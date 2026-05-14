@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", sans-serif;
+  --font-heading: "Outfit", sans-serif;
+  
+  --color-ufrpe-blue: #1e2b4f;
+  --color-ufrpe-yellow: #febd11;
+  --color-ufrpe-yellow-hover: #e6a700;
+  --color-ufrpe-cyan: #0088a8;
+  --color-ufrpe-red: #d63624;
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+    background: #1e2b4f;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #febd11;
+}
+
+/* Logo PRPG Custom Styles */
+.prpg-up {
+    font-weight: 900;
+    border-bottom: 5px solid #1e2b4f;
+    font-size: 28px;
+    padding-bottom: 2px;
+    line-height: 1;
+    color: #1e2b4f;
+    width: fit-content;
+}
+
+.prpg-bottom {
+    font-weight: 400;
+    border-top: 3px solid #1e2b4f;
+    font-size: 20px;
+    padding-top: 5px;
+    margin-top: -3px;
+    line-height: 1;
+    color: #1e2b4f;
+    width: fit-content;
+}
+
+/* Animations */
+@keyframes slideInFromTop {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-in {
+    animation: slideInFromTop 0.3s ease-out forwards;
+}
+
+.zoom-in {
+    animation: zoomIn 0.3s ease-out forwards;
+}
+
+/* Nav Menu Transitions */
+.nav-menu ul ul {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.nav-menu li:hover > ul {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    display: block;
+}

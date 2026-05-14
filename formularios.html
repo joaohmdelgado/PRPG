@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulários - PRPG UFRPE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body class="font-sans text-gray-800 bg-gray-50 flex flex-col min-h-screen">
+    
+    <!-- Topbar -->
+    <div class="bg-ufrpe-blue text-white py-2 text-xs md:text-sm hidden md:block border-b border-white/10 shrink-0">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex gap-6">
+                <a href="mailto:secretaria.prpg@ufrpe.br" class="flex items-center gap-2 hover:text-ufrpe-yellow transition"><i class="fa-solid fa-envelope"></i> secretaria.prpg@ufrpe.br</a>
+                <a href="tel:+558133206050" class="flex items-center gap-2 hover:text-ufrpe-yellow transition"><i class="fa-solid fa-phone"></i> +55 81 3320-6050</a>
+                <button id="map-toggle" class="flex items-center gap-2 hover:text-ufrpe-yellow transition cursor-pointer">
+                    <i class="fa-solid fa-location-dot"></i> Localização
+                </button>
+            </div>
+            <div class="flex gap-4 font-medium">
+                <a href="https://www.ufrpe.br/" class="hover:text-ufrpe-yellow transition" target="_blank">Portal UFRPE</a>
+                <a href="https://sigs.ufrpe.br/sigaa/" class="hover:text-ufrpe-yellow transition" target="_blank">SIGAA</a>
+                <a href="http://ava.ufrpe.br/" class="hover:text-ufrpe-yellow transition" target="_blank">AVA</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 shrink-0">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/" class="flex items-center gap-4 shrink-0 group">
+                <img src="https://prpg.ufrpe.br/themes/prpg_ufrpe/assets/img/Bras%C3%A3o%20UFRPE%20-%20Fundo%20Branco.png" alt="Logo UFRPE" class="h-14 md:h-16 w-auto">
+                <span class="flex flex-col">
+                    <div class="prpg-up">PRPG&nbsp;&nbsp;</div>
+                    <div class="prpg-bottom text-[14px] md:text-[20px]">Pró-Reitoria de Pós-Graduação</div>
+                </span>
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden lg:block">
+                <nav class="nav-menu">
+                    <ul class="flex items-center gap-1 font-medium text-sm text-ufrpe-blue uppercase tracking-tight">
+                        <li class="relative group px-3 py-4">
+                            <a href="https://prpg.ufrpe.br/pt-br" class="hover:text-ufrpe-yellow transition flex items-center gap-1">A Pós-Graduação <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                            <ul class="absolute top-full left-0 bg-white shadow-xl min-w-[280px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]">
+                                <li><a href="/missao-visao-valores.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Missão Visão e Valores</a></li>
+                                <li><a href="https://prpg.ufrpe.br/sobre" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Sobre</a></li>
+                                <li><a href="https://prpg.ufrpe.br/historico" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Histórico</a></li>
+                                <li><a href="https://prpg.ufrpe.br/estrutura-organizacional" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Estrutura Organiacional</a></li>
+                                <li><a href="https://prpg.ufrpe.br/equipe" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Equipe</a></li>
+                                <li><a href="https://prpg.ufrpe.br/financeiro" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Financeiro</a></li>
+                                <li><a href="https://prpg.ufrpe.br/projetos-institucionais" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Projetos Institucionais</a></li>
+                                <li><a href="https://prpg.ufrpe.br/indicadores-de-gestao-e-avaliacao-da-pos-graduacao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Indicadores de Gestão e Avaliação</a></li>
+                                <li><a href="https://prpg.ufrpe.br/relatorio-de-gestao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Relatório de Gestão</a></li>
+                            </ul>
+                        </li>
+                        <li class="relative group px-3 py-4">
+                            <a href="https://prpg.ufrpe.br/mestrado-e-doutorado" class="hover:text-ufrpe-yellow transition flex items-center gap-1">Mestrado e Doutorado <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                            <ul class="absolute top-full left-0 bg-white shadow-xl min-w-[250px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]">
+                                <li><a href="https://prpg.ufrpe.br/sites/default/files/documentos/CALEND%C3%81RIO%20PRPG%202026-03-05.pdf" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Calendário Acadêmico</a></li>
+                                <li><a href="https://prpg.ufrpe.br/sites/default/files/2024-06/Cat%C3%A1logo%20UFRPE_compressed.pdf" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Catálogo de cursos</a></li>
+                                <li><a href="/proext-pg.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Proext-PG</a></li>
+                                <li><a href="/resolucoes.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Resoluções gerais</a></li>
+                                <li><a href="https://www.prpg.ufrpe.br/relatorios-autoavaliacao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Relatórios de autoavaliação</a></li>
+                            </ul>
+                        </li>
+                        <li class="relative group px-3 py-4">
+                            <a href="https://prpg.ufrpe.br/especializacao" class="hover:text-ufrpe-yellow transition flex items-center gap-1">Especialização <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                            <ul class="absolute top-full left-0 bg-white shadow-xl min-w-[220px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]">
+                                <li><a href="https://prpg.ufrpe.br/especializacao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Especialização</a></li>
+                                <li><a href="http://prpg.ufrpe.br/pt-br/residencia-profissional" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Residência profissional</a></li>
+                            </ul>
+                        </li>
+                        <li class="relative group px-3 py-4">
+                            <a href="https://prpg.ufrpe.br/internacionalizacao" class="hover:text-ufrpe-yellow transition flex items-center gap-1">Internacionalização <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                            <ul class="absolute top-full left-0 bg-white shadow-xl min-w-[280px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]">
+                                <li><a href="https://prpg.ufrpe.br/sobre-internacionalizacao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Sobre</a></li>
+                                <li><a href="https://prpg.ufrpe.br/alunos-estrangeiros" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Alunos estrangeiros</a></li>
+                                <li><a href="https://prpg.ufrpe.br/capes-print" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Capes PrInt</a></li>
+                                <li><a href="https://prpg.ufrpe.br/mobilidade-estudantil" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Mobilidade estudantil</a></li>
+                                <li><a href="https://prpg.ufrpe.br/noticias-internacionalizacao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Notícias Internacionalização</a></li>
+                                <li><a href="http://prpg.ufrpe.br/sites/default/files/arquivos-noticias/Plano%20Internacionaliza%C3%A7%C3%A3o%202025%20-%202030%20da%20UFRPE.pdf" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Plano Internacionalização</a></li>
+                                <li><a href="https://prpg.ufrpe.br/reconhecimento" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Reconhecimento de diploma</a></li>
+                            </ul>
+                        </li>
+                        <li class="relative group px-3 py-4">
+                            <a href="https://prpg.ufrpe.br/pt-br#" class="hover:text-ufrpe-yellow transition flex items-center gap-1">Documentos <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                            <ul class="absolute top-full left-0 bg-white shadow-xl min-w-[200px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]">
+                                <li><a href="/editais.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Editais</a></li>
+                                <li><a href="/resolucoes.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Resoluções</a></li>
+                                <li><a href="/formularios.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Formulários</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <div class="flex items-center gap-4 relative">
+                <button id="search-toggle" class="hidden lg:flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full hover:bg-ufrpe-yellow hover:text-white transition text-ufrpe-blue">
+                    <i class="fa-solid fa-search"></i>
+                </button>
+
+                <!-- Search Modal Overlay (Local) -->
+                <div id="search-modal" class="hidden absolute top-full right-0 mt-4 w-80 bg-white shadow-2xl rounded-2xl p-4 border border-gray-100 z-[70] animate-in fade-in slide-in-from-top-2 duration-300">
+                    <form action="#" class="relative">
+                        <input type="text" id="search-input" placeholder="O que você procura?" class="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow outline-none text-sm transition-all">
+                        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-ufrpe-blue text-white rounded-lg hover:bg-ufrpe-yellow transition-colors">
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                    </form>
+                    <p class="text-[10px] text-gray-400 mt-3 px-1">Pressione Enter para pesquisar</p>
+                </div>
+
+                <!-- Mobile Menu Toggle -->
+                <button id="mobile-menu-btn" class="lg:hidden text-2xl text-ufrpe-blue">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu list -->
+        <div id="mobile-menu" class="hidden lg:hidden bg-white border-t border-gray-100 absolute w-full shadow-lg h-screen overflow-y-auto pb-24">
+            <ul class="flex flex-col text-ufrpe-blue font-medium text-sm">
+                <li class="border-b border-gray-50">
+                    <div class="flex items-center justify-between px-4 py-4 bg-gray-50/50">
+                        <a href="https://prpg.ufrpe.br/pt-br" class="font-bold">A Pós-Graduação</a>
+                    </div>
+                    <ul class="bg-white">
+                        <li><a href="/missao-visao-valores.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Missão Visão e Valores</a></li>
+                        <li><a href="https://prpg.ufrpe.br/sobre" class="block px-8 py-2 text-xs hover:bg-gray-50">Sobre</a></li>
+                        <li><a href="https://prpg.ufrpe.br/historico" class="block px-8 py-2 text-xs hover:bg-gray-50">Histórico</a></li>
+                        <li><a href="https://prpg.ufrpe.br/estrutura-organizacional" class="block px-8 py-2 text-xs hover:bg-gray-50">Estrutura Organiacional</a></li>
+                        <li><a href="https://prpg.ufrpe.br/equipe" class="block px-8 py-2 text-xs hover:bg-gray-50">Equipe</a></li>
+                        <li><a href="https://prpg.ufrpe.br/financeiro" class="block px-8 py-2 text-xs hover:bg-gray-50">Financeiro</a></li>
+                        <li><a href="https://prpg.ufrpe.br/projetos-institucionais" class="block px-8 py-2 text-xs hover:bg-gray-50">Projetos Institucionais</a></li>
+                        <li><a href="https://prpg.ufrpe.br/indicadores-de-gestao-e-avaliacao-da-pos-graduacao" class="block px-8 py-2 text-xs hover:bg-gray-50">Indicadores de Gestão e Avaliação</a></li>
+                        <li><a href="https://prpg.ufrpe.br/relatorio-de-gestao" class="block px-8 py-2 text-xs hover:bg-gray-50">Relatório de Gestão</a></li>
+                    </ul>
+                </li>
+                <li class="border-b border-gray-50">
+                    <div class="flex items-center justify-between px-4 py-4 bg-gray-50/50">
+                        <a href="https://prpg.ufrpe.br/mestrado-e-doutorado" class="font-bold">Mestrado e Doutorado</a>
+                    </div>
+                    <ul class="bg-white">
+                        <li><a href="https://prpg.ufrpe.br/sites/default/files/documentos/CALEND%C3%81RIO%20PRPG%202026-03-05.pdf" class="block px-8 py-2 text-xs hover:bg-gray-50">Calendário Acadêmico</a></li>
+                        <li><a href="https://prpg.ufrpe.br/sites/default/files/2024-06/Cat%C3%A1logo%20UFRPE_compressed.pdf" class="block px-8 py-2 text-xs hover:bg-gray-50">Catálogo de cursos</a></li>
+                        <li><a href="/proext-pg.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Proext-PG</a></li>
+                        <li><a href="/resolucoes.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Resoluções gerais</a></li>
+                        <li><a href="https://www.prpg.ufrpe.br/relatorios-autoavaliacao" class="block px-8 py-2 text-xs hover:bg-gray-50">Relatórios de autoavaliação</a></li>
+                    </ul>
+                </li>
+                <li class="border-b border-gray-50">
+                    <div class="flex items-center justify-between px-4 py-4 bg-gray-50/50">
+                        <a href="https://prpg.ufrpe.br/especializacao" class="font-bold">Especialização</a>
+                    </div>
+                    <ul class="bg-white">
+                        <li><a href="https://prpg.ufrpe.br/especializacao" class="block px-8 py-2 text-xs hover:bg-gray-50">Especialização</a></li>
+                        <li><a href="http://prpg.ufrpe.br/pt-br/residencia-profissional" class="block px-8 py-2 text-xs hover:bg-gray-50">Residência profissional</a></li>
+                    </ul>
+                </li>
+                <li class="border-b border-gray-50">
+                    <div class="flex items-center justify-between px-4 py-4 bg-gray-50/50">
+                        <a href="https://prpg.ufrpe.br/internacionalizacao" class="font-bold">Internacionalização</a>
+                    </div>
+                    <ul class="bg-white">
+                        <li><a href="https://prpg.ufrpe.br/sobre-internacionalizacao" class="block px-8 py-2 text-xs hover:bg-gray-50">Sobre</a></li>
+                        <li><a href="https://prpg.ufrpe.br/alunos-estrangeiros" class="block px-8 py-2 text-xs hover:bg-gray-50">Alunos estrangeiros</a></li>
+                        <li><a href="https://prpg.ufrpe.br/capes-print" class="block px-8 py-2 text-xs hover:bg-gray-50">Capes PrInt</a></li>
+                        <li><a href="https://prpg.ufrpe.br/mobilidade-estudantil" class="block px-8 py-2 text-xs hover:bg-gray-50">Mobilidade estudantil</a></li>
+                        <li><a href="https://prpg.ufrpe.br/noticias-internacionalizacao" class="block px-8 py-2 text-xs hover:bg-gray-50">Notícias Internacionalização</a></li>
+                        <li><a href="http://prpg.ufrpe.br/sites/default/files/arquivos-noticias/Plano%20Internacionaliza%C3%A7%C3%A3o%202025%20-%202030%20da%20UFRPE.pdf" class="block px-8 py-2 text-xs hover:bg-gray-50">Plano Internacionalização</a></li>
+                        <li><a href="https://prpg.ufrpe.br/reconhecimento" class="block px-8 py-2 text-xs hover:bg-gray-50">Reconhecimento de diploma</a></li>
+                    </ul>
+                </li>
+                <li class="border-b border-gray-50">
+                    <div class="flex items-center justify-between px-4 py-4 bg-gray-50/50">
+                        <a href="https://prpg.ufrpe.br/pt-br#" class="font-bold">Documentos</a>
+                    </div>
+                    <ul class="bg-white pb-10">
+                        <li><a href="/editais.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Editais</a></li>
+                        <li><a href="/resolucoes.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Resoluções</a></li>
+                        <li><a href="/formularios.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Formulários</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <header class="bg-ufrpe-blue py-16 border-b-4 border-ufrpe-yellow">
+        <div class="absolute right-0 top-0 opacity-10 pointer-events-none">
+            <svg width="400" height="400" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#ffffff" d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,81.4,-46.3C91,-33.5,97.3,-18,97,-2.6C96.7,12.8,89.7,28.1,80.1,41.4C70.5,54.7,58.3,66,44.2,74.5C30.1,82.9,14,88.5,0.2,88.2C-13.6,87.9,-27.2,81.6,-40.4,73.4C-53.6,65.2,-66.4,55.1,-75.2,42.4C-84.1,29.7,-89.1,14.8,-88.7,0.2C-88.3,-14.4,-82.5,-28.8,-74,-41.8C-65.5,-54.8,-54.2,-66.4,-41.2,-74C-28.2,-81.6,-14.1,-85.2,1.2,-87.3C16.5,-89.4,30.5,-83.5,44.7,-76.4Z" transform="translate(100 100)" />
+            </svg>
+        </div>
+        
+        <div class="container mx-auto px-4 text-center relative z-10">
+            <h1 class="font-heading font-extrabold text-4xl md:text-5xl text-white mb-4">Formulários</h1>
+            <p class="text-gray-300 text-lg md:text-xl font-light max-w-2xl mx-auto">Consulte e baixe os formulários necessários para os processos da Pró-Reitoria de Pós-Graduação.</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow py-12">
+        <div class="container mx-auto px-4">
+            
+            <div class="flex flex-col lg:flex-row gap-8">
+                
+                <!-- Sidebar / Navigation -->
+                <div class="lg:w-1/4 shrink-0">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-28">
+                        <div class="bg-gray-50/50 text-gray-800 p-5 border-b border-gray-100">
+                            <h3 class="font-heading font-bold text-lg m-0"><i class="fa-solid fa-list mr-2 text-ufrpe-blue opacity-50"></i> Sumário</h3>
+                        </div>
+                        <div class="p-6 overflow-y-auto max-h-[calc(100vh-200px)]">
+                            <div class="mb-6 last:mb-0">
+                                <h4 class="font-bold text-gray-800 mb-3 text-sm uppercase tracking-wider pb-2 border-b border-gray-100">Navegação</h4>
+                                <div class="space-y-2">
+                                    <a href="#mestrado-doutorado" class="flex gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 hover:text-ufrpe-blue group">
+                                        <i class="fa-solid fa-chevron-right text-ufrpe-blue/30 mt-1 group-hover:translate-x-1 transition-transform"></i>
+                                        <span class="leading-snug">Mestrado e Doutorado</span>
+                                    </a>
+                                    <a href="#lato-sensu" class="flex gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 hover:text-ufrpe-blue group">
+                                        <i class="fa-solid fa-chevron-right text-ufrpe-blue/30 mt-1 group-hover:translate-x-1 transition-transform"></i>
+                                        <span class="leading-snug">Lato sensu</span>
+                                    </a>
+                                    <a href="#bolsas" class="flex gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 hover:text-ufrpe-blue group">
+                                        <i class="fa-solid fa-chevron-right text-ufrpe-blue/30 mt-1 group-hover:translate-x-1 transition-transform"></i>
+                                        <span class="leading-snug">Bolsas FAPERJ/CAPES/CNPq</span>
+                                    </a>
+                                    <a href="#apoio-financeiro" class="flex gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 hover:text-ufrpe-blue group">
+                                        <i class="fa-solid fa-chevron-right text-ufrpe-blue/30 mt-1 group-hover:translate-x-1 transition-transform"></i>
+                                        <span class="leading-snug">Apoio Financeiro (PROAP/PROEX)</span>
+                                    </a>
+                                    <a href="#estagio-docencia" class="flex gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 hover:text-ufrpe-blue group">
+                                        <i class="fa-solid fa-chevron-right text-ufrpe-blue/30 mt-1 group-hover:translate-x-1 transition-transform"></i>
+                                        <span class="leading-snug">Estágio de Docência</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="lg:w-3/4 space-y-12">
+                    
+                    <!-- Mestrado e Doutorado -->
+                    <section id="mestrado-doutorado" class="scroll-mt-28">
+                        <h2 class="font-heading font-bold text-2xl md:text-3xl text-ufrpe-blue mb-6 pb-4 border-b-2 border-ufrpe-yellow">Mestrado e Doutorado</h2>
+                        
+                        <div class="space-y-4">
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Estágio Pós-Doutoral
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-4">
+                                    <div class="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Ficha de Identificação</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Ficha de Identificação do Estagiário Pós-Doutoral</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/ficha_de_identificacao_do_estagiario.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Formulários Gerais
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-6">
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Ficha de Identificação do Discente</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/ficha_de_identificacao_do_discente_1.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Formulário Padrão</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/formulario_abertura_de_processo.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Inscrição em Programa de Pós-Graduação Stricto Sensu
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-6">
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Formulário de Matrícula</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/formulario.xls" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Aluno Especial</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Formulário para Inscrição em Programas de Pós-Graduação - Aluno Especial</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/formulario_inscricao_aluno_especial_0.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Aluno Visitante</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Formulário para Inscrição em Programas de Pós-Graduação - Aluno Visitante</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/formulario_inscricao_aluno_visitante.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Revalidação de Disciplina
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-4">
+                                    <div class="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Formulário para Solicitação</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Formulário para Solicitação de Revalidação de Disciplina em Mestrado/Doutorado</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/revalidacao_de_disciplina_0.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                    </section>
+
+                    <!-- Internacionalização -->
+                    <!-- Lato sensu -->
+                    <section id="lato-sensu" class="scroll-mt-28">
+                        <h2 class="font-heading font-bold text-2xl md:text-3xl text-ufrpe-blue mb-6 pb-4 border-b-2 border-ufrpe-yellow">Lato sensu</h2>
+                        
+                        <div class="space-y-4">
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Certificado-Histórico
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-4">
+                                    <div class="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Solicitação de 2ª Via</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Formulário para solicitação de 2ª via</p>
+                                        <a href="https://prpg.ufrpe.br/pt-br/formularios" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Cursos Lato Sensu
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-6">
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Modelo de Histórico Escolar</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/MODELO%20HIST%C3%93RICOS%20CNE%20ATUAL.docx" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Projetos Pedagógicos</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Modelos de Projetos Pedagógicos e Financeiros</p>
+                                        <a href="https://drive.google.com/drive/folders/1maA-Vbm2CQ3huTIeGoV7KPfr3n-zRcEQ" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                    </section>
+
+                    <!-- Apoio Financeiro -->
+                    <section id="apoio-financeiro" class="scroll-mt-28">
+                        <h2 class="font-heading font-bold text-2xl md:text-3xl text-ufrpe-blue mb-6 pb-4 border-b-2 border-ufrpe-yellow">Apoio Financeiro</h2>
+                        
+                        <div class="space-y-4">
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Ajuda de custo ao Discente
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-6">
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Formulário Prestação de Contas</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/relatorio_utilizacao_aux_disc_proap%20-.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Relatório de Viagem de Discente</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/relatorio_viagem_discente.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Ressarcimento Discente PROAP</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/solicitacao_de_empenho_-ressarcimento_-discente_0.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Ajuda de Custo para Discente</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Solicitação de empenho de ajuda de custo para discente.</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/solicitacao_de_empenho_-_ajuda_de_custo_-discente_0.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Apoio ao discente
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-4">
+                                    <div class="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Termo de Compromisso PADPG</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/Termo%20de%20compromisso%20-%20PADPG_%20%281%29.docx" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Auxílio emergencial digital
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-4">
+                                    <div class="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Relatório Auxílio Emergencial</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/relatorio_uso_auxilio_emergencial_digital.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Auxílio Pesquisador
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-6">
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Relatório de Utilização</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Relatório de Utilização de AUX_PESQ_PROAP</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/Relat%C3%B3rio%20Presta%C3%A7%C3%A3o%20de%20contas%20-%20docente-.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Ressarcimento Docente PROAP</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Solicitação de Empenho - Ressarcimento Docente PROAP</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/solicitacao_de_empenho_-ressarcimento_-docente_0_0.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Auxílio Pesquisador</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Solicitação de Empenho de Auxílio Pesquisador</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/solicitacao_de_empenho_-_auxilio_pesquisador.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Termo de Outorga PROAP</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Termo de Outorga PROAP - Auxílio Pesquisador</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/TERMO%20DE%20OUTORGA.%20PROAP.-%20Aux%C3%ADlio%20Pesquisador.docx" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Bolsa Capes
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-6">
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Declaração de Acúmulos</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/DeclaraodeAcmulos.docx" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Formulário de Cadastro</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/bolsa_capes_-_formulario_de_cadastro.pdf" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Formulário de Cancelamento</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/bolsa_capes_-_formulario_de_cancelamento.pdf" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Termo de Compromisso - DS PDF</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/TermodeCompromissoDS-DeclaraodeAcmulos.pdf" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Termo de Compromisso - DS Word</h4>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/TermodeCompromissoDS.docx" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    Compras e contratações de serviços
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-6">
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Solicitação de Empenho</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Solicitação de empenho para compra ou contratação de serviço</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/solicitacao_de_empenho_-_compra_ou_contratacao_de_servico_0.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Especificação de Bens</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Termo de Especificação de Bens PROAP</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/termo_de_especificacao_de_bens_proap.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                    <div class="pb-6 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Especificação de Serviços</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Termo de Especificação de Serviços</p>
+                                        <a href="https://prpg.ufrpe.br/sites/default/files/formularios/termo_de_especificacao_de_servicos.doc" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Baixar Documento
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+
+                            <details class="group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                                <summary class="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
+                                    SCDP
+                                    <span class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
+                                        <i class="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                                    </span>
+                                </summary>
+                                <div class="p-6 bg-white space-y-4">
+                                    <div class="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                                        <h4 class="font-bold text-ufrpe-blue text-lg mb-1">Documentos SCDP</h4>
+                                        <p class="text-sm text-gray-600 mb-4">Formulários, Relatórios e Termos do SCDP</p>
+                                        <a href="http://www.proad.ufrpe.br/br/cdp-formularios" target="_blank" class="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors">
+                                            <i class="fa-solid fa-download"></i> Acessar Documentos
+                                        </a>
+                                    </div>
+                                </div>
+                            </details>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#151e36] text-white pt-20 pb-8 mt-auto relative border-t-4 border-ufrpe-yellow">
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                <!-- Info -->
+                <div>
+                    <h3 class="font-heading font-bold text-2xl text-white mb-6">PRPG <span class="text-ufrpe-yellow">UFRPE</span></h3>
+                    <p class="text-sm text-gray-400 font-light leading-relaxed mb-6">
+                        Pró-Reitoria de Pós-Graduação<br>
+                        Universidade Federal Rural de Pernambuco<br>
+                        Rua Dom Manoel de Medeiros, s/n<br>
+                        Dois Irmãos, Recife - PE, Brasil<br>
+                        CEP 52171-900
+                    </p>
+                    <div class="flex gap-3">
+                        <a href="#" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-ufrpe-yellow hover:text-ufrpe-blue hover:border-ufrpe-yellow transition-all"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-ufrpe-yellow hover:text-ufrpe-blue hover:border-ufrpe-yellow transition-all"><i class="fa-brands fa-youtube"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-ufrpe-yellow hover:text-ufrpe-blue hover:border-ufrpe-yellow transition-all"><i class="fa-brands fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+
+                <!-- Links 1 -->
+                <div>
+                    <h4 class="font-bold text-lg mb-6 border-b border-white/10 pb-3 block">Acesso Rápido</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Calendário Acadêmico</a></li>
+                        <li><a href="/resolucoes.html" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Resoluções</a></li>
+                        <li><a href="/formularios.html"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Formulários</a></li>
+                        <li><a href="/editais.html" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Editais</a></li>
+                        <li><a href="#" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Relatório de Gestão</a></li>
+                    </ul>
+                </div>
+
+                <!-- Links 2 -->
+                <div>
+                    <h4 class="font-bold text-lg mb-6 border-b border-white/10 pb-3 block">Sistemas</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="https://sigs.ufrpe.br/sigaa/" class="hover:text-ufrpe-yellow transition flex items-center" target="_blank"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> SIGAA</a></li>
+                        <li><a href="http://ava.ufrpe.br/" class="hover:text-ufrpe-yellow transition flex items-center" target="_blank"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> AVA - UFRPE</a></li>
+                        <li><a href="#" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> E-mail Institucional</a></li>
+                        <li><a href="#" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Wi-Fi Eduroam</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contato -->
+                <div>
+                    <h4 class="font-bold text-lg mb-6 border-b border-white/10 pb-3 block">Atendimento</h4>
+                    <ul class="space-y-5 text-sm text-gray-400">
+                        <li class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded bg-ufrpe-yellow/10 flex items-center justify-center text-ufrpe-yellow shrink-0">
+                                <i class="fa-solid fa-envelope"></i>
+                            </div>
+                            <div>
+                                <span class="block font-semibold text-white mb-0.5">Secretaria PRPG</span>
+                                <a href="mailto:secretaria.prpg@ufrpe.br" class="hover:underline hover:text-ufrpe-yellow transition">secretaria.prpg@ufrpe.br</a>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded bg-ufrpe-yellow/10 flex items-center justify-center text-ufrpe-yellow shrink-0">
+                                <i class="fa-brands fa-whatsapp text-lg"></i>
+                            </div>
+                            <div>
+                                <span class="block font-semibold text-white mb-0.5">WhatsApp Institucional</span>
+                                <a href="tel:+558133206050" class="hover:underline hover:text-ufrpe-yellow transition">+55 81 3320-6050</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+                <p>&copy; 2026 PRPG - Universidade Federal Rural de Pernambuco. Todos os direitos reservados.</p>
+                <div class="flex gap-6">
+                    <a href="#" class="hover:text-white transition">Política de Privacidade</a>
+                    <a href="#" class="hover:text-white transition">Termos de Uso</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Map Modal -->
+    <div id="map-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-ufrpe-blue/70 backdrop-blur-sm" id="map-modal-overlay"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative z-10 overflow-hidden animate-in zoom-in duration-300">
+            <div class="flex justify-between items-center p-4 border-b border-gray-100">
+                <h3 class="font-bold text-ufrpe-blue flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot text-ufrpe-yellow"></i> 
+                    Nossa Localização
+                </h3>
+                <button id="close-map" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="aspect-video w-full">
+                <iframe 
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3950.8570172108657!2d-34.94817!3d-8.013677399999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7ab198ad41794ab%3A0x4536f257f56330d1!2sPr%C3%B3-Reitoria%20de%20Pesquisa%20e%20P%C3%B3s-Gradua%C3%A7%C3%A3o%20da%20UFRPE!5e0!3m2!1spt-BR!2sbr!4v1778710761960!5m2!1spt-BR!2sbr" 
+                    class="w-full h-full border-0" 
+                    allowfullscreen="" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+    <script>
+        document.querySelectorAll('details').forEach((detail) => {
+            detail.addEventListener('toggle', (e) => {
+                if (detail.open) {
+                    document.querySelectorAll('details').forEach((otherDetail) => {
+                        if (otherDetail !== detail && otherDetail.parentElement === detail.parentElement) {
+                            otherDetail.removeAttribute('open');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
