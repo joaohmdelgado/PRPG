@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico - PRPG UFRPE</title>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body class="font-sans text-gray-800 bg-gray-50 flex flex-col min-h-screen">
+    
+    <!-- Topbar -->
+    <div class="bg-ufrpe-blue text-white py-2 text-xs md:text-sm hidden md:block border-b border-white/10 shrink-0">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex gap-6">
+                <a href="mailto:secretaria.prpg@ufrpe.br" class="flex items-center gap-2 hover:text-ufrpe-yellow transition"><i class="fa-solid fa-envelope"></i> secretaria.prpg@ufrpe.br</a>
+                <a href="tel:+558133206050" class="flex items-center gap-2 hover:text-ufrpe-yellow transition"><i class="fa-solid fa-phone"></i> +55 81 3320-6050</a>
+                <button id="map-toggle" class="flex items-center gap-2 hover:text-ufrpe-yellow transition cursor-pointer">
+                    <i class="fa-solid fa-location-dot"></i> Localização
+                </button>
+            </div>
+            <div class="flex gap-4 font-medium">
+                <a href="https://www.ufrpe.br/" class="hover:text-ufrpe-yellow transition" target="_blank">Portal UFRPE</a>
+                <a href="https://sigs.ufrpe.br/sigaa/" class="hover:text-ufrpe-yellow transition" target="_blank">SIGAA</a>
+                <a href="http://ava.ufrpe.br/" class="hover:text-ufrpe-yellow transition" target="_blank">AVA</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 shrink-0">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/" class="flex items-center gap-4 shrink-0 group">
+                <img src="https://prpg.ufrpe.br/themes/prpg_ufrpe/assets/img/Bras%C3%A3o%20UFRPE%20-%20Fundo%20Branco.png" alt="Logo UFRPE" class="h-14 md:h-16 w-auto">
+                <span class="flex flex-col">
+                    <div class="prpg-up">PRPG&nbsp;&nbsp;</div>
+                    <div class="prpg-bottom text-[14px] md:text-[20px]">Pró-Reitoria de Pós-Graduação</div>
+                </span>
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden lg:block">
+                <nav class="nav-menu">
+                    <ul class="flex items-center gap-1 font-medium text-sm text-ufrpe-blue uppercase tracking-tight">
+                        <li class="relative group px-3 py-4">
+                            <a href="https://prpg.ufrpe.br/pt-br" class="hover:text-ufrpe-yellow transition flex items-center gap-1 text-ufrpe-yellow">A Pós-Graduação <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                            <ul class="absolute top-full left-0 bg-white shadow-xl min-w-[280px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]">
+                                <li><a href="/missao-visao-valores.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Missão Visão e Valores</a></li>
+                                <li><a href="https://prpg.ufrpe.br/sobre" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Sobre</a></li>
+                                <li><a href="/historico.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-yellow uppercase font-bold">Histórico</a></li>
+                                <li><a href="https://prpg.ufrpe.br/estrutura-organizacional" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Estrutura Organiacional</a></li>
+                                <li><a href="/equipe.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Equipe</a></li>
+                                <li><a href="https://prpg.ufrpe.br/financeiro" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Financeiro</a></li>
+                                <li><a href="https://prpg.ufrpe.br/projetos-institucionais" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Projetos Institucionais</a></li>
+                                <li><a href="https://prpg.ufrpe.br/indicadores-de-gestao-e-avaliacao-da-pos-graduacao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Indicadores de Gestão e Avaliação</a></li>
+                                <li><a href="https://prpg.ufrpe.br/relatorio-de-gestao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Relatório de Gestão</a></li>
+                            </ul>
+                        </li>
+                        <li class="relative group px-3 py-4">
+                            <a href="https://prpg.ufrpe.br/mestrado-e-doutorado" class="hover:text-ufrpe-yellow transition flex items-center gap-1">Mestrado e Doutorado <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                            <ul class="absolute top-full left-0 bg-white shadow-xl min-w-[250px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]">
+                                <li><a href="https://prpg.ufrpe.br/sites/default/files/documentos/CALEND%C3%81RIO%20PRPG%202026-03-05.pdf" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Calendário Acadêmico</a></li>
+                                <li><a href="https://prpg.ufrpe.br/sites/default/files/2024-06/Cat%C3%A1logo%20UFRPE_compressed.pdf" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Catálogo de cursos</a></li>
+                                <li><a href="/proext-pg.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Proext-PG</a></li>
+                                <li><a href="/resolucoes.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Resoluções gerais</a></li>
+                                <li><a href="https://www.prpg.ufrpe.br/relatorios-autoavaliacao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Relatórios de autoavaliação</a></li>
+                            </ul>
+                        </li>
+                        <li class="relative group px-3 py-4">
+                            <a href="https://prpg.ufrpe.br/especializacao" class="hover:text-ufrpe-yellow transition flex items-center gap-1">Especialização <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                            <ul class="absolute top-full left-0 bg-white shadow-xl min-w-[220px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]">
+                                <li><a href="https://prpg.ufrpe.br/especializacao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Especialização</a></li>
+                                <li><a href="http://prpg.ufrpe.br/pt-br/residencia-profissional" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Residência profissional</a></li>
+                            </ul>
+                        </li>
+                        <li class="relative group px-3 py-4">
+                            <a href="https://prpg.ufrpe.br/internacionalizacao" class="hover:text-ufrpe-yellow transition flex items-center gap-1">Internacionalização <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                            <ul class="absolute top-full left-0 bg-white shadow-xl min-w-[280px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]">
+                                <li><a href="https://prpg.ufrpe.br/sobre-internacionalizacao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Sobre</a></li>
+                                <li><a href="https://prpg.ufrpe.br/alunos-estrangeiros" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Alunos estrangeiros</a></li>
+                                <li><a href="https://prpg.ufrpe.br/capes-print" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Capes PrInt</a></li>
+                                <li><a href="https://prpg.ufrpe.br/mobilidade-estudantil" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Mobilidade estudantil</a></li>
+                                <li><a href="https://prpg.ufrpe.br/noticias-internacionalizacao" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Notícias Internacionalização</a></li>
+                                <li><a href="http://prpg.ufrpe.br/sites/default/files/arquivos-noticias/Plano%20Internacionaliza%C3%A7%C3%A3o%202025%20-%202030%20da%20UFRPE.pdf" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Plano Internacionalização</a></li>
+                                <li><a href="https://prpg.ufrpe.br/reconhecimento" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Reconhecimento de diploma</a></li>
+                            </ul>
+                        </li>
+                        <li class="relative group px-3 py-4">
+                            <a href="https://prpg.ufrpe.br/pt-br#" class="hover:text-ufrpe-yellow transition flex items-center gap-1">Documentos <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                            <ul class="absolute top-full left-0 bg-white shadow-xl min-w-[200px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]">
+                                <li><a href="/editais.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Editais</a></li>
+                                <li><a href="/resolucoes.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Resoluções</a></li>
+                                <li><a href="/formularios.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition">Formulários</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <div class="flex items-center gap-4 relative">
+                <button id="search-toggle" class="hidden lg:flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full hover:bg-ufrpe-yellow hover:text-white transition text-ufrpe-blue">
+                    <i class="fa-solid fa-search"></i>
+                </button>
+
+                <!-- Search Modal Overlay (Local) -->
+                <div id="search-modal" class="hidden absolute top-full right-0 mt-4 w-80 bg-white shadow-2xl rounded-2xl p-4 border border-gray-100 z-[70] animate-in fade-in slide-in-from-top-2 duration-300">
+                    <form action="#" class="relative">
+                        <input type="text" id="search-input" placeholder="O que você procura?" class="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow outline-none text-sm transition-all">
+                        <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-ufrpe-blue text-white rounded-lg hover:bg-ufrpe-yellow transition-colors">
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                    </form>
+                    <p class="text-[10px] text-gray-400 mt-3 px-1">Pressione Enter para pesquisar</p>
+                </div>
+
+                <!-- Mobile Menu Toggle -->
+                <button id="mobile-menu-btn" class="lg:hidden text-2xl text-ufrpe-blue">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu list -->
+        <div id="mobile-menu" class="hidden lg:hidden bg-white border-t border-gray-100 absolute w-full shadow-lg h-screen overflow-y-auto pb-24">
+            <ul class="flex flex-col text-ufrpe-blue font-medium text-sm">
+                <li class="border-b border-gray-50">
+                    <div class="flex items-center justify-between px-4 py-4 bg-gray-50/50">
+                        <a href="https://prpg.ufrpe.br/pt-br" class="font-bold">A Pós-Graduação</a>
+                    </div>
+                    <ul class="bg-white">
+                        <li><a href="/missao-visao-valores.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Missão Visão e Valores</a></li>
+                        <li><a href="https://prpg.ufrpe.br/sobre" class="block px-8 py-2 text-xs hover:bg-gray-50">Sobre</a></li>
+                        <li><a href="/historico.html" class="block px-8 py-2 text-xs hover:bg-gray-50 font-bold text-ufrpe-yellow">Histórico</a></li>
+                        <li><a href="https://prpg.ufrpe.br/estrutura-organizacional" class="block px-8 py-2 text-xs hover:bg-gray-50">Estrutura Organiacional</a></li>
+                        <li><a href="/equipe.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Equipe</a></li>
+                        <li><a href="https://prpg.ufrpe.br/financeiro" class="block px-8 py-2 text-xs hover:bg-gray-50">Financeiro</a></li>
+                        <li><a href="https://prpg.ufrpe.br/projetos-institucionais" class="block px-8 py-2 text-xs hover:bg-gray-50">Projetos Institucionais</a></li>
+                        <li><a href="https://prpg.ufrpe.br/indicadores-de-gestao-e-avaliacao-da-pos-graduacao" class="block px-8 py-2 text-xs hover:bg-gray-50">Indicadores de Gestão e Avaliação</a></li>
+                        <li><a href="https://prpg.ufrpe.br/relatorio-de-gestao" class="block px-8 py-2 text-xs hover:bg-gray-50">Relatório de Gestão</a></li>
+                    </ul>
+                </li>
+                <li class="border-b border-gray-50">
+                    <div class="flex items-center justify-between px-4 py-4 bg-gray-50/50">
+                        <a href="https://prpg.ufrpe.br/mestrado-e-doutorado" class="font-bold">Mestrado e Doutorado</a>
+                    </div>
+                    <ul class="bg-white">
+                        <li><a href="https://prpg.ufrpe.br/sites/default/files/documentos/CALEND%C3%81RIO%20PRPG%202026-03-05.pdf" class="block px-8 py-2 text-xs hover:bg-gray-50">Calendário Acadêmico</a></li>
+                        <li><a href="https://prpg.ufrpe.br/sites/default/files/2024-06/Cat%C3%A1logo%20UFRPE_compressed.pdf" class="block px-8 py-2 text-xs hover:bg-gray-50">Catálogo de cursos</a></li>
+                        <li><a href="/proext-pg.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Proext-PG</a></li>
+                        <li><a href="/resolucoes.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Resoluções gerais</a></li>
+                        <li><a href="https://www.prpg.ufrpe.br/relatorios-autoavaliacao" class="block px-8 py-2 text-xs hover:bg-gray-50">Relatórios de autoavaliação</a></li>
+                    </ul>
+                </li>
+                <li class="border-b border-gray-50">
+                    <div class="flex items-center justify-between px-4 py-4 bg-gray-50/50">
+                        <a href="https://prpg.ufrpe.br/especializacao" class="font-bold">Especialização</a>
+                    </div>
+                    <ul class="bg-white">
+                        <li><a href="https://prpg.ufrpe.br/especializacao" class="block px-8 py-2 text-xs hover:bg-gray-50">Especialização</a></li>
+                        <li><a href="http://prpg.ufrpe.br/pt-br/residencia-profissional" class="block px-8 py-2 text-xs hover:bg-gray-50">Residência profissional</a></li>
+                    </ul>
+                </li>
+                <li class="border-b border-gray-50">
+                    <div class="flex items-center justify-between px-4 py-4 bg-gray-50/50">
+                        <a href="https://prpg.ufrpe.br/internacionalizacao" class="font-bold">Internacionalização</a>
+                    </div>
+                    <ul class="bg-white">
+                        <li><a href="https://prpg.ufrpe.br/sobre-internacionalizacao" class="block px-8 py-2 text-xs hover:bg-gray-50">Sobre</a></li>
+                        <li><a href="https://prpg.ufrpe.br/alunos-estrangeiros" class="block px-8 py-2 text-xs hover:bg-gray-50">Alunos estrangeiros</a></li>
+                        <li><a href="https://prpg.ufrpe.br/capes-print" class="block px-8 py-2 text-xs hover:bg-gray-50">Capes PrInt</a></li>
+                        <li><a href="https://prpg.ufrpe.br/mobilidade-estudantil" class="block px-8 py-2 text-xs hover:bg-gray-50">Mobilidade estudantil</a></li>
+                        <li><a href="https://prpg.ufrpe.br/noticias-internacionalizacao" class="block px-8 py-2 text-xs hover:bg-gray-50">Notícias Internacionalização</a></li>
+                        <li><a href="http://prpg.ufrpe.br/sites/default/files/arquivos-noticias/Plano%20Internacionaliza%C3%A7%C3%A3o%202025%20-%202030%20da%20UFRPE.pdf" class="block px-8 py-2 text-xs hover:bg-gray-50">Plano Internacionalização</a></li>
+                        <li><a href="https://prpg.ufrpe.br/reconhecimento" class="block px-8 py-2 text-xs hover:bg-gray-50">Reconhecimento de diploma</a></li>
+                    </ul>
+                </li>
+                <li class="border-b border-gray-50">
+                    <div class="flex items-center justify-between px-4 py-4 bg-gray-50/50">
+                        <a href="https://prpg.ufrpe.br/pt-br#" class="font-bold">Documentos</a>
+                    </div>
+                    <ul class="bg-white pb-10">
+                        <li><a href="/editais.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Editais</a></li>
+                        <li><a href="/resolucoes.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Resoluções</a></li>
+                        <li><a href="/formularios.html" class="block px-8 py-2 text-xs hover:bg-gray-50">Formulários</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Header / Breadcrumbs -->
+    <div class="bg-ufrpe-blue text-white py-12">
+        <div class="container mx-auto px-4">
+            <nav class="flex text-white/60 text-sm mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="/" class="hover:text-ufrpe-yellow transition-colors">Início</a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
+                            <span class="text-white">A Pós-Graduação</span>
+                        </div>
+                    </li>
+                    <li aria-current="page">
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
+                            <span class="text-ufrpe-yellow font-medium">Histórico</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            <h1 class="text-4xl md:text-5xl font-heading font-extrabold tracking-tight">Histórico</h1>
+            <p class="text-white/70 mt-4 text-lg max-w-2xl">A trajetória da Pós-Graduação na UFRPE, desde sua fundação até a consolidação da excelência acadêmica.</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow py-16">
+        <div class="container mx-auto px-4">
+            
+            <div class="max-w-4xl mx-auto">
+                
+                <!-- Timeline Intro -->
+                <div class="text-center mb-16">
+                    <span class="inline-flex items-center px-4 py-1.5 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue text-xs font-bold uppercase tracking-wider mb-4 border border-ufrpe-blue/10">Nossa Jornada</span>
+                    <h2 class="text-3xl font-heading font-black text-ufrpe-blue mb-4">Evolução e Conquistas</h2>
+                    <div class="w-20 h-1.5 bg-ufrpe-yellow mx-auto rounded-full"></div>
+                </div>
+
+                <!-- Vertical Timeline -->
+                <div class="relative">
+                    <!-- Vertical Line -->
+                    <div class="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-gray-200 -translate-x-1/2 hidden md:block"></div>
+                    <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 md:hidden"></div>
+
+                    <!-- 1973 -->
+                    <div class="relative z-10 mb-12 md:mb-24 md:flex items-center group">
+                        <div class="flex-1 md:text-right md:pr-12 mb-4 md:mb-0">
+                            <div class="inline-block px-4 py-1 rounded-full bg-ufrpe-blue text-white font-bold text-lg mb-3">1973</div>
+                            <h3 class="text-xl font-bold text-ufrpe-blue mb-2">Início das Atividades</h3>
+                            <p class="text-gray-600 leading-relaxed text-sm md:text-base">Criação do Curso de Mestrado em Botânica, por meio de convênio firmado com a Universidade Federal de Pernambuco (UFPE).</p>
+                        </div>
+                        <div class="absolute left-4 md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-4 border-white shadow-md bg-ufrpe-blue"></div>
+                        <div class="md:flex-1 md:pl-12"></div>
+                    </div>
+
+                    <!-- 1974 - 1976 -->
+                    <div class="relative z-10 mb-12 md:mb-24 md:flex items-center flex-row-reverse group">
+                        <div class="flex-1 md:pl-12 mb-4 md:mb-0">
+                            <div class="inline-block px-4 py-1 rounded-full bg-ufrpe-blue text-white font-bold text-lg mb-3">1974 - 1976</div>
+                            <h3 class="text-xl font-bold text-ufrpe-blue mb-2">Criação da PRPG</h3>
+                            <p class="text-gray-600 leading-relaxed text-sm md:text-base">Em 1974 foi criada a "Coordenadoria Geral de Pesquisa". Em 1975, o novo Estatuto da UFRPE instituiu o Pró-Reitor de Pesquisa e Pós-Graduação, iniciando as atividades da PRPPG (atual PRPG) em 1976.</p>
+                        </div>
+                        <div class="absolute left-4 md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-4 border-white shadow-md bg-ufrpe-blue"></div>
+                        <div class="md:flex-1"></div>
+                    </div>
+
+                    <!-- 1977 - 1981 -->
+                    <div class="relative z-10 mb-12 md:mb-24 md:flex items-center group">
+                        <div class="flex-1 md:text-right md:pr-12 mb-4 md:mb-0">
+                            <div class="inline-block px-4 py-1 rounded-full bg-ufrpe-blue text-white font-bold text-lg mb-3">1977 - 1981</div>
+                            <h3 class="text-xl font-bold text-ufrpe-blue mb-2">Foco em Ciências Agrárias</h3>
+                            <p class="text-gray-600 leading-relaxed text-sm md:text-base">Criação dos PPGs em Ciência do Solo (1977), Medicina Veterinária (1978), Administração Rural e Comunicação Rural (1979) e Zootecnia (1981), reforçando o perfil institucional.</p>
+                        </div>
+                        <div class="absolute left-4 md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-4 border-white shadow-md bg-ufrpe-blue"></div>
+                        <div class="md:flex-1 md:pl-12"></div>
+                    </div>
+
+                    <!-- 1993 - 1995 -->
+                    <div class="relative z-10 mb-12 md:mb-24 md:flex items-center flex-row-reverse group">
+                        <div class="flex-1 md:pl-12 mb-4 md:mb-0">
+                            <div class="inline-block px-4 py-1 rounded-full bg-ufrpe-blue text-white font-bold text-lg mb-3">1993</div>
+                            <h3 class="text-xl font-bold text-ufrpe-blue mb-2">Primeiro Doutorado</h3>
+                            <p class="text-gray-600 leading-relaxed text-sm md:text-base">Criação do primeiro Curso de Doutorado da Instituição (PPG em Botânica). A primeira tese foi defendida em 20 de dezembro de 1995.</p>
+                        </div>
+                        <div class="absolute left-4 md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-4 border-white shadow-md bg-ufrpe-blue"></div>
+                        <div class="md:flex-1"></div>
+                    </div>
+
+                    <!-- 1999 - 2000 -->
+                    <div class="relative z-10 mb-12 md:mb-24 md:flex items-center group">
+                        <div class="flex-1 md:text-right md:pr-12 mb-4 md:mb-0">
+                            <div class="inline-block px-4 py-1 rounded-full bg-ufrpe-blue text-white font-bold text-lg mb-3">1999</div>
+                            <h3 class="text-xl font-bold text-ufrpe-blue mb-2">Doutorado Integrado</h3>
+                            <p class="text-gray-600 leading-relaxed text-sm md:text-base">Proposta e criação do primeiro Doutorado Integrado (PDIZ), em parceria com a UFPB e UFC, iniciando atividades em 2000.</p>
+                        </div>
+                        <div class="absolute left-4 md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-4 border-white shadow-md bg-ufrpe-blue"></div>
+                        <div class="md:flex-1 md:pl-12"></div>
+                    </div>
+
+                    <!-- 2001 - 2009 -->
+                    <div class="relative z-10 mb-12 md:mb-24 md:flex items-center flex-row-reverse group">
+                        <div class="flex-1 md:pl-12 mb-4 md:mb-0">
+                            <div class="inline-block px-4 py-1 rounded-full bg-ufrpe-blue text-white font-bold text-lg mb-3">2001 - 2009</div>
+                            <h3 class="text-xl font-bold text-ufrpe-blue mb-2">Expansão de Programas</h3>
+                            <p class="text-gray-600 leading-relaxed text-sm md:text-base">Crescimento de 163% no número de programas, totalizando 21 PPGs. Destaque para as redes RENORBIO e Inovação Tecnológica em Medicamentos.</p>
+                        </div>
+                        <div class="absolute left-4 md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-4 border-white shadow-md bg-ufrpe-blue"></div>
+                        <div class="md:flex-1"></div>
+                    </div>
+
+                    <!-- 2010 - 2019 -->
+                    <div class="relative z-10 mb-12 md:mb-24 md:flex items-center group">
+                        <div class="flex-1 md:text-right md:pr-12 mb-4 md:mb-0">
+                            <div class="inline-block px-4 py-1 rounded-full bg-ufrpe-blue text-white font-bold text-lg mb-3">2010 - 2019</div>
+                            <h3 class="text-xl font-bold text-ufrpe-blue mb-2">Interiorização e Redes</h3>
+                            <p class="text-gray-600 leading-relaxed text-sm md:text-base">Total de 42 PPGs alcançado. Início de cursos em Garanhuns, Serra Talhada e Cabo de Santo Agostinho. Implementação de Programas em Rede Nacional (Mestrados Profissionais).</p>
+                        </div>
+                        <div class="absolute left-4 md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-4 border-white shadow-md bg-ufrpe-blue"></div>
+                        <div class="md:flex-1 md:pl-12"></div>
+                    </div>
+
+                    <!-- 2017 - 2018 -->
+                    <div class="relative z-10 mb-12 md:mb-24 md:flex items-center flex-row-reverse group">
+                        <div class="flex-1 md:pl-12 mb-4 md:mb-0">
+                            <div class="inline-block px-4 py-1 rounded-full bg-ufrpe-blue text-white font-bold text-lg mb-3">2017 - 2018</div>
+                            <h3 class="text-xl font-bold text-ufrpe-blue mb-2">Excelência e Internacionalização</h3>
+                            <p class="text-gray-600 leading-relaxed text-sm md:text-base">Avaliação nota 6 em dois programas e aprovação do projeto estratégico CAPES-PrInt para consolidação da internacionalização.</p>
+                        </div>
+                        <div class="absolute left-4 md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-4 border-white shadow-md bg-ufrpe-blue"></div>
+                        <div class="md:flex-1"></div>
+                    </div>
+
+                    <!-- 2021 -->
+                    <div class="relative z-10 mb-12 md:flex items-center group">
+                        <div class="flex-1 md:text-right md:pr-12 mb-4 md:mb-0">
+                            <div class="inline-block px-4 py-1 rounded-full bg-ufrpe-blue text-white font-bold text-lg mb-3">2021</div>
+                            <h3 class="text-xl font-bold text-ufrpe-blue mb-2">Novas Fronteiras em Rede</h3>
+                            <p class="text-gray-600 leading-relaxed text-sm md:text-base">Aprovação do PPG RENON (Rede Nordeste de Ensino), expandindo ainda mais as fronteiras institucionais.</p>
+                        </div>
+                        <div class="absolute left-4 md:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full border-4 border-white shadow-md bg-ufrpe-blue"></div>
+                        <div class="md:flex-1 md:pl-12"></div>
+                    </div>
+
+                </div>
+
+                <!-- Pró-Reitores Section -->
+                <div class="mt-32 pt-16 border-t border-gray-100">
+                    <div class="text-center mb-12">
+                        <h2 class="text-3xl font-heading font-black text-ufrpe-blue mb-4 uppercase">Galeria de Pró-Reitores</h2>
+                        <p class="text-gray-500 max-w-xl mx-auto">Lideranças que conduziram a pesquisa e a pós-graduação na UFRPE ao longo das décadas.</p>
+                    </div>
+
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <!-- Mário -->
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center font-bold text-lg shrink-0 group-hover:bg-ufrpe-blue group-hover:text-white transition">MC</div>
+                            <div>
+                                <h4 class="font-bold text-ufrpe-blue leading-tight mb-0.5">Mário Bezerra de Carvalho</h4>
+                                <p class="text-xs text-gray-400 font-medium tracking-wider">1976 — 1979</p>
+                            </div>
+                        </div>
+                        <!-- Luis -->
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center font-bold text-lg shrink-0 group-hover:bg-ufrpe-blue group-hover:text-white transition">LA</div>
+                            <div>
+                                <h4 class="font-bold text-ufrpe-blue leading-tight mb-0.5">Luis de Melo Amorim</h4>
+                                <p class="text-xs text-gray-400 font-medium tracking-wider">1979 — 1982</p>
+                            </div>
+                        </div>
+                        <!-- Romero -->
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center font-bold text-lg shrink-0 group-hover:bg-ufrpe-blue group-hover:text-white transition">RM</div>
+                            <div>
+                                <h4 class="font-bold text-ufrpe-blue leading-tight mb-0.5">Romero Marinho de Moura</h4>
+                                <p class="text-xs text-gray-400 font-medium tracking-wider">1982 — 1991</p>
+                            </div>
+                        </div>
+                        <!-- Emidio -->
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center font-bold text-lg shrink-0 group-hover:bg-ufrpe-blue group-hover:text-white transition">EF</div>
+                            <div>
+                                <h4 class="font-bold text-ufrpe-blue leading-tight mb-0.5">Emídio Cantídio de Oliveira Filho</h4>
+                                <p class="text-xs text-gray-400 font-medium tracking-wider">1991 — 1994</p>
+                            </div>
+                        </div>
+                        <!-- Severino -->
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center font-bold text-lg shrink-0 group-hover:bg-ufrpe-blue group-hover:text-white transition">SB</div>
+                            <div>
+                                <h4 class="font-bold text-ufrpe-blue leading-tight mb-0.5">Severino Benone Paes Barbosa</h4>
+                                <p class="text-xs text-gray-400 font-medium tracking-wider">1995 — 1999</p>
+                            </div>
+                        </div>
+                        <!-- Aurea -->
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center font-bold text-lg shrink-0 group-hover:bg-ufrpe-blue group-hover:text-white transition">AW</div>
+                            <div>
+                                <h4 class="font-bold text-ufrpe-blue leading-tight mb-0.5">Áurea Wischral</h4>
+                                <p class="text-xs text-gray-400 font-medium tracking-wider">2000 — 2004</p>
+                            </div>
+                        </div>
+                        <!-- Fernando -->
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center font-bold text-lg shrink-0 group-hover:bg-ufrpe-blue group-hover:text-white transition">FF</div>
+                            <div>
+                                <h4 class="font-bold text-ufrpe-blue leading-tight mb-0.5">Fernando José Freire</h4>
+                                <p class="text-xs text-gray-400 font-medium tracking-wider">2004 — 2008</p>
+                            </div>
+                        </div>
+                        <!-- Antonia -->
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center font-bold text-lg shrink-0 group-hover:bg-ufrpe-blue group-hover:text-white transition">AV</div>
+                            <div>
+                                <h4 class="font-bold text-ufrpe-blue leading-tight mb-0.5">Antonia Sherlânea Chaves Véras</h4>
+                                <p class="text-xs text-gray-400 font-medium tracking-wider">2008 — 2012</p>
+                            </div>
+                        </div>
+                        <!-- José -->
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center font-bold text-lg shrink-0 group-hover:bg-ufrpe-blue group-hover:text-white transition">JD</div>
+                            <div>
+                                <h4 class="font-bold text-ufrpe-blue leading-tight mb-0.5">José Carlos Batista Dubeux Junior</h4>
+                                <p class="text-xs text-gray-400 font-medium tracking-wider">2012 — 2013</p>
+                            </div>
+                        </div>
+                        <!-- Maria -->
+                        <div class="bg-white p-5 rounded-2xl border border-gray-100 flex items-center gap-4 hover:shadow-md transition group">
+                            <div class="w-12 h-12 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center font-bold text-lg shrink-0 group-hover:bg-ufrpe-blue group-hover:text-white transition">MG</div>
+                            <div>
+                                <h4 class="font-bold text-ufrpe-blue leading-tight mb-0.5">Maria Madalena Pessoa Guerra</h4>
+                                <p class="text-xs text-gray-400 font-medium tracking-wider">2013</p>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#151e36] text-white pt-20 pb-8 mt-auto relative border-t-4 border-ufrpe-yellow">
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                <!-- Info -->
+                <div>
+                    <h3 class="font-heading font-bold text-2xl text-white mb-6">PRPG <span class="text-ufrpe-yellow">UFRPE</span></h3>
+                    <p class="text-sm text-gray-400 font-light leading-relaxed mb-6">
+                        Pró-Reitoria de Pós-Graduação<br>
+                        Universidade Federal Rural de Pernambuco<br>
+                        Rua Dom Manoel de Medeiros, s/n<br>
+                        Dois Irmãos, Recife - PE, Brasil<br>
+                        CEP 52171-900
+                    </p>
+                </div>
+
+                <!-- Links 1 -->
+                <div>
+                    <h4 class="font-bold text-lg mb-6 border-b border-white/10 pb-3 block">Acesso Rápido</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Calendário Acadêmico</a></li>
+                        <li><a href="/resolucoes.html" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Resoluções</a></li>
+                        <li><a href="/formularios.html" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Formulários</a></li>
+                        <li><a href="/editais.html" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Editais</a></li>
+                    </ul>
+                </div>
+
+                <!-- Links 2 -->
+                <div>
+                    <h4 class="font-bold text-lg mb-6 border-b border-white/10 pb-3 block">Institucional</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Quem Somos</a></li>
+                        <li><a href="/historico.html" class="hover:text-ufrpe-yellow transition flex items-center font-bold text-white"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Histórico</a></li>
+                        <li><a href="/missao-visao-valores.html" class="hover:text-ufrpe-yellow transition flex items-center text-sm"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Missão, Visão e Valores</a></li>
+                        <li><a href="#" class="hover:text-ufrpe-yellow transition flex items-center"><i class="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70"></i> Equipe</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contato -->
+                <div>
+                    <h4 class="font-bold text-lg mb-6 border-b border-white/10 pb-3 block">Atendimento</h4>
+                    <ul class="space-y-5 text-sm text-gray-400">
+                        <li class="flex items-start gap-3">
+                            <div class="w-8 h-8 rounded bg-ufrpe-yellow/10 flex items-center justify-center text-ufrpe-yellow shrink-0">
+                                <i class="fa-solid fa-envelope"></i>
+                            </div>
+                            <div>
+                                <span class="block font-semibold text-white mb-0.5">Secretaria PRPG</span>
+                                <a href="mailto:secretaria.prpg@ufrpe.br" class="hover:underline hover:text-ufrpe-yellow transition">secretaria.prpg@ufrpe.br</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
+                <p>&copy; 2026 PRPG - Universidade Federal Rural de Pernambuco. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            const icon = mobileMenuBtn.querySelector('i');
+            icon.classList.toggle('fa-bars');
+            icon.classList.toggle('fa-xmark');
+        });
+
+        // Search Toggle
+        const searchToggle = document.getElementById('search-toggle');
+        const searchModal = document.getElementById('search-modal');
+
+        searchToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            searchModal.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!searchModal.contains(e.target) && !searchToggle.contains(e.target)) {
+                searchModal.classList.add('hidden');
+            }
+        });
+    </script>
+
+</body>
+</html>

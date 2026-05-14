@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobre a PRPG - UFRPE</title>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/src/style.css">
+</head>
+<body class="font-sans text-gray-800 bg-gray-50 flex flex-col min-h-screen">
+    
+    <!-- Topbar -->
+    <div class="bg-ufrpe-blue text-white py-2 text-xs md:text-sm hidden md:block border-b border-white/10 shrink-0">
+        <div class="container mx-auto px-4 flex justify-between items-center">
+            <div class="flex gap-6">
+                <a href="mailto:secretaria.prpg@ufrpe.br" class="flex items-center gap-2 hover:text-ufrpe-yellow transition"><i class="fa-solid fa-envelope"></i> secretaria.prpg@ufrpe.br</a>
+                <a href="tel:+558133206050" class="flex items-center gap-2 hover:text-ufrpe-yellow transition"><i class="fa-solid fa-phone"></i> +55 81 3320-6050</a>
+            </div>
+            <div class="flex gap-4 font-medium">
+                <a href="https://www.ufrpe.br/" class="hover:text-ufrpe-yellow transition" target="_blank">Portal UFRPE</a>
+                <a href="https://sigs.ufrpe.br/sigaa/" class="hover:text-ufrpe-yellow transition" target="_blank">SIGAA</a>
+                <a href="http://ava.ufrpe.br/" class="hover:text-ufrpe-yellow transition" target="_blank">AVA</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50 shrink-0">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/" class="flex items-center gap-4 shrink-0 group">
+                <img src="https://prpg.ufrpe.br/themes/prpg_ufrpe/assets/img/Bras%C3%A3o%20UFRPE%20-%20Fundo%20Branco.png" alt="Logo UFRPE" class="h-14 md:h-16 w-auto">
+                <span class="flex flex-col">
+                    <div class="prpg-up font-bold">PRPG&nbsp;&nbsp;</div>
+                    <div class="prpg-bottom text-[14px] md:text-[20px]">Pró-Reitoria de Pós-Graduação</div>
+                </span>
+            </a>
+
+            <!-- Desktop Menu -->
+            <div class="hidden lg:block">
+                <nav class="nav-menu">
+                    <ul class="flex items-center gap-1 font-medium text-sm text-ufrpe-blue uppercase tracking-tight">
+                        <li class="relative group px-3 py-4">
+                            <a href="#" class="hover:text-ufrpe-yellow transition flex items-center gap-1 text-ufrpe-yellow font-bold uppercase">A Pós-Graduação <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                            <ul class="absolute top-full left-0 bg-white shadow-xl min-w-[280px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]">
+                                <li><a href="/missao-visao-valores.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Missão Visão e Valores</a></li>
+                                <li><a href="/sobre.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-yellow font-bold uppercase">Sobre</a></li>
+                                <li><a href="/historico.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Histórico</a></li>
+                                <li><a href="/estrutura-organizacional.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Estrutura Organiacional</a></li>
+                                <li><a href="/equipe.html" class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold">Equipe</a></li>
+                                <!-- Outros itens abreviados para facilitar -->
+                            </ul>
+                        </li>
+                        <li class="relative group px-3 py-4">
+                            <a href="#" class="hover:text-ufrpe-yellow transition flex items-center gap-1 text-ufrpe-blue uppercase">Mestrado e Doutorado <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i></a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+
+            <div class="flex items-center gap-4 relative">
+                <button id="mobile-menu-btn" class="lg:hidden text-2xl text-ufrpe-blue">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section / Page Header -->
+    <div class="bg-ufrpe-blue text-white py-20 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M0 100 L100 0 L100 100 Z" fill="currentColor"></path>
+            </svg>
+        </div>
+        <div class="container mx-auto px-4 relative z-10">
+            <h1 class="text-4xl md:text-6xl font-heading font-black tracking-tight mb-4">Sobre a <span class="text-ufrpe-yellow underline decoration-wavy decoration-1 underline-offset-8">PRPG</span></h1>
+            <p class="text-white/70 max-w-xl text-lg font-medium">Excelência acadêmica, pesquisa de alto nível e compromisso com o desenvolvimento da região Nordeste e do Brasil.</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow">
+        
+        <!-- About Context -->
+        <section class="py-20 lg:py-32">
+            <div class="container mx-auto px-4">
+                <div class="flex flex-col lg:flex-row gap-16 items-center">
+                    <div class="lg:w-1/2">
+                        <div class="relative group">
+                            <div class="absolute -inset-4 bg-ufrpe-yellow/20 rounded-3xl blur-xl group-hover:bg-ufrpe-yellow/30 transition duration-700"></div>
+                            <img src="https://prpg.ufrpe.br/sites/default/files/2021-02/prpg.jpg" alt="Sede da PRPG" class="rounded-2xl shadow-2xl relative z-10 w-full object-cover">
+                        </div>
+                    </div>
+                    <div class="lg:w-1/2">
+                        <span class="inline-flex items-center px-4 py-1.5 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue text-xs font-bold uppercase tracking-widest mb-6 border border-ufrpe-blue/10">Inovação e Tradição</span>
+                        <h2 class="text-3xl md:text-4xl font-heading font-black text-ufrpe-blue mb-8 leading-tight">Uma trajetória dedicada à formação de mestres e doutores.</h2>
+                        <div class="space-y-6 text-gray-600 leading-relaxed">
+                            <p>A Pós-graduação da UFRPE teve início em 1974 e evoluiu ao longo dos anos, sendo responsável pela formação de qualidade de mestres e doutores em Ciência e Tecnologia, oriundos de diversos estados do Nordeste do Brasil, contribuindo decisivamente para a formação de novos grupos de pesquisa e programas de pós-graduação na região.</p>
+                            <p>Atualmente a UFRPE conta com <strong class="text-ufrpe-blue">42 Programas de Pós-graduação Stricto Sensu (PPG)</strong>, totalizando <strong class="text-ufrpe-blue">59 cursos</strong> em níveis de mestrado acadêmico, doutorado acadêmico, mestrado profissional e doutorado profissional, abrangendo todas as grandes áreas do conhecimento da CAPES.</p>
+                            <p>Nosso objetivo é a formação de profissionais de alto nível para a docência, pesquisa e atividade autônoma, fomentando a produção de novos conhecimentos que atendam aos anseios da sociedade e contribuam para o desenvolvimento econômico e social.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Counter Section -->
+        <section class="bg-[#151e36] py-20 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-5 pointer-events-none">
+                <i class="fa-solid fa-chart-line text-[30rem] -bottom-20 -left-20 absolute rotate-12 text-white"></i>
+            </div>
+            <div class="container mx-auto px-4 relative z-10 text-white">
+                <div class="text-center mb-16 px-4">
+                    <h2 class="text-3xl font-heading font-black mb-4 uppercase tracking-tighter">PRPG em Números</h2>
+                    <div class="w-16 h-1 bg-ufrpe-yellow mx-auto rounded-full"></div>
+                </div>
+                
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+                    <!-- Stat 1 -->
+                    <div class="text-center group">
+                        <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-ufrpe-yellow group-hover:text-ufrpe-blue transition-all duration-500 transform group-hover:scale-110">
+                            <i class="fa-solid fa-user-graduate text-2xl"></i>
+                        </div>
+                        <div class="text-4xl md:text-5xl font-heading font-black text-ufrpe-yellow mb-2">2154</div>
+                        <p class="text-white/60 text-xs md:text-sm font-bold uppercase tracking-widest">Alunos Stricto Sensu</p>
+                    </div>
+                    <!-- Stat 2 -->
+                    <div class="text-center group">
+                        <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-ufrpe-yellow group-hover:text-ufrpe-blue transition-all duration-500 transform group-hover:scale-110">
+                            <i class="fa-solid fa-graduation-cap text-2xl"></i>
+                        </div>
+                        <div class="text-4xl md:text-5xl font-heading font-black text-ufrpe-yellow mb-2">635</div>
+                        <p class="text-white/60 text-xs md:text-sm font-bold uppercase tracking-widest">Alunos Lato Sensu</p>
+                    </div>
+                    <!-- Stat 3 -->
+                    <div class="text-center group">
+                        <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-ufrpe-yellow group-hover:text-ufrpe-blue transition-all duration-500 transform group-hover:scale-110">
+                            <i class="fa-solid fa-book text-2xl"></i>
+                        </div>
+                        <div class="text-4xl md:text-5xl font-heading font-black text-ufrpe-yellow mb-2">43</div>
+                        <p class="text-white/60 text-xs md:text-sm font-bold uppercase tracking-widest">Programas Stricto Sensu</p>
+                    </div>
+                    <!-- Stat 4 -->
+                    <div class="text-center group">
+                        <div class="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-ufrpe-yellow group-hover:text-ufrpe-blue transition-all duration-500 transform group-hover:scale-110">
+                            <i class="fa-solid fa-certificate text-2xl"></i>
+                        </div>
+                        <div class="text-4xl md:text-5xl font-heading font-black text-ufrpe-yellow mb-2">8</div>
+                        <p class="text-white/60 text-xs md:text-sm font-bold uppercase tracking-widest">Cursos Lato Sensu</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-ufrpe-blue text-white pt-20 pb-10 mt-auto border-t-4 border-ufrpe-yellow">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                <div>
+                    <h3 class="font-heading font-bold text-2xl text-white mb-6">PRPG <span class="text-ufrpe-yellow">UFRPE</span></h3>
+                    <p class="text-sm text-gray-400 font-light leading-relaxed">
+                        Pró-Reitoria de Pós-Graduação<br>
+                        Universidade Federal Rural de Pernambuco<br>
+                        Recife - PE, Brasil
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-6 border-b border-white/10 pb-3">Acesso Rápido</h4>
+                    <ul class="space-y-3 text-sm text-gray-400">
+                        <li><a href="/sobre.html" class="hover:text-ufrpe-yellow transition flex items-center gap-2"><i class="fa-solid fa-angle-right text-[10px]"></i> Sobre a PRPG</a></li>
+                        <li><a href="/historico.html" class="hover:text-ufrpe-yellow transition flex items-center gap-2"><i class="fa-solid fa-angle-right text-[10px]"></i> Histórico</a></li>
+                        <li><a href="/missao-visao-valores.html" class="hover:text-ufrpe-yellow transition flex items-center gap-2"><i class="fa-solid fa-angle-right text-[10px]"></i> Missão, Visão e Valores</a></li>
+                    </ul>
+                </div>
+                <!-- ... Outras colunas do footer ... -->
+            </div>
+            <div class="border-t border-white/10 pt-8 text-center text-xs text-gray-500 uppercase tracking-widest">
+                <p>&copy; 2026 PRPG - UFRPE. Desenvolvido para excelência acadêmica.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Menu Mobile (Exemplo simplificado)
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        mobileMenuBtn?.addEventListener('click', () => {
+            alert('Menu mobile acionado');
+        });
+    </script>
+</body>
+</html>
