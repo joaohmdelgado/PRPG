@@ -1,0 +1,797 @@
+<!doctype html>
+<html lang="pt-br" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mestrado e Doutorado - PRPG UFRPE</title>
+    <!-- FontAwesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="font-sans text-gray-800 bg-gray-50 flex flex-col min-h-screen">
+    <!-- Topbar -->
+    <div
+      class="bg-ufrpe-blue text-white py-2 text-xs md:text-sm hidden md:block border-b border-white/10 shrink-0"
+    >
+      <div
+        class="container mx-auto px-4 flex justify-between items-center text-white font-medium uppercase tracking-wider"
+      >
+        <div class="flex gap-6">
+          <a
+            href="mailto:cppg.prppg@ufrpe.br"
+            class="flex items-center gap-2 hover:text-ufrpe-yellow transition"
+            ><i class="fa-solid fa-envelope text-ufrpe-yellow"></i>
+            cppg.prppg@ufrpe.br</a
+          >
+          <a
+            href="tel:+558133206052"
+            class="flex items-center gap-2 hover:text-ufrpe-yellow transition"
+            ><i class="fa-solid fa-phone text-ufrpe-yellow"></i> +55 81
+            3320-6052</a
+          >
+        </div>
+        <div class="flex gap-4">
+          <a
+            href="https://www.ufrpe.br/"
+            class="hover:text-ufrpe-yellow transition border-r border-white/10 pr-4"
+            target="_blank"
+            >Portal UFRPE</a
+          >
+          <a
+            href="https://sigs.ufrpe.br/sigaa/"
+            class="hover:text-ufrpe-yellow transition border-r border-white/10 pr-4"
+            target="_blank"
+            >SIGAA</a
+          >
+          <a
+            href="http://ava.ufrpe.br/"
+            class="hover:text-ufrpe-yellow transition"
+            target="_blank"
+            >AVA</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Header / Navbar -->
+    <nav
+      class="bg-white shadow-md sticky top-0 z-50 shrink-0 border-b border-gray-100"
+    >
+      <div
+        class="container mx-auto px-4 py-4 flex justify-between items-center"
+      >
+        <a href="/" class="flex items-center gap-4 shrink-0 group">
+          <img
+            src="https://prpg.ufrpe.br/themes/prpg_ufrpe/assets/img/Bras%C3%A3o%20UFRPE%20-%20Fundo%20Branco.png"
+            alt="Logo UFRPE"
+            class="h-14 md:h-16 w-auto"
+          />
+          <span class="flex flex-col">
+            <div class="prpg-up font-bold">PRPG&nbsp;&nbsp;</div>
+            <div class="prpg-bottom text-[14px] md:text-[20px]">
+              Pró-Reitoria de Pós-Graduação
+            </div>
+          </span>
+        </a>
+
+        <!-- Desktop Menu -->
+        <div class="hidden lg:block">
+          <nav class="nav-menu">
+            <ul
+              class="flex items-center gap-1 font-medium text-sm text-ufrpe-blue uppercase tracking-tight"
+            >
+              <li class="relative group px-3 py-4">
+                <a
+                  href="/"
+                  class="hover:text-ufrpe-yellow transition flex items-center gap-1"
+                  >Início</a
+                >
+              </li>
+              <li class="relative group px-3 py-4">
+                <a
+                  href="/mestrado-e-doutorado.html"
+                  class="hover:text-ufrpe-yellow transition flex items-center gap-1 text-ufrpe-yellow font-bold uppercase"
+                  >Mestrado e Doutorado
+                  <i class="fa-solid fa-chevron-down text-[10px] opacity-50"></i
+                ></a>
+                <ul
+                  class="absolute top-full left-0 bg-white shadow-xl min-w-[280px] rounded-b-xl border-t-2 border-ufrpe-yellow hidden group-hover:block transition-all duration-300 py-2 z-[60]"
+                >
+                  <li>
+                    <a
+                      href="#apresentacao"
+                      class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold"
+                      >Apresentação</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="#editais"
+                      class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold"
+                      >Editais</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="#noticias"
+                      class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold"
+                      >Notícias</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="#formularios"
+                      class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold"
+                      >Formulários</a
+                    >
+                  </li>
+                  <li>
+                    <a
+                      href="#resolucoes"
+                      class="block px-6 py-2.5 hover:bg-gray-50 hover:text-ufrpe-yellow transition text-ufrpe-blue uppercase font-bold"
+                      >Resoluções</a
+                    >
+                  </li>
+                </ul>
+              </li>
+              <li class="relative group px-3 py-4">
+                <a
+                  href="/programas-stricto-sensu.html"
+                  class="hover:text-ufrpe-yellow transition flex items-center gap-1 uppercase"
+                  >Cursos</a
+                >
+              </li>
+            </ul>
+          </nav>
+        </div>
+
+        <div class="flex items-center gap-4 relative">
+          <button
+            id="mobile-menu-btn"
+            class="lg:hidden text-2xl text-ufrpe-blue"
+          >
+            <i class="fa-solid fa-bars"></i>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section / Page Header -->
+    <div class="bg-ufrpe-blue text-white py-20 relative overflow-hidden">
+      <div class="absolute inset-0 opacity-10">
+        <svg
+          class="w-full h-full"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+        >
+          <path d="M0 100 L100 0 L100 100 Z" fill="currentColor"></path>
+        </svg>
+      </div>
+      <div class="container mx-auto px-4 relative z-10">
+        <span
+          class="inline-block px-3 py-1 bg-ufrpe-yellow text-ufrpe-blue text-xs font-bold rounded-full mb-6 tracking-wide uppercase"
+          >Coordenação PPG</span
+        >
+        <h1
+          class="text-4xl md:text-6xl font-heading font-black tracking-tight mb-4"
+        >
+          Mestrado e Doutorado
+        </h1>
+        <p class="text-white/70 max-w-2xl text-lg font-medium">
+          Informações, normas, editais e serviços focados na excelência e
+          formação na pós-graduação Stricto Sensu.
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Access / Mini Home Sections -->
+    <div
+      class="bg-white border-b border-gray-100 shadow-sm sticky top-[4.5rem] md:top-[6.5rem] z-40"
+    >
+      <div class="container mx-auto px-4">
+        <ul
+          class="flex overflow-x-auto hide-scrollbar gap-8 text-sm font-bold uppercase tracking-wider text-ufrpe-blue whitespace-nowrap"
+        >
+          <li>
+            <a
+              href="#apresentacao"
+              class="block py-4 border-b-4 border-transparent hover:border-ufrpe-yellow hover:text-ufrpe-yellow-hover transition-all"
+              >Apresentação</a
+            >
+          </li>
+          <li>
+            <a
+              href="#editais"
+              class="block py-4 border-b-4 border-transparent hover:border-ufrpe-yellow hover:text-ufrpe-yellow-hover transition-all"
+              >Editais</a
+            >
+          </li>
+          <li>
+            <a
+              href="#noticias"
+              class="block py-4 border-b-4 border-transparent hover:border-ufrpe-yellow hover:text-ufrpe-yellow-hover transition-all"
+              >Notícias</a
+            >
+          </li>
+          <li>
+            <a
+              href="#formularios"
+              class="block py-4 border-b-4 border-transparent hover:border-ufrpe-yellow hover:text-ufrpe-yellow-hover transition-all"
+              >Formulários</a
+            >
+          </li>
+          <li>
+            <a
+              href="#resolucoes"
+              class="block py-4 border-b-4 border-transparent hover:border-ufrpe-yellow hover:text-ufrpe-yellow-hover transition-all"
+              >Resoluções</a
+            >
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-grow scroll-mt-32">
+      <!-- Apresentação -->
+      <section id="apresentacao" class="py-20 scroll-mt-32">
+        <div class="container mx-auto px-4 max-w-5xl">
+          <div
+            class="flex items-center gap-3 mb-10 border-b-2 border-ufrpe-yellow pb-4"
+          >
+            <div
+              class="w-10 h-10 rounded-lg bg-ufrpe-blue/10 flex items-center justify-center text-ufrpe-blue text-xl"
+            >
+              <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <h2
+              class="font-heading font-bold text-3xl md:text-4xl text-ufrpe-blue"
+            >
+              Apresentação
+            </h2>
+          </div>
+
+          <div
+            class="prose prose-lg max-w-none text-gray-600 prose-headings:text-ufrpe-blue prose-a:text-ufrpe-blue hover:prose-a:text-ufrpe-yellow-hover"
+          >
+            <p class="lead text-xl text-gray-800 font-medium mb-6">
+              Atualmente, a UFRPE conta com 42 PPG, em níveis de mestrado
+              acadêmico, mestrado profissional, doutorado acadêmico e doutorado
+              profissional, totalizando 58 cursos nas mais diversas áreas do
+              conhecimento.
+            </p>
+
+            <p>
+              Para ingresso de alunos regulares, anualmente ou semestralmente
+              (dependendo do PPG), os PPG lançam editais para selecionar
+              candidatos aos seus respectivos cursos. Os editais são amplamente
+              divulgados nas páginas da PRPG, da UFRPE e dos PPG. Para alunos
+              especiais são abertas inscrições anuais, de acordo com Decisão do
+              Colegiado de Coordenação Didática (CCD) de cada Programa de
+              Pós-Graduação.
+            </p>
+
+            <p>
+              Os Programas de Pós-Graduação da UFRPE têm por objetivo a formação
+              de profissionais para o exercício, em alto nível, da docência, da
+              pesquisa e da atividade autônoma, bem como fomentar a pesquisa e a
+              produção de novos conhecimentos; visando atender aos anseios da
+              sociedade e, assim, contribuir para o desenvolvimento de
+              Pernambuco, da Região Nordeste e do País.
+            </p>
+
+            <p>
+              Preocupada com a formação de qualidade de seus alunos de
+              Graduação, a UFRPE incentiva uma ampla articulação entre a
+              Pós-Graduação e a Graduação, especialmente por meio da Disciplina
+              <strong>Estágio de Docência</strong> que, prioritariamente faz
+              parte do elenco de disciplinas de alunos da Pós-Graduação Stricto
+              Sensu bolsistas da CAPES, onde, sob a supervisão dos docentes dos
+              Programas, os discentes ministram aulas para alunos de graduação.
+              Além disso, alguns alunos da graduação, bolsistas, ou não, de
+              Iniciação Científica (IC) ou Tecnológica (IT), ou do Programa de
+              Educação Tutorial (PET), ou estagiários colaboram na execução dos
+              Projetos de Pesquisa conduzidos pelos discentes da Pós-Graduação
+              Stricto Sensu da UFRPE.
+            </p>
+
+            <p>
+              A PRPG realiza acompanhamento sistemático nos PPG, de forma a
+              identificar aqueles que atendam aos requisitos para solicitar
+              abertura de cursos novos (mestrado ou doutorado) em PPG já
+              existentes na UFRPE. Para programas que possuem apenas a
+              modalidade de curso de Mestrado, é exigido que o mesmo possua nota
+              igual ou superior a 4 na última avaliação quadrienal, realizada
+              pela CAPES. Ressalta-se, ainda, que a PRPG também está atenta às
+              necessidades da sociedade para criação de novos PPG na UFRPE.
+            </p>
+
+            <div
+              class="mt-12 bg-gray-50 border border-gray-200 rounded-xl p-8 flex flex-col md:flex-row gap-8 items-start"
+            >
+              <div class="flex-1">
+                <h3
+                  class="font-heading font-bold text-2xl text-ufrpe-blue mb-4"
+                >
+                  Contato da Coordenação
+                </h3>
+                <ul class="space-y-4">
+                  <li class="flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-ufrpe-blue shadow-sm"
+                    >
+                      <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <div>
+                      <span
+                        class="block text-xs font-bold text-gray-500 uppercase tracking-widest"
+                        >E-mail</span
+                      >
+                      <a
+                        href="mailto:cppg.prppg@ufrpe.br"
+                        class="text-ufrpe-blue font-medium hover:text-ufrpe-yellow-hover hover:underline text-lg"
+                        >cppg.prppg@ufrpe.br</a
+                      >
+                    </div>
+                  </li>
+                  <li class="flex items-center gap-3">
+                    <div
+                      class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-ufrpe-blue shadow-sm"
+                    >
+                      <i class="fa-solid fa-phone"></i>
+                    </div>
+                    <div>
+                      <span
+                        class="block text-xs font-bold text-gray-500 uppercase tracking-widest"
+                        >Telefone</span
+                      >
+                      <a
+                        href="tel:+558133206052"
+                        class="text-gray-700 font-medium text-lg"
+                        >(81) 3320-6052</a
+                      >
+                    </div>
+                  </li>
+                </ul>
+              </div>
+              <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                <a
+                  href="#"
+                  class="flex flex-col p-4 bg-white border border-gray-200 rounded-lg hover:border-ufrpe-yellow hover:shadow-md transition-all group"
+                >
+                  <i
+                    class="fa-regular fa-calendar text-2xl text-ufrpe-blue group-hover:text-ufrpe-yellow-hover mb-2 transition-colors"
+                  ></i>
+                  <span class="font-bold text-gray-800 text-sm"
+                    >Calendário Acadêmico</span
+                  >
+                </a>
+                <a
+                  href="/resolucoes.html"
+                  class="flex flex-col p-4 bg-white border border-gray-200 rounded-lg hover:border-ufrpe-yellow hover:shadow-md transition-all group"
+                >
+                  <i
+                    class="fa-solid fa-gavel text-2xl text-ufrpe-blue group-hover:text-ufrpe-yellow-hover mb-2 transition-colors"
+                  ></i>
+                  <span class="font-bold text-gray-800 text-sm"
+                    >Resoluções Gerais</span
+                  >
+                </a>
+                <a
+                  href="#"
+                  class="flex flex-col p-4 bg-white border border-gray-200 rounded-lg hover:border-ufrpe-yellow hover:shadow-md transition-all group"
+                >
+                  <i
+                    class="fa-solid fa-chart-bar text-2xl text-ufrpe-blue group-hover:text-ufrpe-yellow-hover mb-2 transition-colors"
+                  ></i>
+                  <span class="font-bold text-gray-800 text-sm"
+                    >Relatórios de Autoavaliação</span
+                  >
+                </a>
+                <a
+                  href="#"
+                  class="flex flex-col p-4 bg-white border border-gray-200 rounded-lg hover:border-ufrpe-yellow hover:shadow-md transition-all group"
+                >
+                  <i
+                    class="fa-solid fa-chalkboard-user text-2xl text-ufrpe-blue group-hover:text-ufrpe-yellow-hover mb-2 transition-colors"
+                  ></i>
+                  <span class="font-bold text-gray-800 text-sm">PADPG</span>
+                </a>
+                <a
+                  href="/proext-pg.html"
+                  class="flex flex-col p-4 bg-white border border-gray-200 rounded-lg hover:border-ufrpe-yellow hover:shadow-md transition-all group sm:col-span-2"
+                >
+                  <i
+                    class="fa-solid fa-people-arrows text-2xl text-ufrpe-blue group-hover:text-ufrpe-yellow-hover mb-2 transition-colors"
+                  ></i>
+                  <span class="font-bold text-gray-800 text-sm">PROEXT-PG</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Editais (Filtrados para a Coordenação) -->
+      <section id="editais" class="py-20 bg-gray-100 scroll-mt-32">
+        <div class="container mx-auto px-4 max-w-5xl">
+          <div
+            class="flex justify-between items-end mb-10 border-b-2 border-ufrpe-cyan pb-4"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-lg bg-ufrpe-cyan/20 flex items-center justify-center text-ufrpe-cyan text-xl"
+              >
+                <i class="fa-solid fa-bullhorn"></i>
+              </div>
+              <h2 class="font-heading font-bold text-3xl text-ufrpe-blue">
+                Editais e Seleções
+              </h2>
+            </div>
+            <a
+              href="/editais.html"
+              class="text-sm font-bold text-ufrpe-cyan hover:underline transition uppercase tracking-wider hidden sm:block"
+              >Todos os Editais</a
+            >
+          </div>
+
+          <div class="space-y-4">
+            <div
+              class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-ufrpe-cyan hover:shadow-md transition"
+            >
+              <div class="flex items-center gap-3 mb-2">
+                <span
+                  class="bg-cyan-100 text-cyan-800 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider"
+                  >Inscrições Abertas</span
+                >
+                <span class="text-xs text-gray-400 font-medium"
+                  ><i class="fa-regular fa-calendar mr-1"></i> Publicado em
+                  10/05/2026</span
+                >
+              </div>
+              <h4 class="font-bold text-lg text-ufrpe-blue mb-2">
+                Edital Geral de Seleção 2026.2 - Mestrado e Doutorado Acadêmicos
+              </h4>
+              <p class="text-sm text-gray-600 mb-4 line-clamp-2">
+                Processo seletivo para admissão no corpo discente dos Programas
+                de Pós-Graduação para o 2º semestre letivo de 2026.
+              </p>
+              <a
+                href="#"
+                class="text-ufrpe-cyan font-bold text-sm hover:underline"
+                ><i class="fa-solid fa-download mr-1"></i> Acessar Edital e
+                Anexos</a
+              >
+            </div>
+
+            <div
+              class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-gray-300 hover:shadow-md transition"
+            >
+              <div class="flex items-center gap-3 mb-2">
+                <span
+                  class="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider"
+                  >Encerrado</span
+                >
+                <span class="text-xs text-gray-400 font-medium"
+                  ><i class="fa-regular fa-calendar mr-1"></i> Publicado em
+                  02/02/2026</span
+                >
+              </div>
+              <h4 class="font-bold text-lg text-gray-700 mb-2">
+                Edital Geral de Seleção 2026.1 - Mestrado e Doutorado Acadêmicos
+              </h4>
+              <p class="text-sm text-gray-500 mb-4 line-clamp-2">
+                Processo seletivo para admissão no corpo discente dos Programas
+                de Pós-Graduação para o 1º semestre letivo de 2026.
+              </p>
+              <a
+                href="#"
+                class="text-ufrpe-blue font-bold text-sm hover:underline"
+                ><i class="fa-solid fa-eye mr-1"></i> Ver Detalhes</a
+              >
+            </div>
+          </div>
+          <div class="mt-6 text-center sm:hidden">
+            <a
+              href="/editais.html"
+              class="inline-block px-6 py-2 bg-white border border-gray-200 text-ufrpe-blue font-bold rounded-lg shadow-sm hover:bg-gray-50 transition-colors text-sm"
+              >Ver Todos</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- Notícias Stricto Sensu -->
+      <section id="noticias" class="py-20 bg-white scroll-mt-32">
+        <div class="container mx-auto px-4 max-w-5xl">
+          <div
+            class="flex justify-between items-end mb-10 border-b-2 border-ufrpe-yellow pb-4"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-lg bg-ufrpe-yellow/20 flex items-center justify-center text-ufrpe-yellow-hover text-xl"
+              >
+                <i class="fa-regular fa-newspaper"></i>
+              </div>
+              <h2 class="font-heading font-bold text-3xl text-ufrpe-blue">
+                Notícias Stricto Sensu
+              </h2>
+            </div>
+            <a
+              href="/noticias.html"
+              class="text-sm font-bold text-ufrpe-yellow-hover hover:underline transition uppercase tracking-wider hidden sm:block"
+              >Painel de Notícias</a
+            >
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-8">
+            <!-- Featured -->
+            <div
+              class="group cursor-pointer bg-gray-50 rounded-2xl overflow-hidden hover:shadow-lg transition-all border border-gray-100 flex flex-col"
+            >
+              <div class="h-48 bg-gray-200 overflow-hidden relative">
+                <img
+                  src="https://images.unsplash.com/photo-1546410531-bea4ea651817?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
+                  alt="News"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              </div>
+              <div class="p-6 flex flex-col flex-1">
+                <span
+                  class="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-2"
+                  >12 de Maio, 2026 // Capacitação</span
+                >
+                <h3
+                  class="font-bold text-xl text-ufrpe-blue mb-3 group-hover:text-ufrpe-yellow-hover transition-colors leading-tight"
+                >
+                  PRPG promove seminário de integração para novos alunos do
+                  Stricto Sensu
+                </h3>
+                <p class="text-sm text-gray-600 mb-6 flex-1">
+                  Evento abordará direitos, deveres, sistemas institucionais e
+                  dicas para aproveitamento máximo da vivência acadêmica na
+                  pós-graduação.
+                </p>
+                <span class="text-sm font-bold text-ufrpe-blue"
+                  >Ler mais <i class="fa-solid fa-arrow-right ml-1"></i
+                ></span>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <a
+                href="#"
+                class="flex gap-4 group p-4 bg-white border border-gray-100 rounded-xl hover:border-ufrpe-yellow hover:shadow-md transition"
+              >
+                <div
+                  class="w-24 h-24 bg-gray-100 rounded-lg shrink-0 overflow-hidden hidden sm:block"
+                >
+                  <img
+                    src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                    alt="Thumb"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div class="flex flex-col justify-center">
+                  <span
+                    class="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1"
+                    >05 de Maio, 2026</span
+                  >
+                  <h4
+                    class="font-bold text-ufrpe-blue group-hover:text-ufrpe-yellow-hover transition-colors leading-tight text-md"
+                  >
+                    Prazo para solicitação do Estágio de Docência é prorrogado
+                  </h4>
+                </div>
+              </a>
+              <a
+                href="#"
+                class="flex gap-4 group p-4 bg-white border border-gray-100 rounded-xl hover:border-ufrpe-yellow hover:shadow-md transition"
+              >
+                <div
+                  class="w-24 h-24 bg-gray-100 rounded-lg shrink-0 overflow-hidden hidden sm:block"
+                >
+                  <img
+                    src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+                    alt="Thumb"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div class="flex flex-col justify-center">
+                  <span
+                    class="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-1"
+                    >28 de Abril, 2026</span
+                  >
+                  <h4
+                    class="font-bold text-ufrpe-blue group-hover:text-ufrpe-yellow-hover transition-colors leading-tight text-md"
+                  >
+                    Divulgado quantitativo de bolsas CAPES DS para os programas
+                    UFRPE
+                  </h4>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Formulários da Coordenação -->
+      <section id="formularios" class="py-20 bg-gray-50 scroll-mt-32">
+        <div class="container mx-auto px-4 max-w-5xl">
+          <div
+            class="flex justify-between items-end mb-10 border-b-2 border-emerald-500 pb-4"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 text-xl"
+              >
+                <i class="fa-solid fa-file-signature"></i>
+              </div>
+              <h2 class="font-heading font-bold text-3xl text-ufrpe-blue">
+                Formulários Institucionais
+              </h2>
+            </div>
+            <a
+              href="/formularios.html"
+              class="text-sm font-bold text-emerald-600 hover:underline transition uppercase tracking-wider hidden sm:block"
+              >Todos os Docs</a
+            >
+          </div>
+
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <a
+              href="#"
+              class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:border-emerald-500 hover:shadow-md transition group flex flex-col"
+            >
+              <i
+                class="fa-regular fa-file-pdf text-3xl text-gray-400 group-hover:text-emerald-500 transition-colors mb-4"
+              ></i>
+              <h4 class="font-bold text-gray-800 mb-2 leading-tight">
+                Requerimento de Matrícula - Aluno Especial
+              </h4>
+              <span
+                class="mt-auto text-xs font-bold text-emerald-600 uppercase tracking-widest pt-4"
+                >Baixar PDF</span
+              >
+            </a>
+
+            <a
+              href="#"
+              class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:border-emerald-500 hover:shadow-md transition group flex flex-col"
+            >
+              <i
+                class="fa-regular fa-file-word text-3xl text-gray-400 group-hover:text-emerald-500 transition-colors mb-4"
+              ></i>
+              <h4 class="font-bold text-gray-800 mb-2 leading-tight">
+                Formulário de Solicitação de Coorientação
+              </h4>
+              <span
+                class="mt-auto text-xs font-bold text-emerald-600 uppercase tracking-widest pt-4"
+                >Baixar DOC</span
+              >
+            </a>
+
+            <a
+              href="#"
+              class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:border-emerald-500 hover:shadow-md transition group flex flex-col"
+            >
+              <i
+                class="fa-regular fa-file-pdf text-3xl text-gray-400 group-hover:text-emerald-500 transition-colors mb-4"
+              ></i>
+              <h4 class="font-bold text-gray-800 mb-2 leading-tight">
+                Termo de Compromisso do Bolsista CAPES
+              </h4>
+              <span
+                class="mt-auto text-xs font-bold text-emerald-600 uppercase tracking-widest pt-4"
+                >Baixar PDF</span
+              >
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Resoluções -->
+      <section id="resolucoes" class="py-20 bg-white scroll-mt-32">
+        <div class="container mx-auto px-4 max-w-5xl">
+          <div
+            class="flex justify-between items-end mb-10 border-b-2 border-indigo-500 pb-4"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 text-xl"
+              >
+                <i class="fa-solid fa-scale-balanced"></i>
+              </div>
+              <h2 class="font-heading font-bold text-3xl text-ufrpe-blue">
+                Resoluções e Normas
+              </h2>
+            </div>
+          </div>
+
+          <div
+            class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden"
+          >
+            <ul class="divide-y divide-gray-100">
+              <li
+                class="p-6 hover:bg-gray-50 transition-colors flex flex-col sm:flex-row gap-4 justify-between sm:items-center group"
+              >
+                <div>
+                  <span
+                    class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-2 inline-block"
+                    >Resolução CEPE</span
+                  >
+                  <h4
+                    class="font-bold text-gray-800 text-lg group-hover:text-indigo-600 transition-colors leading-tight"
+                  >
+                    Resolução nº XXX/202X - Regulamento Geral da Pós-Graduação
+                  </h4>
+                  <p class="text-sm text-gray-500 mt-1">
+                    Estabelece as normas gerais que regulamentam os Cursos de
+                    Mestrado e Doutorado da UFRPE.
+                  </p>
+                </div>
+                <a
+                  href="#"
+                  class="shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors"
+                >
+                  <i class="fa-solid fa-download"></i>
+                </a>
+              </li>
+              <li
+                class="p-6 hover:bg-gray-50 transition-colors flex flex-col sm:flex-row gap-4 justify-between sm:items-center group"
+              >
+                <div>
+                  <span
+                    class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mb-2 inline-block"
+                    >Normativa PRPG</span
+                  >
+                  <h4
+                    class="font-bold text-gray-800 text-lg group-hover:text-indigo-600 transition-colors leading-tight"
+                  >
+                    Instrução Normativa PRPG nº YY/202Y
+                  </h4>
+                  <p class="text-sm text-gray-500 mt-1">
+                    Dispõe sobre os critérios para alocação de cotas de bolsas
+                    institucionais.
+                  </p>
+                </div>
+                <a
+                  href="#"
+                  class="shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-colors"
+                >
+                  <i class="fa-solid fa-download"></i>
+                </a>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-8 text-center">
+            <a
+              href="/resolucoes.html"
+              class="inline-flex items-center gap-2 text-indigo-600 font-bold hover:underline"
+              >Acessar Biblioteca Completa de Resoluções
+              <i class="fa-solid fa-arrow-right"></i
+            ></a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer
+      class="bg-ufrpe-blue text-white pt-20 pb-10 mt-auto border-t-4 border-ufrpe-yellow"
+    >
+      <div class="container mx-auto px-4">
+        <div
+          class="text-center text-xs text-gray-500 uppercase tracking-widest"
+        >
+          <p>
+            &copy; 2026 PRPG - UFRPE. Desenvolvido para excelência acadêmica.
+          </p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
