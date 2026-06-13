@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: prpg-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: prpg
+      POSTGRES_PASSWORD: prpg
+      POSTGRES_DB: prpg
+    # Mapeia para 5433 no host para nao conflitar com um Postgres ja instalado.
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prpg -d prpg"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

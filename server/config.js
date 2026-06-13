@@ -14,6 +14,17 @@ if (!JWT_SECRET || JWT_SECRET.length < 16) {
   process.exit(1);
 }
 
+export const DATABASE_URL = process.env.DATABASE_URL;
+
+// Conexão com o PostgreSQL é obrigatória.
+if (!DATABASE_URL) {
+  console.error(
+    '[Fatal] DATABASE_URL ausente. Defina no .env ' +
+    '(ex.: postgres://prpg:prpg@localhost:5433/prpg). Suba o banco com: docker compose up -d'
+  );
+  process.exit(1);
+}
+
 export const NODE_ENV = process.env.NODE_ENV || 'development';
 export const IS_PRODUCTION = NODE_ENV === 'production';
 
