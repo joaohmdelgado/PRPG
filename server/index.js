@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import adminRoutes from './routes/adminRoutes.js';
 import { IS_PRODUCTION, CORS_ORIGINS } from './config.js';
+import { pool } from './db/pool.js';
 
 dotenv.config();
 
@@ -40,6 +41,16 @@ app.get('/api/status', (req, res) => {
 // Rotas da API e Painel Admin
 app.use('/api', adminRoutes);
 
-app.listen(PORT, () => {
-  console.log(`[Server] Rodando na porta ${PORT}`);
-});
+// Verifica a conexão com o banco antes de aceitar requisições.
+pool
+  .query('SELECT 1')
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`[Server] Rodando na porta ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('[Fatal] Não foi possível conectar ao PostgreSQL:', err.message);
+    console.error('Suba o banco com: docker compose up -d (e rode: npm run db:migrate)');
+    process.exit(1);
+  });

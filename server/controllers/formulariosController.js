@@ -1,94 +1,43 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-import { sanitizeDocsDesc, isPlainObject } from '../utils/sanitize.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dataPath = path.join(__dirname, '../data/formularios.json');
-
-// Helper para ler os dados
-const getFormulariosData = async () => {
-  try {
-    const data = await fs.readFile(dataPath, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Erro ao ler formularios.json:', error);
-    return [];
-  }
-};
-
-// Helper para salvar os dados
-const saveFormulariosData = async (data) => {
-  try {
-    await fs.writeFile(dataPath, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('Erro ao salvar formularios.json:', error);
-    throw new Error('Erro ao salvar os dados');
-  }
-};
+import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
+import { formulariosRepo } from '../db/repositories.js';
 
 export const getFormularios = async (req, res) => {
-  const formularios = await getFormulariosData();
-  res.json(formularios);
+  res.json(await formulariosRepo.getAll());
 };
 
 export const getFormularioById = async (req, res) => {
-  const formularios = await getFormulariosData();
-  const formulario = formularios.find(f => f.id === req.params.id);
-  if (formulario) {
-    res.json(formulario);
-  } else {
-    res.status(404).json({ message: 'Formulário não encontrado' });
-  }
+  const f = await formulariosRepo.getById(req.params.id);
+  if (f) res.json(f);
+  else res.status(404).json({ message: 'Formulário não encontrado' });
 };
 
 export const createFormulario = async (req, res) => {
   if (!isPlainObject(req.body)) {
     return res.status(400).json({ message: 'Dados inválidos.' });
   }
-  const formularios = await getFormulariosData();
-  const newFormulario = { ...req.body };
-
-  if (newFormulario.docs) newFormulario.docs = sanitizeDocsDesc(newFormulario.docs);
-
-  if (!newFormulario.id) {
-    newFormulario.id = 'form-' + Date.now().toString();
+  const data = { ...req.body };
+  if (data.desc) data.desc = sanitizeHtml(data.desc);
+  if (!data.id) data.id = 'form-' + Date.now().toString();
+  try {
+    res.status(201).json(await formulariosRepo.create(data));
+  } catch (e) {
+    res.status(500).json({ message: 'Erro ao criar formulário.', error: e.message });
   }
-
-  formularios.unshift(newFormulario);
-  await saveFormulariosData(formularios);
-  res.status(201).json(newFormulario);
 };
 
 export const updateFormulario = async (req, res) => {
-  const formularios = await getFormulariosData();
   if (!isPlainObject(req.body)) {
     return res.status(400).json({ message: 'Dados inválidos.' });
   }
-  const index = formularios.findIndex(f => f.id === req.params.id);
-
-  if (index !== -1) {
-    const updated = { ...formularios[index], ...req.body };
-    if (req.body.docs) updated.docs = sanitizeDocsDesc(req.body.docs);
-    formularios[index] = updated;
-    await saveFormulariosData(formularios);
-    res.json(formularios[index]);
-  } else {
-    res.status(404).json({ message: 'Formulário não encontrado' });
-  }
+  const data = { ...req.body };
+  if (data.desc) data.desc = sanitizeHtml(data.desc);
+  const updated = await formulariosRepo.update(req.params.id, data);
+  if (updated) res.json(updated);
+  else res.status(404).json({ message: 'Formulário não encontrado' });
 };
 
 export const deleteFormulario = async (req, res) => {
-  const formularios = await getFormulariosData();
-  const index = formularios.findIndex(f => f.id === req.params.id);
-  
-  if (index !== -1) {
-    formularios.splice(index, 1);
-    await saveFormulariosData(formularios);
-    res.json({ message: 'Formulário removido com sucesso' });
-  } else {
-    res.status(404).json({ message: 'Formulário não encontrado' });
-  }
+  const ok = await formulariosRepo.remove(req.params.id);
+  if (ok) res.json({ message: 'Formulário removido com sucesso' });
+  else res.status(404).json({ message: 'Formulário não encontrado' });
 };

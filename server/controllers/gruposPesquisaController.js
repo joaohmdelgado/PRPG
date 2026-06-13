@@ -1,129 +1,58 @@
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
+import { gruposRepo, usersRepo } from '../db/repositories.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dataDir = path.join(__dirname, '../data');
-
-// Helpers para ler os arquivos
-const readJson = async (filename) => {
-  try {
-    const data = await fs.readFile(path.join(dataDir, filename), 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    return [];
-  }
-};
-
-const writeJson = async (filename, data) => {
-  try {
-    await fs.writeFile(path.join(dataDir, filename), JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error(`Erro ao salvar ${filename}:`, error);
-    throw new Error(`Erro ao salvar ${filename}`);
-  }
-};
-
-// Obter todos os grupos de pesquisa (com líderes resolvidos por nome)
 export const getGruposPesquisa = async (req, res) => {
   try {
-    const grupos = await readJson('grupos_pesquisa.json');
-    const users = await readJson('users.json');
-
-    const resolved = grupos.map(g => {
-      const resolvedLeaders = (g.field_lideres || []).map(leaderId => {
-        const u = users.find(user => user.id === leaderId);
-        return u ? { id: u.id, nome: u.perfil_geral?.nome || u.email } : { id: leaderId, nome: 'Usuário Desconhecido' };
-      });
-      return { ...g, field_lideres_resolved: resolvedLeaders };
-    });
-
+    const grupos = await gruposRepo.getAll();
+    const users = await usersRepo.getAll();
+    const byId = new Map(users.map((u) => [u.id, u]));
+    const resolved = grupos.map((g) => ({
+      ...g,
+      field_lideres_resolved: (g.field_lideres || []).map((leaderId) => {
+        const u = byId.get(leaderId);
+        return u
+          ? { id: u.id, nome: u.perfil_geral?.nome || u.email }
+          : { id: leaderId, nome: 'Usuário Desconhecido' };
+      }),
+    }));
     res.json(resolved);
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar grupos de pesquisa', error: error.message });
+  } catch (e) {
+    res.status(500).json({ message: 'Erro ao buscar grupos de pesquisa', error: e.message });
   }
 };
 
-// Obter grupo de pesquisa por ID
 export const getGrupoPesquisaById = async (req, res) => {
-  try {
-    const grupos = await readJson('grupos_pesquisa.json');
-    const grupo = grupos.find(g => g.id === req.params.id);
-    if (grupo) {
-      res.json(grupo);
-    } else {
-      res.status(404).json({ message: 'Grupo de pesquisa não encontrado' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar grupo de pesquisa', error: error.message });
-  }
+  const g = await gruposRepo.getById(req.params.id);
+  if (g) res.json(g);
+  else res.status(404).json({ message: 'Grupo de pesquisa não encontrado' });
 };
 
-// Criar grupo de pesquisa
 export const createGrupoPesquisa = async (req, res) => {
+  if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
+  const data = { ...req.body };
+  if (!data.title || !String(data.title).trim()) return res.status(400).json({ message: 'O título é obrigatório.' });
+  data.body = data.body || { value: '', summary: '' };
+  if (data.body.value) data.body.value = sanitizeHtml(data.body.value);
+  data.field_lideres = data.field_lideres || [];
+  if (!data.id) data.id = 'grupo-' + Date.now().toString();
   try {
-    const grupos = await readJson('grupos_pesquisa.json');
-    const newGrupo = { ...req.body };
-
-    if (!newGrupo.id) {
-      newGrupo.id = 'grupo-' + Date.now().toString();
-    }
-
-    // Garante estrutura padrão do body e field_lideres
-    newGrupo.body = newGrupo.body || { value: '', summary: '' };
-    newGrupo.field_lideres = newGrupo.field_lideres || [];
-
-    grupos.unshift(newGrupo);
-    await writeJson('grupos_pesquisa.json', grupos);
-    res.status(201).json(newGrupo);
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao criar grupo de pesquisa', error: error.message });
+    res.status(201).json(await gruposRepo.create(data));
+  } catch (e) {
+    res.status(500).json({ message: 'Erro ao criar grupo de pesquisa', error: e.message });
   }
 };
 
-// Atualizar grupo de pesquisa
 export const updateGrupoPesquisa = async (req, res) => {
-  try {
-    const grupos = await readJson('grupos_pesquisa.json');
-    const index = grupos.findIndex(g => g.id === req.params.id);
-
-    if (index !== -1) {
-      const updated = {
-        ...grupos[index],
-        ...req.body,
-        body: {
-          ...grupos[index].body,
-          ...(req.body.body || {})
-        },
-        field_lideres: req.body.field_lideres !== undefined ? req.body.field_lideres : grupos[index].field_lideres
-      };
-
-      grupos[index] = updated;
-      await writeJson('grupos_pesquisa.json', grupos);
-      res.json(updated);
-    } else {
-      res.status(404).json({ message: 'Grupo de pesquisa não encontrado' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao atualizar grupo de pesquisa', error: error.message });
-  }
+  if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
+  const data = { ...req.body };
+  if (data.body?.value) data.body.value = sanitizeHtml(data.body.value);
+  const updated = await gruposRepo.update(req.params.id, data);
+  if (updated) res.json(updated);
+  else res.status(404).json({ message: 'Grupo de pesquisa não encontrado' });
 };
 
-// Excluir grupo de pesquisa
 export const deleteGrupoPesquisa = async (req, res) => {
-  try {
-    const grupos = await readJson('grupos_pesquisa.json');
-    const index = grupos.findIndex(g => g.id === req.params.id);
-
-    if (index !== -1) {
-      grupos.splice(index, 1);
-      await writeJson('grupos_pesquisa.json', grupos);
-      res.json({ message: 'Grupo de pesquisa removido com sucesso' });
-    } else {
-      res.status(404).json({ message: 'Grupo de pesquisa não encontrado' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao excluir grupo de pesquisa', error: error.message });
-  }
+  const ok = await gruposRepo.remove(req.params.id);
+  if (ok) res.json({ message: 'Grupo de pesquisa removido com sucesso' });
+  else res.status(404).json({ message: 'Grupo de pesquisa não encontrado' });
 };

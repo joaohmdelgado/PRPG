@@ -1,41 +1,26 @@
-import fs from 'fs/promises';
-import path from 'path';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { fileURLToPath } from 'url';
 import { JWT_SECRET } from '../config.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dataDir = path.join(__dirname, '../data');
+import { usersRepo } from '../db/repositories.js';
 
 export const login = async (req, res) => {
-  const { username, password } = req.body;
-  // Na nossa modelagem, username é o email
-  const email = username;
+  const { username, password } = req.body || {};
+  const email = username; // username é o e-mail na nossa modelagem
 
   try {
-    const data = await fs.readFile(path.join(dataDir, 'users.json'), 'utf-8');
-    const users = JSON.parse(data);
-    
-    const user = users.find(u => u.email === email);
-    
-    if (user && await bcrypt.compare(password, user.password_hash)) {
+    const user = await usersRepo.findByEmail(email);
+
+    if (user && (await bcrypt.compare(password || '', user.password_hash))) {
       const token = jwt.sign(
-        { 
-          id: user.id, 
-          email: user.email, 
-          roles: user.roles 
-        }, 
+        { id: user.id, email: user.email, roles: user.roles },
         JWT_SECRET,
         { expiresIn: '30d' }
       );
-      
-      res.json({ 
-        token, 
-        username: user.email, 
+      res.json({
+        token,
+        username: user.email,
         roles: user.roles,
-        nome: user.perfil_geral?.nome || user.email
+        nome: user.perfil_geral?.nome || user.email,
       });
     } else {
       res.status(401).json({ message: 'E-mail ou senha inválidos' });

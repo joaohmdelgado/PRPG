@@ -1,27 +1,10 @@
-import fs from 'fs/promises';
-import path from 'path';
 import crypto from 'crypto';
-import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
+import { query } from '../db/pool.js';
+import { usersRepo, portariasRepo } from '../db/repositories.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dataDir = path.join(__dirname, '../data');
-
-// Helpers for reading/writing multiple files
-const readJson = async (filename) => {
-  try {
-    const data = await fs.readFile(path.join(dataDir, filename), 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    return [];
-  }
-};
-
-const writeJson = async (filename, data) => {
-  await fs.writeFile(path.join(dataDir, filename), JSON.stringify(data, null, 2));
-};
+const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
 
 const checkAdmin = (req) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -39,81 +22,73 @@ const checkAdmin = (req) => {
 const filterSensitivePessoa = (pessoa, isAdmin) => {
   if (!pessoa) return null;
   if (isAdmin) return pessoa;
-  
-  // For public users, remove sensitive details
   const { cpf, siape, telefones, email_institucional, email_funcao, endereco, ...rest } = pessoa;
   return rest;
 };
 
+// Carrega os dados relacionados a programas (todos como arrays simples).
+const loadRelated = async () => {
+  const [modalidades, vinculos, pessoas, users, portarias] = await Promise.all([
+    query('SELECT * FROM modalidades').then((r) => r.rows),
+    query('SELECT * FROM vinculos').then((r) => r.rows),
+    query('SELECT * FROM pessoas').then((r) => r.rows),
+    usersRepo.getAll(),
+    portariasRepo.getAll(),
+  ]);
+  return { modalidades, vinculos, pessoas, users, portarias };
+};
+
+// Resolve um vínculo numa pessoa "combinada" (dados + portaria), reaproveitada
+// tanto na listagem quanto no detalhe.
+const buildCombined = (v, { users, pessoas, portarias }) => {
+  const user = users.find((u) => u.id === v.pessoa_id);
+  const portariaObj = portarias.find((p) => p.id === v.portaria_id);
+  const resolvedPortaria = portariaObj
+    ? { portaria_id: v.portaria_id, portaria: portariaObj.title, portaria_download_link: portariaObj.downloadLink }
+    : { portaria_id: '', portaria: v.portaria || '', portaria_download_link: '' };
+
+  if (user) {
+    return {
+      pessoa_id: user.id,
+      nome: user.perfil_geral?.nome || user.email,
+      cpf: user.perfil_geral?.cpf || '',
+      siape: user.perfil_geral?.siape || '',
+      email_institucional: user.email,
+      telefones: Array.isArray(user.perfil_geral?.telefones)
+        ? user.perfil_geral.telefones.join(', ')
+        : (user.perfil_geral?.telefones || ''),
+      endereco: v.endereco || user.perfil_geral?.endereco || '',
+      ...v,
+      ...resolvedPortaria,
+    };
+  }
+  const pessoa = pessoas.find((p) => p.id === v.pessoa_id);
+  if (pessoa) {
+    return { ...pessoa, pessoa_id: pessoa.id, ...v, ...resolvedPortaria };
+  }
+  return null;
+};
+
 export const getProgramas = async (req, res) => {
   try {
-    const programas = await readJson('programas.json');
-    const modalidades = await readJson('modalidades.json');
-    const pessoas = await readJson('pessoas.json');
-    const vinculos = await readJson('vinculos.json');
-    const users = await readJson('users.json');
-    const portarias = await readJson('portarias.json');
-
+    const programas = (await query('SELECT * FROM programas ORDER BY nome')).rows;
+    const related = await loadRelated();
     const isAdmin = checkAdmin(req);
 
-    const result = programas.map(prog => {
-      // Find modalities
-      const progModalidades = modalidades.filter(m => m.programa_id === prog.id);
-      
-      // Find active links
-      const progVinculos = vinculos.filter(v => v.programa_id === prog.id && v.ativo);
-      
-      let coordenador_atual = null;
-      let substituto = null;
-      let secretaria = null;
+    const result = programas.map((prog) => {
+      const progModalidades = related.modalidades.filter((m) => m.programa_id === prog.id);
+      const progVinculos = related.vinculos.filter((v) => v.programa_id === prog.id && v.ativo);
 
-      progVinculos.forEach(v => {
-        // Tenta buscar nos usuários do sistema
-        const user = users.find(u => u.id === v.pessoa_id);
-        const portariaObj = portarias.find(p => p.id === v.portaria_id);
-        const resolvedPortaria = portariaObj
-          ? { portaria_id: v.portaria_id, portaria: portariaObj.title, portaria_download_link: portariaObj.downloadLink }
-          : { portaria_id: '', portaria: v.portaria || '', portaria_download_link: '' };
-
-        if (user) {
-          const combined = {
-            pessoa_id: user.id,
-            nome: user.perfil_geral?.nome || user.email,
-            cpf: user.perfil_geral?.cpf || '',
-            siape: user.perfil_geral?.siape || '',
-            email_institucional: user.email,
-            telefones: Array.isArray(user.perfil_geral?.telefones) ? user.perfil_geral.telefones.join(', ') : (user.perfil_geral?.telefones || ''),
-            endereco: v.endereco || user.perfil_geral?.endereco || '',
-            ...v,
-            ...resolvedPortaria
-          };
-          if (v.papel === 'COORDENADOR_ATUAL') coordenador_atual = filterSensitivePessoa(combined, isAdmin);
-          if (v.papel === 'SUBSTITUTO') substituto = filterSensitivePessoa(combined, isAdmin);
-          if (v.papel === 'TAE') secretaria = filterSensitivePessoa(combined, isAdmin);
-        } else {
-          // Fallback para pessoas.json (legado)
-          const pessoa = pessoas.find(p => p.id === v.pessoa_id);
-          if (pessoa) {
-            const combined = { 
-              ...pessoa, 
-              pessoa_id: pessoa.id, 
-              ...v,
-              ...resolvedPortaria
-            };
-            if (v.papel === 'COORDENADOR_ATUAL') coordenador_atual = filterSensitivePessoa(combined, isAdmin);
-            if (v.papel === 'SUBSTITUTO') substituto = filterSensitivePessoa(combined, isAdmin);
-            if (v.papel === 'TAE') secretaria = filterSensitivePessoa(combined, isAdmin);
-          }
-        }
+      let coordenador_atual = null, substituto = null, secretaria = null;
+      progVinculos.forEach((v) => {
+        const combined = buildCombined(v, related);
+        if (!combined) return;
+        if (v.papel === 'COORDENADOR_ATUAL') coordenador_atual = filterSensitivePessoa(combined, isAdmin);
+        if (v.papel === 'SUBSTITUTO') substituto = filterSensitivePessoa(combined, isAdmin);
+        if (v.papel === 'TAE') secretaria = filterSensitivePessoa(combined, isAdmin);
       });
 
-      return {
-        ...prog,
-        modalidades: progModalidades,
-        coordenador_atual,
-        substituto,
-        secretaria
-      };
+      return { ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria };
     });
 
     res.json(result);
@@ -124,199 +99,110 @@ export const getProgramas = async (req, res) => {
 
 export const getProgramaById = async (req, res) => {
   try {
-    const programas = await readJson('programas.json');
-    const prog = programas.find(p => p.id === req.params.id);
-    
+    const prog = (await query('SELECT * FROM programas WHERE id = $1', [req.params.id])).rows[0];
     if (!prog) return res.status(404).json({ message: 'Programa não encontrado' });
 
-    const modalidades = await readJson('modalidades.json');
-    const pessoas = await readJson('pessoas.json');
-    const vinculos = await readJson('vinculos.json');
-    const users = await readJson('users.json');
-    const portarias = await readJson('portarias.json');
-
-    const progModalidades = modalidades.filter(m => m.programa_id === prog.id);
-    const progVinculos = vinculos.filter(v => v.programa_id === prog.id); // All links to show history
-
+    const related = await loadRelated();
     const isAdmin = checkAdmin(req);
 
-    let coordenador_atual = null;
-    let substituto = null;
-    let secretaria = null;
-    let historico_coordenadores = [];
+    const progModalidades = related.modalidades.filter((m) => m.programa_id === prog.id);
+    const progVinculos = related.vinculos.filter((v) => v.programa_id === prog.id);
 
-    progVinculos.forEach(v => {
-      // Tenta buscar nos usuários do sistema
-      const user = users.find(u => u.id === v.pessoa_id);
-      const portariaObj = portarias.find(p => p.id === v.portaria_id);
-      const resolvedPortaria = portariaObj
-        ? { portaria_id: v.portaria_id, portaria: portariaObj.title, portaria_download_link: portariaObj.downloadLink }
-        : { portaria_id: '', portaria: v.portaria || '', portaria_download_link: '' };
+    let coordenador_atual = null, substituto = null, secretaria = null;
+    const historico_coordenadores = [];
 
-      if (user) {
-        const combined = {
-          pessoa_id: user.id,
-          nome: user.perfil_geral?.nome || user.email,
-          cpf: user.perfil_geral?.cpf || '',
-          siape: user.perfil_geral?.siape || '',
-          email_institucional: user.email,
-          telefones: Array.isArray(user.perfil_geral?.telefones) ? user.perfil_geral.telefones.join(', ') : (user.perfil_geral?.telefones || ''),
-          endereco: v.endereco || user.perfil_geral?.endereco || '',
-          ...v,
-          ...resolvedPortaria
-        };
-        if (v.ativo) {
-          if (v.papel === 'COORDENADOR_ATUAL') coordenador_atual = filterSensitivePessoa(combined, isAdmin);
-          if (v.papel === 'SUBSTITUTO') substituto = filterSensitivePessoa(combined, isAdmin);
-          if (v.papel === 'TAE') secretaria = filterSensitivePessoa(combined, isAdmin);
-        }
-        if (v.papel === 'COORDENADOR_ANTERIOR') {
-          historico_coordenadores.push(filterSensitivePessoa(combined, isAdmin));
-        }
-      } else {
-        // Fallback para pessoas.json (legado)
-        const pessoa = pessoas.find(p => p.id === v.pessoa_id);
-        if (pessoa) {
-          const combined = { 
-            ...pessoa, 
-            pessoa_id: pessoa.id, 
-            ...v,
-            ...resolvedPortaria
-          };
-          if (v.ativo) {
-            if (v.papel === 'COORDENADOR_ATUAL') coordenador_atual = filterSensitivePessoa(combined, isAdmin);
-            if (v.papel === 'SUBSTITUTO') substituto = filterSensitivePessoa(combined, isAdmin);
-            if (v.papel === 'TAE') secretaria = filterSensitivePessoa(combined, isAdmin);
-          }
-          if (v.papel === 'COORDENADOR_ANTERIOR') {
-            historico_coordenadores.push(filterSensitivePessoa(combined, isAdmin));
-          }
-        }
+    progVinculos.forEach((v) => {
+      const combined = buildCombined(v, related);
+      if (!combined) return;
+      if (v.ativo) {
+        if (v.papel === 'COORDENADOR_ATUAL') coordenador_atual = filterSensitivePessoa(combined, isAdmin);
+        if (v.papel === 'SUBSTITUTO') substituto = filterSensitivePessoa(combined, isAdmin);
+        if (v.papel === 'TAE') secretaria = filterSensitivePessoa(combined, isAdmin);
+      }
+      if (v.papel === 'COORDENADOR_ANTERIOR') {
+        historico_coordenadores.push(filterSensitivePessoa(combined, isAdmin));
       }
     });
 
-    // Sort historico by creation date descending
     historico_coordenadores.sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em));
 
-    res.json({
-      ...prog,
-      modalidades: progModalidades,
-      coordenador_atual,
-      substituto,
-      secretaria,
-      historico_coordenadores
-    });
+    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, historico_coordenadores });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar programa', error: error.message });
   }
 };
 
-const handlePessoaVinculo = (payloadData, papel, programa_id, vinculos) => {
-  if (!payloadData) return;
-
+// Cria/atualiza/inativa o vínculo de uma pessoa num papel (regra de negócio
+// preservada da versão em JSON).
+const handlePessoaVinculo = async (payloadData, papel, programa_id) => {
+  if (!payloadData || !payloadData.pessoa_id) return;
   const pessoaId = payloadData.pessoa_id;
-  if (!pessoaId) return;
 
-  // Find existing active vinculo for this papel
-  const vIndex = vinculos.findIndex(v => v.programa_id === programa_id && v.papel === papel && v.ativo);
-  
-  // Prepare vinculo properties
-  const vinculoProps = {
+  const existing = (
+    await query('SELECT * FROM vinculos WHERE programa_id = $1 AND papel = $2 AND ativo = TRUE LIMIT 1', [programa_id, papel])
+  ).rows[0];
+
+  const props = {
     portaria_id: payloadData.portaria_id || '',
-    portaria: payloadData.portaria || '', // Keep legacy string if we have one
+    portaria: payloadData.portaria || '',
     data_vencimento: payloadData.data_vencimento || null,
     email_funcao: payloadData.email_funcao || '',
+    endereco: papel === 'TAE' ? (payloadData.endereco || '') : null,
   };
-  
-  if (papel === 'TAE') {
-    vinculoProps.endereco = payloadData.endereco || '';
-  }
 
-  // se for coordenador_atual e mudou a pessoa, inativa o antigo!
-  if (vIndex !== -1 && papel === 'COORDENADOR_ATUAL' && vinculos[vIndex].pessoa_id !== pessoaId) {
-    vinculos[vIndex].ativo = false;
-    vinculos[vIndex].papel = 'COORDENADOR_ANTERIOR';
-    
-    // Create new active vinculo
-    vinculos.push({
-      id: crypto.randomUUID(),
-      programa_id,
-      pessoa_id: pessoaId,
-      papel,
-      ...vinculoProps,
-      ativo: true,
-      criado_em: new Date().toISOString()
-    });
-  } else if (vIndex !== -1) {
-    // just update
-    vinculos[vIndex] = {
-      ...vinculos[vIndex],
-      pessoa_id: pessoaId,
-      ...vinculoProps
-    };
+  if (existing && papel === 'COORDENADOR_ATUAL' && existing.pessoa_id !== pessoaId) {
+    await query("UPDATE vinculos SET ativo = FALSE, papel = 'COORDENADOR_ANTERIOR' WHERE id = $1", [existing.id]);
+    await insertVinculo(programa_id, pessoaId, papel, props);
+  } else if (existing) {
+    await query(
+      `UPDATE vinculos SET pessoa_id=$1, portaria_id=$2, portaria=$3, data_vencimento=$4, email_funcao=$5, endereco=$6 WHERE id=$7`,
+      [pessoaId, props.portaria_id, props.portaria, props.data_vencimento, props.email_funcao, props.endereco, existing.id]
+    );
   } else {
-    // create new
-    vinculos.push({
-      id: crypto.randomUUID(),
-      programa_id,
-      pessoa_id: pessoaId,
-      papel,
-      ...vinculoProps,
-      ativo: true,
-      criado_em: new Date().toISOString()
-    });
+    await insertVinculo(programa_id, pessoaId, papel, props);
+  }
+};
+
+const insertVinculo = (programa_id, pessoaId, papel, props) =>
+  query(
+    `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, portaria_id, portaria, data_vencimento, email_funcao, endereco, ativo, criado_em)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,TRUE,$10)`,
+    [crypto.randomUUID(), programa_id, pessoaId, papel, props.portaria_id, props.portaria,
+     props.data_vencimento, props.email_funcao, props.endereco, new Date().toISOString()]
+  );
+
+const replaceModalidades = async (programa_id, modalidades) => {
+  if (!Array.isArray(modalidades)) return;
+  await query('DELETE FROM modalidades WHERE programa_id = $1', [programa_id]);
+  for (const m of modalidades) {
+    await query(
+      'INSERT INTO modalidades (id, programa_id, tipo, ano_inicio, nota_capes) VALUES ($1,$2,$3,$4,$5)',
+      [m.id || crypto.randomUUID(), programa_id, m.tipo, intOrNull(m.ano_inicio), m.nota_capes || '']
+    );
   }
 };
 
 export const createPrograma = async (req, res) => {
   try {
-    const programas = await readJson('programas.json');
-    const modalidades = await readJson('modalidades.json');
-    const vinculos = await readJson('vinculos.json');
-
-    const data = req.body;
+    const data = req.body || {};
     const progId = crypto.randomUUID();
+    const now = new Date().toISOString();
 
-    const novoPrograma = {
-      id: progId,
-      nome: data.nome,
-      sigla: data.sigla ? data.sigla.toUpperCase() : '',
-      site: data.site || '',
-      codigo_capes: data.codigo_capes || '',
-      campus: data.campus || 'SEDE',
-      em_rede: data.em_rede || false,
-      nome_rede: data.nome_rede || '',
-      grande_area: data.grande_area || '',
-      area_conhecimento: data.area_conhecimento || '',
-      area_avaliacao: data.area_avaliacao || '',
-      linhas: data.linhas || [],
-      criado_em: new Date().toISOString(),
-      atualizado_em: new Date().toISOString()
-    };
+    await query(
+      `INSERT INTO programas
+        (id,nome,sigla,site,codigo_capes,campus,em_rede,nome_rede,grande_area,
+         area_conhecimento,area_avaliacao,linhas,criado_em,atualizado_em)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+      [progId, data.nome, data.sigla ? data.sigla.toUpperCase() : '', data.site || '',
+       data.codigo_capes || '', data.campus || 'SEDE', data.em_rede || false, data.nome_rede || '',
+       data.grande_area || '', data.area_conhecimento || '', data.area_avaliacao || '',
+       Array.isArray(data.linhas) ? data.linhas : [], now, now]
+    );
 
-    programas.push(novoPrograma);
-
-    // Modalidades
-    if (data.modalidades && Array.isArray(data.modalidades)) {
-      data.modalidades.forEach(m => {
-        modalidades.push({
-          id: crypto.randomUUID(),
-          programa_id: progId,
-          tipo: m.tipo,
-          ano_inicio: m.ano_inicio || null,
-          nota_capes: m.nota_capes || ''
-        });
-      });
-    }
-
-    // Vínculos
-    handlePessoaVinculo(data.coordenador_atual, 'COORDENADOR_ATUAL', progId, vinculos);
-    handlePessoaVinculo(data.substituto, 'SUBSTITUTO', progId, vinculos);
-    handlePessoaVinculo(data.secretaria, 'TAE', progId, vinculos);
-
-    await writeJson('programas.json', programas);
-    await writeJson('modalidades.json', modalidades);
-    await writeJson('vinculos.json', vinculos);
+    await replaceModalidades(progId, data.modalidades);
+    await handlePessoaVinculo(data.coordenador_atual, 'COORDENADOR_ATUAL', progId);
+    await handlePessoaVinculo(data.substituto, 'SUBSTITUTO', progId);
+    await handlePessoaVinculo(data.secretaria, 'TAE', progId);
 
     res.status(201).json({ message: 'Programa criado com sucesso', id: progId });
   } catch (error) {
@@ -326,58 +212,34 @@ export const createPrograma = async (req, res) => {
 
 export const updatePrograma = async (req, res) => {
   try {
-    const programas = await readJson('programas.json');
-    const pIndex = programas.findIndex(p => p.id === req.params.id);
-    
-    if (pIndex === -1) return res.status(404).json({ message: 'Programa não encontrado' });
-
-    const modalidades = await readJson('modalidades.json');
-    const vinculos = await readJson('vinculos.json');
-
-    const data = req.body;
     const progId = req.params.id;
+    const existing = (await query('SELECT * FROM programas WHERE id = $1', [progId])).rows[0];
+    if (!existing) return res.status(404).json({ message: 'Programa não encontrado' });
 
-    programas[pIndex] = {
-      ...programas[pIndex],
-      nome: data.nome || programas[pIndex].nome,
-      sigla: data.sigla ? data.sigla.toUpperCase() : programas[pIndex].sigla,
-      site: data.site !== undefined ? data.site : programas[pIndex].site,
-      codigo_capes: data.codigo_capes !== undefined ? data.codigo_capes : programas[pIndex].codigo_capes,
-      campus: data.campus || programas[pIndex].campus,
-      em_rede: data.em_rede !== undefined ? data.em_rede : programas[pIndex].em_rede,
-      nome_rede: data.nome_rede !== undefined ? data.nome_rede : programas[pIndex].nome_rede,
-      grande_area: data.grande_area !== undefined ? data.grande_area : programas[pIndex].grande_area,
-      area_conhecimento: data.area_conhecimento !== undefined ? data.area_conhecimento : programas[pIndex].area_conhecimento,
-      area_avaliacao: data.area_avaliacao !== undefined ? data.area_avaliacao : programas[pIndex].area_avaliacao,
-      linhas: data.linhas !== undefined ? data.linhas : programas[pIndex].linhas,
-      atualizado_em: new Date().toISOString()
-    };
+    const data = req.body || {};
+    const pick = (val, fallback) => (val !== undefined ? val : fallback);
 
-    // Modalidades - Clear old and insert new (simple sync approach)
-    if (data.modalidades && Array.isArray(data.modalidades)) {
-      const remainingModalidades = modalidades.filter(m => m.programa_id !== progId);
-      data.modalidades.forEach(m => {
-        remainingModalidades.push({
-          id: m.id || crypto.randomUUID(),
-          programa_id: progId,
-          tipo: m.tipo,
-          ano_inicio: m.ano_inicio || null,
-          nota_capes: m.nota_capes || ''
-        });
-      });
-      // Replace completely
-      modalidades.length = 0;
-      modalidades.push(...remainingModalidades);
-    }
+    await query(
+      `UPDATE programas SET nome=$1, sigla=$2, site=$3, codigo_capes=$4, campus=$5, em_rede=$6,
+        nome_rede=$7, grande_area=$8, area_conhecimento=$9, area_avaliacao=$10, linhas=$11, atualizado_em=$12
+       WHERE id=$13`,
+      [
+        data.nome || existing.nome,
+        data.sigla ? data.sigla.toUpperCase() : existing.sigla,
+        pick(data.site, existing.site), pick(data.codigo_capes, existing.codigo_capes),
+        data.campus || existing.campus, pick(data.em_rede, existing.em_rede),
+        pick(data.nome_rede, existing.nome_rede), pick(data.grande_area, existing.grande_area),
+        pick(data.area_conhecimento, existing.area_conhecimento),
+        pick(data.area_avaliacao, existing.area_avaliacao),
+        Array.isArray(data.linhas) ? data.linhas : existing.linhas,
+        new Date().toISOString(), progId,
+      ]
+    );
 
-    // Vínculos
-    handlePessoaVinculo(data.coordenador_atual, 'COORDENADOR_ATUAL', progId, vinculos);
-    handlePessoaVinculo(data.substituto, 'SUBSTITUTO', progId, vinculos);
-    handlePessoaVinculo(data.secretaria, 'TAE', progId, vinculos);
-
-    await writeJson('programas.json', programas);
-    await writeJson('modalidades.json', modalidades);
-    await writeJson('vinculos.json', vinculos);
+    if (data.modalidades !== undefined) await replaceModalidades(progId, data.modalidades);
+    await handlePessoaVinculo(data.coordenador_atual, 'COORDENADOR_ATUAL', progId);
+    await handlePessoaVinculo(data.substituto, 'SUBSTITUTO', progId);
+    await handlePessoaVinculo(data.secretaria, 'TAE', progId);
 
     res.json({ message: 'Programa atualizado com sucesso' });
   } catch (error) {
@@ -387,27 +249,10 @@ export const updatePrograma = async (req, res) => {
 
 export const deletePrograma = async (req, res) => {
   try {
-    const programas = await readJson('programas.json');
-    const pIndex = programas.findIndex(p => p.id === req.params.id);
-    
-    if (pIndex !== -1) {
-      programas.splice(pIndex, 1);
-      
-      // Cascade delete modalidades and vinculos
-      const modalidades = await readJson('modalidades.json');
-      const filteredModalidades = modalidades.filter(m => m.programa_id !== req.params.id);
-      
-      const vinculos = await readJson('vinculos.json');
-      const filteredVinculos = vinculos.filter(v => v.programa_id !== req.params.id);
-
-      await writeJson('programas.json', programas);
-      await writeJson('modalidades.json', filteredModalidades);
-      await writeJson('vinculos.json', filteredVinculos);
-
-      res.json({ message: 'Programa removido com sucesso' });
-    } else {
-      res.status(404).json({ message: 'Programa não encontrado' });
-    }
+    // Modalidades e vínculos saem em cascata (FK ON DELETE CASCADE).
+    const { rowCount } = await query('DELETE FROM programas WHERE id = $1', [req.params.id]);
+    if (rowCount > 0) res.json({ message: 'Programa removido com sucesso' });
+    else res.status(404).json({ message: 'Programa não encontrado' });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao remover programa', error: error.message });
   }
