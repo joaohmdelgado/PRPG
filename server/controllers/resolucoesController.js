@@ -2,6 +2,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { sanitizeDocsDesc, isPlainObject } from '../utils/sanitize.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dataPath = path.join(__dirname, '../data/resolucoes.json');
@@ -43,9 +45,14 @@ export const getResolucaoById = async (req, res) => {
 };
 
 export const createResolucao = async (req, res) => {
+  if (!isPlainObject(req.body)) {
+    return res.status(400).json({ message: 'Dados inválidos.' });
+  }
   const resolucoes = await getResolucoesData();
   const newResolucao = { ...req.body };
-  
+
+  if (newResolucao.docs) newResolucao.docs = sanitizeDocsDesc(newResolucao.docs);
+
   if (!newResolucao.id) {
     newResolucao.id = 'res-' + Date.now().toString();
   }
@@ -57,10 +64,15 @@ export const createResolucao = async (req, res) => {
 
 export const updateResolucao = async (req, res) => {
   const resolucoes = await getResolucoesData();
+  if (!isPlainObject(req.body)) {
+    return res.status(400).json({ message: 'Dados inválidos.' });
+  }
   const index = resolucoes.findIndex(r => r.id === req.params.id);
-  
+
   if (index !== -1) {
-    resolucoes[index] = { ...resolucoes[index], ...req.body };
+    const updated = { ...resolucoes[index], ...req.body };
+    if (req.body.docs) updated.docs = sanitizeDocsDesc(req.body.docs);
+    resolucoes[index] = updated;
     await saveResolucoesData(resolucoes);
     res.json(resolucoes[index]);
   } else {

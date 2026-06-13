@@ -2,6 +2,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { sanitizeDocsDesc, isPlainObject } from '../utils/sanitize.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dataPath = path.join(__dirname, '../data/formularios.json');
@@ -43,9 +45,14 @@ export const getFormularioById = async (req, res) => {
 };
 
 export const createFormulario = async (req, res) => {
+  if (!isPlainObject(req.body)) {
+    return res.status(400).json({ message: 'Dados inválidos.' });
+  }
   const formularios = await getFormulariosData();
   const newFormulario = { ...req.body };
-  
+
+  if (newFormulario.docs) newFormulario.docs = sanitizeDocsDesc(newFormulario.docs);
+
   if (!newFormulario.id) {
     newFormulario.id = 'form-' + Date.now().toString();
   }
@@ -57,10 +64,15 @@ export const createFormulario = async (req, res) => {
 
 export const updateFormulario = async (req, res) => {
   const formularios = await getFormulariosData();
+  if (!isPlainObject(req.body)) {
+    return res.status(400).json({ message: 'Dados inválidos.' });
+  }
   const index = formularios.findIndex(f => f.id === req.params.id);
-  
+
   if (index !== -1) {
-    formularios[index] = { ...formularios[index], ...req.body };
+    const updated = { ...formularios[index], ...req.body };
+    if (req.body.docs) updated.docs = sanitizeDocsDesc(req.body.docs);
+    formularios[index] = updated;
     await saveFormulariosData(formularios);
     res.json(formularios[index]);
   } else {

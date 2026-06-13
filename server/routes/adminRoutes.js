@@ -16,6 +16,7 @@ import { getTeses, getTeseById, createTese, updateTese, deleteTese } from '../co
 import { getFaqs, getFaqById, createFaq, updateFaq, deleteFaq } from '../controllers/faqController.js';
 import { getDisciplinas, getDisciplinaById, createDisciplina, updateDisciplina, deleteDisciplina } from '../controllers/disciplinasController.js';
 import { getBolsas, getBolsaById, createBolsa, updateBolsa, deleteBolsa } from '../controllers/bolsasController.js';
+import { getPages, getPageById, getPageBySlug, createPage, updatePage, deletePage } from '../controllers/pagesController.js';
 
 
 import { login } from '../controllers/authController.js';
@@ -78,6 +79,9 @@ router.get('/disciplinas', getDisciplinas);
 router.get('/disciplinas/:id', getDisciplinaById);
 router.get('/bolsas', getBolsas);
 router.get('/bolsas/:id', getBolsaById);
+router.get('/pages', getPages);
+router.get('/pages/:id', getPageById);
+router.get('/pages/slug/:slug', getPageBySlug);
 
 // Autenticação
 router.post('/login', login);
@@ -149,5 +153,8 @@ router.delete('/disciplinas/:id', protect, deleteDisciplina);
 router.post('/bolsas', protect, createBolsa);
 router.put('/bolsas/:id', protect, updateBolsa);
 router.delete('/bolsas/:id', protect, deleteBolsa);
+router.post('/pages', protect, createPage);
+router.put('/pages/:id', protect, updatePage);
+router.delete('/pages/:id', protect, deletePage);
 
 export default router;

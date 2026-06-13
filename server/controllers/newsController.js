@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { sanitizeHtmlField, isPlainObject } from '../utils/sanitize.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,9 +44,17 @@ export const getNewsById = async (req, res) => {
 };
 
 export const createNews = async (req, res) => {
+  if (!isPlainObject(req.body)) {
+    return res.status(400).json({ message: 'Dados inválidos.' });
+  }
   const news = await getNewsData();
   const newArticle = { ...req.body };
-  
+
+  if (!newArticle.title || !String(newArticle.title).trim()) {
+    return res.status(400).json({ message: 'O título é obrigatório.' });
+  }
+  if (newArticle.content) newArticle.content = sanitizeHtmlField(newArticle.content);
+
   // Se não houver ID, gera um baseado no título
   if (!newArticle.id) {
     newArticle.id = newArticle.title
@@ -60,11 +69,16 @@ export const createNews = async (req, res) => {
 };
 
 export const updateNews = async (req, res) => {
+  if (!isPlainObject(req.body)) {
+    return res.status(400).json({ message: 'Dados inválidos.' });
+  }
   const news = await getNewsData();
   const index = news.findIndex(n => n.id === req.params.id);
-  
+
   if (index !== -1) {
-    news[index] = { ...news[index], ...req.body };
+    const updated = { ...news[index], ...req.body };
+    if (req.body.content) updated.content = sanitizeHtmlField(req.body.content);
+    news[index] = updated;
     await saveNewsData(news);
     res.json(news[index]);
   } else {

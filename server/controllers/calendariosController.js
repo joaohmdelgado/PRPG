@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,9 +44,14 @@ export const getCalendarioById = async (req, res) => {
 };
 
 export const createCalendario = async (req, res) => {
+  if (!isPlainObject(req.body)) {
+    return res.status(400).json({ message: 'Dados inválidos.' });
+  }
   const calendarios = await getCalendariosData();
   const newCalendario = { ...req.body };
-  
+
+  if (newCalendario.description) newCalendario.description = sanitizeHtml(newCalendario.description);
+
   if (!newCalendario.id) {
     newCalendario.id = 'cal-' + Date.now().toString();
   }
@@ -65,11 +71,15 @@ export const createCalendario = async (req, res) => {
 
 export const updateCalendario = async (req, res) => {
   const calendarios = await getCalendariosData();
+  if (!isPlainObject(req.body)) {
+    return res.status(400).json({ message: 'Dados inválidos.' });
+  }
   const index = calendarios.findIndex(c => c.id === req.params.id);
-  
+
   if (index !== -1) {
     const updated = { ...calendarios[index], ...req.body };
-    
+    if (req.body.description) updated.description = sanitizeHtml(req.body.description);
+
     // Enforca que apenas um calendário seja o corrente
     if (updated.isCurrent) {
       calendarios.forEach((c, idx) => {

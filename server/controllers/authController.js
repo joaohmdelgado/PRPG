@@ -3,6 +3,7 @@ import path from 'path';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { fileURLToPath } from 'url';
+import { JWT_SECRET } from '../config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,7 +27,7 @@ export const login = async (req, res) => {
           email: user.email, 
           roles: user.roles 
         }, 
-        process.env.JWT_SECRET || 'fallback_secret', 
+        JWT_SECRET,
         { expiresIn: '30d' }
       );
       
