@@ -1,0 +1,224 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack application for managing academic content and administrative information for the graduate school. The site serves as a content management system for news, editais (calls), resolutions, programs, and other academic information.
+
+## Tech Stack
+
+- **Frontend**: React 19 + React Router, Vite, TailwindCSS
+- **Backend**: Express.js
+- **Data Storage**: JSON files (no database)
+- **Authentication**: JWT tokens with role-based access control
+- **File Uploads**: Multer (PDF and image support)
+
+## Development Commands
+
+| Command | Purpose |
+|---------|---------|
+| `npm run dev` | Run frontend (port 3000) and backend (port 5000) concurrently |
+| `npm run dev:client` | Run Vite dev server on port 3000 only |
+| `npm run dev:server` | Run Express server on port 5000 only |
+| `npm run build` | Build production bundle with Vite |
+| `npm run lint` | TypeScript type checking (no emit) |
+
+**Development URL**: http://localhost:3000  
+**API Base URL**: http://localhost:5000/api
+
+## Architecture Overview
+
+### Frontend Structure (`/src`)
+- **pages/**: Individual page components (public-facing pages like Home, Sobre, Editais)
+- **pages/admin/**: Admin panel pages (content management forms and lists)
+- **components/**: Reusable React components
+  - `AdminLayout.jsx`: Sidebar navigation for admin panel
+  - `RequireAuth.jsx`: Auth protection wrapper
+  - `Navbar.jsx` / `Footer.jsx`: Shared layout components
+- **App.jsx**: Main router configuration with all routes defined
+
+### Backend Structure (`/server`)
+- **controllers/**: Business logic for each content type
+  - Each controller exports standard CRUD operations: `get*`, `get*ById`, `create*`, `update*`, `delete*`
+  - Controllers read/write directly from JSON files in `/server/data`
+- **routes/adminRoutes.js**: All API route definitions
+  - Public routes (GET): news, editais, resolucoes, formularios, programas, disciplinas, bolsas, faq, etc.
+  - Protected routes: authenticated users with `protect` middleware
+  - Admin-only routes: `requireRole(['Administrator', 'Gestor'])`
+- **middleware/authMiddleware.js**: 
+  - `protect`: Validates JWT token from `Authorization: Bearer <token>` header
+  - `requireRole(roles)`: Checks user has one of the required roles
+- **data/**: JSON files storing all content data
+
+### Content Types & Controllers
+
+| Type | Controller | Data File | Routes |
+|------|-----------|-----------|--------|
+| News/Notícias | newsController.js | news.json | `/api/news` |
+| Editais (Calls) | editaisController.js | editais.json | `/api/editais` |
+| Resolutions | resolucoesController.js | resolucoes.json | `/api/resolucoes` |
+| Formulas | formulariosController.js | formularios.json | `/api/formularios` |
+| Programs | programasController.js | programas.json | `/api/programas` |
+| Calendars | calendariosController.js | calendarios.json | `/api/calendarios` |
+| Teses/Dissertações | tesesController.js | teses_dissertacoes.json | `/api/teses-dissertacoes` |
+| Disciplines | disciplinasController.js | disciplinas.json | `/api/disciplinas` |
+| Scholarships (Bolsas) | bolsasController.js | bolsas.json | `/api/bolsas` |
+| FAQ | faqController.js | faq.json | `/api/faq` |
+| Custom Pages | pagesController.js | pages.json | `/api/pages` |
+| Users | usersController.js | users.json | `/api/users` |
+| Portarias | portariasController.js | portarias.json | `/api/portarias` (admin only) |
+| Research Groups | gruposPesquisaController.js | grupos_pesquisa.json | `/api/grupos-pesquisa` (admin only) |
+
+## Authentication & Authorization
+
+**Roles**:
+- `Administrator`: Full access to all content and user management
+- `Gestor`: Can manage most content and users
+- Regular users: Can view public content and create/edit their own content
+
+**JWT Token Format**:
+```javascript
+{
+  id: string,
+  username: string,
+  email: string,
+  roles: string[] // e.g., ['Administrator'] or ['Gestor']
+}
+```
+
+**Using Protected Routes**:
+- All POST/PUT/DELETE routes require JWT token
+- Include token in request headers: `Authorization: Bearer <token>`
+- Token stored in localStorage as `token` in the admin panel
+- Login endpoint: `POST /api/login` returns JWT token
+
+## Key Patterns & Conventions
+
+### Controller Pattern
+Each controller follows this standard structure:
+```javascript
+const getDataPath = () => path.join(__dirname, '../data/contentType.json');
+
+const getData = async () => {
+  try {
+    const data = await fs.readFile(getDataPath(), 'utf-8');
+    return JSON.parse(data);
+  } catch (error) {
+    return [];
+  }
+};
+
+const saveData = async (data) => {
+  await fs.writeFile(getDataPath(), JSON.stringify(data, null, 2));
+};
+
+export const getAll = async (req, res) => { /* ... */ };
+export const getById = async (req, res) => { /* ... */ };
+export const create = async (req, res) => { /* ... */ };
+export const update = async (req, res) => { /* ... */ };
+export const delete = async (req, res) => { /* ... */ };
+```
+
+### Common Data Fields
+Most content items use:
+- `id`: Unique identifier (auto-generated from title or UUID)
+- `title` or `name`: Primary label
+- `description` or `excerpt`: Short summary
+- `content`: Full content (may be array of paragraphs)
+- `date`: Publication/creation date
+- `author`: Creator name
+- `category`/`categorySlug`: For filtering content
+
+### File Uploads
+- Endpoint: `POST /api/upload` (requires authentication)
+- Accepts: PDF files, images (PNG, JPG, etc.)
+- File size limit: 15MB
+- Returns: `{ url: "/uploads/filename", originalName: "..." }`
+
+## Environment Configuration
+
+Create `.env` file in project root with:
+```
+PORT=5000
+JWT_SECRET=your-secret-key
+GEMINI_API_KEY=your-gemini-api-key  # Optional, for AI features
+```
+
+The `GEMINI_API_KEY` is injected into frontend via Vite's `define` config.
+
+## Admin Panel Navigation
+
+Access at `/admin/login`. Main sections in sidebar:
+- Notícias (News)
+- Editais
+- Resoluções
+- Formulários
+- Programas
+- Calendários
+- Teses-Dissertações
+- FAQ
+- Disciplinas
+- Bolsas
+- Páginas (Custom pages)
+- Portarias (Admin only)
+- Grupos de Pesquisa (Admin only)
+- Usuários (User management, Admin only)
+- Taxonomias (Category management, Admin only)
+
+## Important Implementation Notes
+
+1. **No Database**: All data is stored in JSON files. When multiple instances run simultaneously, concurrent writes to the same file could cause data loss. This is acceptable for current usage but would need a proper database for high-concurrency scenarios.
+
+2. **ID Generation**: IDs are typically slug-based (derived from title) rather than UUIDs. Look at individual controllers for their specific ID generation strategy.
+
+3. **Content Slugs**: Many controllers generate slug versions of titles for URLs. Check controller for `generateSlug()` or similar patterns.
+
+4. **Image URLs**: External image URLs from public sources are stored directly in JSON. Local uploads use `/uploads/` path.
+
+5. **TypeScript Config**: The project uses TypeScript for type checking but compiles to JavaScript (ES modules). Type-only imports are used to avoid circular dependencies.
+
+6. **CORS**: Backend has CORS enabled for all origins. Restrict this in production by modifying `cors()` in `server/index.js`.
+
+7. **Static File Serving**: Upload folder is served statically at `/uploads` - files uploaded to `server/uploads/` are accessible at `http://localhost:5000/uploads/filename`.
+
+## Vite Configuration Notes
+
+- Alias `@` points to project root
+- TailwindCSS integrated via `@tailwindcss/vite` plugin
+- GEMINI_API_KEY defined at build time via Vite's define option
+- HMR can be disabled via `DISABLE_HMR=true` environment variable
+- Hot Module Replacement enabled by default for development
+
+## Common Development Tasks
+
+**Adding a New Content Type**:
+1. Create controller: `server/controllers/newTypeController.js` with standard CRUD functions
+2. Create data file: `server/data/newType.json` with sample array
+3. Add routes in `server/routes/adminRoutes.js`
+4. Create frontend pages in `src/pages/` (public view) and `src/pages/admin/` (management)
+5. Add routes in `src/App.jsx`
+6. Add navigation link in `src/components/AdminLayout.jsx`
+
+**Testing API Routes**:
+Use REST client (VS Code REST extension, Insomnia, or Postman) or cURL:
+```bash
+# Get all news
+curl http://localhost:5000/api/news
+
+# Login
+curl -X POST http://localhost:5000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"password"}'
+
+# Create news (requires token)
+curl -X POST http://localhost:5000/api/news \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test","content":"..."}'
+```
+
+**Checking User Roles**:
+- Admin users are defined in `server/data/users.json`
+- Roles are array of strings: `["Administrator"]`, `["Gestor"]`, etc.
+- Check auth middleware for role validation logic
