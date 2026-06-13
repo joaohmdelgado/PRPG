@@ -146,7 +146,9 @@ CREATE TABLE IF NOT EXISTS modalidades (
 CREATE TABLE IF NOT EXISTS vinculos (
   id              TEXT PRIMARY KEY,
   programa_id     TEXT REFERENCES programas(id) ON DELETE CASCADE,
-  pessoa_id       TEXT REFERENCES pessoas(id) ON DELETE SET NULL,
+  -- pessoa_id é polimórfico: aponta para users.id OU pessoas.id (legado),
+  -- resolvido na aplicação. Por isso não há FK aqui.
+  pessoa_id       TEXT,
   papel           TEXT,
   portaria        TEXT,
   portaria_id     TEXT,

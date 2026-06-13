@@ -191,7 +191,11 @@ Access at `/admin/login`. Main sections in sidebar:
   `schema.sql`; `helpers.js` truncates tables and seeds an admin before each test.
   The dev database (`prpg`) is never touched.
 - Coverage: auth, input validation, HTML sanitization (unit + integration),
-  news CRUD, editais status calc, pages slug generation, taxonomias.
+  news CRUD, editais status calc, pages slug generation, taxonomias,
+  programas (coordinator resolution, sensitive-field filtering, coordinator
+  history, cascade delete), users (uniqueness, default password, role rules,
+  access control), role-based authorization, calendarios (single-current rule +
+  milestones child table), grupos/teses reference resolution. ~41 tests.
 - Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes

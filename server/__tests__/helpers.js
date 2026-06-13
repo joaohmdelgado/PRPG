@@ -12,20 +12,35 @@ export async function resetDb() {
   await pool.query(`TRUNCATE ${TABLES} RESTART IDENTITY CASCADE`);
 }
 
+// Cria um usuário com papel/perfil arbitrários (senha padrão "senha123").
+export async function seedUser({ id, email, roles = ['Aluno'], perfil_geral = {}, password = 'senha123' }) {
+  const password_hash = await bcrypt.hash(password, 10);
+  return usersRepo.create({ id, email, password_hash, roles, perfil_geral });
+}
+
 export async function seedAdmin() {
-  const password_hash = await bcrypt.hash('admin123', 10);
-  await usersRepo.create({
+  return seedUser({
     id: 'admin-test',
     email: 'admin@test.com',
-    password_hash,
     roles: ['Administrator'],
     perfil_geral: { nome: 'Admin Teste' },
+    password: 'admin123',
   });
 }
 
-export async function loginAdmin() {
-  const res = await request(app)
-    .post('/api/login')
-    .send({ username: 'admin@test.com', password: 'admin123' });
+export async function login(email, password = 'senha123') {
+  const res = await request(app).post('/api/login').send({ username: email, password });
   return res.body.token;
+}
+
+export async function loginAdmin() {
+  return login('admin@test.com', 'admin123');
+}
+
+// Insere uma pessoa (legado) diretamente, para testar a resolução por pessoas.
+export async function seedPessoa({ id, nome, cpf = '', siape = '' }) {
+  await pool.query(
+    'INSERT INTO pessoas (id, nome, cpf, siape) VALUES ($1, $2, $3, $4)',
+    [id, nome, cpf, siape]
+  );
 }
