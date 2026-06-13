@@ -1,0 +1,88 @@
+<USER_REQUEST>
+Tenho um requisito gerado a partir de uma plhanilha que armazenava informações que serão guardadas agrora nesse sistema. ALguma campos e tipos de conteúdos já devem existir aqui. Analise esses requisitos, depois crie, modifique ou aproveite baseado nesses requisitos abaixo:
+
+Aqui está o documento de requisitos completo:
+
+---
+
+# Requisitos do Sistema — Cadastro de Programas de Pós-Graduação (PRPG/UFRPE)
+
+---
+
+## 1. Visão Geral
+
+Sistema web para cadastro, consulta e manutenção dos dados dos Programas de Pós-Graduação da UFRPE, substituindo a planilha Excel atual. O sistema deve centralizar informações de programas, coordenadores, secretaria e histórico de gestão.
+
+---
+
+## 2. Fonte de Dados (Excel de Referência)
+
+O Excel possui 4 abas:
+
+- **BANCO DE DADOS PRPG** — aba principal, 48 programas, 27 colunas agrupadas em 5 blocos
+- **Sem UFAPE – CAPES** — lista com classificação CAPES, notas e modalidades (sem campus UFAPE)
+- **Sem UFAPE** — lista simplificada sem coluna de área CAPES
+- **Com UFAPE** — lista incluindo programas do campus UFAPE
+
+As abas de lista são visões derivadas da aba principal. No sistema, devem ser geradas dinamicamente como filtros ou exportações, não cadastradas separadamente.
+
+---
+
+## 3. Modelo de Dados
+
+### 3.1 Entidade: Programa
+
+| Campo | Tipo | Obrigatório | Observações |
+|---|---|---|---|
+| `id` | UUID | Sim (gerado) | Chave primária |
+| `nome` | texto | Sim | Nome completo do programa |
+| `sigla` | texto (20) | Sim | Identificador curto, armazenar em maiúsculas |
+| `site` | URL | Não | Endereço do site oficial |
+| `codigo_capes` | texto (20) | Não | Código de 13 caracteres, ex: `25003011022P7` |
+| `campus` | enum | Não | `SEDE`, `UAST`, `UACSA`. Default: `SEDE` |
+| `em_rede` | booleano | Não | Indica se é programa em rede nacional/regional |
+| `nome_rede` | texto | Não | Nome da rede, ex: RENORBIO, PROFIAP. Preencher se `em_rede = true` |
+| `grande_area` | texto | Não | Grande áre
+<truncated 7528 bytes>
+tema exibe confirmação: "Isso moverá [Nome Atual] para o histórico. Confirmar?"
+
+### 6.4 Exportação
+- Exportar para Excel (.xlsx) reproduzindo a estrutura original da planilha
+- Exportar para CSV
+- Filtros das abas "Sem UFAPE" e "Com UFAPE" devem ser aplicáveis na exportação
+
+### 6.5 Rascunho Automático
+- O formulário salva rascunho automaticamente a cada 30 segundos no browser (localStorage ou equivalente)
+- Ao retornar ao formulário com rascunho salvo, exibir banner: "Você tem um rascunho não salvo. Deseja continuar de onde parou?"
+
+---
+
+## 7. Validações
+
+| Campo | Validação |
+|---|---|
+| Sigla | Obrigatório, único, máx 20 caracteres, maiúsculas |
+| Nome | Obrigatório, máx 200 caracteres |
+| Código CAPES | Opcional, formato `[0-9]{5}[0-9]{3}[0-9]{3}[A-Z0-9]{2}[0-9]` ou similar |
+| E-mail | Formato de e-mail válido |
+| CPF | Formato `000.000.000-00`, validar dígitos verificadores |
+| SIAPE | Numérico, 7 a 8 dígitos |
+| Ano de início | Inteiro, entre 1950 e ano corrente |
+| Nota CAPES | Valor no conjunto `{1,2,3,4,5,6,7,A}` |
+| Site | URL válida com protocolo `https://` |
+| Ao menos uma modalidade | Bloquear envio se nenhuma modalidade estiver marcada |
+| Coordenador atual | Obrigatório para salvar (não apenas rascunho) |
+---
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-06-12T09:16:14-03:00.
+
+The user's current state is as follows:
+Active Document: c:\Users\jhmdm\OneDrive\Documentos\UFRPE\Sites\PRPG\src\pages\MissaoVisaoValores.jsx (LANGUAGE_JAVASCRIPT)
+Cursor is on line: 49
+Other open documents:
+- c:\Users\jhmdm\OneDrive\Documentos\UFRPE\Sites\PRPG\src\pages\MissaoVisaoValores.jsx (LANGUAGE_JAVASCRIPT)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.5 Flash (High) to Gemini 3.1 Pro (High). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>

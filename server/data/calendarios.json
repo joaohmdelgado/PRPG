@@ -1,0 +1,46 @@
+[
+  {
+    "id": "cal-1",
+    "ano": 2026,
+    "isCurrent": true,
+    "title": "Calendário Acadêmico 2026 - Corrente",
+    "pdfLink": "https://prpg.ufrpe.br/sites/default/files/documentos/CALEND%C3%81RIO%20PRPG%202026-03-05.pdf",
+    "description": "Calendário oficial de atividades acadêmicas para os cursos de Pós-Graduação da UFRPE referente ao ano letivo de 2026.",
+    "milestones": [
+      { "event": "Matrícula de Discentes Regulares (2026.1)", "date": "02/03/2026 a 06/03/2026" },
+      { "event": "Início das Aulas do Semestre 2026.1", "date": "09/03/2026" },
+      { "event": "Período para Trancamento de Matrícula (2026.1)", "date": "até 24/04/2026" },
+      { "event": "Término das Aulas do Semestre 2026.1", "date": "04/07/2026" },
+      { "event": "Matrícula de Discentes Regulares (2026.2)", "date": "03/08/2026 a 07/08/2026" },
+      { "event": "Início das Aulas do Semestre 2026.2", "date": "10/08/2026" },
+      { "event": "Término das Aulas do Semestre 2026.2", "date": "05/12/2026" }
+    ]
+  },
+  {
+    "id": "cal-2",
+    "ano": 2025,
+    "isCurrent": false,
+    "title": "Calendário Acadêmico 2025",
+    "pdfLink": "https://prpg.ufrpe.br/sites/default/files/documentos/Calendario_Academico_2025_PRPG.pdf",
+    "description": "Calendário de atividades acadêmicas da Pós-Graduação da UFRPE referente ao ano letivo de 2025.",
+    "milestones": []
+  },
+  {
+    "id": "cal-3",
+    "ano": 2024,
+    "isCurrent": false,
+    "title": "Calendário Acadêmico 2024",
+    "pdfLink": "https://prpg.ufrpe.br/sites/default/files/documentos/Calendario_Academico_2024_PRPG.pdf",
+    "description": "Calendário de atividades acadêmicas da Pós-Graduação da UFRPE referente ao ano letivo de 2024.",
+    "milestones": []
+  },
+  {
+    "id": "cal-4",
+    "ano": 2023,
+    "isCurrent": false,
+    "title": "Calendário Acadêmico 2023",
+    "pdfLink": "https://prpg.ufrpe.br/sites/default/files/documentos/Calendario_Academico_2023_PRPG.pdf",
+    "description": "Calendário de atividades acadêmicas da Pós-Graduação da UFRPE referente ao ano letivo de 2023.",
+    "milestones": []
+  }
+]

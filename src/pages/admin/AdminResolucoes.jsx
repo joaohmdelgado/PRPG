@@ -1,0 +1,112 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
+
+const AdminResolucoes = () => {
+  const [resolucoes, setResolucoes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const fetchResolucoes = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/resolucoes');
+      const data = await response.json();
+      setResolucoes(data);
+    } catch (error) {
+      console.error('Erro ao buscar resoluções:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchResolucoes();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Tem certeza que deseja excluir esta resolução?')) {
+      try {
+        const response = await fetch(`http://localhost:5000/api/resolucoes/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (response.ok) {
+          fetchResolucoes();
+        } else if (response.status === 401) {
+          navigate('/admin/login');
+        }
+      } catch (error) {
+        console.error('Erro ao excluir resolução:', error);
+      }
+    }
+  };
+
+  if (loading) return <div>Carregando...</div>;
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold text-gray-800">Gerenciar Resoluções</h2>
+        <Link 
+          to="/admin/resolucoes/nova" 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
+        >
+          <Plus size={18} />
+          Nova Resolução
+        </Link>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-6 py-3 text-sm font-medium text-gray-500">Título</th>
+              <th className="px-6 py-3 text-sm font-medium text-gray-500">Seção</th>
+              <th className="px-6 py-3 text-sm font-medium text-gray-500">Subcategoria</th>
+              <th className="px-6 py-3 text-sm font-medium text-gray-500 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {resolucoes.map((item) => (
+              <tr key={item.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 text-sm text-gray-900 font-medium">{item.title}</td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {item.sectionTitle}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-500">{item.categoryTitle}</td>
+                <td className="px-6 py-4 text-sm font-medium text-right flex justify-end gap-3">
+                  <Link 
+                    to={`/admin/resolucoes/editar/${item.id}`}
+                    className="text-indigo-600 hover:text-indigo-900"
+                  >
+                    <Edit2 size={18} />
+                  </Link>
+                  <button 
+                    onClick={() => handleDelete(item.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {resolucoes.length === 0 && (
+              <tr>
+                <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                  Nenhuma resolução encontrada.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default AdminResolucoes;

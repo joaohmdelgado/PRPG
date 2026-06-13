@@ -1,0 +1,376 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+/**
+ * PRPG UFRPE — Design Tokens
+ * globals.css
+ *
+ * Source: PRPG UFRPE Design System
+ * Fonts: Google Fonts — Outfit (headings) + Inter (body)
+ */
+
+
+@theme {
+  --color-ufrpe-blue: #1e2b4f;
+  --color-ufrpe-blue-dark: #151e36;
+  --color-ufrpe-yellow: #febd11;
+  --color-ufrpe-yellow-hover: #e6a700;
+  --color-ufrpe-cyan: #0088a8;
+  --color-ufrpe-red: #d63624;
+
+  --font-heading: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* =============================================
+   1. BRAND COLOR PALETTE (CSS Variables)
+   ============================================= */
+:root {
+  --color-blue:         #1e2b4f;
+  --color-blue-dark:    #151e36;
+  --color-blue-light:   rgba(30, 43, 79, 0.08);
+
+  --color-yellow:       #febd11;
+  --color-yellow-hover: #e6a700;
+  --color-yellow-soft:  rgba(254, 189, 17, 0.20);
+
+  --color-cyan:         #0088a8;
+  --color-cyan-soft:    rgba(0, 136, 168, 0.10);
+
+  --color-red:          #d63624;
+  --color-red-soft:     rgba(214, 54, 36, 0.10);
+
+  --color-white:        #ffffff;
+  --color-bg:           #f9fafb;
+  --color-surface:      #ffffff;
+  --color-surface-alt:  #f3f4f6;
+  --color-border:       #e5e7eb;
+  --color-border-light: #f3f4f6;
+
+  --color-text-primary: #1e2b4f;
+  --color-text-body:    #374151;
+  --color-text-muted:   #6b7280;
+  --color-text-xmuted:  #9ca3af;
+
+  --color-text-on-dark:        #ffffff;
+  --color-text-on-dark-muted:  rgba(255,255,255,0.70);
+  --color-text-on-dark-xmuted: rgba(255,255,255,0.40);
+
+  --color-status-open-bg:    #cffafe;
+  --color-status-open-text:  #164e63;
+  --color-status-open-border: var(--color-cyan);
+
+  --color-status-active-bg:   #fef9c3;
+  --color-status-active-text: #713f12;
+  --color-status-active-border: var(--color-yellow);
+
+  --color-status-done-bg:    #f3f4f6;
+  --color-status-done-text:  #374151;
+  --color-status-done-border: #d1d5db;
+
+  --color-status-featured-bg:   var(--color-red);
+  --color-status-featured-text: #ffffff;
+
+  --text-hero:    clamp(2.5rem, 5vw, 4rem);
+  --text-h1:      clamp(2rem, 3.5vw, 3rem);
+  --text-h2:      clamp(1.75rem, 3vw, 2.5rem);
+  --text-h3:      clamp(1.25rem, 2vw, 1.5rem);
+  --text-h4:      1.25rem;
+  --text-label:   0.75rem;
+
+  --text-body-lg: 1.125rem;
+  --text-body:    1rem;
+  --text-body-sm: 0.875rem;
+  --text-xs:      0.75rem;
+  --text-xxs:     0.625rem;
+
+  --weight-light:     300;
+  --weight-regular:   400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
+  --weight-extrabold: 800;
+  --weight-black:     900;
+
+  --tracking-tight:   -0.015em;
+  --tracking-normal:  0em;
+  --tracking-wide:    0.05em;
+  --tracking-wider:   0.1em;
+  --tracking-widest:  0.15em;
+
+  --leading-tight:    1.2;
+  --leading-snug:     1.375;
+  --leading-normal:   1.5;
+  --leading-relaxed:  1.625;
+
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  --radius-sm:    8px;
+  --radius-md:    10px;
+  --radius-lg:    12px;
+  --radius-xl:    16px;
+  --radius-2xl:   20px;
+  --radius-3xl:   24px;
+  --radius-full:  9999px;
+
+  --shadow-xs:    0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm:    0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:    0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -1px rgba(0,0,0,0.06);
+  --shadow-lg:    0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -2px rgba(0,0,0,0.05);
+  --shadow-xl:    0 20px 25px -5px rgba(0,0,0,0.10), 0 10px 10px -5px rgba(0,0,0,0.04);
+  --shadow-2xl:   0 25px 50px -12px rgba(0,0,0,0.25);
+  --shadow-card:  0 8px 30px rgba(0,0,0,0.08);
+  --shadow-hero:  0 8px 30px rgba(0,0,0,0.40);
+  --shadow-yellow: 0 8px 20px rgba(254,189,17,0.25);
+
+  --transition-fast:   all 0.15s ease;
+  --transition-base:   all 0.30s ease;
+  --transition-slow:   all 0.50s ease;
+  --transition-image:  transform 0.70s ease;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text-body);
+  background-color: var(--color-bg);
+}
+
+.prpg-hero-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-hero);
+  font-weight: var(--weight-extrabold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-on-dark);
+}
+
+.prpg-h1 {
+  font-family: var(--font-heading);
+  font-size: var(--text-h1);
+  font-weight: var(--weight-extrabold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+}
+
+.prpg-h2 {
+  font-family: var(--font-heading);
+  font-size: var(--text-h2);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-primary);
+}
+
+.prpg-h3 {
+  font-family: var(--font-heading);
+  font-size: var(--text-h3);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+  color: var(--color-text-primary);
+}
+
+.prpg-section-label {
+  font-family: var(--font-body);
+  font-size: var(--text-label);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.prpg-body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-body);
+}
+
+.prpg-body-sm {
+  font-family: var(--font-body);
+  font-size: var(--text-body-sm);
+  font-weight: var(--weight-regular);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-muted);
+}
+
+.prpg-meta {
+  font-family: var(--font-body);
+  font-size: var(--text-xxs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.prpg-logo-up {
+  font-family: var(--font-heading);
+  font-weight: var(--weight-black);
+  font-size: 28px;
+  line-height: 1;
+  color: var(--color-blue);
+  border-bottom: 5px solid var(--color-blue);
+  padding-bottom: 2px;
+  width: fit-content;
+}
+
+.prpg-logo-bottom {
+  font-family: var(--font-heading);
+  font-weight: var(--weight-regular);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--color-blue);
+  border-top: 3px solid var(--color-blue);
+  padding-top: 5px;
+  margin-top: -3px;
+  width: fit-content;
+}
+
+.prpg-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border-light);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-base);
+}
+.prpg-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.prpg-edital-card { border-left: 8px solid var(--color-cyan); }
+.prpg-edital-card--active { border-left-color: var(--color-yellow); }
+.prpg-edital-card--done { border-left-color: #d1d5db; }
+
+.prpg-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 12px 32px;
+  background: var(--color-yellow);
+  color: var(--color-blue);
+  font-family: var(--font-body);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-sm);
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-base);
+  text-decoration: none;
+  box-shadow: var(--shadow-yellow);
+}
+.prpg-btn-primary:hover { background: var(--color-white); }
+
+.prpg-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 12px 32px;
+  background: rgba(255,255,255,0.10);
+  color: var(--color-white);
+  font-family: var(--font-body);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-sm);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255,255,255,0.20);
+  cursor: pointer;
+  transition: var(--transition-base);
+  text-decoration: none;
+  backdrop-filter: blur(4px);
+}
+.prpg-btn-secondary:hover { background: rgba(255,255,255,0.20); }
+
+.prpg-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 12px 32px;
+  background: transparent;
+  color: var(--color-blue);
+  font-family: var(--font-body);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-sm);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--color-blue);
+  cursor: pointer;
+  transition: var(--transition-base);
+  text-decoration: none;
+}
+.prpg-btn-outline:hover {
+  background: var(--color-blue);
+  color: var(--color-white);
+}
+
+.prpg-btn-cyan {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 20px;
+  background: var(--color-cyan);
+  color: var(--color-white);
+  font-family: var(--font-body);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-body-sm);
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition-base);
+  text-decoration: none;
+}
+.prpg-btn-cyan:hover { background: var(--color-blue); }
+
+.prpg-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: var(--space-12);
+  padding-bottom: var(--space-4);
+  border-bottom: 2px solid var(--color-yellow);
+}
+
+.prpg-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: var(--text-xxs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+}
+.prpg-badge--open    { background: var(--color-status-open-bg);   color: var(--color-status-open-text); }
+.prpg-badge--active  { background: var(--color-status-active-bg);  color: var(--color-status-active-text); }
+.prpg-badge--done    { background: var(--color-status-done-bg);   color: var(--color-status-done-text); }
+.prpg-badge--feature { background: var(--color-red); color: white; }
+
+.prpg-section-accent {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.prpg-section-accent::before {
+  content: '';
+  display: block;
+  width: 32px;
+  height: 4px;
+  background: var(--color-yellow);
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: var(--color-blue); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-yellow); }

@@ -1,0 +1,843 @@
+[
+  {
+    "id": "5ea9dfda-7bc0-4cdd-863d-7aa2229fc5fe",
+    "nome": "Administração e Desenvolvimento",
+    "sigla": "PPAD",
+    "site": "https://ppad.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Administração e Desenvolvimento",
+    "area_avaliacao": "",
+    "linhas": [
+      "Competitividade e Gestão",
+      "Políticas Públicas, Desenvolvimento e Sustentabilidade"
+    ],
+    "criado_em": "2026-06-12T12:40:49.198Z",
+    "atualizado_em": "2026-06-12T12:40:49.213Z"
+  },
+  {
+    "id": "2d8b07d5-ee9e-48d1-b647-873e3dc5bc32",
+    "nome": "Administração Pública",
+    "sigla": "PROFIAP",
+    "site": "https://profiap.org.br",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Administração Pública",
+    "area_avaliacao": "",
+    "linhas": [
+      "Políticas Públicas",
+      "Administração Pública e Organizações"
+    ],
+    "criado_em": "2026-06-12T12:40:49.213Z",
+    "atualizado_em": "2026-06-12T12:40:49.213Z"
+  },
+  {
+    "id": "f9a567a5-b8b0-4f08-a971-7ea404ff3f9e",
+    "nome": "Agroecologia e Desenvolvimento Territorial",
+    "sigla": "S/SIGLA",
+    "site": "https://ppgadt.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Sociedade, natureza, inovações sociotécnicas e políticas públicas",
+    "area_avaliacao": "",
+    "linhas": [
+      "Identidade, Cultura e Territorialidades",
+      "Sociedade, Economia e Construção do Conhecimento",
+      "Transições Socioecológicas e Sistemas Produtivos Biodiversos",
+      "Convivência com o Semiárido",
+      "Ambiente, Saúde e Sistemas Agroalimentares"
+    ],
+    "criado_em": "2026-06-12T12:40:49.213Z",
+    "atualizado_em": "2026-06-12T12:40:49.213Z"
+  },
+  {
+    "id": "d32fd35d-a124-4e4b-80f6-47dc94ff611d",
+    "nome": "Biociência Animal",
+    "sigla": "S/SIGLA",
+    "site": "https://www.pgba.ufrpe.br",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Biotecnologia / Morfofisiologia, Sanidade Animal, Humana e Ambiental",
+    "area_avaliacao": "",
+    "linhas": [
+      "Estudo dos mecanismos e processos celulares básicos",
+      "Mecanismos de ação de compostos naturais/sintéticos",
+      "Microbiologia e parasitologia",
+      "Produtos bioativos",
+      "Saúde única"
+    ],
+    "criado_em": "2026-06-12T12:40:49.213Z",
+    "atualizado_em": "2026-06-12T12:40:49.213Z"
+  },
+  {
+    "id": "83c6449c-fd7f-40a2-8917-559155b068c5",
+    "nome": "Biodiversidade",
+    "sigla": "S/SIGLA",
+    "site": "https://ww2.pgb.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Biodiversidade Neotropical",
+    "area_avaliacao": "",
+    "linhas": [
+      "Sistemática e Evolução",
+      "Estrutura e Funcionamento da Biodiversidade",
+      "Usos e Manejo da Biodiversidade"
+    ],
+    "criado_em": "2026-06-12T12:40:49.213Z",
+    "atualizado_em": "2026-06-12T12:40:49.213Z"
+  },
+  {
+    "id": "8551e482-af40-4503-b3c0-27e2e5683afb",
+    "nome": "Biometria e Estatística Aplicada",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppgbea.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Biometria e Estatística Aplicada",
+    "area_avaliacao": "",
+    "linhas": [
+      "Modelagem e Métodos computacionais",
+      "Estatística Aplicada e Experimental"
+    ],
+    "criado_em": "2026-06-12T12:40:49.213Z",
+    "atualizado_em": "2026-06-12T12:40:49.213Z"
+  },
+  {
+    "id": "3fd18205-0f2e-446a-857c-6e753eceb62b",
+    "nome": "Biotecnologia",
+    "sigla": "RENORBIO",
+    "site": "https://renorbio.org/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Biotecnologia",
+    "area_avaliacao": "",
+    "linhas": [
+      "Bioprocessos",
+      "Bioprospecção, Biodiversidade e Conservação",
+      "Conservação e Multiplicação de Germoplasma",
+      "Agentes Profiláticos e Terapêuticos",
+      "Genética e Transgênese",
+      "Insumos Biotecnológicos"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "6b5ddace-a889-4dfd-a567-94dcd7a0b88d",
+    "nome": "Ciência do Solo",
+    "sigla": "S/SIGLA",
+    "site": "http://www.pgs.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Solos e Meio Ambiente",
+    "area_avaliacao": "",
+    "linhas": [
+      "Biologia e Fertilidade do Solo e Nutrição de Plantas",
+      "Pedogênese, Mineralogia e Química Ambiental de Solos",
+      "Física, Manejo e Conservação do Solo e da Água"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "031bc3b5-b2cb-4080-ad68-6b21fffd1dfc",
+    "nome": "Ciência e Tecnologia de Alimentos",
+    "sigla": "S/SIGLA",
+    "site": "https://www.pgcta.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Ciência e Tecnologia de Alimentos",
+    "area_avaliacao": "",
+    "linhas": [
+      "Ciência das matérias-primas alimentícias e resíduos agroindustriais",
+      "Desenvolvimento de produtos e processos de alimentos"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "7dca78c0-0f81-47da-811e-e2a7f0dbe583",
+    "nome": "Ciências do Movimento",
+    "sigla": "S/SIGLA",
+    "site": "http://www.papgcm.ufrpe.br",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Biodinâmica do Desempenho Humano",
+    "area_avaliacao": "",
+    "linhas": [
+      "Fatores determinantes do desempenho esportivo",
+      "Atividade física relacionada ao processo saúde-doença"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "fb6a7ba3-c161-4867-9202-6ca31c645d88",
+    "nome": "Ciências Florestais",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppgcf.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Ciências Florestais",
+    "area_avaliacao": "",
+    "linhas": [
+      "Ecologia e Conservação da Natureza",
+      "Manejo Florestal e Utilização de Produtos Florestais",
+      "Silvicultura"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "e709a3f5-4906-487f-bd62-cb995d1731a1",
+    "nome": "Ciências Sociais",
+    "sigla": "S/SIGLA",
+    "site": "http://ppgcs.ufrpe.br",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Processos Sociais, Desigualdades e Diversidades Culturais",
+    "area_avaliacao": "",
+    "linhas": [
+      "Configurações rurais e seus sujeitos",
+      "Espaços, Cosmovisões e Identidades Múltiplas",
+      "Políticas Públicas, Trabalho e Desenvolvimento"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "07d2f95c-6e5c-4eeb-beb0-6bb7f4daa5d7",
+    "nome": "Controladoria",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppgc.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Controladoria",
+    "area_avaliacao": "",
+    "linhas": [
+      "Estratégia, desempenho e controle",
+      "Planejamento, controle e análise financeira"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "f6d9ede3-7ab1-40e8-9474-d9b0994036a3",
+    "nome": "Desenvolvimento e Inovação Tecnológica em Medicamentos",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppgditm.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Inovação Tecnológica em Medicamentos",
+    "area_avaliacao": "",
+    "linhas": [
+      "Desenvolvimento de Produtos e Processos Farmacêuticos",
+      "Tecnologias Analíticas e Produtivas",
+      "Ensaios Pré-clínicos e Clínicos"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "4ccfd83c-3fae-43d4-86dd-e037f562a506",
+    "nome": "Educação Física em Rede Nacional",
+    "sigla": "PROEF",
+    "site": "https://proef.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Educação Física Escolar",
+    "area_avaliacao": "",
+    "linhas": [
+      "Formação, intervenção e profissionalidade docente",
+      "Abordagens Metodológicas e processos de ensino e aprendizagem"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "ac1a2c4f-aeb0-4151-b8dd-88a3bc24a6ae",
+    "nome": "Educação, Culturas e Identidades",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppgeci.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Processos Educativos, Culturas e Diversidades",
+    "area_avaliacao": "",
+    "linhas": [
+      "Movimentos Sociais, Práticas educativo-culturais e Identidades",
+      "Desenvolvimento e Processos Educacionais e Culturais da infância",
+      "Políticas, Programas e Gestão de Processos Educacionais"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "6e44a6c4-6e2f-4369-9f2f-293876400853",
+    "nome": "Engenharia Agrícola",
+    "sigla": "S/SIGLA",
+    "site": "http://www.pgea.ufrpe.br",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Engenharia de Água e Solo",
+    "area_avaliacao": "",
+    "linhas": [
+      "Monitoramento Ambiental e Recuperação de Solos",
+      "Manejo Integrado de Água e Solo",
+      "Aproveitamento de Resíduos e Reuso de Água",
+      "Manejo em Ambientes Protegidos"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "12c70cb0-8c54-498b-b95b-7b8d35969321",
+    "nome": "Engenharia Ambiental",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppeamb.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Tecnologia e Gestão do Meio Ambiente",
+    "area_avaliacao": "",
+    "linhas": [
+      "Controle e Remediação da Poluição",
+      "Gestão Ambiental e de Recursos Hídricos",
+      "Solos e Engenharia de Sedimentos"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "c861c144-9727-4ef4-9f65-e778941fdab8",
+    "nome": "Ensino das Ciências",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppgec.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Ensino de Ciências e Matemática",
+    "area_avaliacao": "",
+    "linhas": [
+      "Ensino e Aprendizagem de Ciências e da Matemática",
+      "Formação e Prática Pedagógica de Professores",
+      "Tecnologias no Ensino"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "64806d4d-23e2-4052-8913-61dfe644586c",
+    "nome": "Entomologia",
+    "sigla": "S/SIGLA",
+    "site": "https://ppge.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Entomologia Agrícola",
+    "area_avaliacao": "",
+    "linhas": [
+      "Bioecologia de Insetos e ácaros",
+      "Manejo integrado de pragas",
+      "Taxonomia e sistemática de insetos e ácaros"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "6bda6054-8f8c-4ca2-9efd-78d9ef4f6da5",
+    "nome": "Estudos da Linguagem",
+    "sigla": "S/SIGLA",
+    "site": "http://www.progel.ufrpe.br",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Estudos Interdisciplinares da Linguagem",
+    "area_avaliacao": "",
+    "linhas": [
+      "Análises linguísticas, textuais, discursivas e enunciativas",
+      "Análises literárias, culturais e históricas"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "23565f43-9028-4707-83a1-5eb9bfc68044",
+    "nome": "Etnobiologia e Conservação da Natureza",
+    "sigla": "S/SIGLA",
+    "site": "https://www.pgetno.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Etnobiologia e Conservação da Natureza",
+    "area_avaliacao": "",
+    "linhas": [
+      "Bases ecológicas e evolutivas",
+      "Síntese ecológica, conservação e manejo da biodiversidade",
+      "Sistemas cognitivos e uso dos recursos naturais"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "a31e198f-f4d8-4d92-b4e3-63aa731dd736",
+    "nome": "Física Aplicada",
+    "sigla": "S/SIGLA",
+    "site": "https://www.ppgfa.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Física",
+    "area_avaliacao": "",
+    "linhas": [
+      "Sistemas Complexos",
+      "Informação Quântica",
+      "Sistemas de Baixa Dimensionalidade"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "a4061a1f-d39a-4b71-9aa7-9feca7c3121e",
+    "nome": "Fitopatologia",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppgf.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Fitopatologia",
+    "area_avaliacao": "",
+    "linhas": [
+      "Biologia, ecologia e taxonomia de fitopatógenos",
+      "Epidemiologia e controle de doenças de plantas"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "532f0a45-fbef-4f3c-854b-9bc4c09c8874",
+    "nome": "História",
+    "sigla": "S/SIGLA",
+    "site": "http://www.pgh.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "História Social da Cultura Regional",
+    "area_avaliacao": "",
+    "linhas": [
+      "Cultura, Patrimônio e Memória",
+      "Cultura, Política e Relações De Poder",
+      "Ensino De História e Cultura Regional",
+      "Estado, Sociedade e Cultura"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "ce229039-fa8f-4d8a-bcd8-4df8a6efb8ef",
+    "nome": "Informática Aplicada",
+    "sigla": "S/SIGLA",
+    "site": "https://www.ppgia.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Computação Inteligente e Modelagem",
+    "area_avaliacao": "",
+    "linhas": [
+      "Inteligência e Modelagem Computacional",
+      "Engenharia de Software e Sistemas Computacionais"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "fcb8a01b-37ea-481f-8e4a-2a86b501f9be",
+    "nome": "Medicina Veterinária",
+    "sigla": "S/SIGLA",
+    "site": "http://www.pgvet.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Clínica e Cirurgia Animal; Medicina Veterinária Preventiva; Reprodução Animal",
+    "area_avaliacao": "",
+    "linhas": [
+      "Avaliação e Reparação Clínico-Cirúrgica das Afecções Animais",
+      "Epidemiologia, Diagnóstico e Controle das Doenças Infecciosas",
+      "Biotecnologia Aplicada à Reprodução Animal"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "baf4e581-e6bd-4ceb-9d5f-ffdb2a35e5e8",
+    "nome": "Melhoramento Genético de Plantas",
+    "sigla": "S/SIGLA",
+    "site": "http://www.pgmp.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Melhoramento Genético de Plantas",
+    "area_avaliacao": "",
+    "linhas": [
+      "Avaliação e Caracterização vegetal",
+      "Biometria e Melhoramento Vegetal",
+      "Genética Molecular Vegetal"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "2c087626-9707-46a2-8a2a-c12db82db552",
+    "nome": "Ensino de Física",
+    "sigla": "PROFFIS",
+    "site": "http://www.mnpewf.ufrpe.br",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Ensino de Física",
+    "area_avaliacao": "",
+    "linhas": [
+      "Física no Ensino Fundamental",
+      "Física no Ensino Médio",
+      "Processos de aprendizagem e tecnologias de informação"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "c1256d63-0db2-4351-839a-36ee2618f758",
+    "nome": "Matemática em Rede Nacional",
+    "sigla": "PROFMAT",
+    "site": "http://www.dm.ufrpe.br/pg/profmat/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Matemática",
+    "area_avaliacao": "",
+    "linhas": [
+      "Análise funcional",
+      "Análise numérica",
+      "Ensino de matemática",
+      "Geometria",
+      "Sistemas dinâmicos e Otimização"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "704bdfd8-1fc8-4d89-8541-1de56c34b338",
+    "nome": "Química em Rede Nacional",
+    "sigla": "PROFQUI",
+    "site": "http://www.profqui.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Química",
+    "area_avaliacao": "",
+    "linhas": [
+      "Novas tecnologias e comunicação",
+      "Química ambiental e energia",
+      "Química da vida",
+      "Novos materiais"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "96910e36-1c9e-4729-92d4-8e3436e76fb2",
+    "nome": "Saúde Única",
+    "sigla": "PMPSU",
+    "site": "http://www.pmpsu.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Saúde Única",
+    "area_avaliacao": "",
+    "linhas": [
+      "Epidemiologia e Planejamento em Saúde",
+      "Vigilância e Atenção Primária em Saúde"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "b918f0d3-88a1-4869-ae94-15e2bcfdfc60",
+    "nome": "Políticas Públicas e Desenvolvimento",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppgppd.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Políticas Públicas e Desenvolvimento",
+    "area_avaliacao": "",
+    "linhas": [
+      "Instituições, Governo e Políticas Públicas",
+      "Desigualdades e desenvolvimento"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "a595e3b4-f052-43da-9278-d87642ea1af1",
+    "nome": "Química",
+    "sigla": "S/SIGLA",
+    "site": "http://www.pgq.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Química",
+    "area_avaliacao": "",
+    "linhas": [
+      "Química Agrícola",
+      "Química Analítica e Ambiental",
+      "Química Inorgânica e de Materiais",
+      "Química Orgânica e Medicinal",
+      "Físico-química e Química Computacional"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "782551e6-4fec-4224-af0c-fb52996cf6d8",
+    "nome": "Recursos Pesqueiros e Aquicultura",
+    "sigla": "S/SIGLA",
+    "site": "https://ww2.pgpa.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Zootecnia e Recursos Pesqueiros",
+    "area_avaliacao": "",
+    "linhas": [
+      "Pesca Sustentável",
+      "Aquicultura sustentável",
+      "Ecologia Aquática"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "ed16f9b7-dace-4acf-bad5-f394291a93c7",
+    "nome": "Tecnologia e Gestão em Educação a Distância",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppgteg.ufrpe.br",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Tecnologia e Gestão em Educação a Distância",
+    "area_avaliacao": "",
+    "linhas": [
+      "Gestão e Produção de Conteúdos para Educação a Distância",
+      "Ferramentas Tecnológicas para Educação a Distância"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "d2a4986d-070e-4cb5-96bb-a09fe0796fb0",
+    "nome": "Zootecnia",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppgz.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Zootecnia",
+    "area_avaliacao": "",
+    "linhas": [
+      "Produção, avaliação e conservação de plantas forrageiras e pastagens",
+      "Nutrição e produção de animais ruminantes",
+      "Nutrição e produção de animais não ruminantes"
+    ],
+    "criado_em": "2026-06-12T12:40:49.214Z",
+    "atualizado_em": "2026-06-12T12:40:49.214Z"
+  },
+  {
+    "id": "4c08d9f2-e301-41f8-b967-2238da5125c9",
+    "nome": "Ensino – Rede Nordeste de Ensino",
+    "sigla": "RENOEN",
+    "site": "http://renoen.ufrpe.br",
+    "codigo_capes": "",
+    "campus": "SEDE",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Ensino, Currículo e Processos De Ensino-Aprendizagem",
+    "area_avaliacao": "",
+    "linhas": [
+      "Ensino, Currículo e Cultura",
+      "Práticas Pedagógicas no Ensino de Ciências e Matemática",
+      "Ensino Tecnológico: práticas e construções curriculares"
+    ],
+    "criado_em": "2026-06-12T12:40:49.215Z",
+    "atualizado_em": "2026-06-12T12:40:49.215Z"
+  },
+  {
+    "id": "5bf14929-f4d7-4086-8330-d8c389922770",
+    "nome": "Biodiversidade e Conservação",
+    "sigla": "S/SIGLA",
+    "site": "http://www.pgbc.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "UAST",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Biodiversidade e Conservação de Ecossistemas Nordestinos",
+    "area_avaliacao": "",
+    "linhas": [
+      "Ecologia, conservação e uso da biodiversidade de ambientes aquáticos",
+      "Ecologia, conservação e uso da biodiversidade de ambientes terrestres"
+    ],
+    "criado_em": "2026-06-12T12:40:49.215Z",
+    "atualizado_em": "2026-06-12T12:40:49.215Z"
+  },
+  {
+    "id": "81aa1552-bbc1-491c-b010-bbe5f85b9e56",
+    "nome": "Produção Vegetal",
+    "sigla": "S/SIGLA",
+    "site": "http://www.pgpv.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "UAST",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Produção Vegetal no Semiárido",
+    "area_avaliacao": "",
+    "linhas": [
+      "Fisiologia e Tecnologia das plantas nativas e cultivadas no Semiárido",
+      "Interação de fatores bióticos e abióticos em ecossistemas no Semiárido",
+      "Manejo/conservação de agroecossistemas no Semiárido"
+    ],
+    "criado_em": "2026-06-12T12:40:49.215Z",
+    "atualizado_em": "2026-06-12T12:40:49.215Z"
+  },
+  {
+    "id": "c7e26185-cb14-4cfa-91d0-f04d5f2416cf",
+    "nome": "Engenharia de Sistemas de Energia",
+    "sigla": "S/SIGLA",
+    "site": "https://ppgese.ufrpe.br/sobre",
+    "codigo_capes": "",
+    "campus": "UACSA",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Sistemas de Energia",
+    "area_avaliacao": "",
+    "linhas": [
+      "Inteligência, Tecnologias e Digitalização da Energia",
+      "Eficiência & Qualidade da Energia"
+    ],
+    "criado_em": "2026-06-12T12:40:49.215Z",
+    "atualizado_em": "2026-06-12T12:40:49.215Z"
+  },
+  {
+    "id": "d545c60e-c545-497c-b133-70745c75642c",
+    "nome": "Engenharia Física",
+    "sigla": "S/SIGLA",
+    "site": "http://www.ppengfis.ufrpe.br/",
+    "codigo_capes": "",
+    "campus": "UACSA",
+    "em_rede": false,
+    "nome_rede": "",
+    "grande_area": "",
+    "area_conhecimento": "Materiais, Optoeletrônica",
+    "area_avaliacao": "",
+    "linhas": [
+      "Materiais Nanoestruturados",
+      "Materiais para aplicações ambientais, energéticas e industriais",
+      "Metrologia e Instrumentação",
+      "Espectroscopia coerente e óptica não linear",
+      "Controle e dinâmica não linear"
+    ],
+    "criado_em": "2026-06-12T12:40:49.215Z",
+    "atualizado_em": "2026-06-12T12:40:49.215Z"
+  }
+]

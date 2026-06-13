@@ -1,4 +1,4 @@
-window.programasData = {
+export const programasData = {
     "Recife": [
         { 
             name: "Administração e Desenvolvimento - PPAD", site: "https://ppad.ufrpe.br/", email: "coordenacao.padr@ufrpe.br", ano: "Mestrado: 2003", level: ["Mestrado Acadêmico"], areas: "Administração e Desenvolvimento",
