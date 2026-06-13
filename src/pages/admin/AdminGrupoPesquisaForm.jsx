@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, X, Search } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminGrupoPesquisaForm = () => {
   const { id } = useParams();
@@ -89,7 +90,7 @@ const AdminGrupoPesquisaForm = () => {
     const fetchData = async () => {
       try {
         // Obter professores
-        const usersResponse = await fetch('http://localhost:5000/api/users', {
+        const usersResponse = await fetch(`${API_URL}/api/users`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         if (usersResponse.ok) {
@@ -103,7 +104,7 @@ const AdminGrupoPesquisaForm = () => {
 
         // Se edição, obter grupo de pesquisa
         if (isEditing) {
-          const grupoResponse = await fetch(`http://localhost:5000/api/grupos-pesquisa/${id}`, {
+          const grupoResponse = await fetch(`${API_URL}/api/grupos-pesquisa/${id}`, {
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
           });
           if (grupoResponse.ok) {
@@ -211,8 +212,8 @@ const AdminGrupoPesquisaForm = () => {
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/grupos-pesquisa/${id}` 
-        : 'http://localhost:5000/api/grupos-pesquisa';
+        ? `${API_URL}/api/grupos-pesquisa/${id}` 
+        : `${API_URL}/api/grupos-pesquisa`;
       
       const response = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',

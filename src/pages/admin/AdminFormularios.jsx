@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminFormularios = () => {
   const [formularios, setFormularios] = useState([]);
@@ -9,7 +10,7 @@ const AdminFormularios = () => {
 
   const fetchFormularios = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/formularios');
+      const response = await fetch(`${API_URL}/api/formularios`);
       const data = await response.json();
       setFormularios(data);
     } catch (error) {
@@ -26,7 +27,7 @@ const AdminFormularios = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este formulário?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/formularios/${id}`, {
+        const response = await fetch(`${API_URL}/api/formularios/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminCalendarioForm = () => {
   const { id } = useParams();
@@ -83,7 +84,7 @@ const AdminCalendarioForm = () => {
     if (isEditing) {
       const fetchCalendario = async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/calendarios/${id}`);
+          const response = await fetch(`${API_URL}/api/calendarios/${id}`);
           if (response.ok) {
             const data = await response.json();
             const descHTML = data.description || '';
@@ -153,8 +154,8 @@ const AdminCalendarioForm = () => {
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/calendarios/${id}` 
-        : 'http://localhost:5000/api/calendarios';
+        ? `${API_URL}/api/calendarios/${id}` 
+        : `${API_URL}/api/calendarios`;
       
       const method = isEditing ? 'PUT' : 'POST';
 

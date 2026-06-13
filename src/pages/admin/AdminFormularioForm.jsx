@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const SECTIONS = {
   'mestrado-doutorado': 'Mestrado e Doutorado',
@@ -33,7 +34,7 @@ const AdminFormularioForm = () => {
   useEffect(() => {
     const fetchExisting = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/formularios');
+        const response = await fetch(`${API_URL}/api/formularios`);
         if (response.ok) {
           const data = await response.json();
           const cats = Array.from(new Set(data.map(item => item.categoryTitle).filter(Boolean)));
@@ -105,7 +106,7 @@ const AdminFormularioForm = () => {
     if (isEditing) {
       const fetchFormulario = async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/formularios/${id}`);
+          const response = await fetch(`${API_URL}/api/formularios/${id}`);
           if (response.ok) {
             const data = await response.json();
             const description = data.desc || '';
@@ -152,8 +153,8 @@ const AdminFormularioForm = () => {
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/formularios/${id}` 
-        : 'http://localhost:5000/api/formularios';
+        ? `${API_URL}/api/formularios/${id}` 
+        : `${API_URL}/api/formularios`;
       
       const method = isEditing ? 'PUT' : 'POST';
 

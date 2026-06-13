@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Shield, Plus, Trash2, X, Search } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const ROLES = ['Administrator', 'Gestor', 'Secretário(a)', 'Professor', 'Aluno'];
 const NIVEIS = ['Mestrando', 'Mestre', 'Doutorando', 'Doutor'];
@@ -43,21 +44,21 @@ const AdminUserForm = () => {
 
   const fetchProgramas = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/programas');
+      const res = await fetch(`${API_URL}/api/programas`);
       if (res.ok) setProgramasList(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchTaxonomias = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/taxonomias');
+      const res = await fetch(`${API_URL}/api/taxonomias`);
       if (res.ok) setTaxonomias(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchUser = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${id}`, {
+      const response = await fetch(`${API_URL}/api/users/${id}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       if (response.ok) {
@@ -255,8 +256,8 @@ const AdminUserForm = () => {
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/users/${id}` 
-        : 'http://localhost:5000/api/users';
+        ? `${API_URL}/api/users/${id}` 
+        : `${API_URL}/api/users`;
       
       const response = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { API_URL } from '../api';
+import SafeHtml from '../components/SafeHtml';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -24,7 +26,7 @@ export default function Noticia() {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/news');
+        const response = await fetch(`${API_URL}/api/news`);
         const data = await response.json();
         setNoticiasData(data);
       } catch (error) {
@@ -186,7 +188,7 @@ export default function Noticia() {
           {/* Featured Image */}
           <figure className="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
             <img
-              src={newsItem.image?.startsWith('http') ? newsItem.image : `http://localhost:5000${newsItem.image}`}
+              src={newsItem.image?.startsWith('http') ? newsItem.image : `${API_URL}${newsItem.image}`}
               alt={newsItem.title}
               className="w-full h-auto object-cover max-h-[500px]"
             />
@@ -201,10 +203,10 @@ export default function Noticia() {
           <div className="prose prose-lg prose-blue max-w-none text-gray-700 space-y-6">
             {Array.isArray(newsItem.content) ? (
               newsItem.content.map((para, index) => (
-                <p key={index} dangerouslySetInnerHTML={{ __html: para }} />
+                <SafeHtml as="p" key={index} html={para} />
               ))
             ) : (
-              <div dangerouslySetInnerHTML={{ __html: newsItem.content }} />
+              <SafeHtml html={newsItem.content} />
             )}
 
             {newsItem.quote && (
@@ -250,7 +252,7 @@ export default function Noticia() {
               >
                 <div className="aspect-video overflow-hidden bg-gray-200 relative">
                   <img
-                    src={related.image?.startsWith('http') ? related.image : `http://localhost:5000${related.image}`}
+                    src={related.image?.startsWith('http') ? related.image : `${API_URL}${related.image}`}
                     alt={related.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                   />

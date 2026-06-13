@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, Award, Calendar } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminBolsasList = () => {
   const [bolsas, setBolsas] = useState([]);
@@ -10,7 +11,7 @@ const AdminBolsasList = () => {
 
   const fetchBolsas = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/bolsas');
+      const response = await fetch(`${API_URL}/api/bolsas`);
       if (response.ok) {
         const data = await response.json();
         setBolsas(data);
@@ -29,7 +30,7 @@ const AdminBolsasList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este registro de bolsa?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/bolsas/${id}`, {
+        const response = await fetch(`${API_URL}/api/bolsas/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`

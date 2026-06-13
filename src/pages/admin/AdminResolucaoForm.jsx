@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, FileText, Trash2 } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const SECTIONS = {
   'mestrado-doutorado': 'Mestrado e Doutorado',
@@ -36,7 +37,7 @@ const AdminResolucaoForm = () => {
   useEffect(() => {
     const fetchSubcategories = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/taxonomias');
+        const response = await fetch(`${API_URL}/api/taxonomias`);
         if (response.ok) {
           const data = await response.json();
           setExistingCategories(data.subcategorias_resolucao || []);
@@ -107,7 +108,7 @@ const AdminResolucaoForm = () => {
     if (isEditing) {
       const fetchResolucao = async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/resolucoes/${id}`);
+          const response = await fetch(`${API_URL}/api/resolucoes/${id}`);
           if (response.ok) {
             const data = await response.json();
             const description = data.desc || '';
@@ -150,7 +151,7 @@ const AdminResolucaoForm = () => {
     fileData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:5000/api/upload', {
+      const response = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -188,8 +189,8 @@ const AdminResolucaoForm = () => {
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/resolucoes/${id}` 
-        : 'http://localhost:5000/api/resolucoes';
+        ? `${API_URL}/api/resolucoes/${id}` 
+        : `${API_URL}/api/resolucoes`;
       
       const method = isEditing ? 'PUT' : 'POST';
 
@@ -289,7 +290,7 @@ const AdminResolucaoForm = () => {
               <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
                 <FileText className="text-red-500 shrink-0" size={24} />
                 <a 
-                  href={formData.link.startsWith('http') ? formData.link : `http://localhost:5000${formData.link}`} 
+                  href={formData.link.startsWith('http') ? formData.link : `${API_URL}${formData.link}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"

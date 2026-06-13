@@ -58,6 +58,9 @@ import AdminDisciplinasList from './pages/admin/AdminDisciplinasList';
 import AdminDisciplinaForm from './pages/admin/AdminDisciplinaForm';
 import AdminBolsasList from './pages/admin/AdminBolsasList';
 import AdminBolsaForm from './pages/admin/AdminBolsaForm';
+import AdminPagesList from './pages/admin/AdminPagesList';
+import AdminPageForm from './pages/admin/AdminPageForm';
+import PageView from './pages/PageView';
 
 function App() {
   return (
@@ -98,6 +101,9 @@ function App() {
             <Route path="bolsas" element={<AdminBolsasList />} />
             <Route path="bolsas/nova" element={<AdminBolsaForm />} />
             <Route path="bolsas/editar/:id" element={<AdminBolsaForm />} />
+            <Route path="paginas" element={<AdminPagesList />} />
+            <Route path="paginas/nova" element={<AdminPageForm />} />
+            <Route path="paginas/editar/:id" element={<AdminPageForm />} />
             <Route path="taxonomias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
               <Route index element={<AdminTaxonomias />} />
             </Route>
@@ -151,6 +157,7 @@ function App() {
                   <Route path="/reconhecimento" element={<Reconhecimento />} />
                   <Route path="/noticias" element={<Noticias />} />
                   <Route path="/noticia/:id" element={<Noticia />} />
+                  <Route path="/p/:slug" element={<PageView />} />
                 </Routes>
               </main>
               <Footer />

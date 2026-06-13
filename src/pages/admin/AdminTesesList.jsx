@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, BookOpen, GraduationCap, FileText } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminTesesList = () => {
   const [teses, setTeses] = useState([]);
@@ -10,7 +11,7 @@ const AdminTesesList = () => {
 
   const fetchTeses = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/teses-dissertacoes');
+      const response = await fetch(`${API_URL}/api/teses-dissertacoes`);
       if (response.ok) {
         const data = await response.json();
         setTeses(data);
@@ -29,7 +30,7 @@ const AdminTesesList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir esta tese/dissertação?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/teses-dissertacoes/${id}`, {
+        const response = await fetch(`${API_URL}/api/teses-dissertacoes/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -145,7 +146,7 @@ const AdminTesesList = () => {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {item.field_arquivo ? (
                     <a
-                      href={item.field_arquivo.startsWith('http') ? item.field_arquivo : `http://localhost:5000${item.field_arquivo}`}
+                      href={item.field_arquivo.startsWith('http') ? item.field_arquivo : `${API_URL}${item.field_arquivo}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-red-600 hover:text-red-800 inline-flex items-center gap-1.5 font-medium hover:underline"

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { API_URL } from '../api';
+import SafeHtml from '../components/SafeHtml';
 
 export default function Resolucoes() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,7 +11,7 @@ export default function Resolucoes() {
   useEffect(() => {
     const fetchResolucoes = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/resolucoes');
+        const response = await fetch(`${API_URL}/api/resolucoes`);
         const data = await response.json();
 
         // As seções principais com ordem de exibição pré-definida
@@ -237,9 +239,9 @@ export default function Resolucoes() {
                               >
                                 <h4 className="font-bold text-ufrpe-blue text-lg mb-1">{doc.title}</h4>
                                 {doc.desc && (
-                                  <div 
+                                  <SafeHtml
                                     className="text-sm text-gray-600 mb-4 html-content prose prose-sm max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: doc.desc }}
+                                    html={doc.desc}
                                   />
                                 )}
                                 <a

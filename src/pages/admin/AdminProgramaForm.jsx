@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const GRANDES_AREAS = [
   'Ciências Exatas e da Terra',
@@ -63,7 +64,7 @@ const AdminProgramaForm = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/users', {
+        const response = await fetch(`${API_URL}/api/users`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -115,7 +116,7 @@ const AdminProgramaForm = () => {
     if (isEditing) {
       const fetchPrograma = async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/programas/${id}`);
+          const response = await fetch(`${API_URL}/api/programas/${id}`);
           if (response.ok) {
             const data = await response.json();
             setFormData({
@@ -218,8 +219,8 @@ const AdminProgramaForm = () => {
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/programas/${id}` 
-        : 'http://localhost:5000/api/programas';
+        ? `${API_URL}/api/programas/${id}` 
+        : `${API_URL}/api/programas`;
       const method = isEditing ? 'PUT' : 'POST';
 
       const payload = {

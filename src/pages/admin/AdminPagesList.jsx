@@ -1,36 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Search, HelpCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, File, ExternalLink } from 'lucide-react';
 import { API_URL } from '../../api';
 
-const AdminFaqList = () => {
-  const [faqs, setFaqs] = useState([]);
+const AdminPagesList = () => {
+  const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
-  const fetchFaqs = async () => {
+  const fetchPages = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/faq`);
+      const response = await fetch(`${API_URL}/api/pages`);
       if (response.ok) {
         const data = await response.json();
-        setFaqs(data);
+        setPages(data);
       }
     } catch (error) {
-      console.error('Erro ao buscar FAQs:', error);
+      console.error('Erro ao buscar páginas:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchFaqs();
+    fetchPages();
   }, []);
 
   const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta pergunta frequente?')) {
+    if (window.confirm('Tem certeza que deseja excluir esta página?')) {
       try {
-        const response = await fetch(`${API_URL}/api/faq/${id}`, {
+        const response = await fetch(`${API_URL}/api/pages/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -38,21 +38,22 @@ const AdminFaqList = () => {
         });
         
         if (response.ok) {
-          fetchFaqs();
+          fetchPages();
         } else if (response.status === 401) {
           navigate('/admin/login');
         }
       } catch (error) {
-        console.error('Erro ao excluir FAQ:', error);
+        console.error('Erro ao excluir página:', error);
       }
     }
   };
 
-  const filteredFaqs = faqs.filter(item => {
+  const filteredPages = pages.filter(item => {
     const title = item.title || '';
-    const resposta = item.field_resposta || '';
+    const slug = item.slug || '';
+    const bodyText = item.body?.value || '';
     const query = searchQuery.toLowerCase();
-    return title.toLowerCase().includes(query) || resposta.toLowerCase().includes(query);
+    return title.toLowerCase().includes(query) || slug.toLowerCase().includes(query) || bodyText.toLowerCase().includes(query);
   });
 
   if (loading) {
@@ -68,19 +69,19 @@ const AdminFaqList = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <HelpCircle className="text-blue-600" size={24} />
-            Gerenciar Perguntas Frequentes (FAQ)
+            <File className="text-blue-600" size={24} />
+            Gerenciar Páginas Customizadas
           </h2>
           <p className="text-sm text-gray-500 mt-1">
-            Cadastro de perguntas e respostas exibidas na central de ajuda do portal
+            Criação de páginas institucionais com conteúdos ricos e URLs dinâmicas
           </p>
         </div>
         <Link 
-          to="/admin/faq/novo" 
+          to="/admin/paginas/nova" 
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-md flex items-center gap-2 transition-colors font-medium text-sm"
         >
           <Plus size={18} />
-          Nova Pergunta
+          Nova Página
         </Link>
       </div>
 
@@ -93,7 +94,7 @@ const AdminFaqList = () => {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar por pergunta ou resposta..."
+          placeholder="Buscar por título, slug ou conteúdo..."
           className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400"
         />
       </div>
@@ -102,20 +103,32 @@ const AdminFaqList = () => {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-6 py-3 text-sm font-medium text-gray-500 w-3/4">Pergunta</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500 text-right">Ações</th>
+              <th className="px-6 py-3 text-sm font-medium text-gray-500 w-2/5">Título</th>
+              <th className="px-6 py-3 text-sm font-medium text-gray-500 w-2/5">Link Público</th>
+              <th className="px-6 py-3 text-sm font-medium text-gray-500 text-right w-1/5">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredFaqs.map((item) => (
+            {filteredPages.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 text-sm font-medium text-gray-900 pr-10" title={item.title}>
                   {item.title}
                 </td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  <a 
+                    href={`/p/${item.slug}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline inline-flex items-center gap-1.5 font-medium"
+                  >
+                    /p/{item.slug}
+                    <ExternalLink size={14} />
+                  </a>
+                </td>
                 <td className="px-6 py-4 text-sm font-medium text-right">
                   <div className="flex justify-end gap-3">
                     <Link 
-                      to={`/admin/faq/editar/${item.id}`}
+                      to={`/admin/paginas/editar/${item.id}`}
                       className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-1.5 rounded transition-colors"
                       title="Editar"
                     >
@@ -132,10 +145,10 @@ const AdminFaqList = () => {
                 </td>
               </tr>
             ))}
-            {filteredFaqs.length === 0 && (
+            {filteredPages.length === 0 && (
               <tr>
-                <td colSpan="2" className="px-6 py-10 text-center text-gray-500">
-                  Nenhuma pergunta frequente encontrada.
+                <td colSpan="3" className="px-6 py-10 text-center text-gray-500">
+                  Nenhuma página institucional encontrada.
                 </td>
               </tr>
             )}
@@ -146,4 +159,4 @@ const AdminFaqList = () => {
   );
 };
 
-export default AdminFaqList;
+export default AdminPagesList;

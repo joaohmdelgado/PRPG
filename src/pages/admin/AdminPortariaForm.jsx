@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, FileText, Trash2, Upload } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminPortariaForm = () => {
   const { id } = useParams();
@@ -22,7 +23,7 @@ const AdminPortariaForm = () => {
     if (isEditing) {
       const fetchPortaria = async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/portarias/${id}`, {
+          const response = await fetch(`${API_URL}/api/portarias/${id}`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
@@ -61,7 +62,7 @@ const AdminPortariaForm = () => {
     fileData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:5000/api/upload', {
+      const response = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -94,8 +95,8 @@ const AdminPortariaForm = () => {
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/portarias/${id}` 
-        : 'http://localhost:5000/api/portarias';
+        ? `${API_URL}/api/portarias/${id}` 
+        : `${API_URL}/api/portarias`;
       
       const method = isEditing ? 'PUT' : 'POST';
 
@@ -183,7 +184,7 @@ const AdminPortariaForm = () => {
             <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
               <FileText className="text-red-500" size={24} />
               <a 
-                href={`http://localhost:5000${formData.downloadLink}`} 
+                href={`${API_URL}${formData.downloadLink}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"

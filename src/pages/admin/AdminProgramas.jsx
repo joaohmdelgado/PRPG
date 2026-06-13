@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminProgramas = () => {
   const [programas, setProgramas] = useState([]);
@@ -9,7 +10,7 @@ const AdminProgramas = () => {
 
   const fetchProgramas = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/programas');
+      const response = await fetch(`${API_URL}/api/programas`);
       const data = await response.json();
       setProgramas(data);
     } catch (error) {
@@ -26,7 +27,7 @@ const AdminProgramas = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este programa?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/programas/${id}`, {
+        const response = await fetch(`${API_URL}/api/programas/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`

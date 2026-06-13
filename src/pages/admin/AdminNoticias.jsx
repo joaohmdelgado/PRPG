@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -24,7 +25,7 @@ const AdminNoticias = () => {
 
   const fetchNews = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/news');
+      const response = await fetch(`${API_URL}/api/news`);
       const data = await response.json();
       setNews(data);
     } catch (error) {
@@ -41,7 +42,7 @@ const AdminNoticias = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir esta notícia?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/news/${id}`, {
+        const response = await fetch(`${API_URL}/api/news/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminNoticiaForm = () => {
   const { id } = useParams();
@@ -117,7 +118,7 @@ const AdminNoticiaForm = () => {
     if (isEditing) {
       const fetchNoticia = async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/news/${id}`);
+          const response = await fetch(`${API_URL}/api/news/${id}`);
           if (response.ok) {
             const data = await response.json();
             const contentHTML = Array.isArray(data.content)
@@ -166,7 +167,7 @@ const AdminNoticiaForm = () => {
     fileData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:5000/api/upload', {
+      const response = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -223,8 +224,8 @@ const AdminNoticiaForm = () => {
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/news/${id}` 
-        : 'http://localhost:5000/api/news';
+        ? `${API_URL}/api/news/${id}` 
+        : `${API_URL}/api/news`;
       
       const method = isEditing ? 'PUT' : 'POST';
 
@@ -321,14 +322,14 @@ const AdminNoticiaForm = () => {
             {formData.image ? (
               <div className="flex flex-col sm:flex-row gap-4 bg-gray-50 p-4 border border-gray-300 rounded-lg items-center">
                 <img 
-                  src={formData.image.startsWith('http') ? formData.image : `http://localhost:5000${formData.image}`} 
+                  src={formData.image.startsWith('http') ? formData.image : `${API_URL}${formData.image}`} 
                   alt="Pré-visualização" 
                   className="w-32 h-20 object-cover rounded-md border border-gray-200"
                 />
                 <div className="flex-grow min-w-0 w-full">
                   <span className="block text-sm text-gray-600 truncate font-medium">Imagem selecionada</span>
                   <a 
-                    href={formData.image.startsWith('http') ? formData.image : `http://localhost:5000${formData.image}`} 
+                    href={formData.image.startsWith('http') ? formData.image : `${API_URL}${formData.image}`} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="text-xs text-blue-600 hover:underline"

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { API_URL } from '../api';
+import SafeHtml from '../components/SafeHtml';
 
 export default function CalendarioAcademico() {
   const [calendariosData, setCalendariosData] = useState([]);
@@ -8,7 +10,7 @@ export default function CalendarioAcademico() {
   useEffect(() => {
     const fetchCalendarios = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/calendarios');
+        const response = await fetch(`${API_URL}/api/calendarios`);
         const data = await response.json();
         setCalendariosData(data);
       } catch (error) {
@@ -118,9 +120,9 @@ export default function CalendarioAcademico() {
                     </div>
                     <div className="p-6 md:p-8">
                       {currentCalendar.description && (
-                        <div 
+                        <SafeHtml
                           className="text-gray-600 mb-8 leading-relaxed html-content prose prose-sm max-w-none"
-                          dangerouslySetInnerHTML={{ __html: currentCalendar.description }}
+                          html={currentCalendar.description}
                         />
                       )}
 
@@ -170,9 +172,9 @@ export default function CalendarioAcademico() {
                           </div>
                           <h3 className="font-bold text-gray-900 text-lg mb-2 leading-snug">{c.title}</h3>
                           {c.description && (
-                            <div 
+                            <SafeHtml
                               className="text-sm text-gray-500 mb-6 html-content prose prose-sm max-w-none"
-                              dangerouslySetInnerHTML={{ __html: c.description }}
+                              html={c.description}
                             />
                           )}
                         </div>

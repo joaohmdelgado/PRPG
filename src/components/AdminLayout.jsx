@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet, GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle, Book, Award } from 'lucide-react';
+import { LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet, GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle, Book, Award, File } from 'lucide-react';
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -96,6 +96,13 @@ const AdminLayout = () => {
           >
             <Award size={20} />
             <span>Bolsas</span>
+          </Link>
+          <Link 
+            to="/admin/paginas" 
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/paginas') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
+          >
+            <File size={20} />
+            <span>Páginas</span>
           </Link>
           
           {isSuperAdmin && (

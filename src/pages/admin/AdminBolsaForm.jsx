@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Search, X, Award, Calendar } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminBolsaForm = () => {
   const { id } = useParams();
@@ -30,7 +31,7 @@ const AdminBolsaForm = () => {
     const fetchData = async () => {
       try {
         // Carrega todos os usuários para vinculação
-        const usersResponse = await fetch('http://localhost:5000/api/users', {
+        const usersResponse = await fetch(`${API_URL}/api/users`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         
@@ -44,7 +45,7 @@ const AdminBolsaForm = () => {
         }
 
         // Carrega taxonomias para buscar tipo_bolsa
-        const taxResponse = await fetch('http://localhost:5000/api/taxonomias');
+        const taxResponse = await fetch(`${API_URL}/api/taxonomias`);
         if (taxResponse.ok) {
           const taxData = await taxResponse.json();
           setTiposBolsa(taxData.tipo_bolsa || []);
@@ -52,7 +53,7 @@ const AdminBolsaForm = () => {
 
         // Se estiver editando, busca os dados da bolsa
         if (isEditing) {
-          const response = await fetch(`http://localhost:5000/api/bolsas/${id}`);
+          const response = await fetch(`${API_URL}/api/bolsas/${id}`);
           if (response.ok) {
             const data = await response.json();
             setFormData({
@@ -159,8 +160,8 @@ const AdminBolsaForm = () => {
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/bolsas/${id}` 
-        : 'http://localhost:5000/api/bolsas';
+        ? `${API_URL}/api/bolsas/${id}` 
+        : `${API_URL}/api/bolsas`;
       
       const response = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',

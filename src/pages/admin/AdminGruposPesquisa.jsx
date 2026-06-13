@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Users } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminGruposPesquisa = () => {
   const [grupos, setGrupos] = useState([]);
@@ -10,7 +11,7 @@ const AdminGruposPesquisa = () => {
 
   const fetchGrupos = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/grupos-pesquisa', {
+      const response = await fetch(`${API_URL}/api/grupos-pesquisa`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -38,7 +39,7 @@ const AdminGruposPesquisa = () => {
     if (!window.confirm('Tem certeza que deseja remover este grupo de pesquisa?')) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/api/grupos-pesquisa/${id}`, {
+      const response = await fetch(`${API_URL}/api/grupos-pesquisa/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

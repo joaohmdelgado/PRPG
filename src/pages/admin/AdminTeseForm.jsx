@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Upload, FileText, Trash2, Search, X, BookOpen } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminTeseForm = () => {
   const { id } = useParams();
@@ -28,7 +29,7 @@ const AdminTeseForm = () => {
     const fetchData = async () => {
       try {
         // Carrega usuários/alunos do sistema
-        const usersResponse = await fetch('http://localhost:5000/api/users', {
+        const usersResponse = await fetch(`${API_URL}/api/users`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         });
         
@@ -44,7 +45,7 @@ const AdminTeseForm = () => {
 
         // Se estiver editando, busca os dados da tese/dissertação
         if (isEditing) {
-          const response = await fetch(`http://localhost:5000/api/teses-dissertacoes/${id}`);
+          const response = await fetch(`${API_URL}/api/teses-dissertacoes/${id}`);
           if (response.ok) {
             const data = await response.json();
             setFormData({
@@ -96,7 +97,7 @@ const AdminTeseForm = () => {
     fileData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:5000/api/upload', {
+      const response = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -171,8 +172,8 @@ const AdminTeseForm = () => {
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/teses-dissertacoes/${id}` 
-        : 'http://localhost:5000/api/teses-dissertacoes';
+        ? `${API_URL}/api/teses-dissertacoes/${id}` 
+        : `${API_URL}/api/teses-dissertacoes`;
       
       const response = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',
@@ -350,7 +351,7 @@ const AdminTeseForm = () => {
               <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
                 <FileText className="text-red-500 shrink-0" size={24} />
                 <a 
-                  href={formData.field_arquivo.startsWith('http') ? formData.field_arquivo : `http://localhost:5000${formData.field_arquivo}`} 
+                  href={formData.field_arquivo.startsWith('http') ? formData.field_arquivo : `${API_URL}${formData.field_arquivo}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"

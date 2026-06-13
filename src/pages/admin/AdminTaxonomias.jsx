@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Search } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminTaxonomias = () => {
   const [taxonomias, setTaxonomias] = useState({ entradas: [], linhas_pesquisa: [], subcategorias_resolucao: [], tipo_bolsa: [] });
@@ -21,7 +22,7 @@ const AdminTaxonomias = () => {
 
   const fetchTaxonomias = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/taxonomias');
+      const response = await fetch(`${API_URL}/api/taxonomias`);
       if (response.ok) {
         const data = await response.json();
         setTaxonomias({
@@ -40,7 +41,7 @@ const AdminTaxonomias = () => {
 
   const handleSave = async (updatedData) => {
     try {
-      const response = await fetch('http://localhost:5000/api/taxonomias', {
+      const response = await fetch(`${API_URL}/api/taxonomias`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

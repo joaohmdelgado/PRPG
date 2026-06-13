@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
+import { API_URL } from '../api';
 
 const getCampusId = (campusName) => {
   return campusName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -25,7 +26,7 @@ export default function ProgramasStrictoSensu() {
   useEffect(() => {
     const fetchProgramas = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/programas');
+        const response = await fetch(`${API_URL}/api/programas`);
         const data = await response.json();
         setAllProgramas(data);
       } catch (error) {

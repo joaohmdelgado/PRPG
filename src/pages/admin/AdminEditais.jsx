@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminEditais = () => {
   const [editais, setEditais] = useState([]);
@@ -9,7 +10,7 @@ const AdminEditais = () => {
 
   const fetchEditais = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/editais');
+      const response = await fetch(`${API_URL}/api/editais`);
       const data = await response.json();
       setEditais(data);
     } catch (error) {
@@ -26,7 +27,7 @@ const AdminEditais = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este edital?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/editais/${id}`, {
+        const response = await fetch(`${API_URL}/api/editais/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`

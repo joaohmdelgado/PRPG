@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, Book, FileText } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminDisciplinasList = () => {
   const [disciplinas, setDisciplinas] = useState([]);
@@ -10,7 +11,7 @@ const AdminDisciplinasList = () => {
 
   const fetchDisciplinas = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/disciplinas');
+      const response = await fetch(`${API_URL}/api/disciplinas`);
       if (response.ok) {
         const data = await response.json();
         setDisciplinas(data);
@@ -29,7 +30,7 @@ const AdminDisciplinasList = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir esta disciplina?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/disciplinas/${id}`, {
+        const response = await fetch(`${API_URL}/api/disciplinas/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -139,7 +140,7 @@ const AdminDisciplinasList = () => {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {item.field_ementa ? (
                     <a
-                      href={item.field_ementa.startsWith('http') ? item.field_ementa : `http://localhost:5000${item.field_ementa}`}
+                      href={item.field_ementa.startsWith('http') ? item.field_ementa : `${API_URL}${item.field_ementa}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-red-600 hover:text-red-800 inline-flex items-center gap-1.5 font-medium hover:underline"

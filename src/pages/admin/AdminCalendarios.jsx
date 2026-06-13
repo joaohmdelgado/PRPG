@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Calendar } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminCalendarios = () => {
   const [calendarios, setCalendarios] = useState([]);
@@ -9,7 +10,7 @@ const AdminCalendarios = () => {
 
   const fetchCalendarios = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/calendarios');
+      const response = await fetch(`${API_URL}/api/calendarios`);
       const data = await response.json();
       setCalendarios(data);
     } catch (error) {
@@ -26,7 +27,7 @@ const AdminCalendarios = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este calendário?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/calendarios/${id}`, {
+        const response = await fetch(`${API_URL}/api/calendarios/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`

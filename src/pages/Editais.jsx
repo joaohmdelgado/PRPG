@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { API_URL } from '../api';
+import SafeHtml from '../components/SafeHtml';
 
 export default function Editais() {
   const [search, setSearch] = useState("");
@@ -11,7 +13,7 @@ export default function Editais() {
   useEffect(() => {
     const fetchEditais = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/editais');
+        const response = await fetch(`${API_URL}/api/editais`);
         const data = await response.json();
         
         const grouped = {
@@ -41,10 +43,16 @@ export default function Editais() {
               return d;
             };
 
+            const formattedPeriodo = edital.field_periodo ? {
+              data_inicio: formatDate(edital.field_periodo.data_inicio),
+              data_fim: formatDate(edital.field_periodo.data_fim)
+            } : null;
+
             grouped[edital.categoryId].items.push({
               ...edital,
               publishedAt: formatDate(edital.publishedAt),
               deadline: formatDate(edital.deadline),
+              field_periodo: formattedPeriodo,
               borderClass,
               badgeClass
             });
@@ -68,7 +76,7 @@ export default function Editais() {
     if (link.startsWith('http://') || link.startsWith('https://') || link.startsWith('#')) {
       return link;
     }
-    return `http://localhost:5000${link}`;
+    return `${API_URL}${link}`;
   };
 
   const filteredData = editaisData.map(section => {
@@ -276,16 +284,20 @@ export default function Editais() {
                                   <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-md">
                                     <i className="fa-regular fa-calendar mr-1"></i> Publicado em: {edital.publishedAt}
                                   </span>
-                                  {edital.deadline && (
+                                  {edital.field_periodo && edital.field_periodo.data_inicio && edital.field_periodo.data_fim ? (
+                                    <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-md">
+                                      <i className="fa-regular fa-clock mr-1"></i> Inscrições: {edital.field_periodo.data_inicio} a {edital.field_periodo.data_fim}
+                                    </span>
+                                  ) : edital.deadline ? (
                                     <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-md">
                                       <i className="fa-regular fa-clock mr-1"></i> Inscrições até: {edital.deadline}
                                     </span>
-                                  )}
+                                  ) : null}
                                 </div>
                                 <h3 className="font-heading font-bold text-xl md:text-2xl text-ufrpe-blue hover:text-ufrpe-yellow transition-colors leading-tight mb-2">
                                   <Link to={`/editais/${edital.id}`}>{edital.title}</Link>
                                 </h3>
-                                <div className="text-gray-600 text-sm prose prose-sm max-w-none html-content mb-4" dangerouslySetInnerHTML={{ __html: edital.description }} />
+                                <SafeHtml className="text-gray-600 text-sm prose prose-sm max-w-none html-content mb-4" html={edital.description} />
 
                                 {/* Documentos Relacionados */}
                                 {(edital.resultadoParcial || edital.resultadoFinal || (edital.erratas && edital.erratas.length > 0)) && (

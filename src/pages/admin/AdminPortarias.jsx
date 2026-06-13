@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, FileCheck, Eye } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const AdminPortarias = () => {
   const [portarias, setPortarias] = useState([]);
@@ -10,7 +11,7 @@ const AdminPortarias = () => {
 
   const fetchPortarias = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/portarias', {
+      const response = await fetch(`${API_URL}/api/portarias`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -40,7 +41,7 @@ const AdminPortarias = () => {
     if (!window.confirm('Tem certeza que deseja remover esta portaria?')) return;
     
     try {
-      const response = await fetch(`http://localhost:5000/api/portarias/${id}`, {
+      const response = await fetch(`${API_URL}/api/portarias/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -129,7 +130,7 @@ const AdminPortarias = () => {
                   <td className="px-6 py-4 text-sm font-medium text-right flex justify-end gap-3 items-center">
                     {item.downloadLink && (
                       <a 
-                        href={`http://localhost:5000${item.downloadLink}`}
+                        href={`${API_URL}${item.downloadLink}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-gray-500 hover:text-blue-600 transition-colors"

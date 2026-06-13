@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { API_URL } from '../api';
+import SafeHtml from '../components/SafeHtml';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -17,7 +19,7 @@ export default function Edital() {
   useEffect(() => {
     const fetchEdital = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/editais/${id}`);
+        const response = await fetch(`${API_URL}/api/editais/${id}`);
         if (response.ok) {
           const data = await response.json();
           setEdital(data);
@@ -38,7 +40,7 @@ export default function Edital() {
     if (link.startsWith('http://') || link.startsWith('https://') || link.startsWith('#')) {
       return link;
     }
-    return `http://localhost:5000${link}`;
+    return `${API_URL}${link}`;
   };
 
   const getSituationBadge = (situation) => {
@@ -138,9 +140,9 @@ export default function Edital() {
                 <h2 className="text-xl font-bold text-ufrpe-blue mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
                   <i className="fa-solid fa-file-lines text-ufrpe-yellow"></i> Descrição / Detalhes do Edital
                 </h2>
-                <div 
+                <SafeHtml
                   className="text-gray-700 leading-relaxed html-content prose prose-blue max-w-none"
-                  dangerouslySetInnerHTML={{ __html: edital.description }} 
+                  html={edital.description}
                 />
               </div>
 
@@ -265,11 +267,24 @@ export default function Edital() {
                         <span className="text-gray-700 font-bold">{formatDate(edital.publishedAt)}</span>
                       </div>
                     )}
-                    {edital.deadline && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-50">
-                        <span className="text-gray-400 font-medium">Inscrições até</span>
-                        <span className="text-red-600 font-bold">{formatDate(edital.deadline)}</span>
-                      </div>
+                    {edital.field_periodo && edital.field_periodo.data_inicio && edital.field_periodo.data_fim ? (
+                      <>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                          <span className="text-gray-400 font-medium">Início das Inscrições</span>
+                          <span className="text-gray-700 font-bold">{formatDate(edital.field_periodo.data_inicio)}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                          <span className="text-gray-400 font-medium">Fim das Inscrições</span>
+                          <span className="text-red-600 font-bold">{formatDate(edital.field_periodo.data_fim)}</span>
+                        </div>
+                      </>
+                    ) : (
+                      edital.deadline && (
+                        <div className="flex justify-between items-center py-2 border-b border-gray-50">
+                          <span className="text-gray-400 font-medium">Inscrições até</span>
+                          <span className="text-red-600 font-bold">{formatDate(edital.deadline)}</span>
+                        </div>
+                      )
                     )}
                     {edital.numero && (
                       <div className="flex justify-between items-center py-2 border-b border-gray-50">

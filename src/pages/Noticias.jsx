@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { API_URL } from '../api';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -27,7 +28,7 @@ export default function Noticias() {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/news');
+        const response = await fetch(`${API_URL}/api/news`);
         const data = await response.json();
         setNoticiasData(data);
       } catch (error) {
@@ -223,7 +224,7 @@ export default function Noticias() {
                 <div key={item.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 flex flex-col h-full">
                   <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-200">
                     <img
-                      src={item.image?.startsWith('http') ? item.image : `http://localhost:5000${item.image}`}
+                      src={item.image?.startsWith('http') ? item.image : `${API_URL}${item.image}`}
                       alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                     />

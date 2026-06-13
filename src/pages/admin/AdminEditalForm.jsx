@@ -1,18 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Upload, FileText, Trash2 } from 'lucide-react';
+import { ArrowLeft, Upload, FileText, Trash2, Calendar } from 'lucide-react';
+import { API_URL } from '../../api';
 
 const CATEGORIES = {
   'mestrado-doutorado': 'Mestrado e Doutorado',
   'especializacao': 'Especialização',
   'residencia': 'Residência',
   'internacionalizacao': 'Internacionalização'
-};
-
-const SITUATIONS = {
-  'abertas': 'Inscrições Abertas',
-  'andamento': 'Em Andamento',
-  'concluido': 'Concluído'
 };
 
 const AdminEditalForm = () => {
@@ -23,8 +18,11 @@ const AdminEditalForm = () => {
   const [formData, setFormData] = useState({
     categoryId: '',
     title: '',
-    situation: '',
     publishedAt: '',
+    field_periodo: {
+      data_inicio: '',
+      data_fim: ''
+    },
     deadline: '',
     description: '',
     downloadLink: '',
@@ -101,7 +99,7 @@ const AdminEditalForm = () => {
     if (isEditing) {
       const fetchEdital = async () => {
         try {
-          const response = await fetch(`http://localhost:5000/api/editais/${id}`);
+          const response = await fetch(`${API_URL}/api/editais/${id}`);
           if (response.ok) {
             const data = await response.json();
             const desc = data.description || '';
@@ -110,8 +108,11 @@ const AdminEditalForm = () => {
             setFormData({
               categoryId: data.categoryId || '',
               title: data.title || '',
-              situation: data.situation || '',
               publishedAt: data.publishedAt || '',
+              field_periodo: data.field_periodo || {
+                data_inicio: data.publishedAt || '',
+                data_fim: data.deadline || ''
+              },
               deadline: data.deadline || '',
               description: desc,
               downloadLink: data.downloadLink || '',
@@ -144,6 +145,17 @@ const AdminEditalForm = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handlePeriodChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      field_periodo: {
+        ...prev.field_periodo,
+        [name]: value
+      }
+    }));
+  };
+
   const handleFileUpload = async (file, fieldName, errataIndex = null) => {
     const fieldKey = errataIndex !== null ? `erratas-${errataIndex}` : fieldName;
     setUploadingFields(prev => ({ ...prev, [fieldKey]: true }));
@@ -152,7 +164,7 @@ const AdminEditalForm = () => {
     fileData.append('file', file);
 
     try {
-      const response = await fetch('http://localhost:5000/api/upload', {
+      const response = await fetch(`${API_URL}/api/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -217,24 +229,32 @@ const AdminEditalForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (formData.field_periodo.data_inicio && formData.field_periodo.data_fim) {
+      if (new Date(formData.field_periodo.data_inicio) > new Date(formData.field_periodo.data_fim)) {
+        setError('A data de início não pode ser posterior à data de término do período de inscrições.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    }
+
     setLoading(true);
     
     // Calcula os labels e ano
     const categoryTitle = CATEGORIES[formData.categoryId] || '';
-    const situationLabel = SITUATIONS[formData.situation] || '';
     const yearVal = formData.year ? parseInt(formData.year, 10) : (formData.publishedAt ? parseInt(formData.publishedAt.split('-')[0], 10) : new Date().getFullYear());
 
     const payload = {
       ...formData,
+      deadline: formData.field_periodo.data_fim, // mantém compatibilidade
       year: yearVal,
-      categoryTitle,
-      situationLabel
+      categoryTitle
     };
 
     try {
       const url = isEditing 
-        ? `http://localhost:5000/api/editais/${id}` 
-        : 'http://localhost:5000/api/editais';
+        ? `${API_URL}/api/editais/${id}` 
+        : `${API_URL}/api/editais`;
       
       const method = isEditing ? 'PUT' : 'POST';
 
@@ -296,7 +316,7 @@ const AdminEditalForm = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
             <select
               name="categoryId"
               value={formData.categoryId}
@@ -306,22 +326,6 @@ const AdminEditalForm = () => {
             >
               <option value="">Selecione uma categoria</option>
               {Object.entries(CATEGORIES).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Situação</label>
-            <select
-              name="situation"
-              value={formData.situation}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
-            >
-              <option value="">Selecione a situação</option>
-              {Object.entries(SITUATIONS).map(([val, label]) => (
                 <option key={val} value={val}>{label}</option>
               ))}
             </select>
@@ -352,7 +356,7 @@ const AdminEditalForm = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Data de Publicação</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Data de Publicação do Edital (Nó) *</label>
             <input
               type="date"
               name="publishedAt"
@@ -363,15 +367,35 @@ const AdminEditalForm = () => {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Data de Encerramento (Opcional)</label>
-            <input
-              type="date"
-              name="deadline"
-              value={formData.deadline}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-            />
+          <div className="md:col-span-2 border border-gray-200 rounded-lg p-4 bg-gray-50/50">
+            <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-4">
+              <Calendar size={16} className="text-gray-500" />
+              Período de Inscrição (data de início e fim)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Data de Início *</label>
+                <input
+                  type="date"
+                  name="data_inicio"
+                  value={formData.field_periodo?.data_inicio || ''}
+                  onChange={handlePeriodChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 bg-white rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Data de Término *</label>
+                <input
+                  type="date"
+                  name="data_fim"
+                  value={formData.field_periodo?.data_fim || ''}
+                  onChange={handlePeriodChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 bg-white rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="md:col-span-2">
@@ -380,7 +404,7 @@ const AdminEditalForm = () => {
               <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
                 <FileText className="text-red-500 shrink-0" size={24} />
                 <a 
-                  href={formData.downloadLink.startsWith('http') ? formData.downloadLink : `http://localhost:5000${formData.downloadLink}`} 
+                  href={formData.downloadLink.startsWith('http') ? formData.downloadLink : `${API_URL}${formData.downloadLink}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"
@@ -434,7 +458,7 @@ const AdminEditalForm = () => {
               <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
                 <FileText className="text-red-500 shrink-0" size={24} />
                 <a 
-                  href={`http://localhost:5000${formData.resultadoParcial}`} 
+                  href={`${API_URL}${formData.resultadoParcial}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"
@@ -487,7 +511,7 @@ const AdminEditalForm = () => {
               <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
                 <FileText className="text-red-500 shrink-0" size={24} />
                 <a 
-                  href={`http://localhost:5000${formData.resultadoFinal}`} 
+                  href={`${API_URL}${formData.resultadoFinal}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"
@@ -569,7 +593,7 @@ const AdminEditalForm = () => {
                         <div className="flex items-center gap-3 bg-white px-3 py-2 border border-gray-300 rounded-md text-sm">
                           <FileText className="text-red-500 shrink-0" size={20} />
                           <a 
-                            href={`http://localhost:5000${errata.downloadLink}`} 
+                            href={`${API_URL}${errata.downloadLink}`} 
                             target="_blank" 
                             rel="noopener noreferrer" 
                             className="text-blue-600 hover:underline truncate flex-grow font-medium"
