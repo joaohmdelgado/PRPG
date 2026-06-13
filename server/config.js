@@ -13,3 +13,23 @@ if (!JWT_SECRET || JWT_SECRET.length < 16) {
   );
   process.exit(1);
 }
+
+export const NODE_ENV = process.env.NODE_ENV || 'development';
+export const IS_PRODUCTION = NODE_ENV === 'production';
+
+// Lista de origens autorizadas a consumir a API via navegador (CORS).
+// Definida em CORS_ORIGINS como valores separados por vírgula, ex.:
+//   CORS_ORIGINS=https://prpg.ufrpe.br,https://www.prpg.ufrpe.br
+export const CORS_ORIGINS = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+// Em produção, uma allowlist vazia bloquearia todo acesso cross-origin.
+// Avisamos para que o operador não descubra isso só quando o site quebrar.
+if (IS_PRODUCTION && CORS_ORIGINS.length === 0) {
+  console.warn(
+    '[Aviso] NODE_ENV=production sem CORS_ORIGINS definido: requisições ' +
+    'cross-origin do navegador serão bloqueadas. Defina CORS_ORIGINS no .env.'
+  );
+}

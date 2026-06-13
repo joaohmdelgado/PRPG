@@ -4,6 +4,7 @@ import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import adminRoutes from './routes/adminRoutes.js';
+import { IS_PRODUCTION, CORS_ORIGINS } from './config.js';
 
 dotenv.config();
 
@@ -13,7 +14,19 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// CORS: em produção, libera apenas as origens da allowlist (CORS_ORIGINS).
+// Em desenvolvimento, libera qualquer origem para facilitar o trabalho local.
+// Requisições sem header Origin (curl, same-origin, apps) são sempre aceitas.
+const corsOptions = {
+  origin(origin, callback) {
+    const allowed = !origin || !IS_PRODUCTION || CORS_ORIGINS.includes(origin);
+    // callback(null, false) apenas omite os cabeçalhos CORS (o navegador
+    // bloqueia a leitura) — evita responder 500 e poluir o log com stack.
+    callback(null, allowed);
+  },
+};
+
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '2mb' }));
 
 // Servir a pasta de uploads de forma estática
