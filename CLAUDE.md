@@ -10,7 +10,8 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 
 - **Frontend**: React 19 + React Router, Vite, TailwindCSS
 - **Backend**: Express.js
-- **Data Storage**: JSON files (no database)
+- **Data Storage**: PostgreSQL (relational schema). Runs via Docker Compose. The
+  legacy JSON files in `server/data/` are now only the migration seed/source.
 - **Authentication**: JWT tokens with role-based access control
 - **File Uploads**: Multer (PDF and image support)
 
@@ -23,6 +24,14 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 | `npm run dev:server` | Run Express server on port 5000 only |
 | `npm run build` | Build production bundle with Vite |
 | `npm run lint` | TypeScript type checking (no emit) |
+| `npm run db:up` | Start the PostgreSQL container (Docker Compose) |
+| `npm run db:down` | Stop the PostgreSQL container |
+| `npm run db:migrate` | (Re)create rows in the DB from the JSON seed files (TRUNCATEs first) |
+
+**First-time setup**: `npm install` → `npm run db:up` → apply schema
+(`docker exec -i prpg-postgres psql -U prpg -d prpg < server/db/schema.sql`) →
+`npm run db:migrate` → `npm run dev`. Requires a `.env` with `JWT_SECRET` and
+`DATABASE_URL` (see `.env.example`).
 
 **Development URL**: http://localhost:3000  
 **API Base URL**: http://localhost:5000/api
@@ -138,14 +147,18 @@ Most content items use:
 
 ## Environment Configuration
 
-Create `.env` file in project root with:
+Create `.env` file in project root (see `.env.example`):
 ```
 PORT=5000
-JWT_SECRET=your-secret-key
-GEMINI_API_KEY=your-gemini-api-key  # Optional, for AI features
+JWT_SECRET=<long random string, min 16 chars>   # server refuses to boot without it
+DATABASE_URL=postgres://prpg:prpg@localhost:5433/prpg
+VITE_API_URL=                                    # prod only; empty uses localhost:5000
+NODE_ENV=development                             # production restricts CORS
+CORS_ORIGINS=                                    # comma-separated allowlist (prod)
 ```
 
-The `GEMINI_API_KEY` is injected into frontend via Vite's `define` config.
+`JWT_SECRET` and `DATABASE_URL` are required — the server exits at boot if either
+is missing. `VITE_API_URL` is read by the frontend (`src/api.js`) at build time.
 
 ## Admin Panel Navigation
 
@@ -168,7 +181,17 @@ Access at `/admin/login`. Main sections in sidebar:
 
 ## Important Implementation Notes
 
-1. **No Database**: All data is stored in JSON files. When multiple instances run simultaneously, concurrent writes to the same file could cause data loss. This is acceptable for current usage but would need a proper database for high-concurrency scenarios.
+1. **Database layer**: Data lives in PostgreSQL. The data-access layer is in `server/db/`:
+   - `pool.js`: shared `pg` connection pool (`query()` helper).
+   - `schema.sql`: full relational schema (one table per content type; child tables
+     `calendario_milestones`; relational set `programas`/`pessoas`/`modalidades`/`vinculos`).
+   - `repository.js`: generic CRUD factory (`createRepository`) for single-table entities.
+   - `repositories.js`: per-entity repos with `fromRow`/`toRow` mappers that convert
+     between DB snake_case columns and the camelCase JSON the frontend expects.
+   - `migrate.mjs`: seeds the DB from the JSON files.
+   Controllers are thin: they call a repo and keep validation/sanitization/slug/status logic.
+   A few genuinely free-form nested objects are stored as JSONB (`editais.erratas`,
+   `grupos_pesquisa.field_lideres`, `users.perfil_aluno`/`perfil_professor`).
 
 2. **ID Generation**: IDs are typically slug-based (derived from title) rather than UUIDs. Look at individual controllers for their specific ID generation strategy.
 
