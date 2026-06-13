@@ -27,6 +27,8 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 | `npm run db:up` | Start the PostgreSQL container (Docker Compose) |
 | `npm run db:down` | Stop the PostgreSQL container |
 | `npm run db:migrate` | (Re)create rows in the DB from the JSON seed files (TRUNCATEs first) |
+| `npm test` | Run the Vitest suite (needs `npm run db:up`; uses an isolated `prpg_test` DB) |
+| `npm run test:watch` | Vitest in watch mode |
 
 **First-time setup**: `npm install` → `npm run db:up` → apply schema
 (`docker exec -i prpg-postgres psql -U prpg -d prpg < server/db/schema.sql`) →
@@ -178,6 +180,19 @@ Access at `/admin/login`. Main sections in sidebar:
 - Grupos de Pesquisa (Admin only)
 - Usuários (User management, Admin only)
 - Taxonomias (Category management, Admin only)
+
+## Testing
+
+- **Vitest + supertest**. Tests live in `server/__tests__/`.
+- The Express app is split: `server/app.js` exports the configured `app` (no
+  `listen`), and `server/index.js` does the DB boot check + `listen`. Tests
+  import `app.js` directly via supertest.
+- `globalSetup.js` drops/recreates an isolated `prpg_test` database and applies
+  `schema.sql`; `helpers.js` truncates tables and seeds an admin before each test.
+  The dev database (`prpg`) is never touched.
+- Coverage: auth, input validation, HTML sanitization (unit + integration),
+  news CRUD, editais status calc, pages slug generation, taxonomias.
+- Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes
 
