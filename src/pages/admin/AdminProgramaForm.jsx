@@ -24,7 +24,21 @@ const MODALIDADE_TIPOS = [
 const NOTAS_CAPES = ['1', '2', '3', '4', '5', '6', '7', 'A'];
 
 const emptyPessoa = {
-  pessoa_id: '', nome: '', cpf: '', siape: '', email_institucional: '', telefones: '', portaria_id: '', portaria: '', data_vencimento: '', email_funcao: '', endereco: ''
+  pessoa_id: '', nome: '', cpf: '', siape: '', email_institucional: '', telefones: '', portaria_id: '', portaria: '', data_vencimento: '', data_inicio_mandato: '', email_funcao: '', endereco: ''
+};
+
+const MOTIVO_LABELS = {
+  FIM_MANDATO: 'Fim de mandato',
+  RENUNCIA: 'Renúncia',
+  AFASTADO: 'Afastamento',
+  APOSENTADO: 'Aposentadoria',
+  EXONERADO: 'Exoneração',
+};
+
+const formatMandato = (inicio, fim) => {
+  const fmt = (d) => (d ? new Date(d).toLocaleDateString('pt-BR', { month: '2-digit', year: 'numeric', timeZone: 'UTC' }) : '—');
+  if (!inicio && !fim) return '';
+  return `${fmt(inicio)} – ${fmt(fim)}`;
 };
 
 const STATUS_OPTIONS = [
@@ -563,10 +577,16 @@ const AdminProgramaForm = () => {
           </div>
           
           {sectionName === 'coordenador_atual' && (
-            <div>
-              <label className="block text-sm font-medium mb-1">Vencimento do Mandato</label>
-              <input type="date" name="data_vencimento" value={data.data_vencimento} onChange={e => handleChange(e, sectionName)} className="w-full border p-2 rounded text-sm" />
-            </div>
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">Início do Mandato</label>
+                <input type="date" name="data_inicio_mandato" value={data.data_inicio_mandato || ''} onChange={e => handleChange(e, sectionName)} className="w-full border p-2 rounded text-sm" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Vencimento do Mandato</label>
+                <input type="date" name="data_vencimento" value={data.data_vencimento || ''} onChange={e => handleChange(e, sectionName)} className="w-full border p-2 rounded text-sm" />
+              </div>
+            </>
           )}
           
           {sectionName === 'secretaria' && (
@@ -584,6 +604,22 @@ const AdminProgramaForm = () => {
     <div className="space-y-6">
       {renderPessoaForm('coordenador_atual', 'Coordenador(a) Atual (Obrigatório)')}
       {renderPessoaForm('substituto', 'Substituto Eventual / Vice (Opcional)')}
+      {isEditing && Array.isArray(formData.historico_coordenadores) && formData.historico_coordenadores.length > 0 && (
+        <div className="pt-4">
+          <h3 className="text-lg font-medium border-b pb-2">Histórico de Coordenadores</h3>
+          <ul className="mt-3 border rounded divide-y">
+            {formData.historico_coordenadores.map((h, i) => (
+              <li key={i} className="px-4 py-2.5 text-sm flex flex-wrap justify-between items-center gap-2">
+                <span className="font-medium text-gray-800">{h.nome || '—'}</span>
+                <span className="text-xs text-gray-500">
+                  {formatMandato(h.data_inicio_mandato, h.data_fim_mandato) || 'Período não informado'}
+                  {h.motivo_encerramento ? ` · ${MOTIVO_LABELS[h.motivo_encerramento] || h.motivo_encerramento}` : ''}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 

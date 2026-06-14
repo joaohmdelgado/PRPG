@@ -129,7 +129,9 @@ export const getProgramaById = async (req, res) => {
       }
     });
 
-    historico_coordenadores.sort((a, b) => new Date(b.criado_em) - new Date(a.criado_em));
+    // Ordena por início de mandato (mais recente primeiro); cai para criado_em quando ausente.
+    const histKey = (x) => String(x.data_inicio_mandato || x.criado_em || '').slice(0, 10);
+    historico_coordenadores.sort((a, b) => histKey(b).localeCompare(histKey(a)));
 
     res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, historico_coordenadores });
   } catch (error) {
@@ -153,15 +155,26 @@ const handlePessoaVinculo = async (payloadData, papel, programa_id) => {
     data_vencimento: payloadData.data_vencimento || null,
     email_funcao: payloadData.email_funcao || '',
     endereco: papel === 'TAE' ? (payloadData.endereco || '') : null,
+    data_inicio_mandato: payloadData.data_inicio_mandato || null,
   };
 
   if (existing && papel === 'COORDENADOR_ATUAL' && existing.pessoa_id !== pessoaId) {
-    await query("UPDATE vinculos SET ativo = FALSE, papel = 'COORDENADOR_ANTERIOR' WHERE id = $1", [existing.id]);
+    // Encerra o mandato do coordenador anterior (preserva valores já gravados).
+    const hoje = new Date().toISOString().slice(0, 10);
+    await query(
+      `UPDATE vinculos SET ativo = FALSE, papel = 'COORDENADOR_ANTERIOR',
+         data_fim_mandato = COALESCE(data_fim_mandato, $2),
+         motivo_encerramento = COALESCE(motivo_encerramento, 'FIM_MANDATO')
+       WHERE id = $1`,
+      [existing.id, hoje]
+    );
     await insertVinculo(programa_id, pessoaId, papel, props);
   } else if (existing) {
     await query(
-      `UPDATE vinculos SET pessoa_id=$1, portaria_id=$2, portaria=$3, data_vencimento=$4, email_funcao=$5, endereco=$6 WHERE id=$7`,
-      [pessoaId, props.portaria_id, props.portaria, props.data_vencimento, props.email_funcao, props.endereco, existing.id]
+      `UPDATE vinculos SET pessoa_id=$1, portaria_id=$2, portaria=$3, data_vencimento=$4, email_funcao=$5, endereco=$6,
+         data_inicio_mandato=COALESCE($7, data_inicio_mandato) WHERE id=$8`,
+      [pessoaId, props.portaria_id, props.portaria, props.data_vencimento, props.email_funcao, props.endereco,
+       props.data_inicio_mandato, existing.id]
     );
   } else {
     await insertVinculo(programa_id, pessoaId, papel, props);
@@ -170,10 +183,10 @@ const handlePessoaVinculo = async (payloadData, papel, programa_id) => {
 
 const insertVinculo = (programa_id, pessoaId, papel, props) =>
   query(
-    `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, portaria_id, portaria, data_vencimento, email_funcao, endereco, ativo, criado_em)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,TRUE,$10)`,
+    `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, portaria_id, portaria, data_vencimento, email_funcao, endereco, data_inicio_mandato, ativo, criado_em)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,TRUE,$11)`,
     [crypto.randomUUID(), programa_id, pessoaId, papel, props.portaria_id, props.portaria,
-     props.data_vencimento, props.email_funcao, props.endereco, new Date().toISOString()]
+     props.data_vencimento, props.email_funcao, props.endereco, props.data_inicio_mandato || null, new Date().toISOString()]
   );
 
 const replaceModalidades = async (programa_id, modalidades) => {

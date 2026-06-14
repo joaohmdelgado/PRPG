@@ -170,6 +170,10 @@ CREATE TABLE IF NOT EXISTS vinculos (
   data_vencimento TEXT,
   email_funcao    TEXT,
   endereco        TEXT,
+  -- Fase 2: período do mandato e motivo de encerramento (datas como TEXT 'YYYY-MM-DD').
+  data_inicio_mandato TEXT,
+  data_fim_mandato    TEXT,
+  motivo_encerramento TEXT, -- FIM_MANDATO|RENUNCIA|AFASTADO|APOSENTADO|EXONERADO
   ativo           BOOLEAN DEFAULT TRUE,
   criado_em       TIMESTAMPTZ DEFAULT now()
 );

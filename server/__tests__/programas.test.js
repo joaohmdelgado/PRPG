@@ -124,6 +124,51 @@ describe('programas — Fase 1: status, contato e documentos', () => {
   });
 });
 
+describe('programas — Fase 2: mandato e histórico', () => {
+  it('grava o início de mandato do coordenador atual', async () => {
+    const id = await createPrograma({
+      coordenador_atual: { pessoa_id: 'coord-a', portaria: 'P1', data_inicio_mandato: '2022-05-10' },
+    });
+    const res = await auth(request(app).get(`/api/programas/${id}`));
+    expect(res.body.coordenador_atual.data_inicio_mandato).toBe('2022-05-10');
+  });
+
+  it('ao trocar coordenador, o anterior recebe fim de mandato e motivo', async () => {
+    const id = await createPrograma({
+      coordenador_atual: { pessoa_id: 'coord-a', portaria: 'P1', data_inicio_mandato: '2020-01-01' },
+    });
+    await auth(request(app).put(`/api/programas/${id}`)).send({
+      coordenador_atual: { pessoa_id: 'coord-b', portaria: 'P2', data_inicio_mandato: '2024-01-01' },
+    });
+
+    const res = await auth(request(app).get(`/api/programas/${id}`));
+    expect(res.body.coordenador_atual.pessoa_id).toBe('coord-b');
+    expect(res.body.coordenador_atual.data_inicio_mandato).toBe('2024-01-01');
+    expect(res.body.historico_coordenadores).toHaveLength(1);
+    const prev = res.body.historico_coordenadores[0];
+    expect(prev.pessoa_id).toBe('coord-a');
+    expect(prev.data_fim_mandato).toBeTruthy();
+    expect(prev.motivo_encerramento).toBe('FIM_MANDATO');
+  });
+
+  it('ordena o histórico por início de mandato (mais recente primeiro)', async () => {
+    const id = await createPrograma({
+      coordenador_atual: { pessoa_id: 'coord-a', portaria: 'P1', data_inicio_mandato: '2018-01-01' },
+    });
+    await auth(request(app).put(`/api/programas/${id}`)).send({
+      coordenador_atual: { pessoa_id: 'coord-b', portaria: 'P2', data_inicio_mandato: '2021-01-01' },
+    });
+    await auth(request(app).put(`/api/programas/${id}`)).send({
+      coordenador_atual: { pessoa_id: 'coord-a', portaria: 'P3', data_inicio_mandato: '2024-01-01' },
+    });
+
+    const res = await auth(request(app).get(`/api/programas/${id}`));
+    expect(res.body.historico_coordenadores).toHaveLength(2);
+    expect(res.body.historico_coordenadores[0].data_inicio_mandato).toBe('2021-01-01');
+    expect(res.body.historico_coordenadores[1].data_inicio_mandato).toBe('2018-01-01');
+  });
+});
+
 describe('programas — exclusão em cascata', () => {
   it('remove modalidades e vínculos junto com o programa', async () => {
     const id = await createPrograma();
