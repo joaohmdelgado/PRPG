@@ -17,7 +17,7 @@ export const createCalendario = async (req, res) => {
   if (data.description) data.description = sanitizeHtml(data.description);
   if (!data.id) data.id = 'cal-' + Date.now().toString();
   try {
-    const created = await calendariosRepo.create(data);
+    const created = await calendariosRepo.create(data, req.user?.id);
     // Garante que apenas um calendário seja o corrente.
     if (created.isCurrent) await calendariosRepo.unsetCurrentExcept(created.id);
     res.status(201).json(created);
@@ -30,7 +30,7 @@ export const updateCalendario = async (req, res) => {
   if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
   const data = { ...req.body };
   if (data.description) data.description = sanitizeHtml(data.description);
-  const updated = await calendariosRepo.update(req.params.id, data);
+  const updated = await calendariosRepo.update(req.params.id, data, req.user?.id);
   if (!updated) return res.status(404).json({ message: 'Calendário não encontrado' });
   if (updated.isCurrent) await calendariosRepo.unsetCurrentExcept(updated.id);
   res.json(updated);

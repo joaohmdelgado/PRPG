@@ -19,7 +19,7 @@ export const createResolucao = async (req, res) => {
   if (data.desc) data.desc = sanitizeHtml(data.desc);
   if (!data.id) data.id = 'res-' + Date.now().toString();
   try {
-    res.status(201).json(await resolucoesRepo.create(data));
+    res.status(201).json(await resolucoesRepo.create(data, req.user?.id));
   } catch (e) {
     res.status(500).json({ message: 'Erro ao criar resolução.', error: e.message });
   }
@@ -31,7 +31,7 @@ export const updateResolucao = async (req, res) => {
   }
   const data = { ...req.body };
   if (data.desc) data.desc = sanitizeHtml(data.desc);
-  const updated = await resolucoesRepo.update(req.params.id, data);
+  const updated = await resolucoesRepo.update(req.params.id, data, req.user?.id);
   if (updated) res.json(updated);
   else res.status(404).json({ message: 'Resolução não encontrada' });
 };

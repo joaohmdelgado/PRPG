@@ -19,7 +19,7 @@ export const createFormulario = async (req, res) => {
   if (data.desc) data.desc = sanitizeHtml(data.desc);
   if (!data.id) data.id = 'form-' + Date.now().toString();
   try {
-    res.status(201).json(await formulariosRepo.create(data));
+    res.status(201).json(await formulariosRepo.create(data, req.user?.id));
   } catch (e) {
     res.status(500).json({ message: 'Erro ao criar formulário.', error: e.message });
   }
@@ -31,7 +31,7 @@ export const updateFormulario = async (req, res) => {
   }
   const data = { ...req.body };
   if (data.desc) data.desc = sanitizeHtml(data.desc);
-  const updated = await formulariosRepo.update(req.params.id, data);
+  const updated = await formulariosRepo.update(req.params.id, data, req.user?.id);
   if (updated) res.json(updated);
   else res.status(404).json({ message: 'Formulário não encontrado' });
 };

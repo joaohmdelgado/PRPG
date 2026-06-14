@@ -248,3 +248,22 @@ CREATE TABLE IF NOT EXISTS taxonomias (
   chave   TEXT PRIMARY KEY,
   valores TEXT[] DEFAULT '{}'
 );
+
+-- ===================== Auditoria (Fase 3) =========================
+-- criado_por / atualizado_por (id do usuário) em todas as entidades de
+-- conteúdo. Bloco idempotente: vale para instalações novas, testes e
+-- bancos já existentes (espelhado em server/db/migrations).
+ALTER TABLE news               ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE editais            ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE resolucoes         ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE formularios        ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE calendarios        ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE portarias          ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE grupos_pesquisa    ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE teses_dissertacoes ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE faq                ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE disciplinas        ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE bolsas             ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE pages              ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE programas          ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+ALTER TABLE users              ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;

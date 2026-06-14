@@ -53,7 +53,7 @@ export const createPage = async (req, res) => {
     data.id = Date.now().toString();
     data.slug = generateUniqueSlug(data.title, pages);
 
-    res.status(201).json(await pagesRepo.create(data));
+    res.status(201).json(await pagesRepo.create(data, req.user?.id));
   } catch (e) {
     res.status(500).json({ message: 'Erro ao criar página.', error: e.message });
   }
@@ -78,7 +78,7 @@ export const updatePage = async (req, res) => {
       data.slug = generateUniqueSlug(data.title, pages, req.params.id);
     }
 
-    res.json(await pagesRepo.update(req.params.id, data));
+    res.json(await pagesRepo.update(req.params.id, data, req.user?.id));
   } catch (e) {
     res.status(500).json({ message: 'Erro ao atualizar página.', error: e.message });
   }

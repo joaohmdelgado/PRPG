@@ -24,7 +24,7 @@ export const createTese = async (req, res) => {
   if (!data.title || !String(data.title).trim()) return res.status(400).json({ message: 'O título é obrigatório.' });
   if (!data.id) data.id = 'tese-' + Date.now().toString();
   try {
-    res.status(201).json(await tesesRepo.create(data));
+    res.status(201).json(await tesesRepo.create(data, req.user?.id));
   } catch (e) {
     res.status(500).json({ message: 'Erro ao criar tese/dissertação.', error: e.message });
   }
@@ -32,7 +32,7 @@ export const createTese = async (req, res) => {
 
 export const updateTese = async (req, res) => {
   if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
-  const updated = await tesesRepo.update(req.params.id, req.body);
+  const updated = await tesesRepo.update(req.params.id, req.body, req.user?.id);
   if (updated) res.json(updated);
   else res.status(404).json({ message: 'Tese/Dissertação não encontrada' });
 };

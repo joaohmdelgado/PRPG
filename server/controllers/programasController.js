@@ -205,6 +205,7 @@ export const createPrograma = async (req, res) => {
     const data = req.body || {};
     const progId = crypto.randomUUID();
     const now = new Date().toISOString();
+    const actor = req.user?.id || null;
 
     await query(
       `INSERT INTO programas
@@ -213,9 +214,9 @@ export const createPrograma = async (req, res) => {
          status,status_descricao,data_credenciamento,data_descredenciamento,
          bloco,sala,cep,telefone_secretaria,horario_atendimento,email_programa,
          regimento_url,regulamento_url,sucupira_url,palavras_chave,
-         criado_em,atualizado_em)
+         criado_em,atualizado_em,criado_por,atualizado_por)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
-               $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)`,
+               $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$29)`,
       [progId, data.nome, data.sigla ? data.sigla.toUpperCase() : '', data.site || '',
        data.codigo_capes || '', data.campus || 'SEDE', data.em_rede || false, data.nome_rede || '',
        data.grande_area || '', data.area_conhecimento || '', data.area_avaliacao || '',
@@ -226,7 +227,7 @@ export const createPrograma = async (req, res) => {
        strOrNull(data.telefone_secretaria), strOrNull(data.horario_atendimento),
        strOrNull(data.email_programa), strOrNull(data.regimento_url),
        strOrNull(data.regulamento_url), strOrNull(data.sucupira_url),
-       arrOrEmpty(data.palavras_chave), now, now]
+       arrOrEmpty(data.palavras_chave), now, now, actor]
     );
 
     await replaceModalidades(progId, data.modalidades);
@@ -248,6 +249,7 @@ export const updatePrograma = async (req, res) => {
 
     const data = req.body || {};
     const pick = (val, fallback) => (val !== undefined ? val : fallback);
+    const actor = req.user?.id || null;
 
     await query(
       `UPDATE programas SET nome=$1, sigla=$2, site=$3, codigo_capes=$4, campus=$5, em_rede=$6,
@@ -255,8 +257,8 @@ export const updatePrograma = async (req, res) => {
         status=$12, status_descricao=$13, data_credenciamento=$14, data_descredenciamento=$15,
         bloco=$16, sala=$17, cep=$18, telefone_secretaria=$19, horario_atendimento=$20,
         email_programa=$21, regimento_url=$22, regulamento_url=$23, sucupira_url=$24,
-        palavras_chave=$25, atualizado_em=$26
-       WHERE id=$27`,
+        palavras_chave=$25, atualizado_em=$26, atualizado_por=COALESCE($27, atualizado_por)
+       WHERE id=$28`,
       [
         data.nome || existing.nome,
         data.sigla ? data.sigla.toUpperCase() : existing.sigla,
@@ -278,7 +280,7 @@ export const updatePrograma = async (req, res) => {
         pick(data.regulamento_url, existing.regulamento_url),
         pick(data.sucupira_url, existing.sucupira_url),
         Array.isArray(data.palavras_chave) ? data.palavras_chave : existing.palavras_chave,
-        new Date().toISOString(), progId,
+        new Date().toISOString(), actor, progId,
       ]
     );
 

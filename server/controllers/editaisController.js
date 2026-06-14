@@ -64,7 +64,7 @@ export const createEdital = async (req, res) => {
   if (data.description) data.description = sanitizeHtml(data.description);
   if (!data.id) data.id = Date.now().toString();
   try {
-    res.status(201).json(await editaisRepo.create(data));
+    res.status(201).json(await editaisRepo.create(data, req.user?.id));
   } catch (e) {
     res.status(500).json({ message: 'Erro ao criar edital.', error: e.message });
   }
@@ -76,7 +76,7 @@ export const updateEdital = async (req, res) => {
   }
   const data = { ...req.body };
   if (data.description) data.description = sanitizeHtml(data.description);
-  const updated = await editaisRepo.update(req.params.id, data);
+  const updated = await editaisRepo.update(req.params.id, data, req.user?.id);
   if (updated) res.json(updated);
   else res.status(404).json({ message: 'Edital não encontrado' });
 };

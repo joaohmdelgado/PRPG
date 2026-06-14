@@ -24,7 +24,7 @@ export const createBolsa = async (req, res) => {
   if (!data.title || !String(data.title).trim()) return res.status(400).json({ message: 'O título é obrigatório.' });
   if (!data.id) data.id = 'bolsa-' + Date.now().toString();
   try {
-    res.status(201).json(await bolsasRepo.create(data));
+    res.status(201).json(await bolsasRepo.create(data, req.user?.id));
   } catch (e) {
     res.status(500).json({ message: 'Erro ao criar bolsa.', error: e.message });
   }
@@ -32,7 +32,7 @@ export const createBolsa = async (req, res) => {
 
 export const updateBolsa = async (req, res) => {
   if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
-  const updated = await bolsasRepo.update(req.params.id, req.body);
+  const updated = await bolsasRepo.update(req.params.id, req.body, req.user?.id);
   if (updated) res.json(updated);
   else res.status(404).json({ message: 'Bolsa não encontrada' });
 };

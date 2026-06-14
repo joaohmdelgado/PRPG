@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../app.js';
 import { pool } from '../db/pool.js';
-import { resetDb, seedAdmin, seedUser, loginAdmin } from './helpers.js';
+import { resetDb, seedAdmin, seedUser, login, loginAdmin } from './helpers.js';
 
 let token;
 
@@ -81,5 +81,25 @@ describe('teses/dissertações', () => {
 
     const res = await request(app).get('/api/teses-dissertacoes');
     expect(res.body[0].field_autor_resolved.nome).toBe('Autor Teste');
+  });
+});
+
+describe('auditoria (Fase 3)', () => {
+  it('carimba criado_por na criação e atualizado_por na edição (entidade genérica)', async () => {
+    const created = await auth(request(app).post('/api/resolucoes')).send({ title: 'Res Audit', desc: 'x' });
+    expect(created.status).toBe(201);
+    expect(created.body.criado_por).toBe('admin-test');
+    expect(created.body.atualizado_por).toBe('admin-test');
+
+    // Edição por outro usuário: atualizado_por muda, criado_por é preservado.
+    await seedUser({ id: 'gestor-1', email: 'gestor@test.com', roles: ['Gestor'], perfil_geral: { nome: 'Gestor' } });
+    const gestorToken = await login('gestor@test.com');
+    const upd = await request(app)
+      .put(`/api/resolucoes/${created.body.id}`)
+      .set('Authorization', `Bearer ${gestorToken}`)
+      .send({ title: 'Res Audit v2' });
+    expect(upd.status).toBe(200);
+    expect(upd.body.criado_por).toBe('admin-test');
+    expect(upd.body.atualizado_por).toBe('gestor-1');
   });
 });

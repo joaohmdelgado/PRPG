@@ -24,7 +24,7 @@ export const createNews = async (req, res) => {
     data.id = String(data.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
   }
   try {
-    res.status(201).json(await newsRepo.create(data));
+    res.status(201).json(await newsRepo.create(data, req.user?.id));
   } catch (e) {
     res.status(500).json({ message: 'Erro ao criar notícia.', error: e.message });
   }
@@ -36,7 +36,7 @@ export const updateNews = async (req, res) => {
   }
   const data = { ...req.body };
   if (data.content) data.content = sanitizeHtmlField(data.content);
-  const updated = await newsRepo.update(req.params.id, data);
+  const updated = await newsRepo.update(req.params.id, data, req.user?.id);
   if (updated) res.json(updated);
   else res.status(404).json({ message: 'Notícia não encontrada' });
 };

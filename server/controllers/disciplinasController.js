@@ -25,7 +25,7 @@ export const createDisciplina = async (req, res) => {
   if (data.field_ementa) data.field_ementa = sanitizeHtml(data.field_ementa);
   if (!data.id) data.id = 'disc-' + Date.now().toString();
   try {
-    res.status(201).json(await disciplinasRepo.create(data));
+    res.status(201).json(await disciplinasRepo.create(data, req.user?.id));
   } catch (e) {
     res.status(500).json({ message: 'Erro ao criar disciplina.', error: e.message });
   }
@@ -35,7 +35,7 @@ export const updateDisciplina = async (req, res) => {
   if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
   const data = { ...req.body };
   if (data.field_ementa) data.field_ementa = sanitizeHtml(data.field_ementa);
-  const updated = await disciplinasRepo.update(req.params.id, data);
+  const updated = await disciplinasRepo.update(req.params.id, data, req.user?.id);
   if (updated) res.json(updated);
   else res.status(404).json({ message: 'Disciplina não encontrada' });
 };

@@ -169,6 +169,20 @@ describe('programas — Fase 2: mandato e histórico', () => {
   });
 });
 
+describe('programas — Fase 3: auditoria', () => {
+  it('carimba criado_por na criação e atualizado_por na edição', async () => {
+    const id = await createPrograma();
+    const res1 = await auth(request(app).get(`/api/programas/${id}`));
+    expect(res1.body.criado_por).toBe('admin-test');
+    expect(res1.body.atualizado_por).toBe('admin-test');
+
+    await auth(request(app).put(`/api/programas/${id}`)).send({ nome: 'PPG Teste 2' });
+    const res2 = await auth(request(app).get(`/api/programas/${id}`));
+    expect(res2.body.criado_por).toBe('admin-test'); // preservado
+    expect(res2.body.atualizado_por).toBe('admin-test');
+  });
+});
+
 describe('programas — exclusão em cascata', () => {
   it('remove modalidades e vínculos junto com o programa', async () => {
     const id = await createPrograma();

@@ -36,7 +36,7 @@ export const createGrupoPesquisa = async (req, res) => {
   data.field_lideres = data.field_lideres || [];
   if (!data.id) data.id = 'grupo-' + Date.now().toString();
   try {
-    res.status(201).json(await gruposRepo.create(data));
+    res.status(201).json(await gruposRepo.create(data, req.user?.id));
   } catch (e) {
     res.status(500).json({ message: 'Erro ao criar grupo de pesquisa', error: e.message });
   }
@@ -46,7 +46,7 @@ export const updateGrupoPesquisa = async (req, res) => {
   if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
   const data = { ...req.body };
   if (data.body?.value) data.body.value = sanitizeHtml(data.body.value);
-  const updated = await gruposRepo.update(req.params.id, data);
+  const updated = await gruposRepo.update(req.params.id, data, req.user?.id);
   if (updated) res.json(updated);
   else res.status(404).json({ message: 'Grupo de pesquisa não encontrado' });
 };

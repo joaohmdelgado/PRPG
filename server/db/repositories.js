@@ -201,6 +201,7 @@ const loadMilestones = async (calendarioId) => {
 const calFromRow = (r) => ({
   id: r.id, ano: r.ano, isCurrent: r.is_current, title: r.title,
   pdfLink: r.pdf_link, description: r.description, milestones: r._milestones ?? [],
+  criado_por: r.criado_por ?? null, atualizado_por: r.atualizado_por ?? null,
 });
 const saveMilestones = async (calendarioId, milestones) => {
   await query('DELETE FROM calendario_milestones WHERE calendario_id = $1', [calendarioId]);
@@ -224,22 +225,23 @@ export const calendariosRepo = {
     if (!rows[0]) return null;
     return calFromRow({ ...rows[0], _milestones: await loadMilestones(id) });
   },
-  async create(o) {
+  async create(o, actor) {
     await query(
-      `INSERT INTO calendarios (id, ano, is_current, title, pdf_link, description)
-       VALUES ($1,$2,$3,$4,$5,$6)`,
-      [o.id, intOrNull(o.ano), !!o.isCurrent, o.title ?? null, o.pdfLink ?? null, o.description ?? null]
+      `INSERT INTO calendarios (id, ano, is_current, title, pdf_link, description, criado_por, atualizado_por)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$7)`,
+      [o.id, intOrNull(o.ano), !!o.isCurrent, o.title ?? null, o.pdfLink ?? null, o.description ?? null, actor ?? null]
     );
     await saveMilestones(o.id, o.milestones);
     return calendariosRepo.getById(o.id);
   },
-  async update(id, partial) {
+  async update(id, partial, actor) {
     const existing = await calendariosRepo.getById(id);
     if (!existing) return null;
     const o = { ...existing, ...partial };
     await query(
-      `UPDATE calendarios SET ano=$1, is_current=$2, title=$3, pdf_link=$4, description=$5 WHERE id=$6`,
-      [intOrNull(o.ano), !!o.isCurrent, o.title ?? null, o.pdfLink ?? null, o.description ?? null, id]
+      `UPDATE calendarios SET ano=$1, is_current=$2, title=$3, pdf_link=$4, description=$5,
+         atualizado_por=COALESCE($6, atualizado_por) WHERE id=$7`,
+      [intOrNull(o.ano), !!o.isCurrent, o.title ?? null, o.pdfLink ?? null, o.description ?? null, actor ?? null, id]
     );
     await saveMilestones(id, o.milestones);
     return calendariosRepo.getById(id);

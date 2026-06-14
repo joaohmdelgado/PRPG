@@ -69,7 +69,7 @@ export const createUser = async (req, res) => {
       atualizado_em: new Date().toISOString(),
     };
 
-    const created = await usersRepo.create(newUser);
+    const created = await usersRepo.create(newUser, req.user?.id);
     res.status(201).json(stripHash(created));
   } catch (error) {
     res.status(500).json({ message: 'Erro ao criar usuário', error: error.message });
@@ -118,7 +118,7 @@ export const updateUser = async (req, res) => {
       atualizado_em: new Date().toISOString(),
     };
 
-    const updated = await usersRepo.update(req.params.id, merged);
+    const updated = await usersRepo.update(req.params.id, merged, req.user?.id);
     res.json(stripHash(updated));
   } catch (error) {
     res.status(500).json({ message: 'Erro ao atualizar usuário', error: error.message });
