@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import { API_URL } from '../../api';
+import AuditInfo from '../../components/AuditInfo';
 
 const GRANDES_AREAS = [
   'Ciências Exatas e da Terra',
@@ -653,6 +654,15 @@ const AdminProgramaForm = () => {
           <button type="button" onClick={() => setStep(3)} className="text-blue-600">Editar</button>
         </div>
         <p><strong>TAE:</strong> {formData.secretaria.nome || 'Não preenchido'}</p>
+
+        {isEditing && (
+          <AuditInfo
+            criadoPor={formData.criado_por}
+            atualizadoPor={formData.atualizado_por}
+            users={users}
+            className="pt-4 mt-4 border-t border-gray-200"
+          />
+        )}
       </div>
     </div>
   );
