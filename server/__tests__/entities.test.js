@@ -84,6 +84,45 @@ describe('teses/dissertações', () => {
   });
 });
 
+describe('metricas anuais (Fase 4 / dashboard)', () => {
+  const novoPrograma = async () => {
+    const res = await auth(request(app).post('/api/programas')).send({ nome: 'PPG Métricas', sigla: 'ppgm' });
+    return res.body.id;
+  };
+
+  it('cria, lê por programa e bloqueia duplicidade (programa+ano)', async () => {
+    const progId = await novoPrograma();
+    const create = await auth(request(app).post('/api/metricas')).send({
+      programa_id: progId, ano: 2025, docentes_permanentes: 18,
+      discentes_mestrado: 40, discentes_doutorado: 22, taxa_conclusao: 78.5,
+    });
+    expect(create.status).toBe(201);
+    expect(create.body.docentes_permanentes).toBe(18);
+    expect(create.body.taxa_conclusao).toBe(78.5);
+    expect(create.body.criado_por).toBe('admin-test');
+
+    const list = await auth(request(app).get(`/api/metricas?programa=${progId}`));
+    expect(list.status).toBe(200);
+    expect(list.body).toHaveLength(1);
+
+    const dup = await auth(request(app).post('/api/metricas')).send({ programa_id: progId, ano: 2025 });
+    expect(dup.status).toBe(409);
+  });
+
+  it('remove em cascata ao excluir o programa', async () => {
+    const progId = await novoPrograma();
+    await auth(request(app).post('/api/metricas')).send({ programa_id: progId, ano: 2024 });
+    await auth(request(app).delete(`/api/programas/${progId}`));
+    const list = await auth(request(app).get(`/api/metricas?programa=${progId}`));
+    expect(list.body).toHaveLength(0);
+  });
+
+  it('exige autenticação para acessar métricas', async () => {
+    const res = await request(app).get('/api/metricas');
+    expect(res.status).toBe(401);
+  });
+});
+
 describe('auditoria (Fase 3)', () => {
   it('carimba criado_por na criação e atualizado_por na edição (entidade genérica)', async () => {
     const created = await auth(request(app).post('/api/resolucoes')).send({ title: 'Res Audit', desc: 'x' });

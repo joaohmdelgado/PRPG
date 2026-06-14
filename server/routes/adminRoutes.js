@@ -17,6 +17,7 @@ import { getFaqs, getFaqById, createFaq, updateFaq, deleteFaq } from '../control
 import { getDisciplinas, getDisciplinaById, createDisciplina, updateDisciplina, deleteDisciplina } from '../controllers/disciplinasController.js';
 import { getBolsas, getBolsaById, createBolsa, updateBolsa, deleteBolsa } from '../controllers/bolsasController.js';
 import { getPages, getPageById, getPageBySlug, createPage, updatePage, deletePage } from '../controllers/pagesController.js';
+import { getMetricas, getMetricaById, createMetrica, updateMetrica, deleteMetrica } from '../controllers/metricasController.js';
 
 
 import { login } from '../controllers/authController.js';
@@ -115,6 +116,13 @@ router.get('/grupos-pesquisa/:id', protect, requireRole(['Administrator', 'Gesto
 router.post('/grupos-pesquisa', protect, requireRole(['Administrator', 'Gestor']), createGrupoPesquisa);
 router.put('/grupos-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor']), updateGrupoPesquisa);
 router.delete('/grupos-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor']), deleteGrupoPesquisa);
+
+// Métricas anuais / dashboard (Apenas Admin/Gestor)
+router.get('/metricas', protect, requireRole(['Administrator', 'Gestor']), getMetricas);
+router.get('/metricas/:id', protect, requireRole(['Administrator', 'Gestor']), getMetricaById);
+router.post('/metricas', protect, requireRole(['Administrator', 'Gestor']), createMetrica);
+router.put('/metricas/:id', protect, requireRole(['Administrator', 'Gestor']), updateMetrica);
+router.delete('/metricas/:id', protect, requireRole(['Administrator', 'Gestor']), deleteMetrica);
 
 // Rota de usuário que também pode ser acessada pelo próprio dono (update/get)
 // No momento simplificaremos: Admin/Gestor tem acesso livre. Dono da conta poderia atualizar a própria, mas vamos deixar liberado pro Gestor aqui.

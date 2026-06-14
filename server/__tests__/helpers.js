@@ -6,7 +6,8 @@ import { usersRepo } from '../db/repositories.js';
 
 const TABLES = `news, editais, resolucoes, formularios, portarias, teses_dissertacoes,
   faq, disciplinas, bolsas, pages, users, taxonomias, grupos_pesquisa,
-  calendarios, calendario_milestones, programas, pessoas, modalidades, vinculos`;
+  calendarios, calendario_milestones, programas, pessoas, modalidades, vinculos,
+  metricas_anuais`;
 
 export async function resetDb() {
   await pool.query(`TRUNCATE ${TABLES} RESTART IDENTITY CASCADE`);

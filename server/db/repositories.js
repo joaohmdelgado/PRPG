@@ -3,6 +3,7 @@ import { query } from './pool.js';
 
 const toArr = (v) => (Array.isArray(v) ? v : v != null && v !== '' ? [v] : []);
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
+const numOrNull = (v) => (v === '' || v == null ? null : Number(v));
 
 // ============================ Noticias ============================
 export const newsRepo = createRepository({
@@ -252,6 +253,50 @@ export const calendariosRepo = {
   },
   async unsetCurrentExcept(id) {
     await query('UPDATE calendarios SET is_current = FALSE WHERE id <> $1', [id ?? '']);
+  },
+};
+
+// ======================== Metricas anuais =========================
+// Snapshot anual de indicadores por programa (dashboard).
+const metricaFromRow = (r) => ({
+  id: r.id, programa_id: r.programa_id, ano: r.ano,
+  docentes_permanentes: r.docentes_permanentes,
+  discentes_mestrado: r.discentes_mestrado,
+  discentes_doutorado: r.discentes_doutorado,
+  discentes_profissional: r.discentes_profissional,
+  producao_artigos: r.producao_artigos,
+  teses_defendidas: r.teses_defendidas,
+  bolsistas_capes: r.bolsistas_capes,
+  taxa_conclusao: numOrNull(r.taxa_conclusao),
+  indice_internacionalizacao: numOrNull(r.indice_internacionalizacao),
+  observacao: r.observacao,
+  criado_em: r.criado_em, atualizado_em: r.atualizado_em,
+  criado_por: r.criado_por ?? null, atualizado_por: r.atualizado_por ?? null,
+});
+const metricaToRow = (o) => ({
+  id: o.id, programa_id: o.programa_id, ano: intOrNull(o.ano),
+  docentes_permanentes: intOrNull(o.docentes_permanentes),
+  discentes_mestrado: intOrNull(o.discentes_mestrado),
+  discentes_doutorado: intOrNull(o.discentes_doutorado),
+  discentes_profissional: intOrNull(o.discentes_profissional),
+  producao_artigos: intOrNull(o.producao_artigos),
+  teses_defendidas: intOrNull(o.teses_defendidas),
+  bolsistas_capes: intOrNull(o.bolsistas_capes),
+  taxa_conclusao: numOrNull(o.taxa_conclusao),
+  indice_internacionalizacao: numOrNull(o.indice_internacionalizacao),
+  observacao: o.observacao || null,
+  criado_em: o.criado_em || new Date().toISOString(),
+  atualizado_em: new Date().toISOString(),
+});
+export const metricasRepo = {
+  ...createRepository({ table: 'metricas_anuais', orderBy: 'ano DESC, programa_id ASC', fromRow: metricaFromRow, toRow: metricaToRow }),
+  async getByPrograma(programaId) {
+    const { rows } = await query('SELECT * FROM metricas_anuais WHERE programa_id = $1 ORDER BY ano DESC', [programaId]);
+    return rows.map(metricaFromRow);
+  },
+  async findByProgramaAno(programaId, ano) {
+    const { rows } = await query('SELECT * FROM metricas_anuais WHERE programa_id = $1 AND ano = $2', [programaId, intOrNull(ano)]);
+    return rows[0] ? metricaFromRow(rows[0]) : null;
   },
 };
 

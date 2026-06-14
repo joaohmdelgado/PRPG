@@ -107,8 +107,15 @@ const AdminLayout = () => {
           
           {isSuperAdmin && (
             <>
-              <Link 
-                to="/admin/portarias" 
+              <Link
+                to="/admin/metricas"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/metricas') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
+              >
+                <LayoutDashboard size={20} />
+                <span>Dashboard / Métricas</span>
+              </Link>
+              <Link
+                to="/admin/portarias"
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/portarias') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
               >
                 <FileCheck size={20} />

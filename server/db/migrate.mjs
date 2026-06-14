@@ -46,7 +46,7 @@ async function main() {
     news, editais, resolucoes, formularios, portarias, teses_dissertacoes,
     faq, disciplinas, bolsas, pages, users, taxonomias, grupos_pesquisa,
     calendarios, calendario_milestones,
-    programas, pessoas, modalidades, vinculos
+    programas, pessoas, modalidades, vinculos, metricas_anuais
     RESTART IDENTITY CASCADE`);
 
   console.log('Migrando entidades simples...');

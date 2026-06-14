@@ -178,6 +178,29 @@ CREATE TABLE IF NOT EXISTS vinculos (
   criado_em       TIMESTAMPTZ DEFAULT now()
 );
 
+-- Snapshot anual de indicadores por programa (Fase 4 / dashboard).
+-- Um registro por (programa, ano) — dado de "foto do ano", não verdade corrente.
+CREATE TABLE IF NOT EXISTS metricas_anuais (
+  id                         TEXT PRIMARY KEY,
+  programa_id                TEXT REFERENCES programas(id) ON DELETE CASCADE,
+  ano                        INTEGER NOT NULL,
+  docentes_permanentes       INTEGER,
+  discentes_mestrado         INTEGER,
+  discentes_doutorado        INTEGER,
+  discentes_profissional     INTEGER,
+  producao_artigos           INTEGER,
+  teses_defendidas           INTEGER,
+  bolsistas_capes            INTEGER,
+  taxa_conclusao             NUMERIC(5,2), -- % de conclusão no prazo
+  indice_internacionalizacao NUMERIC(5,2), -- % de publicações internacionais
+  observacao                 TEXT,
+  criado_em                  TIMESTAMPTZ DEFAULT now(),
+  atualizado_em              TIMESTAMPTZ DEFAULT now(),
+  criado_por                 TEXT,
+  atualizado_por             TEXT,
+  UNIQUE (programa_id, ano)
+);
+
 -- =========================== Portarias ============================
 CREATE TABLE IF NOT EXISTS portarias (
   id              TEXT PRIMARY KEY,

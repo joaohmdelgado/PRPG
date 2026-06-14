@@ -60,6 +60,7 @@ import AdminBolsasList from './pages/admin/AdminBolsasList';
 import AdminBolsaForm from './pages/admin/AdminBolsaForm';
 import AdminPagesList from './pages/admin/AdminPagesList';
 import AdminPageForm from './pages/admin/AdminPageForm';
+import AdminMetricas from './pages/admin/AdminMetricas';
 import PageView from './pages/PageView';
 
 function App() {
@@ -121,6 +122,9 @@ function App() {
               <Route index element={<AdminUsersList />} />
               <Route path="novo" element={<AdminUserForm />} />
               <Route path="editar/:id" element={<AdminUserForm />} />
+            </Route>
+            <Route path="metricas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+              <Route index element={<AdminMetricas />} />
             </Route>
           </Route>
         </Route>
