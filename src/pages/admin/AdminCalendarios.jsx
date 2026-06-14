@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Calendar } from 'lucide-react';
 import { API_URL } from '../../api';
+import { LastEdited } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const AdminCalendarios = () => {
   const [calendarios, setCalendarios] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const users = useUsers();
 
   const fetchCalendarios = async () => {
     try {
@@ -73,7 +76,10 @@ const AdminCalendarios = () => {
           <tbody className="divide-y divide-gray-200">
             {calendarios.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 text-sm text-gray-900 font-medium">{item.title}</td>
+                <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                  {item.title}
+                  <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-500">{item.ano}</td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {item.isCurrent ? (

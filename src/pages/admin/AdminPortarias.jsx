@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, FileCheck, Eye } from 'lucide-react';
 import { API_URL } from '../../api';
+import { LastEdited } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const AdminPortarias = () => {
   const [portarias, setPortarias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const users = useUsers();
 
   const fetchPortarias = async () => {
     try {
@@ -103,6 +106,7 @@ const AdminPortarias = () => {
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                     {item.title}
+                    <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {item.data_portaria ? new Date(item.data_portaria).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}

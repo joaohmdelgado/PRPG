@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Users } from 'lucide-react';
 import { API_URL } from '../../api';
+import { LastEdited } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const AdminGruposPesquisa = () => {
   const [grupos, setGrupos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const users = useUsers();
 
   const fetchGrupos = async () => {
     try {
@@ -95,6 +98,7 @@ const AdminGruposPesquisa = () => {
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                     {item.title}
+                    <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {leadersText}

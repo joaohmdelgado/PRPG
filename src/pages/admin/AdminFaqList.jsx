@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, HelpCircle } from 'lucide-react';
 import { API_URL } from '../../api';
+import { LastEdited } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const AdminFaqList = () => {
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const users = useUsers();
 
   const fetchFaqs = async () => {
     try {
@@ -111,6 +114,7 @@ const AdminFaqList = () => {
               <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4 text-sm font-medium text-gray-900 pr-10" title={item.title}>
                   {item.title}
+                  <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-right">
                   <div className="flex justify-end gap-3">

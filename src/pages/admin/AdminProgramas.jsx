@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { API_URL } from '../../api';
-import { authorName } from '../../components/AuditInfo';
+import { LastEdited } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const AdminProgramas = () => {
   const [programas, setProgramas] = useState([]);
-  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const users = useUsers();
 
   const fetchProgramas = async () => {
     try {
@@ -24,17 +25,6 @@ const AdminProgramas = () => {
 
   useEffect(() => {
     fetchProgramas();
-    const fetchUsers = async () => {
-      try {
-        const r = await fetch(`${API_URL}/api/users`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
-        if (r.ok) setUsers(await r.json());
-      } catch (e) {
-        // silencioso: a coluna de autoria apenas não resolverá nomes
-      }
-    };
-    fetchUsers();
   }, []);
 
   const handleDelete = async (id) => {
@@ -88,11 +78,7 @@ const AdminProgramas = () => {
               <tr key={item.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                   {item.nome} {item.sigla && `(${item.sigla})`}
-                  {(item.atualizado_por || item.criado_por) && (
-                    <div className="text-xs text-gray-400 font-normal mt-0.5">
-                      Última edição: {authorName(item.atualizado_por || item.criado_por, users)}
-                    </div>
-                  )}
+                  <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">

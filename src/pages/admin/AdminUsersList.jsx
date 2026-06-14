@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { API_URL } from '../../api';
+import { LastEdited } from '../../components/AuditInfo';
 
 const AdminUsersList = () => {
   const [users, setUsers] = useState([]);
@@ -85,6 +86,7 @@ const AdminUsersList = () => {
                 <td className="p-4">
                   <div className="font-medium text-gray-800">{user.perfil_geral?.nome || 'Sem Nome'}</div>
                   <div className="text-sm text-gray-500">{user.email}</div>
+                  <LastEdited criadoPor={user.criado_por} atualizadoPor={user.atualizado_por} users={users} className="mt-1" />
                 </td>
                 <td className="p-4">
                   <div className="flex gap-1 flex-wrap">

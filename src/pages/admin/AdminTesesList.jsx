@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, BookOpen, GraduationCap, FileText } from 'lucide-react';
 import { API_URL } from '../../api';
+import { LastEdited } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const AdminTesesList = () => {
   const [teses, setTeses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const users = useUsers();
 
   const fetchTeses = async () => {
     try {
@@ -122,8 +125,9 @@ const AdminTesesList = () => {
           <tbody className="divide-y divide-gray-200">
             {filteredTeses.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs md:max-w-md truncate" title={item.title}>
-                  {item.title}
+                <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs md:max-w-md" title={item.title}>
+                  <div className="truncate">{item.title}</div>
+                  <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
