@@ -5,6 +5,11 @@ import { query } from '../db/pool.js';
 import { usersRepo, portariasRepo } from '../db/repositories.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
+const strOrNull = (v) => (v === '' || v == null ? null : v);
+const arrOrEmpty = (v) => (Array.isArray(v) ? v : []);
+
+const ALLOWED_STATUS = ['ATIVO', 'SUSPENSO', 'DESATIVADO', 'EM_AVALIACAO'];
+const normalizeStatus = (v, fallback = 'ATIVO') => (ALLOWED_STATUS.includes(v) ? v : fallback);
 
 const checkAdmin = (req) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -191,12 +196,24 @@ export const createPrograma = async (req, res) => {
     await query(
       `INSERT INTO programas
         (id,nome,sigla,site,codigo_capes,campus,em_rede,nome_rede,grande_area,
-         area_conhecimento,area_avaliacao,linhas,criado_em,atualizado_em)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+         area_conhecimento,area_avaliacao,linhas,
+         status,status_descricao,data_credenciamento,data_descredenciamento,
+         bloco,sala,cep,telefone_secretaria,horario_atendimento,email_programa,
+         regimento_url,regulamento_url,sucupira_url,palavras_chave,
+         criado_em,atualizado_em)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
+               $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)`,
       [progId, data.nome, data.sigla ? data.sigla.toUpperCase() : '', data.site || '',
        data.codigo_capes || '', data.campus || 'SEDE', data.em_rede || false, data.nome_rede || '',
        data.grande_area || '', data.area_conhecimento || '', data.area_avaliacao || '',
-       Array.isArray(data.linhas) ? data.linhas : [], now, now]
+       Array.isArray(data.linhas) ? data.linhas : [],
+       normalizeStatus(data.status), strOrNull(data.status_descricao),
+       strOrNull(data.data_credenciamento), strOrNull(data.data_descredenciamento),
+       strOrNull(data.bloco), strOrNull(data.sala), strOrNull(data.cep),
+       strOrNull(data.telefone_secretaria), strOrNull(data.horario_atendimento),
+       strOrNull(data.email_programa), strOrNull(data.regimento_url),
+       strOrNull(data.regulamento_url), strOrNull(data.sucupira_url),
+       arrOrEmpty(data.palavras_chave), now, now]
     );
 
     await replaceModalidades(progId, data.modalidades);
@@ -221,8 +238,12 @@ export const updatePrograma = async (req, res) => {
 
     await query(
       `UPDATE programas SET nome=$1, sigla=$2, site=$3, codigo_capes=$4, campus=$5, em_rede=$6,
-        nome_rede=$7, grande_area=$8, area_conhecimento=$9, area_avaliacao=$10, linhas=$11, atualizado_em=$12
-       WHERE id=$13`,
+        nome_rede=$7, grande_area=$8, area_conhecimento=$9, area_avaliacao=$10, linhas=$11,
+        status=$12, status_descricao=$13, data_credenciamento=$14, data_descredenciamento=$15,
+        bloco=$16, sala=$17, cep=$18, telefone_secretaria=$19, horario_atendimento=$20,
+        email_programa=$21, regimento_url=$22, regulamento_url=$23, sucupira_url=$24,
+        palavras_chave=$25, atualizado_em=$26
+       WHERE id=$27`,
       [
         data.nome || existing.nome,
         data.sigla ? data.sigla.toUpperCase() : existing.sigla,
@@ -232,6 +253,18 @@ export const updatePrograma = async (req, res) => {
         pick(data.area_conhecimento, existing.area_conhecimento),
         pick(data.area_avaliacao, existing.area_avaliacao),
         Array.isArray(data.linhas) ? data.linhas : existing.linhas,
+        normalizeStatus(data.status, existing.status),
+        pick(data.status_descricao, existing.status_descricao),
+        pick(data.data_credenciamento, existing.data_credenciamento),
+        pick(data.data_descredenciamento, existing.data_descredenciamento),
+        pick(data.bloco, existing.bloco), pick(data.sala, existing.sala),
+        pick(data.cep, existing.cep), pick(data.telefone_secretaria, existing.telefone_secretaria),
+        pick(data.horario_atendimento, existing.horario_atendimento),
+        pick(data.email_programa, existing.email_programa),
+        pick(data.regimento_url, existing.regimento_url),
+        pick(data.regulamento_url, existing.regulamento_url),
+        pick(data.sucupira_url, existing.sucupira_url),
+        Array.isArray(data.palavras_chave) ? data.palavras_chave : existing.palavras_chave,
         new Date().toISOString(), progId,
       ]
     );

@@ -77,6 +77,53 @@ describe('programas — histórico de coordenadores', () => {
   });
 });
 
+describe('programas — Fase 1: status, contato e documentos', () => {
+  it('persiste status, contato, documentos e palavras-chave', async () => {
+    const id = await createPrograma({
+      status: 'SUSPENSO',
+      status_descricao: 'Sem quórum 2024',
+      data_credenciamento: '2010-03-01',
+      bloco: 'Bloco 7',
+      sala: '12',
+      telefone_secretaria: '(81) 1234-5678',
+      horario_atendimento: 'Seg-Sex 08-12h',
+      email_programa: 'ppg@ufrpe.br',
+      regimento_url: 'https://ex/regimento.pdf',
+      sucupira_url: 'https://sucupira/ppg',
+      palavras_chave: ['Agroecologia', 'Solos'],
+    });
+    const res = await auth(request(app).get(`/api/programas/${id}`));
+    expect(res.body.status).toBe('SUSPENSO');
+    expect(res.body.status_descricao).toBe('Sem quórum 2024');
+    expect(res.body.data_credenciamento).toBe('2010-03-01');
+    expect(res.body.telefone_secretaria).toBe('(81) 1234-5678');
+    expect(res.body.email_programa).toBe('ppg@ufrpe.br');
+    expect(res.body.regimento_url).toBe('https://ex/regimento.pdf');
+    expect(res.body.palavras_chave).toEqual(['Agroecologia', 'Solos']);
+  });
+
+  it('usa status ATIVO por padrão e normaliza valor inválido', async () => {
+    const idDefault = await createPrograma();
+    const r1 = await auth(request(app).get(`/api/programas/${idDefault}`));
+    expect(r1.body.status).toBe('ATIVO');
+
+    const idBad = await createPrograma({ status: 'XPTO' });
+    const r2 = await auth(request(app).get(`/api/programas/${idBad}`));
+    expect(r2.body.status).toBe('ATIVO');
+  });
+
+  it('atualiza status e preserva campos não enviados', async () => {
+    const id = await createPrograma({ telefone_secretaria: '111' });
+    await auth(request(app).put(`/api/programas/${id}`))
+      .send({ status: 'DESATIVADO', data_descredenciamento: '2024-01-01' });
+
+    const res = await auth(request(app).get(`/api/programas/${id}`));
+    expect(res.body.status).toBe('DESATIVADO');
+    expect(res.body.data_descredenciamento).toBe('2024-01-01');
+    expect(res.body.telefone_secretaria).toBe('111');
+  });
+});
+
 describe('programas — exclusão em cascata', () => {
   it('remove modalidades e vínculos junto com o programa', async () => {
     const id = await createPrograma();

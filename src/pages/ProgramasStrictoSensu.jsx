@@ -16,6 +16,20 @@ const mapModalidade = (tipo) => {
   }
 };
 
+const STATUS_LABELS = {
+  ATIVO: 'Ativo',
+  SUSPENSO: 'Suspenso',
+  EM_AVALIACAO: 'Em Avaliação',
+  DESATIVADO: 'Desativado',
+};
+
+// Apenas situações que merecem destaque visual (ATIVO não recebe selo).
+const STATUS_BADGE_CLS = {
+  SUSPENSO: 'bg-amber-100 text-amber-800',
+  EM_AVALIACAO: 'bg-blue-100 text-blue-800',
+  DESATIVADO: 'bg-red-100 text-red-700',
+};
+
 export default function ProgramasStrictoSensu() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRede, setFilterRede] = useState('ALL');
@@ -42,10 +56,11 @@ export default function ProgramasStrictoSensu() {
     // Group by campus name
     const grouped = {};
     const filtered = allProgramas.filter(prog => {
-      const matchSearch = prog.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      const matchSearch = prog.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           prog.sigla.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (prog.area_conhecimento && prog.area_conhecimento.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          (prog.linhas && prog.linhas.some(l => l.toLowerCase().includes(searchTerm.toLowerCase())));
+                          (prog.linhas && prog.linhas.some(l => l.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+                          (prog.palavras_chave && prog.palavras_chave.some(k => k.toLowerCase().includes(searchTerm.toLowerCase())));
       
       let matchRede = true;
       if (filterRede === 'SIM') matchRede = prog.em_rede === true;
@@ -84,6 +99,7 @@ export default function ProgramasStrictoSensu() {
         flatData.push({
           'Sigla': prog.sigla,
           'Nome': prog.nome,
+          'Status': STATUS_LABELS[prog.status] || prog.status || 'Ativo',
           'Campus': prog.campus,
           'Em Rede': prog.em_rede ? 'Sim' : 'Não',
           'Nome da Rede': prog.nome_rede || '',
@@ -269,6 +285,11 @@ export default function ProgramasStrictoSensu() {
                                 Em Rede
                               </span>
                             )}
+                            {prog.status && STATUS_BADGE_CLS[prog.status] && (
+                              <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded ${STATUS_BADGE_CLS[prog.status]}`}>
+                                {STATUS_LABELS[prog.status]}
+                              </span>
+                            )}
                           </div>
 
                           <div className="text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100 flex-grow">
@@ -311,18 +332,56 @@ export default function ProgramasStrictoSensu() {
                                 </div>
                               )}
                             </div>
+
+                            {(prog.bloco || prog.sala || prog.telefone_secretaria || prog.horario_atendimento || prog.email_programa) && (
+                              <div className="mt-4 pt-4 border-t border-gray-100 space-y-1.5 text-xs text-gray-600">
+                                {(prog.bloco || prog.sala) && (
+                                  <div><i className="fa-solid fa-location-dot text-ufrpe-yellow mr-2 w-3.5"></i>{[prog.bloco, prog.sala && `Sala ${prog.sala}`].filter(Boolean).join(' — ')}</div>
+                                )}
+                                {prog.telefone_secretaria && (
+                                  <div><i className="fa-solid fa-phone text-ufrpe-yellow mr-2 w-3.5"></i>{prog.telefone_secretaria}</div>
+                                )}
+                                {prog.horario_atendimento && (
+                                  <div><i className="fa-solid fa-clock text-ufrpe-yellow mr-2 w-3.5"></i>{prog.horario_atendimento}</div>
+                                )}
+                                {prog.email_programa && (
+                                  <div><i className="fa-solid fa-envelope text-ufrpe-yellow mr-2 w-3.5"></i><a href={`mailto:${prog.email_programa}`} className="hover:text-ufrpe-blue break-all">{prog.email_programa}</a></div>
+                                )}
+                              </div>
+                            )}
                           </div>
                           
-                          {prog.site && (
-                            <a
-                              href={prog.site}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="w-full text-center py-2.5 mt-auto bg-gray-50 border border-gray-100 text-ufrpe-blue font-bold text-sm rounded-lg hover:bg-ufrpe-blue hover:border-ufrpe-blue hover:text-white transition-colors"
-                            >
-                              <i className="fa-solid fa-arrow-up-right-from-square mr-2 opacity-50"></i> Site do Programa
-                            </a>
-                          )}
+                          <div className="mt-auto">
+                            {(prog.regimento_url || prog.regulamento_url || prog.sucupira_url) && (
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {prog.regimento_url && (
+                                  <a href={prog.regimento_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-ufrpe-blue hover:bg-gray-100 transition-colors">
+                                    <i className="fa-solid fa-file-lines mr-1.5 opacity-60"></i>Regimento
+                                  </a>
+                                )}
+                                {prog.regulamento_url && (
+                                  <a href={prog.regulamento_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-ufrpe-blue hover:bg-gray-100 transition-colors">
+                                    <i className="fa-solid fa-file-signature mr-1.5 opacity-60"></i>Regulamento
+                                  </a>
+                                )}
+                                {prog.sucupira_url && (
+                                  <a href={prog.sucupira_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-ufrpe-blue hover:bg-gray-100 transition-colors">
+                                    <i className="fa-solid fa-chart-column mr-1.5 opacity-60"></i>Sucupira
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                            {prog.site && (
+                              <a
+                                href={prog.site}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block w-full text-center py-2.5 bg-gray-50 border border-gray-100 text-ufrpe-blue font-bold text-sm rounded-lg hover:bg-ufrpe-blue hover:border-ufrpe-blue hover:text-white transition-colors"
+                              >
+                                <i className="fa-solid fa-arrow-up-right-from-square mr-2 opacity-50"></i> Site do Programa
+                              </a>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>

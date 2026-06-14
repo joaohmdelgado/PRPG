@@ -119,6 +119,21 @@ CREATE TABLE IF NOT EXISTS programas (
   area_conhecimento TEXT,
   area_avaliacao    TEXT,
   linhas            TEXT[] DEFAULT '{}',
+  -- Fase 1: situacao, contato/localizacao e documentos do programa.
+  status                 TEXT NOT NULL DEFAULT 'ATIVO', -- ATIVO|SUSPENSO|DESATIVADO|EM_AVALIACAO
+  status_descricao       TEXT,
+  data_credenciamento    TEXT, -- datas como TEXT 'YYYY-MM-DD' (padrao do projeto)
+  data_descredenciamento TEXT,
+  bloco                  TEXT,
+  sala                   TEXT,
+  cep                    TEXT,
+  telefone_secretaria    TEXT,
+  horario_atendimento    TEXT,
+  email_programa         TEXT,
+  regimento_url          TEXT,
+  regulamento_url        TEXT,
+  sucupira_url           TEXT,
+  palavras_chave         TEXT[] DEFAULT '{}',
   criado_em         TIMESTAMPTZ DEFAULT now(),
   atualizado_em     TIMESTAMPTZ DEFAULT now()
 );

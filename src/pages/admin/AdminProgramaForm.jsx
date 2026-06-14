@@ -27,6 +27,13 @@ const emptyPessoa = {
   pessoa_id: '', nome: '', cpf: '', siape: '', email_institucional: '', telefones: '', portaria_id: '', portaria: '', data_vencimento: '', email_funcao: '', endereco: ''
 };
 
+const STATUS_OPTIONS = [
+  { id: 'ATIVO', label: 'Ativo' },
+  { id: 'SUSPENSO', label: 'Suspenso' },
+  { id: 'EM_AVALIACAO', label: 'Em Avaliação' },
+  { id: 'DESATIVADO', label: 'Desativado' }
+];
+
 const initialFormData = {
   nome: '',
   sigla: '',
@@ -39,6 +46,21 @@ const initialFormData = {
   area_conhecimento: '',
   area_avaliacao: '',
   linhas: '',
+  // Fase 1: situação, contato/localização e documentos
+  status: 'ATIVO',
+  status_descricao: '',
+  data_credenciamento: '',
+  data_descredenciamento: '',
+  bloco: '',
+  sala: '',
+  cep: '',
+  telefone_secretaria: '',
+  horario_atendimento: '',
+  email_programa: '',
+  regimento_url: '',
+  regulamento_url: '',
+  sucupira_url: '',
+  palavras_chave: '',
   modalidades: [],
   coordenador_atual: { ...emptyPessoa },
   substituto: { ...emptyPessoa },
@@ -122,6 +144,20 @@ const AdminProgramaForm = () => {
             setFormData({
               ...initialFormData,
               ...data,
+              status: data.status || 'ATIVO',
+              status_descricao: data.status_descricao || '',
+              data_credenciamento: data.data_credenciamento || '',
+              data_descredenciamento: data.data_descredenciamento || '',
+              bloco: data.bloco || '',
+              sala: data.sala || '',
+              cep: data.cep || '',
+              telefone_secretaria: data.telefone_secretaria || '',
+              horario_atendimento: data.horario_atendimento || '',
+              email_programa: data.email_programa || '',
+              regimento_url: data.regimento_url || '',
+              regulamento_url: data.regulamento_url || '',
+              sucupira_url: data.sucupira_url || '',
+              palavras_chave: Array.isArray(data.palavras_chave) ? data.palavras_chave.join(', ') : (data.palavras_chave || ''),
               coordenador_atual: data.coordenador_atual || { ...emptyPessoa },
               substituto: data.substituto || { ...emptyPessoa },
               secretaria: data.secretaria || { ...emptyPessoa },
@@ -225,7 +261,8 @@ const AdminProgramaForm = () => {
 
       const payload = {
         ...formData,
-        linhas: formData.linhas ? formData.linhas.split('\n').map(l => l.trim()).filter(l => l) : []
+        linhas: formData.linhas ? formData.linhas.split('\n').map(l => l.trim()).filter(l => l) : [],
+        palavras_chave: formData.palavras_chave ? formData.palavras_chave.split(/[\n,]/).map(p => p.trim()).filter(p => p) : []
       };
 
       const response = await fetch(url, {
@@ -343,6 +380,78 @@ const AdminProgramaForm = () => {
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">Linhas de Pesquisa (Uma por linha)</label>
           <textarea name="linhas" value={formData.linhas} onChange={handleChange} className="w-full border p-2 rounded" rows="4" placeholder="Sua primeira linha de pesquisa..." />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1">Palavras-chave (separadas por vírgula)</label>
+          <input type="text" name="palavras_chave" value={formData.palavras_chave} onChange={handleChange} className="w-full border p-2 rounded" placeholder="Ex: Sustentabilidade, Agroecologia, Biotecnologia" />
+        </div>
+      </div>
+
+      <h3 className="text-lg font-medium border-b pb-2 pt-4">Situação do Programa</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Status</label>
+          <select name="status" value={formData.status} onChange={handleChange} className="w-full border p-2 rounded bg-white">
+            {STATUS_OPTIONS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Data de Credenciamento</label>
+          <input type="date" name="data_credenciamento" value={formData.data_credenciamento} onChange={handleChange} className="w-full border p-2 rounded" />
+        </div>
+        {formData.status === 'DESATIVADO' && (
+          <div>
+            <label className="block text-sm font-medium mb-1">Data de Descredenciamento</label>
+            <input type="date" name="data_descredenciamento" value={formData.data_descredenciamento} onChange={handleChange} className="w-full border p-2 rounded" />
+          </div>
+        )}
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1">Observação sobre a Situação (opcional)</label>
+          <input type="text" name="status_descricao" value={formData.status_descricao} onChange={handleChange} className="w-full border p-2 rounded" placeholder="Ex: Suspensão temporária por falta de quórum 2024-2025" />
+        </div>
+      </div>
+
+      <h3 className="text-lg font-medium border-b pb-2 pt-4">Contato e Localização da Secretaria</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Bloco / Edifício</label>
+          <input type="text" name="bloco" value={formData.bloco} onChange={handleChange} className="w-full border p-2 rounded" placeholder="Ex: Bloco 7, Prédio da Pós-Graduação" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Sala</label>
+          <input type="text" name="sala" value={formData.sala} onChange={handleChange} className="w-full border p-2 rounded" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">CEP</label>
+          <input type="text" name="cep" value={formData.cep} onChange={handleChange} className="w-full border p-2 rounded" placeholder="00000-000" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Telefone da Secretaria</label>
+          <input type="text" name="telefone_secretaria" value={formData.telefone_secretaria} onChange={handleChange} className="w-full border p-2 rounded" placeholder="(81) 0000-0000" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">E-mail do Programa</label>
+          <input type="email" name="email_programa" value={formData.email_programa} onChange={handleChange} className="w-full border p-2 rounded" placeholder="ppg@ufrpe.br" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Horário de Atendimento</label>
+          <input type="text" name="horario_atendimento" value={formData.horario_atendimento} onChange={handleChange} className="w-full border p-2 rounded" placeholder="Seg-Sex 08:00-12:00 e 14:00-17:00" />
+        </div>
+      </div>
+
+      <h3 className="text-lg font-medium border-b pb-2 pt-4">Documentos e Plataformas</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Regimento Interno (URL)</label>
+          <input type="url" name="regimento_url" value={formData.regimento_url} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Regulamento de Admissão (URL)</label>
+          <input type="url" name="regulamento_url" value={formData.regulamento_url} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://" />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1">Página na Plataforma Sucupira (URL)</label>
+          <input type="url" name="sucupira_url" value={formData.sucupira_url} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://sucupira.capes.gov.br/..." />
         </div>
       </div>
     </div>
@@ -494,6 +603,7 @@ const AdminProgramaForm = () => {
         </div>
         <p><strong>Nome:</strong> {formData.nome} ({formData.sigla})</p>
         <p><strong>Campus:</strong> {formData.campus} | <strong>Rede:</strong> {formData.em_rede ? `Sim (${formData.nome_rede})` : 'Não'}</p>
+        <p><strong>Status:</strong> {(STATUS_OPTIONS.find(s => s.id === formData.status) || {}).label || formData.status}</p>
         <p><strong>Modalidades:</strong> {formData.modalidades.map(m => m.tipo).join(', ')}</p>
 
         <div className="flex justify-between border-b pb-2 mt-4">
