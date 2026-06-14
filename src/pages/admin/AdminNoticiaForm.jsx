@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 import { API_URL } from '../../api';
+import { AuditHeader } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const AdminNoticiaForm = () => {
   const { id } = useParams();
@@ -24,6 +26,8 @@ const AdminNoticiaForm = () => {
   const [loading, setLoading] = useState(isEditing);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [audit, setAudit] = useState(null);
+  const users = useUsers();
 
   // Helper para converter data para YYYY-MM-DD
   const parseDateToISO = (dateStr) => {
@@ -121,6 +125,7 @@ const AdminNoticiaForm = () => {
           const response = await fetch(`${API_URL}/api/news/${id}`);
           if (response.ok) {
             const data = await response.json();
+            setAudit(data);
             const contentHTML = Array.isArray(data.content)
               ? data.content.map(p => p.startsWith('<p>') ? p : `<p>${p}</p>`).join('')
               : data.content || '';
@@ -265,6 +270,10 @@ const AdminNoticiaForm = () => {
           {isEditing ? 'Editar Notícia' : 'Nova Notícia'}
         </h2>
       </div>
+
+      {isEditing && (
+        <AuditHeader criadoPor={audit?.criado_por} atualizadoPor={audit?.atualizado_por} criadoEm={audit?.criado_em} atualizadoEm={audit?.atualizado_em} users={users} className="mb-6" />
+      )}
 
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">

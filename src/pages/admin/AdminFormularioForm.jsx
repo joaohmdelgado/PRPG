@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { API_URL } from '../../api';
+import { AuditHeader } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const SECTIONS = {
   'mestrado-doutorado': 'Mestrado e Doutorado',
@@ -25,6 +27,8 @@ const AdminFormularioForm = () => {
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
   const [existingCategories, setExistingCategories] = useState([]);
+  const [audit, setAudit] = useState(null);
+  const users = useUsers();
 
   const editorRef = useRef(null);
   const editorInstanceRef = useRef(null);
@@ -109,6 +113,7 @@ const AdminFormularioForm = () => {
           const response = await fetch(`${API_URL}/api/formularios/${id}`);
           if (response.ok) {
             const data = await response.json();
+            setAudit(data);
             const description = data.desc || '';
             descRef.current = description;
             
@@ -194,6 +199,10 @@ const AdminFormularioForm = () => {
           {isEditing ? 'Editar Formulário' : 'Novo Formulário'}
         </h2>
       </div>
+
+      {isEditing && (
+        <AuditHeader criadoPor={audit?.criado_por} atualizadoPor={audit?.atualizado_por} criadoEm={audit?.criado_em} atualizadoEm={audit?.atualizado_em} users={users} className="mb-6" />
+      )}
 
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">

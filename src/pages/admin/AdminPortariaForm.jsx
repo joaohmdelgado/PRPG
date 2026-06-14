@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, FileText, Trash2, Upload } from 'lucide-react';
 import { API_URL } from '../../api';
+import { AuditHeader } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const AdminPortariaForm = () => {
   const { id } = useParams();
@@ -18,6 +20,8 @@ const AdminPortariaForm = () => {
   const [loading, setLoading] = useState(isEditing);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [audit, setAudit] = useState(null);
+  const users = useUsers();
 
   useEffect(() => {
     if (isEditing) {
@@ -30,6 +34,7 @@ const AdminPortariaForm = () => {
           });
           if (response.ok) {
             const data = await response.json();
+            setAudit(data);
             setFormData({
               title: data.title || '',
               data_portaria: data.data_portaria || '',
@@ -136,6 +141,10 @@ const AdminPortariaForm = () => {
           {isEditing ? 'Editar Portaria' : 'Nova Portaria'}
         </h2>
       </div>
+
+      {isEditing && (
+        <AuditHeader criadoPor={audit?.criado_por} atualizadoPor={audit?.atualizado_por} criadoEm={audit?.criado_em} atualizadoEm={audit?.atualizado_em} users={users} className="mb-6" />
+      )}
 
       {error && <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">{error}</div>}
 

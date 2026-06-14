@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Shield, Plus, Trash2, X, Search } from 'lucide-react';
 import { API_URL } from '../../api';
+import { AuditHeader } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const ROLES = ['Administrator', 'Gestor', 'Secretário(a)', 'Professor', 'Aluno'];
 const NIVEIS = ['Mestrando', 'Mestre', 'Doutorando', 'Doutor'];
@@ -33,6 +35,7 @@ const AdminUserForm = () => {
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
   const [taxonomias, setTaxonomias] = useState({ entradas: [], linhas_pesquisa: [] });
+  const users = useUsers();
 
   const [programasList, setProgramasList] = useState([]);
 
@@ -293,6 +296,10 @@ const AdminUserForm = () => {
           {isEditing ? 'Editar Usuário' : 'Novo Usuário'}
         </h2>
       </div>
+
+      {isEditing && (
+        <AuditHeader criadoPor={formData.criado_por} atualizadoPor={formData.atualizado_por} criadoEm={formData.criado_em} atualizadoEm={formData.atualizado_em} users={users} className="mb-6" />
+      )}
 
       {error && <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">{error}</div>}
 

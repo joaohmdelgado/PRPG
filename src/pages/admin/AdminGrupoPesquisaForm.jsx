@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, X, Search } from 'lucide-react';
 import { API_URL } from '../../api';
+import { AuditHeader } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const AdminGrupoPesquisaForm = () => {
   const { id } = useParams();
@@ -20,6 +22,8 @@ const AdminGrupoPesquisaForm = () => {
   const [professores, setProfessores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [audit, setAudit] = useState(null);
+  const auditUsers = useUsers();
 
   const editorRef = useRef(null);
   const editorInstanceRef = useRef(null);
@@ -109,6 +113,7 @@ const AdminGrupoPesquisaForm = () => {
           });
           if (grupoResponse.ok) {
             const data = await grupoResponse.json();
+            setAudit(data);
             const valueHTML = data.body?.value || '';
             contentRef.current = valueHTML;
 
@@ -249,6 +254,10 @@ const AdminGrupoPesquisaForm = () => {
           {isEditing ? 'Editar Grupo de Pesquisa' : 'Novo Grupo de Pesquisa'}
         </h2>
       </div>
+
+      {isEditing && (
+        <AuditHeader criadoPor={audit?.criado_por} atualizadoPor={audit?.atualizado_por} criadoEm={audit?.criado_em} atualizadoEm={audit?.atualizado_em} users={auditUsers} className="mb-6" />
+      )}
 
       {error && <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">{error}</div>}
 

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Upload, FileText, Trash2, Search, X, BookOpen } from 'lucide-react';
 import { API_URL } from '../../api';
+import { AuditHeader } from '../../components/AuditInfo';
+import useUsers from '../../hooks/useUsers';
 
 const AdminTeseForm = () => {
   const { id } = useParams();
@@ -19,6 +21,8 @@ const AdminTeseForm = () => {
   const [alunos, setAlunos] = useState([]);
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
+  const [audit, setAudit] = useState(null);
+  const auditUsers = useUsers();
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -48,6 +52,7 @@ const AdminTeseForm = () => {
           const response = await fetch(`${API_URL}/api/teses-dissertacoes/${id}`);
           if (response.ok) {
             const data = await response.json();
+            setAudit(data);
             setFormData({
               title: data.title || '',
               field_ano: data.field_ano || '',
@@ -216,6 +221,10 @@ const AdminTeseForm = () => {
           {isEditing ? 'Editar Tese/Dissertação' : 'Nova Tese/Dissertação'}
         </h2>
       </div>
+
+      {isEditing && (
+        <AuditHeader criadoPor={audit?.criado_por} atualizadoPor={audit?.atualizado_por} criadoEm={audit?.criado_em} atualizadoEm={audit?.atualizado_em} users={auditUsers} className="mb-6" />
+      )}
 
       {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">

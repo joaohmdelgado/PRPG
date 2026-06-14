@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import { API_URL } from '../../api';
-import AuditInfo from '../../components/AuditInfo';
+import AuditInfo, { AuditHeader } from '../../components/AuditInfo';
 
 const GRANDES_AREAS = [
   'Ciências Exatas e da Terra',
@@ -687,6 +687,10 @@ const AdminProgramaForm = () => {
           {isEditing ? 'Editar Programa' : 'Novo Programa'}
         </h2>
       </div>
+
+      {isEditing && (
+        <AuditHeader criadoPor={formData.criado_por} atualizadoPor={formData.atualizado_por} criadoEm={formData.criado_em} atualizadoEm={formData.atualizado_em} users={users} className="mb-6" />
+      )}
 
       {error && <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">{error}</div>}
 

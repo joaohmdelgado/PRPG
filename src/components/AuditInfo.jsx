@@ -36,3 +36,30 @@ export function LastEdited({ criadoPor, atualizadoPor, users = [], className = '
   if (!name) return null;
   return <div className={`text-xs text-gray-400 font-normal ${className}`}>Última edição: {name}</div>;
 }
+
+const fmtData = (s) => {
+  if (!s) return null;
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+};
+
+// Cabeçalho de auditoria para formulários de edição. Mostra autoria e, quando a
+// entidade tiver timestamp (criado_em/atualizado_em), a data correspondente.
+export function AuditHeader({ criadoPor, atualizadoPor, criadoEm, atualizadoEm, users = [], className = '' }) {
+  const criado = authorName(criadoPor, users);
+  const atualizado = authorName(atualizadoPor, users);
+  if (!criado && !atualizado) return null;
+  const criadoData = fmtData(criadoEm);
+  const editadoData = fmtData(atualizadoEm);
+
+  return (
+    <div className={`text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-md px-3 py-2 flex flex-wrap gap-x-4 gap-y-1 ${className}`}>
+      {criado && (
+        <span>Criado por <span className="font-medium text-gray-700">{criado}</span>{criadoData ? ` em ${criadoData}` : ''}</span>
+      )}
+      {atualizado && (
+        <span>Última edição por <span className="font-medium text-gray-700">{atualizado}</span>{editadoData ? ` em ${editadoData}` : ''}</span>
+      )}
+    </div>
+  );
+}
