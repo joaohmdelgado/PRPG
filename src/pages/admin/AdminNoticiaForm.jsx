@@ -266,7 +266,7 @@ const AdminNoticiaForm = () => {
         <Link to="/admin/noticias" className="text-gray-500 hover:text-gray-700">
           <ArrowLeft size={24} />
         </Link>
-        <h2 className="text-2xl font-semibold text-gray-800">
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">
           {isEditing ? 'Editar Notícia' : 'Nova Notícia'}
         </h2>
       </div>
@@ -291,7 +291,7 @@ const AdminNoticiaForm = () => {
               value={formData.title}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             />
           </div>
 
@@ -302,7 +302,7 @@ const AdminNoticiaForm = () => {
               value={formData.category}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white"
             >
               <option value="">Selecione uma categoria</option>
               <option value="Pesquisa">Pesquisa</option>
@@ -322,7 +322,7 @@ const AdminNoticiaForm = () => {
               value={formData.date}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             />
           </div>
 
@@ -341,7 +341,7 @@ const AdminNoticiaForm = () => {
                     href={formData.image.startsWith('http') ? formData.image : `${API_URL}${formData.image}`} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="text-xs text-blue-600 hover:underline"
+                    className="text-xs text-ufrpe-blue hover:underline"
                   >
                     Visualizar imagem cheia
                   </a>
@@ -358,12 +358,12 @@ const AdminNoticiaForm = () => {
             ) : (
               <div className="relative">
                 {uploading ? (
-                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-blue-300 rounded-lg bg-blue-50/50 text-blue-600 text-sm font-medium animate-pulse">
-                    <span className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5/50 text-ufrpe-blue text-sm font-medium animate-pulse">
+                    <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
                     Enviando imagem...
                   </div>
                 ) : (
-                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-blue-400 rounded-lg cursor-pointer bg-gray-50 hover:bg-blue-50/30 transition-all focus-within:ring-2 focus-within:ring-blue-500">
+                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5/30 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
                     <Upload className="text-gray-400 shrink-0" size={20} />
                     <div className="flex-grow min-w-0">
                       <span className="block text-sm font-medium text-gray-700">Selecionar Imagem</span>
@@ -394,7 +394,7 @@ const AdminNoticiaForm = () => {
               onChange={handleChange}
               required
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             />
           </div>
 
@@ -421,7 +421,7 @@ const AdminNoticiaForm = () => {
               name="tags"
               value={formData.tags}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
               placeholder="#Pesquisa, #Inovação"
             />
           </div>
@@ -437,7 +437,7 @@ const AdminNoticiaForm = () => {
           <button
             type="submit"
             disabled={loading || uploading || !formData.image}
-            className="bg-blue-600 border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="bg-ufrpe-blue border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-[#2a3a66] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ufrpe-yellow disabled:opacity-50"
           >
             {loading ? 'Salvando...' : 'Salvar Notícia'}
           </button>

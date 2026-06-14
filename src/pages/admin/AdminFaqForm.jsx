@@ -161,7 +161,7 @@ const AdminFaqForm = () => {
   if (loading && isEditing) {
     return (
       <div className="flex justify-center items-center h-64">
-        <span className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+        <span className="w-8 h-8 border-4 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
       </div>
     );
   }
@@ -172,8 +172,8 @@ const AdminFaqForm = () => {
         <Link to="/admin/faq" className="text-gray-500 hover:text-gray-700 transition-colors">
           <ArrowLeft size={24} />
         </Link>
-        <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-          <HelpCircle className="text-blue-600" size={24} />
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue flex items-center gap-2">
+          <HelpCircle className="text-ufrpe-blue" size={24} />
           {isEditing ? 'Editar FAQ' : 'Novo FAQ'}
         </h2>
       </div>
@@ -198,7 +198,7 @@ const AdminFaqForm = () => {
             value={formData.title}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
             placeholder="Digite a pergunta frequente..."
           />
         </div>
@@ -227,7 +227,7 @@ const AdminFaqForm = () => {
           <button 
             type="submit"
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50"
+            className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50"
           >
             <Save size={18} />
             {loading ? 'Salvando...' : 'Salvar FAQ'}

@@ -73,13 +73,13 @@ const AdminPortarias = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-          <FileCheck className="text-blue-600" />
+        <h2 className="font-heading text-xl font-semibold text-ufrpe-blue flex items-center gap-2">
+          <FileCheck className="text-ufrpe-blue" />
           Gerenciar Portarias
         </h2>
         <Link 
           to="/admin/portarias/nova" 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm"
+          className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm"
         >
           <Plus size={18} />
           Nova Portaria
@@ -126,7 +126,7 @@ const AdminPortarias = () => {
                         </span>
                       )
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-ufrpe-blue/10 text-ufrpe-blue">
                         Permanente
                       </span>
                     )}
@@ -137,7 +137,7 @@ const AdminPortarias = () => {
                         href={`${API_URL}${item.downloadLink}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-gray-500 hover:text-blue-600 transition-colors"
+                        className="text-gray-500 hover:text-ufrpe-yellow transition-colors"
                         title="Ver arquivo anexado"
                       >
                         <Eye size={18} />
@@ -145,7 +145,7 @@ const AdminPortarias = () => {
                     )}
                     <Link 
                       to={`/admin/portarias/editar/${item.id}`}
-                      className="text-indigo-600 hover:text-indigo-900 transition-colors"
+                      className="text-ufrpe-blue hover:text-ufrpe-yellow transition-colors"
                       title="Editar"
                     >
                       <Edit2 size={18} />

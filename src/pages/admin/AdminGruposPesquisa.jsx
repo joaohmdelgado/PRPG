@@ -63,13 +63,13 @@ const AdminGruposPesquisa = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-          <Users className="text-blue-600" />
+        <h2 className="font-heading text-xl font-semibold text-ufrpe-blue flex items-center gap-2">
+          <Users className="text-ufrpe-blue" />
           Gerenciar Grupos de Pesquisa
         </h2>
         <Link 
           to="/admin/grupos-pesquisa/novo" 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm"
+          className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm"
         >
           <Plus size={18} />
           Novo Grupo de Pesquisa
@@ -109,7 +109,7 @@ const AdminGruposPesquisa = () => {
                   <td className="px-6 py-4 text-sm font-medium text-right flex justify-end gap-3 items-center">
                     <Link 
                       to={`/admin/grupos-pesquisa/editar/${item.id}`}
-                      className="text-indigo-600 hover:text-indigo-900 transition-colors"
+                      className="text-ufrpe-blue hover:text-ufrpe-yellow transition-colors"
                       title="Editar"
                     >
                       <Edit2 size={18} />

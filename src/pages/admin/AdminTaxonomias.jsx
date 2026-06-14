@@ -198,7 +198,7 @@ const AdminTaxonomias = () => {
           onClick={() => handleTabChange('entradas')}
           className={`py-3 px-4 text-sm font-semibold border-b-2 transition-all shrink-0 ${
             activeTab === 'entradas'
-              ? 'border-blue-600 text-blue-600'
+              ? 'border-ufrpe-blue text-ufrpe-blue'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
         >
@@ -208,7 +208,7 @@ const AdminTaxonomias = () => {
           onClick={() => handleTabChange('linhas_pesquisa')}
           className={`py-3 px-4 text-sm font-semibold border-b-2 transition-all shrink-0 ${
             activeTab === 'linhas_pesquisa'
-              ? 'border-blue-600 text-blue-600'
+              ? 'border-ufrpe-blue text-ufrpe-blue'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
         >
@@ -218,7 +218,7 @@ const AdminTaxonomias = () => {
           onClick={() => handleTabChange('subcategorias_resolucao')}
           className={`py-3 px-4 text-sm font-semibold border-b-2 transition-all shrink-0 ${
             activeTab === 'subcategorias_resolucao'
-              ? 'border-blue-600 text-blue-600'
+              ? 'border-ufrpe-blue text-ufrpe-blue'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
         >
@@ -228,7 +228,7 @@ const AdminTaxonomias = () => {
           onClick={() => handleTabChange('tipo_bolsa')}
           className={`py-3 px-4 text-sm font-semibold border-b-2 transition-all shrink-0 ${
             activeTab === 'tipo_bolsa'
-              ? 'border-blue-600 text-blue-600'
+              ? 'border-ufrpe-blue text-ufrpe-blue'
               : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
           }`}
         >
@@ -247,11 +247,11 @@ const AdminTaxonomias = () => {
               value={getNewValue()}
               onChange={(e) => handleNewValueChange(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none text-sm"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow focus:outline-none text-sm"
             />
             <button
               onClick={handleAdd}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-semibold text-sm transition-all shadow-sm hover:shadow active:scale-95 shrink-0"
+              className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-semibold text-sm transition-all shadow-sm hover:shadow active:scale-95 shrink-0"
             >
               <Plus size={18} /> Adicionar
             </button>
@@ -264,7 +264,7 @@ const AdminTaxonomias = () => {
               placeholder="Buscar itens..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none text-sm bg-gray-50/50"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow focus:outline-none text-sm bg-gray-50/50"
             />
           </div>
         </div>

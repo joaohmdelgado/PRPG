@@ -58,10 +58,10 @@ const AdminUsersList = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-800">Gerenciar Usuários</h2>
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">Gerenciar Usuários</h2>
         <Link 
           to="/admin/users/novo" 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
+          className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded flex items-center gap-2 transition-colors"
         >
           <Plus size={20} />
           Novo Usuário
@@ -91,7 +91,7 @@ const AdminUsersList = () => {
                 <td className="p-4">
                   <div className="flex gap-1 flex-wrap">
                     {user.roles.map(role => (
-                      <span key={role} className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-medium">
+                      <span key={role} className="bg-ufrpe-blue/10 text-ufrpe-blue text-xs px-2 py-1 rounded-full font-medium">
                         {role}
                       </span>
                     ))}
@@ -108,7 +108,7 @@ const AdminUsersList = () => {
                   <div className="flex justify-end gap-2">
                     <Link 
                       to={`/admin/users/editar/${user.id}`}
-                      className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-2 text-ufrpe-blue hover:bg-ufrpe-blue/5 rounded transition-colors"
                       title="Editar"
                     >
                       <Edit size={18} />

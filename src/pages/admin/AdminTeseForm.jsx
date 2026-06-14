@@ -205,7 +205,7 @@ const AdminTeseForm = () => {
   if (loading && isEditing) {
     return (
       <div className="flex justify-center items-center h-64">
-        <span className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+        <span className="w-8 h-8 border-4 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
       </div>
     );
   }
@@ -216,8 +216,8 @@ const AdminTeseForm = () => {
         <Link to="/admin/teses-dissertacoes" className="text-gray-500 hover:text-gray-700 transition-colors">
           <ArrowLeft size={24} />
         </Link>
-        <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-          <BookOpen className="text-blue-600" size={24} />
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue flex items-center gap-2">
+          <BookOpen className="text-ufrpe-blue" size={24} />
           {isEditing ? 'Editar Tese/Dissertação' : 'Nova Tese/Dissertação'}
         </h2>
       </div>
@@ -243,7 +243,7 @@ const AdminTeseForm = () => {
               value={formData.title}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
               placeholder="Digite o título do trabalho acadêmico..."
             />
           </div>
@@ -256,7 +256,7 @@ const AdminTeseForm = () => {
               value={formData.field_tipo_td}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm bg-white"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm bg-white"
             >
               <option value="">Selecione o tipo</option>
               <option value="Tese">Tese</option>
@@ -273,7 +273,7 @@ const AdminTeseForm = () => {
               value={formData.field_ano}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
             />
           </div>
 
@@ -283,19 +283,19 @@ const AdminTeseForm = () => {
             
             {formData.field_autor ? (
               // Aluno Selecionado
-              <div className="flex items-center justify-between bg-blue-50 border border-blue-200 text-blue-900 rounded-md px-4 py-2.5">
+              <div className="flex items-center justify-between bg-ufrpe-blue/5 border border-ufrpe-blue/20 text-ufrpe-blue rounded-md px-4 py-2.5">
                 <div>
                   <p className="font-semibold text-sm">
                     {selectedAlunoObj?.perfil_geral?.nome || 'Usuário carregando...'}
                   </p>
-                  <p className="text-xs text-blue-600">
+                  <p className="text-xs text-ufrpe-blue">
                     {selectedAlunoObj?.email}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={handleRemoveAluno}
-                  className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full p-1.5 transition-colors focus:outline-none"
+                  className="text-ufrpe-blue hover:text-ufrpe-yellow hover:bg-ufrpe-blue/10 rounded-full p-1.5 transition-colors focus:outline-none"
                   title="Remover autor"
                 >
                   <X size={16} />
@@ -315,7 +315,7 @@ const AdminTeseForm = () => {
                     setShowDropdown(true);
                   }}
                   onFocus={() => setShowDropdown(true)}
-                  className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400"
+                  className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm placeholder-gray-400"
                   placeholder="Buscar aluno por nome ou email..."
                 />
 
@@ -331,7 +331,7 @@ const AdminTeseForm = () => {
                         <div
                           key={aluno.id}
                           onClick={() => handleSelectAluno(aluno)}
-                          className="px-4 py-2.5 hover:bg-blue-50 text-sm cursor-pointer transition-colors border-b border-gray-100 last:border-0 flex justify-between items-center"
+                          className="px-4 py-2.5 hover:bg-ufrpe-blue/5 text-sm cursor-pointer transition-colors border-b border-gray-100 last:border-0 flex justify-between items-center"
                         >
                           <div>
                             <p className="font-semibold text-gray-900">
@@ -339,7 +339,7 @@ const AdminTeseForm = () => {
                             </p>
                             <p className="text-xs text-gray-500">{aluno.email}</p>
                           </div>
-                          <span className="text-xs text-blue-600 bg-blue-50 px-2.5 py-1 rounded font-semibold">
+                          <span className="text-xs text-ufrpe-blue bg-ufrpe-blue/5 px-2.5 py-1 rounded font-semibold">
                             Selecionar
                           </span>
                         </div>
@@ -363,7 +363,7 @@ const AdminTeseForm = () => {
                   href={formData.field_arquivo.startsWith('http') ? formData.field_arquivo : `${API_URL}${formData.field_arquivo}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"
+                  className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
                 >
                   Visualizar PDF da Dissertação / Tese
                 </a>
@@ -380,12 +380,12 @@ const AdminTeseForm = () => {
               // Componente Premium de Upload
               <div className="relative">
                 {uploading ? (
-                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-blue-300 rounded-lg bg-blue-50/50 text-blue-600 text-sm font-medium animate-pulse">
-                    <span className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5/50 text-ufrpe-blue text-sm font-medium animate-pulse">
+                    <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
                     Enviando trabalho acadêmico...
                   </div>
                 ) : (
-                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-blue-400 rounded-lg cursor-pointer bg-gray-50 hover:bg-blue-50/30 transition-all focus-within:ring-2 focus-within:ring-blue-500">
+                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5/30 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
                     <Upload className="text-gray-400 shrink-0" size={20} />
                     <div className="flex-grow min-w-0">
                       <span className="block text-sm font-medium text-gray-700">Selecionar PDF do Trabalho</span>
@@ -421,7 +421,7 @@ const AdminTeseForm = () => {
           <button 
             type="submit"
             disabled={loading || uploading}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50"
+            className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50"
           >
             <Save size={18} />
             {loading ? 'Salvando...' : 'Salvar Trabalho'}

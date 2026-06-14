@@ -62,7 +62,7 @@ const AdminPagesList = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <span className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+        <span className="w-8 h-8 border-4 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
       </div>
     );
   }
@@ -71,8 +71,8 @@ const AdminPagesList = () => {
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <File className="text-blue-600" size={24} />
+          <h2 className="font-heading text-xl font-semibold text-ufrpe-blue flex items-center gap-2">
+            <File className="text-ufrpe-blue" size={24} />
             Gerenciar Páginas Customizadas
           </h2>
           <p className="text-sm text-gray-500 mt-1">
@@ -81,7 +81,7 @@ const AdminPagesList = () => {
         </div>
         <Link 
           to="/admin/paginas/nova" 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-md flex items-center gap-2 transition-colors font-medium text-sm"
+          className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2.5 rounded-md flex items-center gap-2 transition-colors font-medium text-sm"
         >
           <Plus size={18} />
           Nova Página
@@ -98,7 +98,7 @@ const AdminPagesList = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Buscar por título, slug ou conteúdo..."
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400"
+          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm placeholder-gray-400"
         />
       </div>
 
@@ -123,7 +123,7 @@ const AdminPagesList = () => {
                     href={`/p/${item.slug}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline inline-flex items-center gap-1.5 font-medium"
+                    className="text-ufrpe-blue hover:underline inline-flex items-center gap-1.5 font-medium"
                   >
                     /p/{item.slug}
                     <ExternalLink size={14} />
@@ -133,7 +133,7 @@ const AdminPagesList = () => {
                   <div className="flex justify-end gap-3">
                     <Link 
                       to={`/admin/paginas/editar/${item.id}`}
-                      className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-1.5 rounded transition-colors"
+                      className="text-ufrpe-blue hover:text-ufrpe-yellow bg-ufrpe-blue/5 hover:bg-ufrpe-blue/10 p-1.5 rounded transition-colors"
                       title="Editar"
                     >
                       <Edit2 size={16} />

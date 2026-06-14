@@ -195,7 +195,7 @@ const AdminFormularioForm = () => {
         <Link to="/admin/formularios" className="text-gray-500 hover:text-gray-700">
           <ArrowLeft size={24} />
         </Link>
-        <h2 className="text-2xl font-semibold text-gray-800">
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">
           {isEditing ? 'Editar Formulário' : 'Novo Formulário'}
         </h2>
       </div>
@@ -220,7 +220,7 @@ const AdminFormularioForm = () => {
               value={formData.title}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
               placeholder="Ex: Ficha de Identificação do Discente"
             />
           </div>
@@ -232,7 +232,7 @@ const AdminFormularioForm = () => {
               value={formData.sectionId}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white"
             >
               <option value="">Selecione uma seção</option>
               {Object.entries(SECTIONS).map(([val, label]) => (
@@ -250,7 +250,7 @@ const AdminFormularioForm = () => {
               onChange={handleChange}
               required
               list="categories-list"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
               placeholder="Digite ou selecione uma subcategoria"
             />
             <datalist id="categories-list">
@@ -268,7 +268,7 @@ const AdminFormularioForm = () => {
               value={formData.link}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
               placeholder="Ex: https://prpg.ufrpe.br/.../documento.docx"
             />
           </div>
@@ -296,7 +296,7 @@ const AdminFormularioForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="bg-ufrpe-blue border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-[#2a3a66] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ufrpe-yellow disabled:opacity-50"
           >
             {loading ? 'Salvando...' : 'Salvar Formulário'}
           </button>

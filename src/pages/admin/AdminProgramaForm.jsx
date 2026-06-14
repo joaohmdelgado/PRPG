@@ -495,7 +495,7 @@ const AdminProgramaForm = () => {
             <select
               value={data.pessoa_id || ''}
               onChange={e => handleUserSelect(sectionName, e.target.value)}
-              className="w-full border p-2 rounded bg-white text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border p-2 rounded bg-white text-sm focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             >
               <option value="">-- Selecione um usuário cadastrado --</option>
               {eligibleUsers.map(u => (
@@ -508,7 +508,7 @@ const AdminProgramaForm = () => {
 
           {/* Dados Pessoais Resolvidos (Read Only) */}
           {data.pessoa_id ? (
-            <div className="md:col-span-2 bg-blue-50 border border-blue-100 p-4 rounded-md grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="md:col-span-2 bg-ufrpe-blue/5 border border-ufrpe-blue/15 p-4 rounded-md grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
               <div><span className="font-semibold text-gray-700">Nome:</span> <span className="text-gray-800">{data.nome}</span></div>
               <div><span className="font-semibold text-gray-700">E-mail:</span> <span className="text-gray-800">{data.email_institucional}</span></div>
               <div><span className="font-semibold text-gray-700">CPF:</span> <span className="text-gray-800">{data.cpf || '-'}</span></div>
@@ -558,7 +558,7 @@ const AdminProgramaForm = () => {
                   }
                 }));
               }}
-              className="w-full border p-2 rounded bg-white text-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border p-2 rounded bg-white text-sm focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             >
               <option value="">-- Selecione uma portaria oficial --</option>
               {portarias.map(p => (
@@ -636,7 +636,7 @@ const AdminProgramaForm = () => {
       <div className="bg-gray-50 p-6 rounded text-sm space-y-4">
         <div className="flex justify-between border-b pb-2">
           <strong>Identificação</strong>
-          <button type="button" onClick={() => setStep(1)} className="text-blue-600">Editar</button>
+          <button type="button" onClick={() => setStep(1)} className="text-ufrpe-blue">Editar</button>
         </div>
         <p><strong>Nome:</strong> {formData.nome} ({formData.sigla})</p>
         <p><strong>Campus:</strong> {formData.campus} | <strong>Rede:</strong> {formData.em_rede ? `Sim (${formData.nome_rede})` : 'Não'}</p>
@@ -645,13 +645,13 @@ const AdminProgramaForm = () => {
 
         <div className="flex justify-between border-b pb-2 mt-4">
           <strong>Coordenação</strong>
-          <button type="button" onClick={() => setStep(2)} className="text-blue-600">Editar</button>
+          <button type="button" onClick={() => setStep(2)} className="text-ufrpe-blue">Editar</button>
         </div>
         <p><strong>Atual:</strong> {formData.coordenador_atual.nome || 'Não preenchido'}</p>
 
         <div className="flex justify-between border-b pb-2 mt-4">
           <strong>Secretaria</strong>
-          <button type="button" onClick={() => setStep(3)} className="text-blue-600">Editar</button>
+          <button type="button" onClick={() => setStep(3)} className="text-ufrpe-blue">Editar</button>
         </div>
         <p><strong>TAE:</strong> {formData.secretaria.nome || 'Não preenchido'}</p>
 
@@ -670,11 +670,11 @@ const AdminProgramaForm = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 max-w-5xl mx-auto">
       {hasDraft && !isEditing && (
-        <div className="bg-blue-50 text-blue-800 p-4 rounded-md mb-6 flex justify-between items-center">
+        <div className="bg-ufrpe-blue/5 text-ufrpe-blue p-4 rounded-md mb-6 flex justify-between items-center">
           <span>Você tem um rascunho não salvo. Deseja continuar de onde parou?</span>
           <div className="space-x-2">
-            <button type="button" onClick={loadDraft} className="bg-blue-600 text-white px-3 py-1 rounded text-sm">Recuperar</button>
-            <button type="button" onClick={discardDraft} className="text-blue-600 px-3 py-1 text-sm border border-blue-600 rounded">Descartar</button>
+            <button type="button" onClick={loadDraft} className="bg-ufrpe-blue text-white px-3 py-1 rounded text-sm">Recuperar</button>
+            <button type="button" onClick={discardDraft} className="text-ufrpe-blue px-3 py-1 text-sm border border-ufrpe-blue rounded">Descartar</button>
           </div>
         </div>
       )}
@@ -683,7 +683,7 @@ const AdminProgramaForm = () => {
         <Link to="/admin/programas" className="text-gray-500 hover:text-gray-700">
           <ArrowLeft size={24} />
         </Link>
-        <h2 className="text-2xl font-semibold text-gray-800">
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">
           {isEditing ? 'Editar Programa' : 'Novo Programa'}
         </h2>
       </div>
@@ -696,9 +696,9 @@ const AdminProgramaForm = () => {
 
       <div className="flex justify-between mb-8 relative">
         <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10 transform -translate-y-1/2"></div>
-        <div className="absolute top-1/2 left-0 h-1 bg-blue-600 -z-10 transform -translate-y-1/2 transition-all" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
+        <div className="absolute top-1/2 left-0 h-1 bg-ufrpe-blue -z-10 transform -translate-y-1/2 transition-all" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
         {[1, 2, 3, 4].map(s => (
-          <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 ${step >= s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-400 border-gray-300'}`}>
+          <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 ${step >= s ? 'bg-ufrpe-blue text-white border-ufrpe-blue' : 'bg-white text-gray-400 border-gray-300'}`}>
             {s}
           </div>
         ))}
@@ -719,13 +719,13 @@ const AdminProgramaForm = () => {
           
           <div className="flex gap-2">
             {!isEditing && (
-              <button type="button" onClick={() => handleSubmit(null, true)} className="px-4 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded">
+              <button type="button" onClick={() => handleSubmit(null, true)} className="px-4 py-2 text-ufrpe-blue bg-ufrpe-blue/5 hover:bg-ufrpe-blue/10 rounded">
                 Salvar Rascunho
               </button>
             )}
             
             {step < 4 ? (
-              <button type="button" onClick={nextStep} className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              <button type="button" onClick={nextStep} className="flex items-center px-4 py-2 bg-ufrpe-blue text-white rounded hover:bg-[#2a3a66]">
                 Próximo <ChevronRight size={18} className="ml-2" />
               </button>
             ) : (

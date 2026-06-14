@@ -192,7 +192,7 @@ const AdminPageForm = () => {
   if (loading && isEditing) {
     return (
       <div className="flex justify-center items-center h-64">
-        <span className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+        <span className="w-8 h-8 border-4 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
       </div>
     );
   }
@@ -205,8 +205,8 @@ const AdminPageForm = () => {
         <Link to="/admin/paginas" className="text-gray-500 hover:text-gray-700 transition-colors">
           <ArrowLeft size={24} />
         </Link>
-        <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-          <File className="text-blue-600" size={24} />
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue flex items-center gap-2">
+          <File className="text-ufrpe-blue" size={24} />
           {isEditing ? 'Editar Página' : 'Nova Página'}
         </h2>
       </div>
@@ -227,12 +227,12 @@ const AdminPageForm = () => {
             value={formData.title}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
             placeholder="Digite o título da página (ex: Infraestrutura e Laboratórios)..."
           />
           {formData.title && (
             <p className="mt-1.5 text-xs text-gray-500">
-              Link público da página: <span className="font-semibold text-blue-600">/p/{currentSlug}</span>
+              Link público da página: <span className="font-semibold text-ufrpe-blue">/p/{currentSlug}</span>
             </p>
           )}
         </div>
@@ -245,7 +245,7 @@ const AdminPageForm = () => {
             value={formData.body.summary}
             onChange={handleSummaryChange}
             rows={3}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm placeholder-gray-400"
             placeholder="Um resumo curto do assunto tratado na página institucional..."
           />
         </div>
@@ -274,7 +274,7 @@ const AdminPageForm = () => {
           <button 
             type="submit"
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50"
+            className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50"
           >
             <Save size={18} />
             {loading ? 'Salvando...' : 'Salvar Página'}

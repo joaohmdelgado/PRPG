@@ -295,7 +295,7 @@ const AdminEditalForm = () => {
         <Link to="/admin/editais" className="text-gray-500 hover:text-gray-700">
           <ArrowLeft size={24} />
         </Link>
-        <h2 className="text-2xl font-semibold text-gray-800">
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">
           {isEditing ? 'Editar Edital' : 'Novo Edital'}
         </h2>
       </div>
@@ -320,7 +320,7 @@ const AdminEditalForm = () => {
               value={formData.title}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             />
           </div>
 
@@ -331,7 +331,7 @@ const AdminEditalForm = () => {
               value={formData.categoryId}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white"
             >
               <option value="">Selecione uma categoria</option>
               {Object.entries(CATEGORIES).map(([val, label]) => (
@@ -348,7 +348,7 @@ const AdminEditalForm = () => {
               value={formData.numero}
               onChange={handleChange}
               placeholder="Ex: 07"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             />
           </div>
 
@@ -360,7 +360,7 @@ const AdminEditalForm = () => {
               value={formData.year}
               onChange={handleChange}
               placeholder="Ex: 2026"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             />
           </div>
 
@@ -372,7 +372,7 @@ const AdminEditalForm = () => {
               value={formData.publishedAt}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             />
           </div>
 
@@ -390,7 +390,7 @@ const AdminEditalForm = () => {
                   value={formData.field_periodo?.data_inicio || ''}
                   onChange={handlePeriodChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 bg-white rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-4 py-2 border border-gray-300 bg-white rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
                 />
               </div>
               <div>
@@ -401,7 +401,7 @@ const AdminEditalForm = () => {
                   value={formData.field_periodo?.data_fim || ''}
                   onChange={handlePeriodChange}
                   required
-                  className="w-full px-4 py-2 border border-gray-300 bg-white rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full px-4 py-2 border border-gray-300 bg-white rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
                 />
               </div>
             </div>
@@ -416,7 +416,7 @@ const AdminEditalForm = () => {
                   href={formData.downloadLink.startsWith('http') ? formData.downloadLink : `${API_URL}${formData.downloadLink}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"
+                  className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
                 >
                   Visualizar PDF do Edital
                 </a>
@@ -432,12 +432,12 @@ const AdminEditalForm = () => {
             ) : (
               <div className="relative">
                 {uploadingFields['downloadLink'] ? (
-                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-blue-300 rounded-lg bg-blue-50/50 text-blue-600 text-sm font-medium animate-pulse">
-                    <span className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5/50 text-ufrpe-blue text-sm font-medium animate-pulse">
+                    <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
                     Enviando edital...
                   </div>
                 ) : (
-                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-blue-400 rounded-lg cursor-pointer bg-gray-50 hover:bg-blue-50/30 transition-all focus-within:ring-2 focus-within:ring-blue-500">
+                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5/30 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
                     <Upload className="text-gray-400 shrink-0" size={20} />
                     <div className="flex-grow min-w-0">
                       <span className="block text-sm font-medium text-gray-700">Selecionar PDF do Edital</span>
@@ -470,7 +470,7 @@ const AdminEditalForm = () => {
                   href={`${API_URL}${formData.resultadoParcial}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"
+                  className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
                 >
                   Visualizar PDF
                 </a>
@@ -486,12 +486,12 @@ const AdminEditalForm = () => {
             ) : (
               <div className="relative">
                 {uploadingFields['resultadoParcial'] ? (
-                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-blue-300 rounded-lg bg-blue-50/50 text-blue-600 text-sm font-medium animate-pulse">
-                    <span className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5/50 text-ufrpe-blue text-sm font-medium animate-pulse">
+                    <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
                     Enviando arquivo...
                   </div>
                 ) : (
-                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-blue-400 rounded-lg cursor-pointer bg-gray-50 hover:bg-blue-50/30 transition-all focus-within:ring-2 focus-within:ring-blue-500">
+                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5/30 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
                     <Upload className="text-gray-400 shrink-0" size={20} />
                     <div className="flex-grow min-w-0">
                       <span className="block text-sm font-medium text-gray-700">Selecionar PDF</span>
@@ -523,7 +523,7 @@ const AdminEditalForm = () => {
                   href={`${API_URL}${formData.resultadoFinal}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"
+                  className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
                 >
                   Visualizar PDF
                 </a>
@@ -539,12 +539,12 @@ const AdminEditalForm = () => {
             ) : (
               <div className="relative">
                 {uploadingFields['resultadoFinal'] ? (
-                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-blue-300 rounded-lg bg-blue-50/50 text-blue-600 text-sm font-medium animate-pulse">
-                    <span className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5/50 text-ufrpe-blue text-sm font-medium animate-pulse">
+                    <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
                     Enviando arquivo...
                   </div>
                 ) : (
-                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-blue-400 rounded-lg cursor-pointer bg-gray-50 hover:bg-blue-50/30 transition-all focus-within:ring-2 focus-within:ring-blue-500">
+                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5/30 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
                     <Upload className="text-gray-400 shrink-0" size={20} />
                     <div className="flex-grow min-w-0">
                       <span className="block text-sm font-medium text-gray-700">Selecionar PDF</span>
@@ -573,7 +573,7 @@ const AdminEditalForm = () => {
               <button
                 type="button"
                 onClick={handleAddErrata}
-                className="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+                className="bg-ufrpe-blue/5 hover:bg-ufrpe-blue/10 text-ufrpe-blue px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
               >
                 + Adicionar Errata
               </button>
@@ -593,7 +593,7 @@ const AdminEditalForm = () => {
                         onChange={(e) => handleErrataNumeroChange(index, e.target.value)}
                         placeholder="Ex: 01"
                         required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white text-sm"
                       />
                     </div>
                     <div className="w-full md:w-80">
@@ -605,7 +605,7 @@ const AdminEditalForm = () => {
                             href={`${API_URL}${errata.downloadLink}`} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="text-blue-600 hover:underline truncate flex-grow font-medium"
+                            className="text-ufrpe-blue hover:underline truncate flex-grow font-medium"
                           >
                             Visualizar PDF
                           </a>
@@ -627,12 +627,12 @@ const AdminEditalForm = () => {
                       ) : (
                         <div className="relative">
                           {uploadingFields[`erratas-${index}`] ? (
-                            <div className="flex items-center gap-2 px-3 py-2 border border-dashed border-blue-300 rounded-lg bg-blue-50/50 text-blue-600 text-xs font-medium animate-pulse">
-                              <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                            <div className="flex items-center gap-2 px-3 py-2 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5/50 text-ufrpe-blue text-xs font-medium animate-pulse">
+                              <span className="w-4 h-4 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
                               Enviando errata...
                             </div>
                           ) : (
-                            <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 hover:border-blue-400 rounded-lg cursor-pointer bg-white hover:bg-blue-50/10 transition-all focus-within:ring-2 focus-within:ring-blue-500">
+                            <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-white hover:bg-ufrpe-blue/5/10 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
                               <Upload className="text-gray-400 shrink-0" size={16} />
                               <div className="flex-grow min-w-0">
                                 <span className="block text-xs font-medium text-gray-700">Selecionar PDF</span>
@@ -690,7 +690,7 @@ const AdminEditalForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="bg-ufrpe-blue border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-[#2a3a66] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ufrpe-yellow disabled:opacity-50"
           >
             {loading ? 'Salvando...' : 'Salvar Edital'}
           </button>

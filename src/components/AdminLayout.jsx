@@ -1,6 +1,32 @@
 import React from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet, GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle, Book, Award, File } from 'lucide-react';
+import {
+  LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet,
+  GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle,
+  Book, Award, File, UserCog, ExternalLink
+} from 'lucide-react';
+
+const CONTEUDO = [
+  { to: '/admin/noticias', label: 'Notícias', icon: Newspaper },
+  { to: '/admin/editais', label: 'Editais', icon: FileText },
+  { to: '/admin/resolucoes', label: 'Resoluções', icon: Scale },
+  { to: '/admin/formularios', label: 'Formulários', icon: FileSpreadsheet },
+  { to: '/admin/programas', label: 'Programas', icon: GraduationCap },
+  { to: '/admin/calendarios', label: 'Calendários', icon: Calendar },
+  { to: '/admin/teses-dissertacoes', label: 'Teses e Dissertações', icon: BookOpen },
+  { to: '/admin/faq', label: 'FAQ', icon: HelpCircle },
+  { to: '/admin/disciplinas', label: 'Disciplinas', icon: Book },
+  { to: '/admin/bolsas', label: 'Bolsas', icon: Award },
+  { to: '/admin/paginas', label: 'Páginas', icon: File },
+];
+
+const ADMINISTRACAO = [
+  { to: '/admin/metricas', label: 'Dashboard / Métricas', icon: LayoutDashboard },
+  { to: '/admin/portarias', label: 'Portarias', icon: FileCheck },
+  { to: '/admin/grupos-pesquisa', label: 'Grupos de Pesquisa', icon: Users },
+  { to: '/admin/taxonomias', label: 'Taxonomias', icon: Tags },
+  { to: '/admin/users', label: 'Usuários', icon: UserCog },
+];
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -14,144 +40,80 @@ const AdminLayout = () => {
   };
 
   const isActive = (path) => location.pathname.startsWith(path);
-  
+
   const userRoles = JSON.parse(localStorage.getItem('roles') || '[]');
   const isSuperAdmin = userRoles.includes('Administrator') || userRoles.includes('Gestor');
+  const username = localStorage.getItem('username') || 'Admin';
+  const roleLabel = userRoles[0] || 'Usuário';
+  const initial = username.trim().charAt(0).toUpperCase() || 'A';
+
+  const NavItem = ({ to, label, icon: Icon }) => {
+    const active = isActive(to);
+    return (
+      <Link
+        to={to}
+        className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+          active
+            ? 'bg-ufrpe-yellow text-ufrpe-blue font-semibold'
+            : 'text-white/70 hover:text-white hover:bg-white/10'
+        }`}
+      >
+        <Icon
+          size={18}
+          className={active ? 'text-ufrpe-blue shrink-0' : 'text-white/45 group-hover:text-ufrpe-yellow shrink-0 transition-colors'}
+        />
+        <span className="truncate">{label}</span>
+      </Link>
+    );
+  };
+
+  const SectionLabel = ({ children }) => (
+    <p className="px-3 pt-5 pb-2 text-[11px] font-semibold uppercase tracking-wider text-white/35">
+      {children}
+    </p>
+  );
 
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col">
-        <div className="p-6">
-          <h2 className="text-2xl font-bold text-blue-400">PRPG Admin</h2>
+      <aside className="w-64 bg-ufrpe-blue text-white flex flex-col shrink-0">
+        <div className="px-6 pt-6 pb-5 border-b border-white/10">
+          <Link to="/admin" className="inline-block">
+            <span className="font-heading font-extrabold text-2xl text-white leading-none border-b-4 border-ufrpe-yellow pb-1 inline-block">
+              PRPG
+            </span>
+            <span className="block font-heading text-[13px] text-white/55 mt-2 tracking-wide">
+              Painel Administrativo
+            </span>
+          </Link>
         </div>
-        
-        <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
-          <Link 
-            to="/admin/noticias" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/noticias') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-          >
-            <Newspaper size={20} />
-            <span>Notícias</span>
-          </Link>
-          <Link 
-            to="/admin/editais" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/editais') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-          >
-            <FileText size={20} />
-            <span>Editais</span>
-          </Link>
-          <Link 
-            to="/admin/resolucoes" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/resolucoes') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-          >
-            <Scale size={20} />
-            <span>Resoluções</span>
-          </Link>
-          <Link 
-            to="/admin/formularios" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/formularios') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-          >
-            <FileSpreadsheet size={20} />
-            <span>Formulários</span>
-          </Link>
-          <Link 
-            to="/admin/programas" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/programas') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-          >
-            <GraduationCap size={20} />
-            <span>Programas</span>
-          </Link>
-          <Link 
-            to="/admin/calendarios" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/calendarios') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-          >
-            <Calendar size={20} />
-            <span>Calendários</span>
-          </Link>
-          <Link 
-            to="/admin/teses-dissertacoes" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/teses-dissertacoes') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-          >
-            <BookOpen size={20} />
-            <span>Teses e Dissertações</span>
-          </Link>
-          <Link 
-            to="/admin/faq" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/faq') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-          >
-            <HelpCircle size={20} />
-            <span>FAQ</span>
-          </Link>
-          <Link 
-            to="/admin/disciplinas" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/disciplinas') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-          >
-            <Book size={20} />
-            <span>Disciplinas</span>
-          </Link>
-          <Link 
-            to="/admin/bolsas" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/bolsas') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-          >
-            <Award size={20} />
-            <span>Bolsas</span>
-          </Link>
-          <Link 
-            to="/admin/paginas" 
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/paginas') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-          >
-            <File size={20} />
-            <span>Páginas</span>
-          </Link>
-          
+
+        <nav className="flex-1 px-3 pb-4 overflow-y-auto">
+          <SectionLabel>Conteúdo</SectionLabel>
+          <div className="space-y-1">
+            {CONTEUDO.map((item) => (
+              <NavItem key={item.to} {...item} />
+            ))}
+          </div>
+
           {isSuperAdmin && (
             <>
-              <Link
-                to="/admin/metricas"
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/metricas') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-              >
-                <LayoutDashboard size={20} />
-                <span>Dashboard / Métricas</span>
-              </Link>
-              <Link
-                to="/admin/portarias"
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/portarias') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-              >
-                <FileCheck size={20} />
-                <span>Portarias</span>
-              </Link>
-              <Link 
-                to="/admin/grupos-pesquisa" 
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/grupos-pesquisa') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-              >
-                <Users size={20} />
-                <span>Grupos de Pesquisa</span>
-              </Link>
-              <Link 
-                to="/admin/taxonomias" 
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/taxonomias') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-              >
-                <Tags size={20} />
-                <span>Taxonomias</span>
-              </Link>
-              <Link 
-                to="/admin/users" 
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive('/admin/users') ? 'bg-blue-600' : 'hover:bg-slate-800'}`}
-              >
-                <Users size={20} />
-                <span>Usuários</span>
-              </Link>
+              <SectionLabel>Administração</SectionLabel>
+              <div className="space-y-1">
+                {ADMINISTRACAO.map((item) => (
+                  <NavItem key={item.to} {...item} />
+                ))}
+              </div>
             </>
           )}
         </nav>
 
-        <div className="p-4 border-t border-slate-800">
-          <button 
+        <div className="p-3 border-t border-white/10">
+          <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 w-full text-left rounded-lg hover:bg-red-600 transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 w-full text-left rounded-lg text-sm text-white/70 hover:bg-ufrpe-red hover:text-white transition-colors"
           >
-            <LogOut size={20} />
+            <LogOut size={18} className="shrink-0" />
             <span>Sair</span>
           </button>
         </div>
@@ -159,13 +121,30 @@ const AdminLayout = () => {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm px-8 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-semibold text-gray-800">Painel de Controle</h1>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-600">Olá, {localStorage.getItem('username') || 'Admin'}</span>
+        <header className="bg-white border-b border-gray-100 px-8 py-3.5 flex justify-between items-center shrink-0">
+          <h1 className="font-heading text-lg font-semibold text-ufrpe-blue">Painel de Controle</h1>
+          <div className="flex items-center gap-5">
+            <a
+              href="/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden sm:flex items-center gap-1.5 text-sm text-gray-500 hover:text-ufrpe-blue transition-colors"
+            >
+              <ExternalLink size={15} />
+              Ver site
+            </a>
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full bg-ufrpe-blue text-white grid place-items-center font-heading font-semibold text-sm">
+                {initial}
+              </div>
+              <div className="leading-tight hidden sm:block">
+                <p className="text-sm font-medium text-gray-800">{username}</p>
+                <p className="text-xs text-gray-400">{roleLabel}</p>
+              </div>
+            </div>
           </div>
         </header>
-        
+
         <div className="flex-1 overflow-auto p-8">
           <Outlet />
         </div>

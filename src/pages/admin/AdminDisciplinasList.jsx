@@ -64,7 +64,7 @@ const AdminDisciplinasList = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <span className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+        <span className="w-8 h-8 border-4 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
       </div>
     );
   }
@@ -73,8 +73,8 @@ const AdminDisciplinasList = () => {
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <Book className="text-blue-600" size={24} />
+          <h2 className="font-heading text-xl font-semibold text-ufrpe-blue flex items-center gap-2">
+            <Book className="text-ufrpe-blue" size={24} />
             Gerenciar Disciplinas
           </h2>
           <p className="text-sm text-gray-500 mt-1">
@@ -83,7 +83,7 @@ const AdminDisciplinasList = () => {
         </div>
         <Link 
           to="/admin/disciplinas/nova" 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-md flex items-center gap-2 transition-colors font-medium text-sm"
+          className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2.5 rounded-md flex items-center gap-2 transition-colors font-medium text-sm"
         >
           <Plus size={18} />
           Nova Disciplina
@@ -100,7 +100,7 @@ const AdminDisciplinasList = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Buscar por título, docente ou tipo..."
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400"
+          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm placeholder-gray-400"
         />
       </div>
 
@@ -126,7 +126,7 @@ const AdminDisciplinasList = () => {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     item.field_tipo_disciplina === 'Obrigatória' 
-                      ? 'bg-blue-100 text-blue-800' 
+                      ? 'bg-ufrpe-blue/10 text-ufrpe-blue' 
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
                     {item.field_tipo_disciplina}
@@ -160,7 +160,7 @@ const AdminDisciplinasList = () => {
                   <div className="flex justify-end gap-3">
                     <Link 
                       to={`/admin/disciplinas/editar/${item.id}`}
-                      className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-1.5 rounded transition-colors"
+                      className="text-ufrpe-blue hover:text-ufrpe-yellow bg-ufrpe-blue/5 hover:bg-ufrpe-blue/10 p-1.5 rounded transition-colors"
                       title="Editar"
                     >
                       <Edit2 size={16} />

@@ -250,7 +250,7 @@ const AdminGrupoPesquisaForm = () => {
         <Link to="/admin/grupos-pesquisa" className="text-gray-500 hover:text-gray-700 transition-colors">
           <ArrowLeft size={20} />
         </Link>
-        <h2 className="text-xl font-semibold text-gray-800">
+        <h2 className="font-heading text-xl font-semibold text-ufrpe-blue">
           {isEditing ? 'Editar Grupo de Pesquisa' : 'Novo Grupo de Pesquisa'}
         </h2>
       </div>
@@ -270,7 +270,7 @@ const AdminGrupoPesquisaForm = () => {
             value={formData.title}
             onChange={handleInputChange}
             required
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
             placeholder="Ex: Grupo de Estudo em Ciências de Dados"
           />
         </div>
@@ -282,7 +282,7 @@ const AdminGrupoPesquisaForm = () => {
             value={formData.body.summary}
             onChange={handleInputChange}
             rows="2"
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
             placeholder="Ex: Breve resumo dos objetivos do grupo..."
           />
         </div>
@@ -308,16 +308,16 @@ const AdminGrupoPesquisaForm = () => {
               {selectedLeaders.map(leader => (
                 <div 
                   key={leader.id} 
-                  className="bg-blue-50 text-blue-800 text-sm px-3 py-1.5 rounded-full flex items-center gap-2 border border-blue-200 font-medium"
+                  className="bg-ufrpe-blue/5 text-ufrpe-blue text-sm px-3 py-1.5 rounded-full flex items-center gap-2 border border-ufrpe-blue/20 font-medium"
                 >
                   <div>
                     <span>{leader.nome}</span>
-                    {leader.email && <span className="text-xs text-blue-600 ml-1 font-normal">({leader.email})</span>}
+                    {leader.email && <span className="text-xs text-ufrpe-blue ml-1 font-normal">({leader.email})</span>}
                   </div>
                   <button
                     type="button"
                     onClick={() => handleRemoveLeader(leader.id)}
-                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-full p-0.5 transition-colors focus:outline-none"
+                    className="text-ufrpe-blue hover:text-ufrpe-yellow hover:bg-ufrpe-blue/10 rounded-full p-0.5 transition-colors focus:outline-none"
                     title="Remover líder"
                   >
                     <X size={14} />
@@ -345,7 +345,7 @@ const AdminGrupoPesquisaForm = () => {
                   setShowDropdown(true);
                 }}
                 onFocus={() => setShowDropdown(true)}
-                className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400"
+                className="w-full border border-gray-300 rounded-md pl-10 pr-4 py-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm placeholder-gray-400"
                 placeholder="Buscar professor por nome ou email..."
               />
 
@@ -361,13 +361,13 @@ const AdminGrupoPesquisaForm = () => {
                       <div
                         key={prof.id}
                         onClick={() => handleAddLeader(prof.id)}
-                        className="px-4 py-2.5 hover:bg-blue-50 text-sm cursor-pointer transition-colors border-b border-gray-100 last:border-0 flex justify-between items-center"
+                        className="px-4 py-2.5 hover:bg-ufrpe-blue/5 text-sm cursor-pointer transition-colors border-b border-gray-100 last:border-0 flex justify-between items-center"
                       >
                         <div>
                           <p className="font-medium text-gray-900">{prof.perfil_geral?.nome || prof.email}</p>
                           <p className="text-xs text-gray-500">{prof.email}</p>
                         </div>
-                        <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded font-medium">Selecionar</span>
+                        <span className="text-xs text-ufrpe-blue bg-ufrpe-blue/5 px-2 py-1 rounded font-medium">Selecionar</span>
                       </div>
                     ))
                   )}
@@ -387,7 +387,7 @@ const AdminGrupoPesquisaForm = () => {
           <button 
             type="submit"
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50"
+            className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50"
           >
             <Save size={18} />
             {loading ? 'Salvando...' : 'Salvar Grupo'}

@@ -137,7 +137,7 @@ const AdminPortariaForm = () => {
         <Link to="/admin/portarias" className="text-gray-500 hover:text-gray-700">
           <ArrowLeft size={24} />
         </Link>
-        <h2 className="text-2xl font-semibold text-gray-800">
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">
           {isEditing ? 'Editar Portaria' : 'Nova Portaria'}
         </h2>
       </div>
@@ -157,7 +157,7 @@ const AdminPortariaForm = () => {
             value={formData.title}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow focus:outline-none"
             placeholder="Ex: PORTARIA GR/UFRPE Nº 846/2025"
           />
         </div>
@@ -171,7 +171,7 @@ const AdminPortariaForm = () => {
               value={formData.data_portaria}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 focus:outline-none bg-white"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow focus:outline-none bg-white"
             />
           </div>
 
@@ -182,7 +182,7 @@ const AdminPortariaForm = () => {
               name="data_vencimento"
               value={formData.data_vencimento}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 focus:outline-none bg-white"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow focus:outline-none bg-white"
             />
           </div>
         </div>
@@ -196,7 +196,7 @@ const AdminPortariaForm = () => {
                 href={`${API_URL}${formData.downloadLink}`} 
                 target="_blank" 
                 rel="noopener noreferrer" 
-                className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"
+                className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
               >
                 Visualizar PDF Anexado
               </a>
@@ -212,12 +212,12 @@ const AdminPortariaForm = () => {
           ) : (
             <div className="relative">
               {uploading ? (
-                <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-blue-300 rounded-lg bg-blue-50/50 text-blue-600 text-sm font-medium animate-pulse">
-                  <span className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5/50 text-ufrpe-blue text-sm font-medium animate-pulse">
+                  <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
                   Enviando arquivo...
                 </div>
               ) : (
-                <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-blue-400 rounded-lg cursor-pointer bg-gray-50 hover:bg-blue-50/30 transition-all focus-within:ring-2 focus-within:ring-blue-500">
+                <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5/30 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
                   <Upload className="text-gray-400 shrink-0" size={20} />
                   <div className="flex-grow min-w-0">
                     <span className="block text-sm font-medium text-gray-700">Selecionar PDF</span>
@@ -250,7 +250,7 @@ const AdminPortariaForm = () => {
           <button
             type="submit"
             disabled={loading || uploading || !formData.downloadLink}
-            className="bg-blue-600 border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 flex items-center gap-2"
+            className="bg-ufrpe-blue border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-[#2a3a66] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ufrpe-yellow disabled:opacity-50 flex items-center gap-2"
           >
             <Save size={18} />
             {loading ? 'Salvando...' : 'Salvar Portaria'}

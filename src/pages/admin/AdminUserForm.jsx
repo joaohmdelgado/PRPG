@@ -292,7 +292,7 @@ const AdminUserForm = () => {
         <Link to="/admin/users" className="text-gray-500 hover:text-gray-700">
           <ArrowLeft size={24} />
         </Link>
-        <h2 className="text-2xl font-semibold text-gray-800">
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">
           {isEditing ? 'Editar Usuário' : 'Novo Usuário'}
         </h2>
       </div>
@@ -323,7 +323,7 @@ const AdminUserForm = () => {
             <label className="block text-sm font-medium mb-2">Papéis (Roles) *</label>
             <div className="flex flex-wrap gap-3">
               {ROLES.map(role => (
-                <label key={role} className={`flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-colors ${formData.roles.includes(role) ? 'bg-blue-50 border-blue-500 text-blue-700' : 'bg-white hover:bg-gray-100'}`}>
+                <label key={role} className={`flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-colors ${formData.roles.includes(role) ? 'bg-ufrpe-blue/5 border-ufrpe-blue text-ufrpe-blue' : 'bg-white hover:bg-gray-100'}`}>
                   <input type="checkbox" checked={formData.roles.includes(role)} onChange={() => handleRoleToggle(role)} className="hidden" />
                   <Shield size={16} /> {role}
                 </label>
@@ -336,8 +336,8 @@ const AdminUserForm = () => {
         <section className="border border-gray-200 p-6 rounded-lg">
           <h3 className="text-lg font-medium text-gray-800 mb-4 border-b pb-2">Controles de Privacidade</h3>
           <div className="flex flex-col gap-3">
-            <label className="flex items-center gap-2 font-bold text-blue-800">
-              <input type="checkbox" name="perfil_publico" checked={formData.privacidade.perfil_publico} onChange={(e) => handleChange(e, 'privacidade')} className="w-5 h-5 text-blue-600" />
+            <label className="flex items-center gap-2 font-bold text-ufrpe-blue">
+              <input type="checkbox" name="perfil_publico" checked={formData.privacidade.perfil_publico} onChange={(e) => handleChange(e, 'privacidade')} className="w-5 h-5 text-ufrpe-blue" />
               Perfil Visível no Site Público
             </label>
             <div className={`pl-8 space-y-2 ${!formData.privacidade.perfil_publico && 'opacity-50 pointer-events-none'}`}>
@@ -381,7 +381,7 @@ const AdminUserForm = () => {
                       placeholder={index === 0 ? "Digite o telefone" : "Digite outro telefone"}
                       value={telefone}
                       onChange={(e) => handleTelefoneChange(index, e.target.value)}
-                      className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      className="w-full border p-2 rounded focus:ring-2 focus:ring-ufrpe-yellow outline-none transition-all"
                     />
                     {formData.perfil_geral.telefones.length > 1 && (
                       <button
@@ -399,7 +399,7 @@ const AdminUserForm = () => {
               <button
                 type="button"
                 onClick={handleAddTelefone}
-                className="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 hover:underline focus:outline-none transition-colors"
+                className="mt-2 text-sm text-ufrpe-blue hover:text-ufrpe-yellow font-medium flex items-center gap-1 hover:underline focus:outline-none transition-colors"
               >
                 <Plus size={16} /> Adicionar outro
               </button>
@@ -425,7 +425,7 @@ const AdminUserForm = () => {
                     <div className="w-1/3 bg-gray-50 border rounded p-2 text-sm overflow-y-auto max-h-24">
                       <strong className="block mb-1">Taxonomias Oficiais:</strong>
                       {taxonomias.linhas_pesquisa.map(l => (
-                        <div key={l} className="cursor-pointer text-blue-600 hover:underline" onClick={() => handleChange({target:{name:'linhas_pesquisa', value: formData.dados_academicos.linhas_pesquisa ? formData.dados_academicos.linhas_pesquisa + '\n' + l : l}}, 'dados_academicos')}>{l}</div>
+                        <div key={l} className="cursor-pointer text-ufrpe-blue hover:underline" onClick={() => handleChange({target:{name:'linhas_pesquisa', value: formData.dados_academicos.linhas_pesquisa ? formData.dados_academicos.linhas_pesquisa + '\n' + l : l}}, 'dados_academicos')}>{l}</div>
                       ))}
                     </div>
                   )}
@@ -570,7 +570,7 @@ const AdminUserForm = () => {
         )}
 
         <div className="flex justify-end pt-4 border-t border-gray-200">
-          <button type="submit" disabled={loading} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 flex items-center gap-2 disabled:opacity-50">
+          <button type="submit" disabled={loading} className="bg-ufrpe-blue text-white px-6 py-2 rounded hover:bg-[#2a3a66] flex items-center gap-2 disabled:opacity-50">
             <Save size={20} />
             {loading ? 'Salvando...' : 'Salvar Usuário'}
           </button>

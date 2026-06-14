@@ -53,10 +53,10 @@ const AdminCalendarios = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Gerenciar Calendários Acadêmicos</h2>
+        <h2 className="font-heading text-xl font-semibold text-ufrpe-blue">Gerenciar Calendários Acadêmicos</h2>
         <Link 
           to="/admin/calendarios/novo" 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
+          className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
         >
           <Plus size={18} />
           Novo Calendário
@@ -95,7 +95,7 @@ const AdminCalendarios = () => {
                 <td className="px-6 py-4 text-sm font-medium text-right flex justify-end gap-3">
                   <Link 
                     to={`/admin/calendarios/editar/${item.id}`}
-                    className="text-indigo-600 hover:text-indigo-900"
+                    className="text-ufrpe-blue hover:text-ufrpe-yellow"
                   >
                     <Edit2 size={18} />
                   </Link>

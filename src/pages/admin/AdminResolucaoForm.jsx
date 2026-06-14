@@ -231,7 +231,7 @@ const AdminResolucaoForm = () => {
         <Link to="/admin/resolucoes" className="text-gray-500 hover:text-gray-700">
           <ArrowLeft size={24} />
         </Link>
-        <h2 className="text-2xl font-semibold text-gray-800">
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">
           {isEditing ? 'Editar Resolução' : 'Nova Resolução'}
         </h2>
       </div>
@@ -256,7 +256,7 @@ const AdminResolucaoForm = () => {
               value={formData.title}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
               placeholder="Ex: Resolução CEPE 048/2018"
             />
           </div>
@@ -268,7 +268,7 @@ const AdminResolucaoForm = () => {
               value={formData.sectionId}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white"
             >
               <option value="">Selecione uma seção</option>
               {Object.entries(SECTIONS).map(([val, label]) => (
@@ -284,7 +284,7 @@ const AdminResolucaoForm = () => {
               value={formData.categoryTitle}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white"
             >
               <option value="">Selecione uma subcategoria</option>
               {existingCategories.map((cat, idx) => (
@@ -302,7 +302,7 @@ const AdminResolucaoForm = () => {
                   href={formData.link.startsWith('http') ? formData.link : `${API_URL}${formData.link}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="text-sm text-blue-600 hover:underline flex-grow truncate font-medium"
+                  className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
                 >
                   Visualizar PDF Anexado
                 </a>
@@ -318,12 +318,12 @@ const AdminResolucaoForm = () => {
             ) : (
               <div className="relative">
                 {uploading ? (
-                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-blue-300 rounded-lg bg-blue-50/50 text-blue-600 text-sm font-medium animate-pulse">
-                    <span className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5/50 text-ufrpe-blue text-sm font-medium animate-pulse">
+                    <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
                     Enviando arquivo...
                   </div>
                 ) : (
-                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-blue-400 rounded-lg cursor-pointer bg-gray-50 hover:bg-blue-50/30 transition-all focus-within:ring-2 focus-within:ring-blue-500">
+                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5/30 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
                     <Upload className="text-gray-400 shrink-0" size={20} />
                     <div className="flex-grow min-w-0">
                       <span className="block text-sm font-medium text-gray-700">Selecionar PDF</span>
@@ -369,7 +369,7 @@ const AdminResolucaoForm = () => {
           <button
             type="submit"
             disabled={loading || uploading || !formData.link}
-            className="bg-blue-600 border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="bg-ufrpe-blue border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-[#2a3a66] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ufrpe-yellow disabled:opacity-50"
           >
             {loading ? 'Salvando...' : 'Salvar Resolução'}
           </button>

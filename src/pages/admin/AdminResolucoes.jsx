@@ -53,10 +53,10 @@ const AdminResolucoes = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">Gerenciar Resoluções</h2>
+        <h2 className="font-heading text-xl font-semibold text-ufrpe-blue">Gerenciar Resoluções</h2>
         <Link 
           to="/admin/resolucoes/nova" 
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
+          className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
         >
           <Plus size={18} />
           Nova Resolução
@@ -81,7 +81,7 @@ const AdminResolucoes = () => {
                   <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ufrpe-blue/10 text-ufrpe-blue">
                     {item.sectionTitle}
                   </span>
                 </td>
@@ -89,7 +89,7 @@ const AdminResolucoes = () => {
                 <td className="px-6 py-4 text-sm font-medium text-right flex justify-end gap-3">
                   <Link 
                     to={`/admin/resolucoes/editar/${item.id}`}
-                    className="text-indigo-600 hover:text-indigo-900"
+                    className="text-ufrpe-blue hover:text-ufrpe-yellow"
                   >
                     <Edit2 size={18} />
                   </Link>

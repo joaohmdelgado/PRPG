@@ -129,7 +129,7 @@ export default function AdminMetricas() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-semibold text-gray-800">Dashboard de Indicadores</h2>
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">Dashboard de Indicadores</h2>
         <p className="text-sm text-gray-500 mt-1">
           Resumo com base no último ano informado de cada programa. Os dados são um <em>snapshot</em> anual — mantenha-os atualizados.
         </p>
@@ -137,7 +137,7 @@ export default function AdminMetricas() {
 
       {/* Cartões de resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card icon={GraduationCap} label="Docentes permanentes" value={totals.docentes} color="bg-blue-100 text-blue-700" />
+        <Card icon={GraduationCap} label="Docentes permanentes" value={totals.docentes} color="bg-ufrpe-blue/10 text-ufrpe-blue" />
         <Card icon={Users} label="Discentes (M+D+P)" value={totals.discentes} color="bg-emerald-100 text-emerald-700" />
         <Card icon={Award} label="Bolsistas CAPES" value={totals.bolsistas} color="bg-amber-100 text-amber-700" />
         <Card icon={BarChart3} label="Programas com dados" value={latestByPrograma.length} color="bg-violet-100 text-violet-700" />
@@ -213,7 +213,7 @@ export default function AdminMetricas() {
         </div>
 
         <div className="flex gap-2">
-          <button type="submit" className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+          <button type="submit" className="flex items-center gap-2 px-4 py-2 bg-ufrpe-blue text-white rounded hover:bg-[#2a3a66]">
             <Save size={18} /> {editingId ? 'Salvar alterações' : 'Adicionar'}
           </button>
           {editingId && (
@@ -255,7 +255,7 @@ export default function AdminMetricas() {
                   <td className="px-4 py-3 text-gray-600">{m.taxa_conclusao != null ? `${m.taxa_conclusao}%` : '—'}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-3">
-                      <button onClick={() => startEdit(m)} className="text-indigo-600 hover:text-indigo-900"><Edit2 size={16} /></button>
+                      <button onClick={() => startEdit(m)} className="text-ufrpe-blue hover:text-ufrpe-yellow"><Edit2 size={16} /></button>
                       <button onClick={() => handleDelete(m.id)} className="text-red-600 hover:text-red-900"><Trash2 size={16} /></button>
                     </div>
                   </td>

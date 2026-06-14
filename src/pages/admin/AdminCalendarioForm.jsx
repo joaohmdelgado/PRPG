@@ -196,7 +196,7 @@ const AdminCalendarioForm = () => {
         <Link to="/admin/calendarios" className="text-gray-500 hover:text-gray-700">
           <ArrowLeft size={24} />
         </Link>
-        <h2 className="text-2xl font-semibold text-gray-800">
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">
           {isEditing ? 'Editar Calendário' : 'Novo Calendário'}
         </h2>
       </div>
@@ -221,7 +221,7 @@ const AdminCalendarioForm = () => {
               value={formData.title}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
               placeholder="Ex: Calendário Acadêmico 2026 - Corrente"
             />
           </div>
@@ -234,7 +234,7 @@ const AdminCalendarioForm = () => {
               value={formData.ano}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
               placeholder="Ex: 2026"
             />
           </div>
@@ -246,7 +246,7 @@ const AdminCalendarioForm = () => {
                 name="isCurrent"
                 checked={formData.isCurrent}
                 onChange={handleChange}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4 mr-2"
+                className="rounded border-gray-300 text-ufrpe-blue focus:ring-ufrpe-yellow h-4 w-4 mr-2"
               />
               Definir como Calendário Corrente (Ativo)
             </label>
@@ -260,7 +260,7 @@ const AdminCalendarioForm = () => {
               value={formData.pdfLink}
               onChange={handleChange}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
               placeholder="Ex: https://prpg.ufrpe.br/.../calendario.pdf"
             />
           </div>
@@ -285,7 +285,7 @@ const AdminCalendarioForm = () => {
               value={milestonesInput}
               onChange={(e) => setMilestonesInput(e.target.value)}
               rows={6}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow font-mono text-sm"
               placeholder="Exemplo:&#10;Início das Aulas do Semestre 2026.1 | 09/03/2026&#10;Matrícula de Discentes | 02/03/2026 a 06/03/2026"
             />
           </div>
@@ -301,7 +301,7 @@ const AdminCalendarioForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            className="bg-ufrpe-blue border border-transparent rounded-md shadow-sm py-2 px-4 text-sm font-medium text-white hover:bg-[#2a3a66] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ufrpe-yellow disabled:opacity-50"
           >
             {loading ? 'Salvando...' : 'Salvar Calendário'}
           </button>
