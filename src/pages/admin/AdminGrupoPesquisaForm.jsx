@@ -1,3 +1,4 @@
+import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, X, Search } from 'lucide-react';
@@ -242,7 +243,7 @@ const AdminGrupoPesquisaForm = () => {
     }
   };
 
-  if (loading) return <div className="p-6">Carregando...</div>;
+  if (loading) return <FormSkeleton />;
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 max-w-4xl mx-auto">

@@ -1,3 +1,4 @@
+import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2 } from 'lucide-react';
@@ -53,7 +54,7 @@ const AdminUsersList = () => {
     }
   };
 
-  if (loading) return <div>Carregando...</div>;
+  if (loading) return <TableSkeleton />;
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -125,11 +126,7 @@ const AdminUsersList = () => {
               </tr>
             ))}
             {users.length === 0 && (
-              <tr>
-                <td colSpan="4" className="p-8 text-center text-gray-500">
-                  Nenhum usuário cadastrado.
-                </td>
-              </tr>
+              <EmptyRow colSpan={4} message="Nenhum usuário cadastrado." />
             )}
           </tbody>
         </table>

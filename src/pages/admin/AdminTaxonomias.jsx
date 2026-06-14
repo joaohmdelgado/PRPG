@@ -1,3 +1,4 @@
+import { TableSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Search } from 'lucide-react';
@@ -174,7 +175,7 @@ const AdminTaxonomias = () => {
     return list.indexOf(item);
   };
 
-  if (loading) return <div className="p-6 text-center text-gray-500 font-medium">Carregando...</div>;
+  if (loading) return <TableSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-2">

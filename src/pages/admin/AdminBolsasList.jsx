@@ -1,3 +1,4 @@
+import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, Award, Calendar } from 'lucide-react';
@@ -82,9 +83,7 @@ const AdminBolsasList = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <span className="w-8 h-8 border-4 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
-      </div>
+      <TableSkeleton />
     );
   }
 
@@ -179,11 +178,7 @@ const AdminBolsasList = () => {
               </tr>
             ))}
             {filteredBolsas.length === 0 && (
-              <tr>
-                <td colSpan="5" className="px-6 py-10 text-center text-gray-500">
-                  Nenhum registro de bolsa encontrado.
-                </td>
-              </tr>
+              <EmptyRow colSpan={5} message="Nenhum registro de bolsa encontrado." />
             )}
           </tbody>
         </table>

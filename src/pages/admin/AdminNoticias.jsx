@@ -1,3 +1,4 @@
+import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
@@ -63,7 +64,7 @@ const AdminNoticias = () => {
     }
   };
 
-  if (loading) return <div>Carregando...</div>;
+  if (loading) return <TableSkeleton />;
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
@@ -118,11 +119,7 @@ const AdminNoticias = () => {
               </tr>
             ))}
             {news.length === 0 && (
-              <tr>
-                <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
-                  Nenhuma notícia encontrada.
-                </td>
-              </tr>
+              <EmptyRow colSpan={4} message="Nenhuma notícia encontrada." />
             )}
           </tbody>
         </table>

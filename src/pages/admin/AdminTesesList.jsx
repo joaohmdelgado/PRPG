@@ -1,3 +1,4 @@
+import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, BookOpen, GraduationCap, FileText } from 'lucide-react';
@@ -69,9 +70,7 @@ const AdminTesesList = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <span className="w-8 h-8 border-4 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
-      </div>
+      <TableSkeleton />
     );
   }
 
@@ -183,11 +182,7 @@ const AdminTesesList = () => {
               </tr>
             ))}
             {filteredTeses.length === 0 && (
-              <tr>
-                <td colSpan="6" className="px-6 py-10 text-center text-gray-500">
-                  Nenhuma tese ou dissertação encontrada.
-                </td>
-              </tr>
+              <EmptyRow colSpan={6} message="Nenhuma tese ou dissertação encontrada." />
             )}
           </tbody>
         </table>

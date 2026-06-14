@@ -1,3 +1,4 @@
+import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { Save, Trash2, Edit2, X, GraduationCap, Users, Award, BarChart3 } from 'lucide-react';
 import { API_URL } from '../../api';
@@ -114,7 +115,7 @@ export default function AdminMetricas() {
     if (res.ok) fetchAll();
   };
 
-  if (loading) return <div>Carregando...</div>;
+  if (loading) return <TableSkeleton />;
 
   const Card = ({ icon: Icon, label, value, color }) => (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
@@ -146,7 +147,7 @@ export default function AdminMetricas() {
       {/* Comparativo de discentes por programa */}
       {latestByPrograma.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-          <h3 className="font-semibold text-gray-800 mb-4">Discentes por programa (último ano)</h3>
+          <h3 className="font-heading font-semibold text-ufrpe-blue mb-4">Discentes por programa (último ano)</h3>
           <div className="space-y-3">
             {latestByPrograma.map((m) => (
               <div key={m.id} className="flex items-center gap-3">
@@ -170,14 +171,14 @@ export default function AdminMetricas() {
 
       {/* Formulário de registro */}
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 space-y-4">
-        <h3 className="font-semibold text-gray-800">{editingId ? 'Editar registro anual' : 'Novo registro anual'}</h3>
+        <h3 className="font-heading font-semibold text-ufrpe-blue">{editingId ? 'Editar registro anual' : 'Novo registro anual'}</h3>
         {error && <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">{error}</div>}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium mb-1">Programa *</label>
             <select name="programa_id" value={form.programa_id} onChange={handleChange} disabled={!!editingId}
-              className="w-full border p-2 rounded bg-white disabled:bg-gray-100">
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow outline-none transition disabled:bg-gray-100">
               <option value="">Selecione...</option>
               {programas.map((p) => <option key={p.id} value={p.id}>{p.nome} {p.sigla && `(${p.sigla})`}</option>)}
             </select>
@@ -185,7 +186,7 @@ export default function AdminMetricas() {
           <div>
             <label className="block text-sm font-medium mb-1">Ano *</label>
             <input type="number" name="ano" value={form.ano} onChange={handleChange} disabled={!!editingId}
-              className="w-full border p-2 rounded disabled:bg-gray-100" min="1990" max="2100" />
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow outline-none transition disabled:bg-gray-100" min="1990" max="2100" />
           </div>
         </div>
 
@@ -194,14 +195,14 @@ export default function AdminMetricas() {
             <div key={f.key}>
               <label className="block text-xs font-medium mb-1 text-gray-600">{f.label}</label>
               <input type="number" name={f.key} value={form[f.key]} onChange={handleChange} min="0"
-                className="w-full border p-2 rounded text-sm" />
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow outline-none transition" />
             </div>
           ))}
           {PCT_FIELDS.map((f) => (
             <div key={f.key}>
               <label className="block text-xs font-medium mb-1 text-gray-600">{f.label}</label>
               <input type="number" name={f.key} value={form[f.key]} onChange={handleChange} min="0" max="100" step="0.1"
-                className="w-full border p-2 rounded text-sm" />
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow outline-none transition" />
             </div>
           ))}
         </div>
@@ -209,7 +210,7 @@ export default function AdminMetricas() {
         <div>
           <label className="block text-xs font-medium mb-1 text-gray-600">Observação</label>
           <input type="text" name="observacao" value={form.observacao} onChange={handleChange}
-            className="w-full border p-2 rounded text-sm" placeholder="Notas sobre o período, fonte do dado, etc." />
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow outline-none transition" placeholder="Notas sobre o período, fonte do dado, etc." />
         </div>
 
         <div className="flex gap-2">
@@ -217,7 +218,7 @@ export default function AdminMetricas() {
             <Save size={18} /> {editingId ? 'Salvar alterações' : 'Adicionar'}
           </button>
           {editingId && (
-            <button type="button" onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 border rounded hover:bg-gray-50">
+            <button type="button" onClick={cancelEdit} className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
               <X size={18} /> Cancelar
             </button>
           )}
@@ -227,7 +228,7 @@ export default function AdminMetricas() {
       {/* Tabela de todos os registros */}
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-800">Registros ({metricas.length})</h3>
+          <h3 className="font-heading font-semibold text-ufrpe-blue">Registros ({metricas.length})</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -262,7 +263,7 @@ export default function AdminMetricas() {
                 </tr>
               ))}
               {metricas.length === 0 && (
-                <tr><td colSpan="7" className="px-4 py-8 text-center text-gray-500">Nenhum registro de métricas ainda.</td></tr>
+                <EmptyRow colSpan={7} icon={BarChart3} message="Nenhum indicador registrado ainda." hint="Use o formulário acima para registrar o primeiro snapshot anual de um programa." />
               )}
             </tbody>
           </table>

@@ -1,3 +1,4 @@
+import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -188,7 +189,7 @@ const AdminCalendarioForm = () => {
     }
   };
 
-  if (loading && isEditing) return <div>Carregando...</div>;
+  if (loading && isEditing) return <FormSkeleton />;
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 max-w-4xl mx-auto">

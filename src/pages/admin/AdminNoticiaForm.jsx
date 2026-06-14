@@ -1,3 +1,4 @@
+import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
@@ -258,7 +259,7 @@ const AdminNoticiaForm = () => {
     }
   };
 
-  if (loading && isEditing) return <div>Carregando...</div>;
+  if (loading && isEditing) return <FormSkeleton />;
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 max-w-4xl mx-auto">
@@ -358,12 +359,12 @@ const AdminNoticiaForm = () => {
             ) : (
               <div className="relative">
                 {uploading ? (
-                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5/50 text-ufrpe-blue text-sm font-medium animate-pulse">
+                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5 text-ufrpe-blue text-sm font-medium animate-pulse">
                     <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
                     Enviando imagem...
                   </div>
                 ) : (
-                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5/30 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
+                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
                     <Upload className="text-gray-400 shrink-0" size={20} />
                     <div className="flex-grow min-w-0">
                       <span className="block text-sm font-medium text-gray-700">Selecionar Imagem</span>

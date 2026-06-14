@@ -1,3 +1,4 @@
+import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Search, X, Award, Calendar } from 'lucide-react';
@@ -190,9 +191,7 @@ const AdminBolsaForm = () => {
 
   if (loading && isEditing) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <span className="w-8 h-8 border-4 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
-      </div>
+      <FormSkeleton />
     );
   }
 

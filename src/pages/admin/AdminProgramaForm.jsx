@@ -1,3 +1,4 @@
+import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Check, ChevronRight, ChevronLeft } from 'lucide-react';
@@ -308,7 +309,7 @@ const AdminProgramaForm = () => {
   const nextStep = () => setStep(s => Math.min(s + 1, 4));
   const prevStep = () => setStep(s => Math.max(s - 1, 1));
 
-  if (loading && isEditing) return <div>Carregando...</div>;
+  if (loading && isEditing) return <FormSkeleton />;
 
   const renderStep1 = () => (
     <div className="space-y-6">
