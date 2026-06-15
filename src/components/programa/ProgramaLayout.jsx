@@ -10,6 +10,7 @@ const NAV_FIXOS = [
   { label: 'Editais',  sub: 'editais', icon: 'fa-file-lines' },
 ];
 const NAV_DINAMICOS = [
+  { label: 'Corpo Docente',  sub: 'pessoas',        icon: 'fa-users',        modulo: 'pessoas' },
   { label: 'Disciplinas',    sub: 'disciplinas',    icon: 'fa-book-open',    modulo: 'disciplinas' },
   { label: 'Teses',          sub: 'teses',          icon: 'fa-graduation-cap', modulo: 'teses' },
   { label: 'FAQ',            sub: 'faq',            icon: 'fa-circle-question', modulo: 'faq' },

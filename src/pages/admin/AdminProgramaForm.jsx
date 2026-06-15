@@ -17,7 +17,7 @@ const SECOES = [
 const emptySecoes = () =>
   SECOES.reduce((acc, s) => ({ ...acc, [s.key]: { titulo: '', value: '' } }), {});
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 const GRANDES_AREAS = [
   'Ciências Exatas e da Terra',
@@ -126,6 +126,10 @@ const AdminProgramaForm = () => {
   const [hasDraft, setHasDraft] = useState(false);
   const [users, setUsers] = useState([]);
   const [portarias, setPortarias] = useState([]);
+  const [docentesList, setDocentesList] = useState([]);
+  const [docentesLoading, setDocentesLoading] = useState(false);
+  const [docentesBusca, setDocentesBusca] = useState('');
+  const [docentesPapel, setDocentesPapel] = useState('DOCENTE_PERMANENTE');
 
   // Carregar lista de usuários e portarias para seleção de coordenadores e secretários
   useEffect(() => {
@@ -368,6 +372,36 @@ const AdminProgramaForm = () => {
 
   const nextStep = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));
   const prevStep = () => setStep(s => Math.max(s - 1, 1));
+
+  const loadDocentes = async () => {
+    if (!isEditing) return;
+    setDocentesLoading(true);
+    try {
+      const r = await fetch(`${API_URL}/api/programas/${id}/docentes`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (r.ok) setDocentesList(await r.json());
+    } catch {} finally { setDocentesLoading(false); }
+  };
+
+  useEffect(() => { if (step === 5 && isEditing) loadDocentes(); }, [step]);
+
+  const handleAddDocente = async (user) => {
+    const r = await fetch(`${API_URL}/api/programas/${id}/docentes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+      body: JSON.stringify({ pessoa_id: user.id, papel: docentesPapel })
+    });
+    if (r.ok) { setDocentesBusca(''); loadDocentes(); }
+  };
+
+  const handleRemoveDocente = async (vinculoId) => {
+    const r = await fetch(`${API_URL}/api/programas/${id}/docentes/${vinculoId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    if (r.ok) loadDocentes();
+  };
 
   const slugPreview = (formData.slug || formData.nome || '')
     .toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -801,7 +835,109 @@ const AdminProgramaForm = () => {
     </div>
   );
 
-  const renderStep5 = () => (
+  const renderStep5 = () => {
+    const professorUsers = users.filter((u) => Array.isArray(u.roles) && u.roles.includes('Professor'));
+    const vinculadosIds = new Set(docentesList.map((d) => d.pessoa_id));
+    const filteredProfessores = professorUsers.filter((u) =>
+      !vinculadosIds.has(u.id) &&
+      (!docentesBusca || (u.perfil_geral?.nome || u.email || '').toLowerCase().includes(docentesBusca.toLowerCase()))
+    );
+
+    return (
+      <div className="space-y-6">
+        <h3 className="text-lg font-medium border-b pb-2">Corpo Docente</h3>
+        {!isEditing ? (
+          <div className="bg-blue-50 text-ufrpe-blue p-4 rounded-md text-sm">
+            <i className="fa-solid fa-circle-info mr-2"></i>
+            Salve o programa primeiro para poder adicionar docentes.
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Buscar professor cadastrado</label>
+                <input
+                  type="text"
+                  value={docentesBusca}
+                  onChange={(e) => setDocentesBusca(e.target.value)}
+                  placeholder="Nome ou e-mail..."
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Tipo de vínculo</label>
+                <select
+                  value={docentesPapel}
+                  onChange={(e) => setDocentesPapel(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
+                >
+                  <option value="DOCENTE_PERMANENTE">Docente Permanente</option>
+                  <option value="DOCENTE_COLABORADOR">Docente Colaborador</option>
+                </select>
+              </div>
+            </div>
+
+            {docentesBusca && (
+              <div className="border border-gray-200 rounded-md divide-y max-h-52 overflow-y-auto">
+                {filteredProfessores.length === 0 ? (
+                  <p className="px-4 py-3 text-sm text-gray-500">Nenhum professor disponível para adicionar.</p>
+                ) : filteredProfessores.map((u) => (
+                  <div key={u.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{u.perfil_geral?.nome || u.email}</p>
+                      <p className="text-xs text-gray-500">{u.email}</p>
+                    </div>
+                    <button type="button" onClick={() => handleAddDocente(u)}
+                      className="text-xs px-3 py-1 bg-ufrpe-blue text-white rounded hover:bg-[#2a3a66]">
+                      Adicionar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Docentes vinculados{' '}
+                <span className="text-gray-400 font-normal">({docentesList.length})</span>
+              </p>
+              {docentesLoading ? (
+                <div className="py-4 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-ufrpe-blue"></div></div>
+              ) : docentesList.length === 0 ? (
+                <p className="text-sm text-gray-400">Nenhum docente vinculado ainda.</p>
+              ) : (
+                <div className="space-y-2">
+                  {docentesList.map((d) => (
+                    <div key={d.id} className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
+                      <div className="flex items-center gap-3">
+                        {d.foto_url ? (
+                          <img src={d.foto_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full bg-ufrpe-blue/10 flex items-center justify-center">
+                            <i className="fa-solid fa-user text-ufrpe-blue/40 text-xs"></i>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{d.nome}</p>
+                          <p className="text-xs text-gray-500">{d.papel === 'DOCENTE_PERMANENTE' ? 'Permanente' : 'Colaborador'}</p>
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => handleRemoveDocente(d.id)}
+                        className="text-red-500 hover:bg-red-50 rounded p-1.5 transition-colors text-xs">
+                        <i className="fa-solid fa-trash-can"></i>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  };
+
+  const renderStep6 = () => (
     <div className="space-y-6">
       <h3 className="text-lg font-medium border-b pb-2">Revisão do Cadastro</h3>
       <div className="bg-gray-50 p-6 rounded text-sm space-y-4">
@@ -834,6 +970,14 @@ const AdminProgramaForm = () => {
           <strong>Endereço:</strong> /{slugPreview || '—'} ·{' '}
           <strong>Status:</strong> {formData.microsite_ativo ? 'Publicado' : 'Não publicado'}
         </p>
+
+        {isEditing && (
+          <div className="flex justify-between border-b pb-2 mt-4">
+            <strong>Corpo Docente</strong>
+            <button type="button" onClick={() => setStep(5)} className="text-ufrpe-blue">Editar</button>
+          </div>
+        )}
+        {isEditing && <p><strong>Docentes:</strong> {docentesList.length} vinculado(s)</p>}
 
         {isEditing && (
           <AuditInfo
@@ -877,8 +1021,8 @@ const AdminProgramaForm = () => {
       <div className="flex justify-between mb-8 relative">
         <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10 transform -translate-y-1/2"></div>
         <div className="absolute top-1/2 left-0 h-1 bg-ufrpe-blue -z-10 transform -translate-y-1/2 transition-all" style={{ width: `${((step - 1) / (TOTAL_STEPS - 1)) * 100}%` }}></div>
-        {[1, 2, 3, 4, 5].map(s => (
-          <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 ${step >= s ? 'bg-ufrpe-blue text-white border-ufrpe-blue' : 'bg-white text-gray-400 border-gray-300'}`}>
+        {[1, 2, 3, 4, 5, 6].map(s => (
+          <div key={s} className={`w-9 h-9 rounded-full flex items-center justify-center font-bold border-2 text-sm ${step >= s ? 'bg-ufrpe-blue text-white border-ufrpe-blue' : 'bg-white text-gray-400 border-gray-300'}`}>
             {s}
           </div>
         ))}
@@ -890,6 +1034,7 @@ const AdminProgramaForm = () => {
         {step === 3 && renderStep3()}
         {step === 4 && renderStep4()}
         {step === 5 && renderStep5()}
+        {step === 6 && renderStep6()}
 
         <div className="flex justify-between pt-8 mt-8 border-t border-gray-200">
           {step > 1 ? (

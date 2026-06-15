@@ -219,6 +219,9 @@ export const getProgramaBySlug = async (req, res) => {
       const { rows } = await query(`SELECT count(*)::int AS n FROM ${tbl} WHERE programa_id = $1`, [prog.id]);
       modulos[key] = rows[0]?.n ?? 0;
     }));
+    modulos['pessoas'] = related.vinculos.filter(
+      (v) => v.programa_id === prog.id && v.ativo && ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR'].includes(v.papel)
+    ).length;
 
     res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, paginas, modulos });
   } catch (error) {
@@ -432,5 +435,130 @@ export const deletePrograma = async (req, res) => {
     else res.status(404).json({ message: 'Programa não encontrado' });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao remover programa', error: error.message });
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Corpo Docente (Fase 3)
+// ──────────────────────────────────────────────────────────────────────────────
+
+const PAPEIS_DOCENTE = ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR'];
+
+// Endpoint público: docentes do programa por slug (sem dados sensíveis).
+export const getProgramaDocentesPublic = async (req, res) => {
+  try {
+    const prog = (await query('SELECT id FROM programas WHERE slug = $1', [req.params.slug])).rows[0];
+    if (!prog) return res.status(404).json({ message: 'Programa não encontrado' });
+
+    const { rows: vinculos } = await query(
+      `SELECT id, pessoa_id, papel, email_funcao FROM vinculos
+       WHERE programa_id = $1 AND ativo = TRUE AND papel = ANY($2::text[])
+       ORDER BY papel, criado_em`,
+      [prog.id, PAPEIS_DOCENTE]
+    );
+
+    const ids = vinculos.map((v) => v.pessoa_id);
+    if (ids.length === 0) return res.json([]);
+
+    const { rows: usrs } = await query(
+      `SELECT id, email, perfil_nome, perfil_foto_url, acad_lattes, acad_orcid, acad_google_scholar
+       FROM users WHERE id = ANY($1::text[])`,
+      [ids]
+    );
+
+    const byId = Object.fromEntries(usrs.map((u) => [u.id, u]));
+    const docentes = vinculos
+      .map((v) => {
+        const u = byId[v.pessoa_id];
+        if (!u) return null;
+        return {
+          id: v.id,
+          pessoa_id: v.pessoa_id,
+          papel: v.papel,
+          nome: u.perfil_nome || u.email,
+          foto_url: u.perfil_foto_url || null,
+          lattes: u.acad_lattes || null,
+          orcid: u.acad_orcid || null,
+          google_scholar: u.acad_google_scholar || null,
+          email_funcao: v.email_funcao || null,
+        };
+      })
+      .filter(Boolean);
+
+    res.json(docentes);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar docentes', error: error.message });
+  }
+};
+
+// Endpoint admin: docentes do programa por ID.
+export const getDocentesAdmin = async (req, res) => {
+  try {
+    const { rows: vinculos } = await query(
+      `SELECT id, pessoa_id, papel, email_funcao FROM vinculos
+       WHERE programa_id = $1 AND ativo = TRUE AND papel = ANY($2::text[])
+       ORDER BY papel, criado_em`,
+      [req.params.id, PAPEIS_DOCENTE]
+    );
+
+    const ids = vinculos.map((v) => v.pessoa_id);
+    if (ids.length === 0) return res.json([]);
+
+    const { rows: usrs } = await query(
+      `SELECT id, email, perfil_nome, perfil_foto_url FROM users WHERE id = ANY($1::text[])`,
+      [ids]
+    );
+    const byId = Object.fromEntries(usrs.map((u) => [u.id, u]));
+
+    res.json(
+      vinculos.map((v) => {
+        const u = byId[v.pessoa_id] || {};
+        return { id: v.id, pessoa_id: v.pessoa_id, papel: v.papel, email_funcao: v.email_funcao || '',
+                 nome: u.perfil_nome || u.email || v.pessoa_id, foto_url: u.perfil_foto_url || null };
+      })
+    );
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao listar docentes', error: error.message });
+  }
+};
+
+// Adiciona docente ao programa.
+export const addDocente = async (req, res) => {
+  try {
+    const { pessoa_id, papel, email_funcao } = req.body || {};
+    if (!pessoa_id) return res.status(400).json({ message: 'pessoa_id é obrigatório' });
+    if (!PAPEIS_DOCENTE.includes(papel)) return res.status(400).json({ message: 'papel inválido' });
+
+    const existing = (
+      await query(
+        'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id=$2 AND papel=ANY($3::text[]) AND ativo=TRUE',
+        [req.params.id, pessoa_id, PAPEIS_DOCENTE]
+      )
+    ).rows[0];
+    if (existing) return res.status(409).json({ message: 'Docente já vinculado neste programa' });
+
+    const id = crypto.randomUUID();
+    await query(
+      `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, email_funcao, ativo, criado_em)
+       VALUES ($1,$2,$3,$4,$5,TRUE,$6)`,
+      [id, req.params.id, pessoa_id, papel, email_funcao || null, new Date().toISOString()]
+    );
+    res.status(201).json({ message: 'Docente adicionado', id });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao adicionar docente', error: error.message });
+  }
+};
+
+// Remove (inativa) vínculo de docente.
+export const removeDocente = async (req, res) => {
+  try {
+    const { rowCount } = await query(
+      `UPDATE vinculos SET ativo=FALSE WHERE id=$1 AND programa_id=$2 AND papel=ANY($3::text[])`,
+      [req.params.vinculoId, req.params.id, PAPEIS_DOCENTE]
+    );
+    if (rowCount > 0) res.json({ message: 'Docente removido' });
+    else res.status(404).json({ message: 'Vínculo não encontrado' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao remover docente', error: error.message });
   }
 };
