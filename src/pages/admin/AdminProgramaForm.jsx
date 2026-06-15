@@ -4,18 +4,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Check, ChevronRight, ChevronLeft, Globe } from 'lucide-react';
 import { API_URL } from '../../api';
 import AuditInfo, { AuditHeader } from '../../components/AuditInfo';
-import RichTextEditor from '../../components/admin/RichTextEditor';
-
-// Seções de texto livre do microsite (programa_paginas).
-const SECOES = [
-  { key: 'sobre', label: 'Sobre o Programa' },
-  { key: 'historico', label: 'Histórico' },
-  { key: 'objetivos', label: 'Natureza, Finalidade e Objetivos' },
-  { key: 'linhas', label: 'Áreas e Linhas de Pesquisa' },
-];
-
-const emptySecoes = () =>
-  SECOES.reduce((acc, s) => ({ ...acc, [s.key]: { titulo: '', value: '' } }), {});
+import { Link as LinkIcon } from 'lucide-react';
 
 const TOTAL_STEPS = 8;
 
@@ -135,7 +124,6 @@ const initialFormData = {
   facebook_url: '',
   youtube_url: '',
   mapa_embed: '',
-  secoes: emptySecoes()
 };
 
 const DRAFT_KEY = 'prpg_programa_draft';
@@ -226,10 +214,6 @@ const AdminProgramaForm = () => {
           const response = await fetch(`${API_URL}/api/programas/${id}`);
           if (response.ok) {
             const data = await response.json();
-            const secoes = emptySecoes();
-            (data.paginas || []).forEach((p) => {
-              if (secoes[p.secao]) secoes[p.secao] = { titulo: p.titulo || '', value: p.body?.value || '' };
-            });
             setFormData({
               ...initialFormData,
               ...data,
@@ -247,7 +231,6 @@ const AdminProgramaForm = () => {
               facebook_url: data.facebook_url || '',
               youtube_url: data.youtube_url || '',
               mapa_embed: data.mapa_embed || '',
-              secoes,
               status_descricao: data.status_descricao || '',
               data_credenciamento: data.data_credenciamento || '',
               data_descredenciamento: data.data_descredenciamento || '',
@@ -342,13 +325,6 @@ const AdminProgramaForm = () => {
     }));
   };
 
-  const handleSecaoChange = (key, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      secoes: { ...prev.secoes, [key]: { ...prev.secoes[key], [field]: value } }
-    }));
-  };
-
   const handleSubmit = async (e, isDraft = false) => {
     if (e) e.preventDefault();
     if (!isDraft && formData.modalidades.length === 0) {
@@ -364,21 +340,15 @@ const AdminProgramaForm = () => {
     setError('');
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/programas/${id}` 
+      const url = isEditing
+        ? `${API_URL}/api/programas/${id}`
         : `${API_URL}/api/programas`;
       const method = isEditing ? 'PUT' : 'POST';
 
-      const { secoes, ...rest } = formData;
       const payload = {
-        ...rest,
+        ...formData,
         linhas: formData.linhas ? formData.linhas.split('\n').map(l => l.trim()).filter(l => l) : [],
         palavras_chave: formData.palavras_chave ? formData.palavras_chave.split(/[\n,]/).map(p => p.trim()).filter(p => p) : [],
-        paginas: SECOES.map((s, i) => {
-          const sec = secoes[s.key] || {};
-          const value = sec.value || '';
-          return { secao: s.key, titulo: sec.titulo || s.label, body: { value }, ord: i, visivel: !!value.trim() };
-        })
       };
 
       const response = await fetch(url, {
@@ -951,41 +921,27 @@ const AdminProgramaForm = () => {
         </div>
       </div>
 
-      <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wider pt-2">Páginas de Conteúdo (Sobre)</h4>
-      <div className="space-y-6">
-        {SECOES.map((s) => (
-          <div key={s.key} className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
-            <label className="block text-sm font-semibold text-ufrpe-blue mb-2">{s.label}</label>
-            <input
-              type="text"
-              value={formData.secoes[s.key]?.titulo || ''}
-              onChange={(e) => handleSecaoChange(s.key, 'titulo', e.target.value)}
-              className="w-full border p-2 rounded mb-2 text-sm"
-              placeholder={`Título da seção (ex.: ${s.label})`}
-            />
-            <RichTextEditor
-              value={formData.secoes[s.key]?.value || ''}
-              onChange={(html) => handleSecaoChange(s.key, 'value', html)}
-              minHeight={180}
-            />
-          </div>
-        ))}
-      </div>
+      {isEditing && (
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+          <p className="text-sm font-semibold text-ufrpe-blue mb-1 flex items-center gap-2">
+            <i className="fa-solid fa-file-lines"></i> Conteúdo da aba "Sobre"
+          </p>
+          <p className="text-xs text-blue-700 mb-3">
+            As páginas de conteúdo (Sobre, Histórico, Objetivos, Linhas de Pesquisa…) são gerenciadas em{' '}
+            <strong>Páginas</strong>. Crie uma página e vincule-a a este programa para que apareça no microsite.
+          </p>
+          <a
+            href={`/admin/paginas/nova`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-medium text-ufrpe-blue bg-white border border-ufrpe-blue/30 px-4 py-2 rounded-lg hover:bg-ufrpe-blue/5 transition-colors"
+          >
+            <i className="fa-solid fa-plus text-xs"></i> Nova página vinculada a este programa
+          </a>
+        </div>
+      )}
     </div>
   );
-
-  const renderStep5 = () => renderVinculoStep({
-    titulo: 'Corpo Docente',
-    papeis: { DOCENTE_PERMANENTE: 'Docente Permanente', DOCENTE_COLABORADOR: 'Docente Colaborador' },
-    lista: docentesList,
-    loading: docentesLoading,
-    busca: docentesBusca,
-    setBusca: setDocentesBusca,
-    papel: docentesPapel,
-    setPapel: setDocentesPapel,
-    onAdd: handleAddDocente,
-    onRemove: handleRemoveDocente,
-  });
 
   const renderVinculoStep = ({ titulo, papeis, lista, loading: isLoading, busca, setBusca, papel, setPapel, onAdd, onRemove, papelLabel }) => {
     const vinculadosIds = new Set(lista.map((m) => m.pessoa_id));
@@ -1075,6 +1031,19 @@ const AdminProgramaForm = () => {
       </div>
     );
   };
+
+  const renderStep5 = () => renderVinculoStep({
+    titulo: 'Corpo Docente',
+    papeis: { DOCENTE_PERMANENTE: 'Docente Permanente', DOCENTE_COLABORADOR: 'Docente Colaborador' },
+    lista: docentesList,
+    loading: docentesLoading,
+    busca: docentesBusca,
+    setBusca: setDocentesBusca,
+    papel: docentesPapel,
+    setPapel: setDocentesPapel,
+    onAdd: handleAddDocente,
+    onRemove: handleRemoveDocente,
+  });
 
   const renderStep6 = () => renderVinculoStep({
     titulo: 'Corpo Discente',

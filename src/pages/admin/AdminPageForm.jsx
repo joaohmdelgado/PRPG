@@ -11,14 +11,19 @@ const AdminPageForm = () => {
 
   const [formData, setFormData] = useState({
     title: '',
-    body: {
-      value: '',
-      summary: ''
-    }
+    programaId: '',
+    body: { value: '', summary: '' },
   });
 
+  const [programas, setProgramas] = useState([]);
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/programas`)
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => setProgramas(Array.isArray(d) ? d : []));
+  }, []);
 
   const editorRef = useRef(null);
   const editorInstanceRef = useRef(null);
@@ -97,10 +102,8 @@ const AdminPageForm = () => {
 
             setFormData({
               title: data.title || '',
-              body: {
-                value: bodyVal,
-                summary: data.body?.summary || ''
-              }
+              programaId: data.programaId || '',
+              body: { value: bodyVal, summary: data.body?.summary || '' },
             });
 
             if (editorInstanceRef.current) {
@@ -234,6 +237,25 @@ const AdminPageForm = () => {
               Link público da página: <span className="font-semibold text-ufrpe-blue">/p/{currentSlug}</span>
             </p>
           )}
+        </div>
+
+        {/* Programa */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
+          <select
+            name="programaId"
+            value={formData.programaId}
+            onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white text-sm"
+          >
+            <option value="">— Página geral da PRPG (sem programa) —</option>
+            {programas.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.sigla && p.sigla !== 'S/SIGLA' ? `${p.sigla} — ${p.nome}` : p.nome}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-gray-500">Ao vincular, a página aparece também no microsite do programa (aba Sobre).</p>
         </div>
 
         {/* Resumo */}

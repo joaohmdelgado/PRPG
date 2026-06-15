@@ -24,7 +24,18 @@ const generateUniqueSlug = (title, pages, currentId = null) => {
 };
 
 export const getPages = async (req, res) => {
-  res.json(await pagesRepo.getAll());
+  const all = await pagesRepo.getAll();
+  const { programa } = req.query;
+  if (programa) {
+    // aceita id direto ou slug (resolve via join simples)
+    const { query } = await import('../db/pool.js');
+    const prog = (await query(
+      'SELECT id FROM programas WHERE id=$1 OR slug=$1', [programa]
+    )).rows[0];
+    if (!prog) return res.json([]);
+    return res.json(all.filter((p) => p.programaId === prog.id));
+  }
+  res.json(all);
 };
 
 export const getPageById = async (req, res) => {

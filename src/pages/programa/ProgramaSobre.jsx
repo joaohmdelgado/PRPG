@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { API_URL } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState } from '../../components/programa/ProgramaUI';
 import SafeHtml from '../../components/SafeHtml';
@@ -6,9 +7,15 @@ import SafeHtml from '../../components/SafeHtml';
 const fmtMes = (d) => d ? new Date(d).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' }) : null;
 
 export default function ProgramaSobre() {
-  const { programa } = usePrograma();
-  const paginas = Array.isArray(programa.paginas) ? programa.paginas : [];
+  const { programa, slug } = usePrograma();
   const historico = Array.isArray(programa.historico_coordenadores) ? programa.historico_coordenadores : [];
+  const [paginas, setPaginas] = useState([]);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/pages?programa=${encodeURIComponent(slug)}`)
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => setPaginas(Array.isArray(d) ? d : []));
+  }, [slug]);
 
   return (
     <>
@@ -29,10 +36,10 @@ export default function ProgramaSobre() {
         ) : (
           <>
             {paginas.map((p) => (
-              <section key={p.id || p.secao} id={p.secao} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-7 md:p-10 scroll-mt-24">
-                {p.titulo && (
+              <section key={p.id} id={p.slug} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-7 md:p-10 scroll-mt-24">
+                {p.title && (
                   <h2 className="font-heading font-black text-2xl text-[var(--prog-primary)] mb-2 pb-3 border-b-2 border-[var(--prog-accent)] inline-block">
-                    {p.titulo}
+                    {p.title}
                   </h2>
                 )}
                 <SafeHtml

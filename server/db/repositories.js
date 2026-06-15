@@ -136,10 +136,12 @@ export const pagesRepo = createRepository({
   fromRow: (r) => ({
     id: r.id, title: r.title, slug: r.slug,
     body: { value: r.body_value, summary: r.body_summary },
+    programaId: r.programa_id || null,
   }),
   toRow: (o) => ({
     id: o.id, title: o.title, slug: o.slug,
     body_value: o.body?.value ?? null, body_summary: o.body?.summary ?? null,
+    programa_id: o.programaId || null,
   }),
 });
 

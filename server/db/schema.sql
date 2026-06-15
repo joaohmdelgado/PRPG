@@ -361,3 +361,6 @@ CREATE INDEX IF NOT EXISTS formularios_prog_idx       ON formularios(programa_id
 CREATE INDEX IF NOT EXISTS teses_prog_idx             ON teses_dissertacoes(programa_id);
 CREATE INDEX IF NOT EXISTS faq_prog_idx               ON faq(programa_id);
 CREATE INDEX IF NOT EXISTS grupos_prog_idx            ON grupos_pesquisa(programa_id);
+
+ALTER TABLE pages ADD COLUMN IF NOT EXISTS programa_id TEXT REFERENCES programas(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS pages_programa_id_idx ON pages(programa_id);
