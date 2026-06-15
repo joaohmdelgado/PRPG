@@ -17,6 +17,7 @@ import ProgramaDocumentos from './ProgramaDocumentos';
 import ProgramaPessoas from './ProgramaPessoas';
 import ProgramaBusca from './ProgramaBusca';
 import ProgramaComissoes from './ProgramaComissoes';
+import ProgramaDiscentes from './ProgramaDiscentes';
 
 function FullScreen({ children }) {
   return (
@@ -113,6 +114,7 @@ export default function ProgramaSite() {
           <Route path="editais" element={<ProgramaEditais />} />
           <Route path="busca" element={<ProgramaBusca />} />
           <Route path="comissoes" element={<ProgramaComissoes />} />
+          <Route path="discentes" element={<ProgramaDiscentes />} />
           <Route path="pessoas" element={<ProgramaPessoas />} />
           <Route path="disciplinas" element={<ProgramaDisciplinas />} />
           <Route path="teses" element={<ProgramaTeses />} />

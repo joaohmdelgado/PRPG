@@ -222,6 +222,9 @@ export const getProgramaBySlug = async (req, res) => {
     modulos['pessoas'] = related.vinculos.filter(
       (v) => v.programa_id === prog.id && v.ativo && ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR'].includes(v.papel)
     ).length;
+    modulos['discentes'] = related.vinculos.filter(
+      (v) => v.programa_id === prog.id && v.ativo && ['DISCENTE_MESTRADO', 'DISCENTE_DOUTORADO', 'DISCENTE_PROFISSIONAL', 'EGRESSO'].includes(v.papel)
+    ).length;
 
     // Histórico de coordenadores (inativos, COORDENADOR_ANTERIOR).
     const todosVinculos = related.vinculos.filter((v) => v.programa_id === prog.id);
@@ -646,6 +649,120 @@ export const removeDocente = async (req, res) => {
     else res.status(404).json({ message: 'Vínculo não encontrado' });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao remover docente', error: error.message });
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Corpo Discente
+// ──────────────────────────────────────────────────────────────────────────────
+
+export const PAPEIS_DISCENTE = ['DISCENTE_MESTRADO', 'DISCENTE_DOUTORADO', 'DISCENTE_PROFISSIONAL', 'EGRESSO'];
+
+export const PAPEIS_DISCENTE_LABEL = {
+  DISCENTE_MESTRADO:     'Mestrando(a)',
+  DISCENTE_DOUTORADO:    'Doutorando(a)',
+  DISCENTE_PROFISSIONAL: 'Mestrando(a) Profissional',
+  EGRESSO:               'Egresso(a)',
+};
+
+// Endpoint público: discentes do programa por slug.
+export const getProgramaDiscentesPublic = async (req, res) => {
+  try {
+    const prog = (await query('SELECT id FROM programas WHERE slug=$1', [req.params.slug])).rows[0];
+    if (!prog) return res.status(404).json({ message: 'Programa não encontrado' });
+
+    const { rows: vinculos } = await query(
+      `SELECT id, pessoa_id, papel FROM vinculos
+       WHERE programa_id=$1 AND ativo=TRUE AND papel=ANY($2::text[])
+       ORDER BY papel, criado_em`,
+      [prog.id, PAPEIS_DISCENTE]
+    );
+
+    const ids = vinculos.map((v) => v.pessoa_id);
+    if (ids.length === 0) return res.json([]);
+
+    const { rows: usrs } = await query(
+      `SELECT id, email, perfil_nome, perfil_foto_url, acad_lattes, acad_orcid, acad_google_scholar
+       FROM users WHERE id=ANY($1::text[])`,
+      [ids]
+    );
+    const byId = Object.fromEntries(usrs.map((u) => [u.id, u]));
+
+    res.json(
+      vinculos.map((v) => {
+        const u = byId[v.pessoa_id];
+        if (!u) return null;
+        return {
+          id: v.id, pessoa_id: v.pessoa_id, papel: v.papel,
+          nome: u.perfil_nome || u.email,
+          foto_url: u.perfil_foto_url || null,
+          lattes: u.acad_lattes || null,
+          orcid: u.acad_orcid || null,
+          google_scholar: u.acad_google_scholar || null,
+        };
+      }).filter(Boolean)
+    );
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar discentes', error: error.message });
+  }
+};
+
+// Endpoint admin: discentes do programa por ID.
+export const getDiscentesAdmin = async (req, res) => {
+  try {
+    const { rows: vinculos } = await query(
+      `SELECT id, pessoa_id, papel FROM vinculos
+       WHERE programa_id=$1 AND ativo=TRUE AND papel=ANY($2::text[])
+       ORDER BY papel, criado_em`,
+      [req.params.id, PAPEIS_DISCENTE]
+    );
+    const ids = vinculos.map((v) => v.pessoa_id);
+    if (ids.length === 0) return res.json([]);
+    const { rows: usrs } = await query(
+      `SELECT id, email, perfil_nome, perfil_foto_url FROM users WHERE id=ANY($1::text[])`, [ids]
+    );
+    const byId = Object.fromEntries(usrs.map((u) => [u.id, u]));
+    res.json(vinculos.map((v) => {
+      const u = byId[v.pessoa_id] || {};
+      return { id: v.id, pessoa_id: v.pessoa_id, papel: v.papel,
+               nome: u.perfil_nome || u.email || v.pessoa_id, foto_url: u.perfil_foto_url || null };
+    }));
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao listar discentes', error: error.message });
+  }
+};
+
+export const addDiscente = async (req, res) => {
+  try {
+    const { pessoa_id, papel } = req.body || {};
+    if (!pessoa_id) return res.status(400).json({ message: 'pessoa_id obrigatório' });
+    if (!PAPEIS_DISCENTE.includes(papel)) return res.status(400).json({ message: 'papel inválido' });
+    const existing = (await query(
+      'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id=$2 AND papel=ANY($3::text[]) AND ativo=TRUE',
+      [req.params.id, pessoa_id, PAPEIS_DISCENTE]
+    )).rows[0];
+    if (existing) return res.status(409).json({ message: 'Discente já vinculado neste programa' });
+    const id = crypto.randomUUID();
+    await query(
+      `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, ativo, criado_em) VALUES ($1,$2,$3,$4,TRUE,$5)`,
+      [id, req.params.id, pessoa_id, papel, new Date().toISOString()]
+    );
+    res.status(201).json({ message: 'Discente adicionado', id });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao adicionar discente', error: error.message });
+  }
+};
+
+export const removeDiscente = async (req, res) => {
+  try {
+    const { rowCount } = await query(
+      `UPDATE vinculos SET ativo=FALSE WHERE id=$1 AND programa_id=$2 AND papel=ANY($3::text[])`,
+      [req.params.vinculoId, req.params.id, PAPEIS_DISCENTE]
+    );
+    if (rowCount > 0) res.json({ message: 'Discente removido' });
+    else res.status(404).json({ message: 'Vínculo não encontrado' });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao remover discente', error: error.message });
   }
 };
 
