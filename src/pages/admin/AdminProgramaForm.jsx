@@ -17,7 +17,33 @@ const SECOES = [
 const emptySecoes = () =>
   SECOES.reduce((acc, s) => ({ ...acc, [s.key]: { titulo: '', value: '' } }), {});
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 8;
+
+const STEP_LABELS = [
+  { label: 'Identificação', icon: 'fa-id-card' },
+  { label: 'Coordenação',   icon: 'fa-user-tie' },
+  { label: 'Secretaria',    icon: 'fa-user-gear' },
+  { label: 'Microsite',     icon: 'fa-globe' },
+  { label: 'Docentes',      icon: 'fa-users' },
+  { label: 'Discentes',     icon: 'fa-user-graduate' },
+  { label: 'Comissões',     icon: 'fa-users-gear' },
+  { label: 'Revisão',       icon: 'fa-check-double' },
+];
+
+const PAPEIS_DISCENTE_LABELS = {
+  DISCENTE_MESTRADO:     'Mestrando(a)',
+  DISCENTE_DOUTORADO:    'Doutorando(a)',
+  DISCENTE_PROFISSIONAL: 'Mestrando(a) Profissional',
+  EGRESSO:               'Egresso(a)',
+};
+
+const PAPEIS_COMISSAO_LABELS = {
+  COMISSAO_CPG:       'Câmara/CPG',
+  COMISSAO_BOLSAS:    'Bolsas',
+  COMISSAO_SELECAO:   'Seleção',
+  COMISSAO_PESQUISA:  'Pesquisa',
+  COMISSAO_ORIENTACAO:'Orientação',
+};
 
 const GRANDES_AREAS = [
   'Ciências Exatas e da Terra',
@@ -130,6 +156,16 @@ const AdminProgramaForm = () => {
   const [docentesLoading, setDocentesLoading] = useState(false);
   const [docentesBusca, setDocentesBusca] = useState('');
   const [docentesPapel, setDocentesPapel] = useState('DOCENTE_PERMANENTE');
+
+  const [discentesList, setDiscentesList] = useState([]);
+  const [discentesLoading, setDiscentesLoading] = useState(false);
+  const [discentesBusca, setDiscentesBusca] = useState('');
+  const [discentesPapel, setDiscentesPapel] = useState('DISCENTE_MESTRADO');
+
+  const [comissoesList, setComissoesList] = useState([]);
+  const [comissoesLoading, setComissoesLoading] = useState(false);
+  const [comissoesBusca, setComissoesBusca] = useState('');
+  const [comissoesPapel, setComissoesPapel] = useState('COMISSAO_CPG');
 
   // Carregar lista de usuários e portarias para seleção de coordenadores e secretários
   useEffect(() => {
@@ -380,27 +416,130 @@ const AdminProgramaForm = () => {
       const r = await fetch(`${API_URL}/api/programas/${id}/docentes`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      if (r.ok) setDocentesList(await r.json());
-    } catch {} finally { setDocentesLoading(false); }
+      if (r.ok) {
+        setDocentesList(await r.json());
+      } else {
+        console.error('Erro ao carregar docentes:', r.status);
+      }
+    } catch (err) {
+      console.error('Erro ao carregar docentes:', err);
+    } finally {
+      setDocentesLoading(false);
+    }
   };
 
   useEffect(() => { if (step === 5 && isEditing) loadDocentes(); }, [step]);
 
+  const loadDiscentes = async () => {
+    if (!isEditing) return;
+    setDiscentesLoading(true);
+    try {
+      const r = await fetch(`${API_URL}/api/programas/${id}/discentes`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (r.ok) setDiscentesList(await r.json());
+    } catch (err) { console.error('Erro ao carregar discentes:', err); }
+    finally { setDiscentesLoading(false); }
+  };
+
+  useEffect(() => { if (step === 6 && isEditing) loadDiscentes(); }, [step]);
+
+  const handleAddDiscente = async (user) => {
+    try {
+      const r = await fetch(`${API_URL}/api/programas/${id}/discentes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify({ pessoa_id: user.id, papel: discentesPapel })
+      });
+      if (r.ok) { setDiscentesBusca(''); loadDiscentes(); }
+      else { const d = await r.json(); setError(d.message || 'Erro ao adicionar discente'); }
+    } catch { setError('Erro de conexão ao adicionar discente'); }
+  };
+
+  const handleRemoveDiscente = async (vinculoId) => {
+    try {
+      const r = await fetch(`${API_URL}/api/programas/${id}/discentes/${vinculoId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (r.ok) loadDiscentes();
+      else setError('Erro ao remover discente');
+    } catch { setError('Erro de conexão ao remover discente'); }
+  };
+
+  const loadComissoes = async () => {
+    if (!isEditing) return;
+    setComissoesLoading(true);
+    try {
+      const r = await fetch(`${API_URL}/api/programas/${id}/comissoes`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (r.ok) setComissoesList(await r.json());
+    } catch (err) { console.error('Erro ao carregar comissões:', err); }
+    finally { setComissoesLoading(false); }
+  };
+
+  useEffect(() => { if (step === 7 && isEditing) loadComissoes(); }, [step]);
+
+  const handleAddComissao = async (user) => {
+    try {
+      const r = await fetch(`${API_URL}/api/programas/${id}/comissoes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify({ pessoa_id: user.id, papel: comissoesPapel })
+      });
+      if (r.ok) { setComissoesBusca(''); loadComissoes(); }
+      else { const d = await r.json(); setError(d.message || 'Erro ao adicionar membro'); }
+    } catch { setError('Erro de conexão ao adicionar membro'); }
+  };
+
+  const handleRemoveComissao = async (vinculoId) => {
+    try {
+      const r = await fetch(`${API_URL}/api/programas/${id}/comissoes/${vinculoId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (r.ok) loadComissoes();
+      else setError('Erro ao remover membro');
+    } catch { setError('Erro de conexão ao remover membro'); }
+  };
+
   const handleAddDocente = async (user) => {
-    const r = await fetch(`${API_URL}/api/programas/${id}/docentes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-      body: JSON.stringify({ pessoa_id: user.id, papel: docentesPapel })
-    });
-    if (r.ok) { setDocentesBusca(''); loadDocentes(); }
+    try {
+      const r = await fetch(`${API_URL}/api/programas/${id}/docentes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+        body: JSON.stringify({ pessoa_id: user.id, papel: docentesPapel })
+      });
+      if (r.ok) {
+        setDocentesBusca('');
+        loadDocentes();
+      } else {
+        const data = await r.json();
+        setError(data.message || 'Erro ao adicionar docente');
+      }
+    } catch (err) {
+      console.error('Erro ao adicionar docente:', err);
+      setError('Erro de conexão ao adicionar docente');
+    }
   };
 
   const handleRemoveDocente = async (vinculoId) => {
-    const r = await fetch(`${API_URL}/api/programas/${id}/docentes/${vinculoId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
-    if (r.ok) loadDocentes();
+    try {
+      const r = await fetch(`${API_URL}/api/programas/${id}/docentes/${vinculoId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (r.ok) {
+        loadDocentes();
+      } else {
+        console.error('Erro ao remover docente:', r.status);
+        setError('Erro ao remover docente');
+      }
+    } catch (err) {
+      console.error('Erro ao remover docente:', err);
+      setError('Erro de conexão ao remover docente');
+    }
   };
 
   const slugPreview = (formData.slug || formData.nome || '')
@@ -835,59 +974,61 @@ const AdminProgramaForm = () => {
     </div>
   );
 
-  const renderStep5 = () => {
-    const professorUsers = users.filter((u) => Array.isArray(u.roles) && u.roles.includes('Professor'));
-    const vinculadosIds = new Set(docentesList.map((d) => d.pessoa_id));
-    const filteredProfessores = professorUsers.filter((u) =>
-      !vinculadosIds.has(u.id) &&
-      (!docentesBusca || (u.perfil_geral?.nome || u.email || '').toLowerCase().includes(docentesBusca.toLowerCase()))
-    );
+  const renderStep5 = () => renderVinculoStep({
+    titulo: 'Corpo Docente',
+    papeis: { DOCENTE_PERMANENTE: 'Docente Permanente', DOCENTE_COLABORADOR: 'Docente Colaborador' },
+    lista: docentesList,
+    loading: docentesLoading,
+    busca: docentesBusca,
+    setBusca: setDocentesBusca,
+    papel: docentesPapel,
+    setPapel: setDocentesPapel,
+    onAdd: handleAddDocente,
+    onRemove: handleRemoveDocente,
+  });
 
+  const renderVinculoStep = ({ titulo, papeis, lista, loading: isLoading, busca, setBusca, papel, setPapel, onAdd, onRemove, papelLabel }) => {
+    const vinculadosIds = new Set(lista.map((m) => m.pessoa_id));
+    const candidatos = users.filter(
+      (u) => !vinculadosIds.has(u.id) &&
+        (!busca || (u.perfil_geral?.nome || u.email || '').toLowerCase().includes(busca.toLowerCase()))
+    );
     return (
       <div className="space-y-6">
-        <h3 className="text-lg font-medium border-b pb-2">Corpo Docente</h3>
+        <h3 className="text-lg font-medium border-b pb-2">{titulo}</h3>
         {!isEditing ? (
           <div className="bg-blue-50 text-ufrpe-blue p-4 rounded-md text-sm">
             <i className="fa-solid fa-circle-info mr-2"></i>
-            Salve o programa primeiro para poder adicionar docentes.
+            Salve o programa primeiro para poder gerenciar vínculos.
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Buscar professor cadastrado</label>
-                <input
-                  type="text"
-                  value={docentesBusca}
-                  onChange={(e) => setDocentesBusca(e.target.value)}
+                <label className="block text-xs font-medium text-gray-500 mb-1">Buscar usuário cadastrado</label>
+                <input type="text" value={busca} onChange={(e) => setBusca(e.target.value)}
                   placeholder="Nome ou e-mail..."
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
-                />
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-ufrpe-yellow focus:border-ufrpe-yellow" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Tipo de vínculo</label>
-                <select
-                  value={docentesPapel}
-                  onChange={(e) => setDocentesPapel(e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
-                >
-                  <option value="DOCENTE_PERMANENTE">Docente Permanente</option>
-                  <option value="DOCENTE_COLABORADOR">Docente Colaborador</option>
+                <select value={papel} onChange={(e) => setPapel(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:ring-ufrpe-yellow focus:border-ufrpe-yellow">
+                  {Object.entries(papeis).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </select>
               </div>
             </div>
-
-            {docentesBusca && (
+            {busca && (
               <div className="border border-gray-200 rounded-md divide-y max-h-52 overflow-y-auto">
-                {filteredProfessores.length === 0 ? (
-                  <p className="px-4 py-3 text-sm text-gray-500">Nenhum professor disponível para adicionar.</p>
-                ) : filteredProfessores.map((u) => (
+                {candidatos.length === 0 ? (
+                  <p className="px-4 py-3 text-sm text-gray-500">Nenhum usuário disponível para adicionar.</p>
+                ) : candidatos.map((u) => (
                   <div key={u.id} className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50">
                     <div>
                       <p className="text-sm font-medium text-gray-900">{u.perfil_geral?.nome || u.email}</p>
                       <p className="text-xs text-gray-500">{u.email}</p>
                     </div>
-                    <button type="button" onClick={() => handleAddDocente(u)}
+                    <button type="button" onClick={() => onAdd(u)}
                       className="text-xs px-3 py-1 bg-ufrpe-blue text-white rounded hover:bg-[#2a3a66]">
                       Adicionar
                     </button>
@@ -895,34 +1036,32 @@ const AdminProgramaForm = () => {
                 ))}
               </div>
             )}
-
             <div>
               <p className="text-sm font-medium text-gray-700 mb-2">
-                Docentes vinculados{' '}
-                <span className="text-gray-400 font-normal">({docentesList.length})</span>
+                Vinculados <span className="text-gray-400 font-normal">({lista.length})</span>
               </p>
-              {docentesLoading ? (
+              {isLoading ? (
                 <div className="py-4 flex justify-center"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-ufrpe-blue"></div></div>
-              ) : docentesList.length === 0 ? (
-                <p className="text-sm text-gray-400">Nenhum docente vinculado ainda.</p>
+              ) : lista.length === 0 ? (
+                <p className="text-sm text-gray-400">Nenhum vínculo ainda.</p>
               ) : (
                 <div className="space-y-2">
-                  {docentesList.map((d) => (
-                    <div key={d.id} className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
+                  {lista.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
                       <div className="flex items-center gap-3">
-                        {d.foto_url ? (
-                          <img src={d.foto_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                        {m.foto_url ? (
+                          <img src={m.foto_url} alt="" className="w-8 h-8 rounded-full object-cover" />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-ufrpe-blue/10 flex items-center justify-center">
                             <i className="fa-solid fa-user text-ufrpe-blue/40 text-xs"></i>
                           </div>
                         )}
                         <div>
-                          <p className="text-sm font-medium text-gray-900">{d.nome}</p>
-                          <p className="text-xs text-gray-500">{d.papel === 'DOCENTE_PERMANENTE' ? 'Permanente' : 'Colaborador'}</p>
+                          <p className="text-sm font-medium text-gray-900">{m.nome}</p>
+                          <p className="text-xs text-gray-500">{papeis[m.papel] || m.papel}</p>
                         </div>
                       </div>
-                      <button type="button" onClick={() => handleRemoveDocente(d.id)}
+                      <button type="button" onClick={() => onRemove(m.id)}
                         className="text-red-500 hover:bg-red-50 rounded p-1.5 transition-colors text-xs">
                         <i className="fa-solid fa-trash-can"></i>
                       </button>
@@ -937,7 +1076,33 @@ const AdminProgramaForm = () => {
     );
   };
 
-  const renderStep6 = () => (
+  const renderStep6 = () => renderVinculoStep({
+    titulo: 'Corpo Discente',
+    papeis: PAPEIS_DISCENTE_LABELS,
+    lista: discentesList,
+    loading: discentesLoading,
+    busca: discentesBusca,
+    setBusca: setDiscentesBusca,
+    papel: discentesPapel,
+    setPapel: setDiscentesPapel,
+    onAdd: handleAddDiscente,
+    onRemove: handleRemoveDiscente,
+  });
+
+  const renderStep7 = () => renderVinculoStep({
+    titulo: 'Comissões',
+    papeis: PAPEIS_COMISSAO_LABELS,
+    lista: comissoesList,
+    loading: comissoesLoading,
+    busca: comissoesBusca,
+    setBusca: setComissoesBusca,
+    papel: comissoesPapel,
+    setPapel: setComissoesPapel,
+    onAdd: handleAddComissao,
+    onRemove: handleRemoveComissao,
+  });
+
+  const renderStep8 = () => (
     <div className="space-y-6">
       <h3 className="text-lg font-medium border-b pb-2">Revisão do Cadastro</h3>
       <div className="bg-gray-50 p-6 rounded text-sm space-y-4">
@@ -980,6 +1145,22 @@ const AdminProgramaForm = () => {
         {isEditing && <p><strong>Docentes:</strong> {docentesList.length} vinculado(s)</p>}
 
         {isEditing && (
+          <div className="flex justify-between border-b pb-2 mt-4">
+            <strong>Corpo Discente</strong>
+            <button type="button" onClick={() => setStep(6)} className="text-ufrpe-blue">Editar</button>
+          </div>
+        )}
+        {isEditing && <p><strong>Discentes:</strong> {discentesList.length} vinculado(s)</p>}
+
+        {isEditing && (
+          <div className="flex justify-between border-b pb-2 mt-4">
+            <strong>Comissões</strong>
+            <button type="button" onClick={() => setStep(7)} className="text-ufrpe-blue">Editar</button>
+          </div>
+        )}
+        {isEditing && <p><strong>Membros de comissão:</strong> {comissoesList.length} vinculado(s)</p>}
+
+        {isEditing && (
           <AuditInfo
             criadoPor={formData.criado_por}
             atualizadoPor={formData.atualizado_por}
@@ -992,7 +1173,7 @@ const AdminProgramaForm = () => {
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 max-w-5xl mx-auto">
+    <div className="bg-white rounded-lg shadow-sm p-6">
       {hasDraft && !isEditing && (
         <div className="bg-ufrpe-blue/5 text-ufrpe-blue p-4 rounded-md mb-6 flex justify-between items-center">
           <span>Você tem um rascunho não salvo. Deseja continuar de onde parou?</span>
@@ -1018,14 +1199,36 @@ const AdminProgramaForm = () => {
 
       {error && <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">{error}</div>}
 
-      <div className="flex justify-between mb-8 relative">
-        <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10 transform -translate-y-1/2"></div>
-        <div className="absolute top-1/2 left-0 h-1 bg-ufrpe-blue -z-10 transform -translate-y-1/2 transition-all" style={{ width: `${((step - 1) / (TOTAL_STEPS - 1)) * 100}%` }}></div>
-        {[1, 2, 3, 4, 5, 6].map(s => (
-          <div key={s} className={`w-9 h-9 rounded-full flex items-center justify-center font-bold border-2 text-sm ${step >= s ? 'bg-ufrpe-blue text-white border-ufrpe-blue' : 'bg-white text-gray-400 border-gray-300'}`}>
-            {s}
-          </div>
-        ))}
+      <div className="flex justify-between mb-10 relative">
+        <div className="absolute top-[18px] left-0 w-full h-1 bg-gray-200 -z-10"></div>
+        <div className="absolute top-[18px] left-0 h-1 bg-ufrpe-blue -z-10 transition-all" style={{ width: `${((step - 1) / (TOTAL_STEPS - 1)) * 100}%` }}></div>
+        {STEP_LABELS.map((s, i) => {
+          const n = i + 1;
+          const done = step > n;
+          const active = step === n;
+          return (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setStep(n)}
+              className="flex flex-col items-center gap-1.5 group"
+              title={s.label}
+            >
+              <span className={`w-9 h-9 rounded-full flex items-center justify-center font-bold border-2 text-sm transition-colors ${
+                done    ? 'bg-ufrpe-blue text-white border-ufrpe-blue' :
+                active  ? 'bg-ufrpe-blue text-white border-ufrpe-blue ring-4 ring-ufrpe-blue/20' :
+                          'bg-white text-gray-400 border-gray-300 group-hover:border-ufrpe-blue/50'
+              }`}>
+                {done ? <Check size={14} /> : n}
+              </span>
+              <span className={`text-[10px] font-medium leading-none hidden sm:block transition-colors ${
+                active ? 'text-ufrpe-blue' : done ? 'text-ufrpe-blue/70' : 'text-gray-400 group-hover:text-gray-600'
+              }`}>
+                {s.label}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       <form className="min-h-[400px]">
@@ -1035,6 +1238,8 @@ const AdminProgramaForm = () => {
         {step === 4 && renderStep4()}
         {step === 5 && renderStep5()}
         {step === 6 && renderStep6()}
+        {step === 7 && renderStep7()}
+        {step === 8 && renderStep8()}
 
         <div className="flex justify-between pt-8 mt-8 border-t border-gray-200">
           {step > 1 ? (
