@@ -27,6 +27,11 @@ const AdminLogin = () => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('username', data.username);
         localStorage.setItem('roles', JSON.stringify(data.roles || []));
+        if (data.gestorPrograma) {
+          localStorage.setItem('gestorPrograma', JSON.stringify(data.gestorPrograma));
+        } else {
+          localStorage.removeItem('gestorPrograma');
+        }
         navigate('/admin');
       } else {
         setError(data.message || 'Erro ao fazer login');

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
 import { API_URL } from '../../api';
+import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
 
@@ -338,7 +339,7 @@ const AdminNoticiaForm = () => {
             />
           </div>
 
-          <div className="md:col-span-2">
+          <div className={`md:col-span-2 ${isProgramaGestor() ? 'hidden' : ''}`}>
             <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
             <select
               name="programaId"

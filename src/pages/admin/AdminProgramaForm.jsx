@@ -5,6 +5,7 @@ import { ArrowLeft, Save, Check, ChevronRight, ChevronLeft, Globe } from 'lucide
 import { API_URL } from '../../api';
 import AuditInfo, { AuditHeader } from '../../components/AuditInfo';
 import { Link as LinkIcon } from 'lucide-react';
+import { isProgramaGestor, getGestorPrograma } from '../../auth';
 
 const TOTAL_STEPS = 8;
 
@@ -132,6 +133,17 @@ const AdminProgramaForm = () => {
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
+
+  // Gestor de programa só pode editar o SEU programa: redireciona "novo" ou
+  // tentativas de editar outro programa para o próprio.
+  useEffect(() => {
+    if (isProgramaGestor()) {
+      const meu = getGestorPrograma()?.id;
+      if (meu && id !== meu) {
+        navigate(`/admin/programas/editar/${meu}`, { replace: true });
+      }
+    }
+  }, [id]);
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(initialFormData);

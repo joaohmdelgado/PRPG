@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, File } from 'lucide-react';
 import { API_URL } from '../../api';
+import { isProgramaGestor } from '../../auth';
 
 const AdminPageForm = () => {
   const { id } = useParams();
@@ -240,7 +241,7 @@ const AdminPageForm = () => {
         </div>
 
         {/* Programa */}
-        <div>
+        <div className={isProgramaGestor() ? 'hidden' : undefined}>
           <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
           <select
             name="programaId"

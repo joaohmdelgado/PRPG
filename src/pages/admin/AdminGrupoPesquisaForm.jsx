@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, X, Search } from 'lucide-react';
 import { API_URL } from '../../api';
+import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
 
@@ -273,7 +274,7 @@ const AdminGrupoPesquisaForm = () => {
       {error && <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
+        <div className={isProgramaGestor() ? 'hidden' : undefined}>
           <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
           <select name="programaId" value={formData.programaId} onChange={handleInputChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white text-sm">

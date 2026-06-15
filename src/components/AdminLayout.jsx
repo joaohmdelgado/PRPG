@@ -5,6 +5,7 @@ import {
   GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle,
   Book, Award, File, UserCog, ExternalLink
 } from 'lucide-react';
+import { isProgramaGestor, getGestorPrograma } from '../auth';
 
 const CONTEUDO = [
   { to: '/admin/noticias', label: 'Notícias', icon: Newspaper },
@@ -28,6 +29,23 @@ const ADMINISTRACAO = [
   { to: '/admin/users', label: 'Usuários', icon: UserCog },
 ];
 
+// Navegação do Gestor de Programa: só conteúdo vinculável ao seu programa.
+// "Meu Programa" aponta para a edição do próprio programa (branding, docentes,
+// discentes, comissões). Itens globais da PRPG (calendários, bolsas, portarias,
+// taxonomias, usuários) ficam de fora.
+const gestorConteudo = (programaId) => [
+  { to: '/admin/noticias', label: 'Notícias', icon: Newspaper },
+  { to: '/admin/editais', label: 'Editais', icon: FileText },
+  { to: '/admin/resolucoes', label: 'Resoluções', icon: Scale },
+  { to: '/admin/formularios', label: 'Formulários', icon: FileSpreadsheet },
+  { to: '/admin/teses-dissertacoes', label: 'Teses e Dissertações', icon: BookOpen },
+  { to: '/admin/disciplinas', label: 'Disciplinas', icon: Book },
+  { to: '/admin/faq', label: 'FAQ', icon: HelpCircle },
+  { to: '/admin/grupos-pesquisa', label: 'Grupos de Pesquisa', icon: Users },
+  { to: '/admin/paginas', label: 'Páginas', icon: File },
+  { to: `/admin/programas/editar/${programaId}`, label: 'Meu Programa', icon: GraduationCap },
+];
+
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -36,6 +54,7 @@ const AdminLayout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('username');
     localStorage.removeItem('roles');
+    localStorage.removeItem('gestorPrograma');
     navigate('/admin/login');
   };
 
@@ -43,9 +62,14 @@ const AdminLayout = () => {
 
   const userRoles = JSON.parse(localStorage.getItem('roles') || '[]');
   const isSuperAdmin = userRoles.includes('Administrator') || userRoles.includes('Gestor');
+  const gestorPrograma = isProgramaGestor();
+  const programa = getGestorPrograma();
   const username = localStorage.getItem('username') || 'Admin';
-  const roleLabel = userRoles[0] || 'Usuário';
+  const roleLabel = gestorPrograma ? 'Gestor de Programa' : (userRoles[0] || 'Usuário');
   const initial = username.trim().charAt(0).toUpperCase() || 'A';
+
+  const conteudoItems = gestorPrograma ? gestorConteudo(programa?.id) : CONTEUDO;
+  const siglaPrograma = programa?.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : programa?.nome;
 
   const NavItem = ({ to, label, icon: Icon }) => {
     const active = isActive(to);
@@ -83,15 +107,15 @@ const AdminLayout = () => {
               PRPG
             </span>
             <span className="block font-heading text-[13px] text-white/55 mt-2 tracking-wide">
-              Painel Administrativo
+              {gestorPrograma ? `Painel do Programa${siglaPrograma ? ` · ${siglaPrograma}` : ''}` : 'Painel Administrativo'}
             </span>
           </Link>
         </div>
 
         <nav className="flex-1 px-3 pb-4 overflow-y-auto">
-          <SectionLabel>Conteúdo</SectionLabel>
+          <SectionLabel>{gestorPrograma ? 'Conteúdo do Programa' : 'Conteúdo'}</SectionLabel>
           <div className="space-y-1">
-            {CONTEUDO.map((item) => (
+            {conteudoItems.map((item) => (
               <NavItem key={item.to} {...item} />
             ))}
           </div>
@@ -122,16 +146,18 @@ const AdminLayout = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="bg-white border-b border-gray-100 px-8 py-3.5 flex justify-between items-center shrink-0">
-          <h1 className="font-heading text-lg font-semibold text-ufrpe-blue">Painel de Controle</h1>
+          <h1 className="font-heading text-lg font-semibold text-ufrpe-blue">
+            {gestorPrograma ? `Painel do Programa${siglaPrograma ? ` · ${siglaPrograma}` : ''}` : 'Painel de Controle'}
+          </h1>
           <div className="flex items-center gap-5">
             <a
-              href="/"
+              href={gestorPrograma && programa?.slug ? `/${programa.slug}` : '/'}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:flex items-center gap-1.5 text-sm text-gray-500 hover:text-ufrpe-blue transition-colors"
             >
               <ExternalLink size={15} />
-              Ver site
+              {gestorPrograma && programa?.slug ? 'Ver microsite' : 'Ver site'}
             </a>
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-full bg-ufrpe-blue text-white grid place-items-center font-heading font-semibold text-sm">

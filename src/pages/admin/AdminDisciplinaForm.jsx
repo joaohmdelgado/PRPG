@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Upload, FileText, Trash2, Search, X, Book } from 'lucide-react';
 import { API_URL } from '../../api';
+import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
 
@@ -289,7 +290,7 @@ const AdminDisciplinaForm = () => {
           </div>
 
           {/* Programa */}
-          <div className="md:col-span-2">
+          <div className={`md:col-span-2 ${isProgramaGestor() ? 'hidden' : ''}`}>
             <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
             <select name="programaId" value={formData.programaId} onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white text-sm">

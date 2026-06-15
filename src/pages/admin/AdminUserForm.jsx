@@ -6,7 +6,8 @@ import { API_URL } from '../../api';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
 
-const ROLES = ['Administrator', 'Gestor', 'Secretário(a)', 'Professor', 'Aluno'];
+const ROLES = ['Administrator', 'Gestor', 'GestorPrograma', 'Secretário(a)', 'Professor', 'Aluno'];
+const ROLE_LABELS = { GestorPrograma: 'Gestor de Programa' };
 const NIVEIS = ['Mestrando', 'Mestre', 'Doutorando', 'Doutor'];
 const TIPOS_PROFESSOR = ['Permanente', 'Colaborador', 'Visitante'];
 const SITUACOES_ALUNO = ['Ativo', 'Trancado', 'Desligado', 'Concluído'];
@@ -26,6 +27,7 @@ const AdminUserForm = () => {
     email: '',
     password: '',
     roles: [],
+    programaId: '',
     privacidade: { ...defaultPrivacidade },
     perfil_geral: { ...emptyGeral },
     dados_academicos: { ...emptyAcademicos },
@@ -80,6 +82,7 @@ const AdminUserForm = () => {
         setFormData({
           ...data,
           password: '',
+          programaId: data.programaId || '',
           privacidade: { ...defaultPrivacidade, ...data.privacidade },
           perfil_geral: { 
             ...emptyGeral, 
@@ -239,6 +242,11 @@ const AdminUserForm = () => {
       return;
     }
 
+    if (formData.roles.includes('GestorPrograma') && !formData.programaId) {
+      setError('Selecione o programa que o gestor de programa irá administrar.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -326,11 +334,34 @@ const AdminUserForm = () => {
               {ROLES.map(role => (
                 <label key={role} className={`flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-colors ${formData.roles.includes(role) ? 'bg-ufrpe-blue/5 border-ufrpe-blue text-ufrpe-blue' : 'bg-white hover:bg-gray-100'}`}>
                   <input type="checkbox" checked={formData.roles.includes(role)} onChange={() => handleRoleToggle(role)} className="hidden" />
-                  <Shield size={16} /> {role}
+                  <Shield size={16} /> {ROLE_LABELS[role] || role}
                 </label>
               ))}
             </div>
           </div>
+
+          {formData.roles.includes('GestorPrograma') && (
+            <div className="mt-4 bg-ufrpe-blue/5 border border-ufrpe-blue/20 rounded-lg p-4">
+              <label className="block text-sm font-medium mb-1 text-ufrpe-blue">Programa administrado *</label>
+              <select
+                name="programaId"
+                value={formData.programaId}
+                onChange={handleChange}
+                className="w-full border p-2 rounded bg-white"
+              >
+                <option value="">Selecione o programa...</option>
+                {programasList.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.sigla && p.sigla !== 'S/SIGLA' ? `${p.sigla} — ${p.nome}` : p.nome}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-xs text-gray-500">
+                O gestor de programa acessa um painel próprio e administra apenas o conteúdo deste programa
+                (notícias, editais, resoluções, etc.), sempre vinculado automaticamente a ele.
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Seção 2: Privacidade (Granular) */}

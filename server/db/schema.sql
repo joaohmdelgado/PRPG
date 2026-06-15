@@ -364,3 +364,8 @@ CREATE INDEX IF NOT EXISTS grupos_prog_idx            ON grupos_pesquisa(program
 
 ALTER TABLE pages ADD COLUMN IF NOT EXISTS programa_id TEXT REFERENCES programas(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS pages_programa_id_idx ON pages(programa_id);
+
+-- Gestor de Programa: vincula um usuario a um unico programa que ele administra.
+-- NULL = usuario sem programa (Administrator/Gestor da PRPG, professor, aluno, etc.).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS programa_id TEXT REFERENCES programas(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS users_programa_id_idx ON users(programa_id);

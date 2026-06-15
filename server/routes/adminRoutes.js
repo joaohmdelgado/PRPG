@@ -24,7 +24,14 @@ import { login } from '../controllers/authController.js';
 import { getUsers, getUserById, createUser, updateUser, deleteUser } from '../controllers/usersController.js';
 import { getTaxonomias, updateTaxonomias } from '../controllers/taxonomiasController.js';
 
-import { protect, requireRole } from '../middleware/authMiddleware.js';
+import {
+  protect, requireRole, scopeProgramaWrite, requireProgramaOwnership,
+  requireSelfPrograma, blockProgramaScoped,
+} from '../middleware/authMiddleware.js';
+import {
+  newsRepo, editaisRepo, resolucoesRepo, formulariosRepo, disciplinasRepo,
+  tesesRepo, faqRepo, gruposRepo, pagesRepo,
+} from '../db/repositories.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,15 +81,16 @@ router.get('/programas/slug/:slug/busca', buscaPrograma);
 router.get('/programas/slug/:slug/metricas', getProgramaMetricasPublic);
 router.get('/programas/slug/:slug/discentes', getProgramaDiscentesPublic);
 // Rotas específicas ANTES da rota genérica /:id
-router.get('/programas/:id/docentes', protect, getDocentesAdmin);
-router.post('/programas/:id/docentes', protect, addDocente);
-router.delete('/programas/:id/docentes/:vinculoId', protect, removeDocente);
-router.get('/programas/:id/comissoes', protect, getComissoesAdmin);
-router.post('/programas/:id/comissoes', protect, addComissaoMembro);
-router.delete('/programas/:id/comissoes/:vinculoId', protect, removeComissaoMembro);
-router.get('/programas/:id/discentes', protect, getDiscentesAdmin);
-router.post('/programas/:id/discentes', protect, addDiscente);
-router.delete('/programas/:id/discentes/:vinculoId', protect, removeDiscente);
+// Gestor de programa só gerencia vínculos do SEU programa (requireSelfPrograma).
+router.get('/programas/:id/docentes', protect, requireSelfPrograma, getDocentesAdmin);
+router.post('/programas/:id/docentes', protect, requireSelfPrograma, addDocente);
+router.delete('/programas/:id/docentes/:vinculoId', protect, requireSelfPrograma, removeDocente);
+router.get('/programas/:id/comissoes', protect, requireSelfPrograma, getComissoesAdmin);
+router.post('/programas/:id/comissoes', protect, requireSelfPrograma, addComissaoMembro);
+router.delete('/programas/:id/comissoes/:vinculoId', protect, requireSelfPrograma, removeComissaoMembro);
+router.get('/programas/:id/discentes', protect, requireSelfPrograma, getDiscentesAdmin);
+router.post('/programas/:id/discentes', protect, requireSelfPrograma, addDiscente);
+router.delete('/programas/:id/discentes/:vinculoId', protect, requireSelfPrograma, removeDiscente);
 // Rota genérica DEPOIS das específicas
 router.get('/programas/:id', getProgramaById);
 router.get('/calendarios', getCalendarios);
@@ -115,23 +123,27 @@ router.post('/upload', protect, (req, res) => {
 
 // Rotas exclusivas para Administrator e Gestor
 router.post('/taxonomias', protect, requireRole(['Administrator', 'Gestor']), updateTaxonomias);
-router.get('/users', protect, requireRole(['Administrator', 'Gestor']), getUsers);
+// Leitura da lista de usuários: também o Gestor de Programa, que precisa dela
+// para escolher docentes/discentes/coordenadores do seu programa. Criar/excluir
+// usuários continua restrito a Admin/Gestor.
+router.get('/users', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getUsers);
 router.post('/users', protect, requireRole(['Administrator', 'Gestor']), createUser);
 router.delete('/users/:id', protect, requireRole(['Administrator', 'Gestor']), deleteUser);
 
-// Portarias (Apenas Admin/Gestor podem visualizar e gerenciar)
-router.get('/portarias', protect, requireRole(['Administrator', 'Gestor']), getPortarias);
-router.get('/portarias/:id', protect, requireRole(['Administrator', 'Gestor']), getPortariaById);
+// Portarias: leitura liberada também ao Gestor de Programa (para vincular à
+// coordenação do seu programa). Gestão (POST/PUT/DELETE) segue Admin/Gestor.
+router.get('/portarias', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getPortarias);
+router.get('/portarias/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getPortariaById);
 router.post('/portarias', protect, requireRole(['Administrator', 'Gestor']), createPortaria);
 router.put('/portarias/:id', protect, requireRole(['Administrator', 'Gestor']), updatePortaria);
 router.delete('/portarias/:id', protect, requireRole(['Administrator', 'Gestor']), deletePortaria);
 
-// Grupos de Pesquisa (Apenas Admin/Gestor podem visualizar e gerenciar)
-router.get('/grupos-pesquisa', protect, requireRole(['Administrator', 'Gestor']), getGruposPesquisa);
-router.get('/grupos-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor']), getGrupoPesquisaById);
-router.post('/grupos-pesquisa', protect, requireRole(['Administrator', 'Gestor']), createGrupoPesquisa);
-router.put('/grupos-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor']), updateGrupoPesquisa);
-router.delete('/grupos-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor']), deleteGrupoPesquisa);
+// Grupos de Pesquisa (Admin/Gestor da PRPG + Gestor de Programa escopado ao seu programa)
+router.get('/grupos-pesquisa', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getGruposPesquisa);
+router.get('/grupos-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getGrupoPesquisaById);
+router.post('/grupos-pesquisa', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), scopeProgramaWrite, createGrupoPesquisa);
+router.put('/grupos-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireProgramaOwnership((id) => gruposRepo.getById(id)), scopeProgramaWrite, updateGrupoPesquisa);
+router.delete('/grupos-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireProgramaOwnership((id) => gruposRepo.getById(id)), deleteGrupoPesquisa);
 
 // Métricas anuais / dashboard (Apenas Admin/Gestor)
 router.get('/metricas', protect, requireRole(['Administrator', 'Gestor']), getMetricas);
@@ -145,40 +157,43 @@ router.delete('/metricas/:id', protect, requireRole(['Administrator', 'Gestor'])
 router.get('/users/:id', protect, getUserById); 
 router.put('/users/:id', protect, updateUser);
 
-// As rotas de site (programas, news) mantemos genéricas com "protect" por enquanto, 
-// pois Professores ou Secretários podem editar programas.
-router.post('/news', protect, createNews);
-router.put('/news/:id', protect, updateNews);
-router.delete('/news/:id', protect, deleteNews);
-router.post('/editais', protect, createEdital);
-router.put('/editais/:id', protect, updateEdital);
-router.delete('/editais/:id', protect, deleteEdital);
-router.post('/resolucoes', protect, createResolucao);
-router.put('/resolucoes/:id', protect, updateResolucao);
-router.delete('/resolucoes/:id', protect, deleteResolucao);
-router.post('/formularios', protect, createFormulario);
-router.put('/formularios/:id', protect, updateFormulario);
-router.delete('/formularios/:id', protect, deleteFormulario);
-router.post('/programas', protect, createPrograma);
-router.put('/programas/:id', protect, updatePrograma);
-router.delete('/programas/:id', protect, deletePrograma);
-router.post('/calendarios', protect, createCalendario);
-router.put('/calendarios/:id', protect, updateCalendario);
-router.delete('/calendarios/:id', protect, deleteCalendario);
-router.post('/teses-dissertacoes', protect, createTese);
-router.put('/teses-dissertacoes/:id', protect, updateTese);
-router.delete('/teses-dissertacoes/:id', protect, deleteTese);
-router.post('/faq', protect, createFaq);
-router.put('/faq/:id', protect, updateFaq);
-router.delete('/faq/:id', protect, deleteFaq);
-router.post('/disciplinas', protect, createDisciplina);
-router.put('/disciplinas/:id', protect, updateDisciplina);
-router.delete('/disciplinas/:id', protect, deleteDisciplina);
-router.post('/bolsas', protect, createBolsa);
-router.put('/bolsas/:id', protect, updateBolsa);
-router.delete('/bolsas/:id', protect, deleteBolsa);
-router.post('/pages', protect, createPage);
-router.put('/pages/:id', protect, updatePage);
-router.delete('/pages/:id', protect, deletePage);
+// Conteúdo vinculável a programa: o Gestor de Programa pode criar/editar/excluir,
+// mas tudo é forçado ao SEU programa (scopeProgramaWrite) e só pode tocar itens
+// do próprio programa (requireProgramaOwnership). Admin/Gestor têm acesso global.
+router.post('/news', protect, scopeProgramaWrite, createNews);
+router.put('/news/:id', protect, requireProgramaOwnership((id) => newsRepo.getById(id)), scopeProgramaWrite, updateNews);
+router.delete('/news/:id', protect, requireProgramaOwnership((id) => newsRepo.getById(id)), deleteNews);
+router.post('/editais', protect, scopeProgramaWrite, createEdital);
+router.put('/editais/:id', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, updateEdital);
+router.delete('/editais/:id', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), deleteEdital);
+router.post('/resolucoes', protect, scopeProgramaWrite, createResolucao);
+router.put('/resolucoes/:id', protect, requireProgramaOwnership((id) => resolucoesRepo.getById(id)), scopeProgramaWrite, updateResolucao);
+router.delete('/resolucoes/:id', protect, requireProgramaOwnership((id) => resolucoesRepo.getById(id)), deleteResolucao);
+router.post('/formularios', protect, scopeProgramaWrite, createFormulario);
+router.put('/formularios/:id', protect, requireProgramaOwnership((id) => formulariosRepo.getById(id)), scopeProgramaWrite, updateFormulario);
+router.delete('/formularios/:id', protect, requireProgramaOwnership((id) => formulariosRepo.getById(id)), deleteFormulario);
+// Programas: só Admin/Gestor criam ou excluem. Gestor de Programa edita o SEU.
+router.post('/programas', protect, blockProgramaScoped, createPrograma);
+router.put('/programas/:id', protect, requireSelfPrograma, updatePrograma);
+router.delete('/programas/:id', protect, blockProgramaScoped, deletePrograma);
+// Calendários e Bolsas são globais da PRPG (sem programa_id): bloqueados ao gestor.
+router.post('/calendarios', protect, blockProgramaScoped, createCalendario);
+router.put('/calendarios/:id', protect, blockProgramaScoped, updateCalendario);
+router.delete('/calendarios/:id', protect, blockProgramaScoped, deleteCalendario);
+router.post('/teses-dissertacoes', protect, scopeProgramaWrite, createTese);
+router.put('/teses-dissertacoes/:id', protect, requireProgramaOwnership((id) => tesesRepo.getById(id)), scopeProgramaWrite, updateTese);
+router.delete('/teses-dissertacoes/:id', protect, requireProgramaOwnership((id) => tesesRepo.getById(id)), deleteTese);
+router.post('/faq', protect, scopeProgramaWrite, createFaq);
+router.put('/faq/:id', protect, requireProgramaOwnership((id) => faqRepo.getById(id)), scopeProgramaWrite, updateFaq);
+router.delete('/faq/:id', protect, requireProgramaOwnership((id) => faqRepo.getById(id)), deleteFaq);
+router.post('/disciplinas', protect, scopeProgramaWrite, createDisciplina);
+router.put('/disciplinas/:id', protect, requireProgramaOwnership((id) => disciplinasRepo.getById(id)), scopeProgramaWrite, updateDisciplina);
+router.delete('/disciplinas/:id', protect, requireProgramaOwnership((id) => disciplinasRepo.getById(id)), deleteDisciplina);
+router.post('/bolsas', protect, blockProgramaScoped, createBolsa);
+router.put('/bolsas/:id', protect, blockProgramaScoped, updateBolsa);
+router.delete('/bolsas/:id', protect, blockProgramaScoped, deleteBolsa);
+router.post('/pages', protect, scopeProgramaWrite, createPage);
+router.put('/pages/:id', protect, requireProgramaOwnership((id) => pagesRepo.getById(id)), scopeProgramaWrite, updatePage);
+router.delete('/pages/:id', protect, requireProgramaOwnership((id) => pagesRepo.getById(id)), deletePage);
 
 export default router;

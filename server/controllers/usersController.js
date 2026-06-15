@@ -51,6 +51,9 @@ export const createUser = async (req, res) => {
         return res.status(400).json({ message: 'O professor deve estar relacionado a pelo menos um programa.' });
       }
     }
+    if (roles.includes('GestorPrograma') && !data.programaId) {
+      return res.status(400).json({ message: 'O gestor de programa deve estar vinculado a um programa.' });
+    }
 
     const password = data.password || 'Mudar123';
     const password_hash = await bcrypt.hash(password, await bcrypt.genSalt(10));
@@ -60,6 +63,7 @@ export const createUser = async (req, res) => {
       email: data.email,
       password_hash,
       roles,
+      programaId: roles.includes('GestorPrograma') ? data.programaId : null,
       privacidade: data.privacidade || { mostrar_email: false, mostrar_telefone: false },
       perfil_geral: data.perfil_geral || { nome: data.nome || '', cpf: '', siape: '', foto_url: '', telefones: [] },
       dados_academicos: data.dados_academicos || { lattes: '', orcid: '', google_scholar: '', publons: '', linhas_pesquisa: [] },
@@ -100,6 +104,12 @@ export const updateUser = async (req, res) => {
       }
     }
 
+    const updatedProgramaId =
+      data.programaId !== undefined ? data.programaId : existing.programaId;
+    if (updatedRoles.includes('GestorPrograma') && !updatedProgramaId) {
+      return res.status(400).json({ message: 'O gestor de programa deve estar vinculado a um programa.' });
+    }
+
     let password_hash = existing.password_hash;
     if (data.password) {
       password_hash = await bcrypt.hash(data.password, await bcrypt.genSalt(10));
@@ -110,6 +120,7 @@ export const updateUser = async (req, res) => {
       email: data.email || existing.email,
       password_hash,
       roles: updatedRoles,
+      programaId: updatedRoles.includes('GestorPrograma') ? updatedProgramaId : null,
       privacidade: data.privacidade || existing.privacidade,
       perfil_geral: data.perfil_geral || existing.perfil_geral,
       dados_academicos: data.dados_academicos || existing.dados_academicos,

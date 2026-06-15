@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Users } from 'lucide-react';
 import { API_URL } from '../../api';
+import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
 
@@ -15,7 +16,7 @@ const AdminGruposPesquisa = () => {
 
   const fetchGrupos = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/grupos-pesquisa`, {
+      const response = await fetch(withProgramaScope(`${API_URL}/api/grupos-pesquisa`), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
