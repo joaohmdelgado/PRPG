@@ -1,9 +1,23 @@
 import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, Save, Check, ChevronRight, ChevronLeft, Globe } from 'lucide-react';
 import { API_URL } from '../../api';
 import AuditInfo, { AuditHeader } from '../../components/AuditInfo';
+import RichTextEditor from '../../components/admin/RichTextEditor';
+
+// Seções de texto livre do microsite (programa_paginas).
+const SECOES = [
+  { key: 'sobre', label: 'Sobre o Programa' },
+  { key: 'historico', label: 'Histórico' },
+  { key: 'objetivos', label: 'Natureza, Finalidade e Objetivos' },
+  { key: 'linhas', label: 'Áreas e Linhas de Pesquisa' },
+];
+
+const emptySecoes = () =>
+  SECOES.reduce((acc, s) => ({ ...acc, [s.key]: { titulo: '', value: '' } }), {});
+
+const TOTAL_STEPS = 5;
 
 const GRANDES_AREAS = [
   'Ciências Exatas e da Terra',
@@ -80,7 +94,22 @@ const initialFormData = {
   modalidades: [],
   coordenador_atual: { ...emptyPessoa },
   substituto: { ...emptyPessoa },
-  secretaria: { ...emptyPessoa }
+  secretaria: { ...emptyPessoa },
+  // Fase 5: microsite dedicado do programa
+  slug: '',
+  microsite_ativo: false,
+  logo_url: '',
+  cor_primaria: '',
+  cor_secundaria: '',
+  descricao_curta: '',
+  hero_imagem_url: '',
+  endereco: '',
+  whatsapp: '',
+  instagram_url: '',
+  facebook_url: '',
+  youtube_url: '',
+  mapa_embed: '',
+  secoes: emptySecoes()
 };
 
 const DRAFT_KEY = 'prpg_programa_draft';
@@ -157,10 +186,28 @@ const AdminProgramaForm = () => {
           const response = await fetch(`${API_URL}/api/programas/${id}`);
           if (response.ok) {
             const data = await response.json();
+            const secoes = emptySecoes();
+            (data.paginas || []).forEach((p) => {
+              if (secoes[p.secao]) secoes[p.secao] = { titulo: p.titulo || '', value: p.body?.value || '' };
+            });
             setFormData({
               ...initialFormData,
               ...data,
               status: data.status || 'ATIVO',
+              slug: data.slug || '',
+              microsite_ativo: !!data.microsite_ativo,
+              logo_url: data.logo_url || '',
+              cor_primaria: data.cor_primaria || '',
+              cor_secundaria: data.cor_secundaria || '',
+              descricao_curta: data.descricao_curta || '',
+              hero_imagem_url: data.hero_imagem_url || '',
+              endereco: data.endereco || '',
+              whatsapp: data.whatsapp || '',
+              instagram_url: data.instagram_url || '',
+              facebook_url: data.facebook_url || '',
+              youtube_url: data.youtube_url || '',
+              mapa_embed: data.mapa_embed || '',
+              secoes,
               status_descricao: data.status_descricao || '',
               data_credenciamento: data.data_credenciamento || '',
               data_descredenciamento: data.data_descredenciamento || '',
@@ -255,6 +302,13 @@ const AdminProgramaForm = () => {
     }));
   };
 
+  const handleSecaoChange = (key, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      secoes: { ...prev.secoes, [key]: { ...prev.secoes[key], [field]: value } }
+    }));
+  };
+
   const handleSubmit = async (e, isDraft = false) => {
     if (e) e.preventDefault();
     if (!isDraft && formData.modalidades.length === 0) {
@@ -275,10 +329,16 @@ const AdminProgramaForm = () => {
         : `${API_URL}/api/programas`;
       const method = isEditing ? 'PUT' : 'POST';
 
+      const { secoes, ...rest } = formData;
       const payload = {
-        ...formData,
+        ...rest,
         linhas: formData.linhas ? formData.linhas.split('\n').map(l => l.trim()).filter(l => l) : [],
-        palavras_chave: formData.palavras_chave ? formData.palavras_chave.split(/[\n,]/).map(p => p.trim()).filter(p => p) : []
+        palavras_chave: formData.palavras_chave ? formData.palavras_chave.split(/[\n,]/).map(p => p.trim()).filter(p => p) : [],
+        paginas: SECOES.map((s, i) => {
+          const sec = secoes[s.key] || {};
+          const value = sec.value || '';
+          return { secao: s.key, titulo: sec.titulo || s.label, body: { value }, ord: i, visivel: !!value.trim() };
+        })
       };
 
       const response = await fetch(url, {
@@ -306,8 +366,12 @@ const AdminProgramaForm = () => {
     }
   };
 
-  const nextStep = () => setStep(s => Math.min(s + 1, 4));
+  const nextStep = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));
   const prevStep = () => setStep(s => Math.max(s - 1, 1));
+
+  const slugPreview = (formData.slug || formData.nome || '')
+    .toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-').replace(/(^-|-$)+/g, '');
 
   if (loading && isEditing) return <FormSkeleton />;
 
@@ -633,6 +697,112 @@ const AdminProgramaForm = () => {
 
   const renderStep4 = () => (
     <div className="space-y-6">
+      <div className="flex items-center gap-2 border-b pb-2">
+        <Globe size={18} className="text-ufrpe-blue" />
+        <h3 className="text-lg font-medium">Microsite do Programa</h3>
+      </div>
+      <p className="text-sm text-gray-500 -mt-2">
+        Configure o site dedicado deste programa (ex.: <span className="font-mono">prpg.ufrpe.br/{slugPreview || 'slug'}</span>).
+        Quando publicado, ele fica acessível com cabeçalho, menu e rodapé próprios.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-1">Slug (endereço do microsite)</label>
+          <input type="text" name="slug" value={formData.slug} onChange={handleChange} className="w-full border p-2 rounded font-mono" placeholder="pgh" />
+          <p className="mt-1 text-xs text-gray-500">URL pública: <span className="font-semibold text-ufrpe-blue">/{slugPreview || '...'}</span> · deixe em branco para gerar a partir do nome.</p>
+        </div>
+        <div className="flex items-end">
+          <label className="flex items-center gap-2 p-2">
+            <input type="checkbox" name="microsite_ativo" checked={formData.microsite_ativo} onChange={handleChange} />
+            <span className="text-sm font-medium">Microsite publicado (visível ao público)</span>
+          </label>
+        </div>
+      </div>
+
+      <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wider pt-2">Identidade Visual</h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1">Descrição curta (chamada do topo)</label>
+          <textarea name="descricao_curta" value={formData.descricao_curta} onChange={handleChange} rows="2" className="w-full border p-2 rounded" placeholder="Uma frase que resume o programa." />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Logo (URL)</label>
+          <input type="url" name="logo_url" value={formData.logo_url} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Imagem de destaque / hero (URL)</label>
+          <input type="url" name="hero_imagem_url" value={formData.hero_imagem_url} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Cor primária</label>
+          <div className="flex gap-2 items-center">
+            <input type="color" name="cor_primaria" value={formData.cor_primaria || '#1e2b4f'} onChange={handleChange} className="h-10 w-14 border rounded" />
+            <input type="text" name="cor_primaria" value={formData.cor_primaria} onChange={handleChange} className="flex-1 border p-2 rounded font-mono" placeholder="#1e2b4f" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Cor secundária (destaque)</label>
+          <div className="flex gap-2 items-center">
+            <input type="color" name="cor_secundaria" value={formData.cor_secundaria || '#febd11'} onChange={handleChange} className="h-10 w-14 border rounded" />
+            <input type="text" name="cor_secundaria" value={formData.cor_secundaria} onChange={handleChange} className="flex-1 border p-2 rounded font-mono" placeholder="#febd11" />
+          </div>
+        </div>
+      </div>
+
+      <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wider pt-2">Contato e Redes (rodapé do microsite)</h4>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1">Endereço completo</label>
+          <input type="text" name="endereco" value={formData.endereco} onChange={handleChange} className="w-full border p-2 rounded" placeholder="Rua..., Bairro, Cidade-UF, CEP" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">WhatsApp</label>
+          <input type="text" name="whatsapp" value={formData.whatsapp} onChange={handleChange} className="w-full border p-2 rounded" placeholder="(81) 90000-0000" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Instagram (URL)</label>
+          <input type="url" name="instagram_url" value={formData.instagram_url} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://instagram.com/..." />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">Facebook (URL)</label>
+          <input type="url" name="facebook_url" value={formData.facebook_url} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://facebook.com/..." />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">YouTube (URL)</label>
+          <input type="url" name="youtube_url" value={formData.youtube_url} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://youtube.com/@..." />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium mb-1">Mapa — Google Maps (URL do iframe "embed")</label>
+          <input type="url" name="mapa_embed" value={formData.mapa_embed} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://www.google.com/maps/embed?..." />
+        </div>
+      </div>
+
+      <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wider pt-2">Páginas de Conteúdo (Sobre)</h4>
+      <div className="space-y-6">
+        {SECOES.map((s) => (
+          <div key={s.key} className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
+            <label className="block text-sm font-semibold text-ufrpe-blue mb-2">{s.label}</label>
+            <input
+              type="text"
+              value={formData.secoes[s.key]?.titulo || ''}
+              onChange={(e) => handleSecaoChange(s.key, 'titulo', e.target.value)}
+              className="w-full border p-2 rounded mb-2 text-sm"
+              placeholder={`Título da seção (ex.: ${s.label})`}
+            />
+            <RichTextEditor
+              value={formData.secoes[s.key]?.value || ''}
+              onChange={(html) => handleSecaoChange(s.key, 'value', html)}
+              minHeight={180}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderStep5 = () => (
+    <div className="space-y-6">
       <h3 className="text-lg font-medium border-b pb-2">Revisão do Cadastro</h3>
       <div className="bg-gray-50 p-6 rounded text-sm space-y-4">
         <div className="flex justify-between border-b pb-2">
@@ -655,6 +825,15 @@ const AdminProgramaForm = () => {
           <button type="button" onClick={() => setStep(3)} className="text-ufrpe-blue">Editar</button>
         </div>
         <p><strong>TAE:</strong> {formData.secretaria.nome || 'Não preenchido'}</p>
+
+        <div className="flex justify-between border-b pb-2 mt-4">
+          <strong>Microsite</strong>
+          <button type="button" onClick={() => setStep(4)} className="text-ufrpe-blue">Editar</button>
+        </div>
+        <p>
+          <strong>Endereço:</strong> /{slugPreview || '—'} ·{' '}
+          <strong>Status:</strong> {formData.microsite_ativo ? 'Publicado' : 'Não publicado'}
+        </p>
 
         {isEditing && (
           <AuditInfo
@@ -697,8 +876,8 @@ const AdminProgramaForm = () => {
 
       <div className="flex justify-between mb-8 relative">
         <div className="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -z-10 transform -translate-y-1/2"></div>
-        <div className="absolute top-1/2 left-0 h-1 bg-ufrpe-blue -z-10 transform -translate-y-1/2 transition-all" style={{ width: `${((step - 1) / 3) * 100}%` }}></div>
-        {[1, 2, 3, 4].map(s => (
+        <div className="absolute top-1/2 left-0 h-1 bg-ufrpe-blue -z-10 transform -translate-y-1/2 transition-all" style={{ width: `${((step - 1) / (TOTAL_STEPS - 1)) * 100}%` }}></div>
+        {[1, 2, 3, 4, 5].map(s => (
           <div key={s} className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 ${step >= s ? 'bg-ufrpe-blue text-white border-ufrpe-blue' : 'bg-white text-gray-400 border-gray-300'}`}>
             {s}
           </div>
@@ -710,22 +889,23 @@ const AdminProgramaForm = () => {
         {step === 2 && renderStep2()}
         {step === 3 && renderStep3()}
         {step === 4 && renderStep4()}
-        
+        {step === 5 && renderStep5()}
+
         <div className="flex justify-between pt-8 mt-8 border-t border-gray-200">
           {step > 1 ? (
             <button type="button" onClick={prevStep} className="flex items-center px-4 py-2 border rounded hover:bg-gray-50">
               <ChevronLeft size={18} className="mr-2" /> Anterior
             </button>
           ) : <div></div>}
-          
+
           <div className="flex gap-2">
             {!isEditing && (
               <button type="button" onClick={() => handleSubmit(null, true)} className="px-4 py-2 text-ufrpe-blue bg-ufrpe-blue/5 hover:bg-ufrpe-blue/10 rounded">
                 Salvar Rascunho
               </button>
             )}
-            
-            {step < 4 ? (
+
+            {step < TOTAL_STEPS ? (
               <button type="button" onClick={nextStep} className="flex items-center px-4 py-2 bg-ufrpe-blue text-white rounded hover:bg-[#2a3a66]">
                 Próximo <ChevronRight size={18} className="ml-2" />
               </button>

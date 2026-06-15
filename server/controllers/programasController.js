@@ -2,14 +2,55 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
-import { usersRepo, portariasRepo } from '../db/repositories.js';
+import { usersRepo, portariasRepo, programaPaginasRepo } from '../db/repositories.js';
+import { sanitizeHtml } from '../utils/sanitize.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
 const strOrNull = (v) => (v === '' || v == null ? null : v);
 const arrOrEmpty = (v) => (Array.isArray(v) ? v : []);
+const boolOr = (v, fallback = false) =>
+  v === true || v === 'true' ? true : v === false || v === 'false' ? false : fallback;
 
 const ALLOWED_STATUS = ['ATIVO', 'SUSPENSO', 'DESATIVADO', 'EM_AVALIACAO'];
 const normalizeStatus = (v, fallback = 'ATIVO') => (ALLOWED_STATUS.includes(v) ? v : fallback);
+
+// Slug do microsite (mesmo padrao usado em pagesController).
+const slugify = (text) =>
+  (text || '')
+    .toString()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
+    .replace(/(^-|-$)+/g, '');
+
+// Segmentos de topo ja usados pelo site da PRPG: nao podem virar slug de programa.
+const RESERVED_SLUGS = new Set([
+  'admin', 'api', 'uploads', 'p', 'sobre', 'missao-visao-valores', 'historico',
+  'estrutura-organizacional', 'equipe', 'financeiro', 'proext-pg', 'programas',
+  'calendario-academico', 'editais', 'resolucoes', 'formularios',
+  'relatorios-autoavaliacao', 'especializacao', 'residencia-profissional',
+  'sobre-internacionalizacao', 'alunos-estrangeiros', 'capes-print',
+  'mobilidade-estudantil', 'reconhecimento', 'noticias', 'noticia',
+]);
+
+// Resolve um slug unico, evitando reservados e colisoes (exclui o proprio id no update).
+const resolveSlug = async (rawSlug, nome, currentId = null) => {
+  let base = slugify(rawSlug) || slugify(nome) || 'programa';
+  if (RESERVED_SLUGS.has(base)) base = `${base}-pg`;
+  let slug = base;
+  let count = 1;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const { rows } = await query('SELECT id FROM programas WHERE slug = $1 LIMIT 1', [slug]);
+    if (!rows[0] || rows[0].id === currentId) break;
+    slug = `${base}-${count++}`;
+  }
+  return slug;
+};
 
 const checkAdmin = (req) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -133,7 +174,38 @@ export const getProgramaById = async (req, res) => {
     const histKey = (x) => String(x.data_inicio_mandato || x.criado_em || '').slice(0, 10);
     historico_coordenadores.sort((a, b) => histKey(b).localeCompare(histKey(a)));
 
-    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, historico_coordenadores });
+    const paginas = await programaPaginasRepo.getByPrograma(prog.id, { includeHidden: isAdmin });
+
+    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, historico_coordenadores, paginas });
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar programa', error: error.message });
+  }
+};
+
+// Busca pública do microsite por slug: programa + dirigentes + páginas (rich-text).
+export const getProgramaBySlug = async (req, res) => {
+  try {
+    const prog = (await query('SELECT * FROM programas WHERE slug = $1', [req.params.slug])).rows[0];
+    if (!prog) return res.status(404).json({ message: 'Programa não encontrado' });
+
+    const related = await loadRelated();
+    const isAdmin = checkAdmin(req);
+
+    const progModalidades = related.modalidades.filter((m) => m.programa_id === prog.id);
+    const progVinculos = related.vinculos.filter((v) => v.programa_id === prog.id && v.ativo);
+
+    let coordenador_atual = null, substituto = null, secretaria = null;
+    progVinculos.forEach((v) => {
+      const combined = buildCombined(v, related);
+      if (!combined) return;
+      if (v.papel === 'COORDENADOR_ATUAL') coordenador_atual = filterSensitivePessoa(combined, isAdmin);
+      if (v.papel === 'SUBSTITUTO') substituto = filterSensitivePessoa(combined, isAdmin);
+      if (v.papel === 'TAE') secretaria = filterSensitivePessoa(combined, isAdmin);
+    });
+
+    const paginas = await programaPaginasRepo.getByPrograma(prog.id, { includeHidden: isAdmin });
+
+    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, paginas });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar programa', error: error.message });
   }
@@ -189,6 +261,16 @@ const insertVinculo = (programa_id, pessoaId, papel, props) =>
      props.data_vencimento, props.email_funcao, props.endereco, props.data_inicio_mandato || null, new Date().toISOString()]
   );
 
+// Upsert das paginas de texto livre do microsite (sanitiza o HTML antes de gravar).
+const savePaginas = async (programa_id, paginas, actor) => {
+  if (!Array.isArray(paginas)) return;
+  for (const p of paginas) {
+    if (!p || !p.secao) continue;
+    const body = p.body ? { value: sanitizeHtml(p.body.value), summary: p.body.summary } : undefined;
+    await programaPaginasRepo.upsert(programa_id, p.secao, { ...p, body }, actor);
+  }
+};
+
 const replaceModalidades = async (programa_id, modalidades) => {
   if (!Array.isArray(modalidades)) return;
   await query('DELETE FROM modalidades WHERE programa_id = $1', [programa_id]);
@@ -206,6 +288,7 @@ export const createPrograma = async (req, res) => {
     const progId = crypto.randomUUID();
     const now = new Date().toISOString();
     const actor = req.user?.id || null;
+    const slug = await resolveSlug(data.slug, data.nome, progId);
 
     await query(
       `INSERT INTO programas
@@ -214,9 +297,13 @@ export const createPrograma = async (req, res) => {
          status,status_descricao,data_credenciamento,data_descredenciamento,
          bloco,sala,cep,telefone_secretaria,horario_atendimento,email_programa,
          regimento_url,regulamento_url,sucupira_url,palavras_chave,
+         slug,microsite_ativo,logo_url,cor_primaria,cor_secundaria,descricao_curta,
+         hero_imagem_url,endereco,whatsapp,instagram_url,facebook_url,youtube_url,mapa_embed,
          criado_em,atualizado_em,criado_por,atualizado_por)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
-               $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$29)`,
+               $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,
+               $27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,
+               $40,$40,$41,$41)`,
       [progId, data.nome, data.sigla ? data.sigla.toUpperCase() : '', data.site || '',
        data.codigo_capes || '', data.campus || 'SEDE', data.em_rede || false, data.nome_rede || '',
        data.grande_area || '', data.area_conhecimento || '', data.area_avaliacao || '',
@@ -227,15 +314,22 @@ export const createPrograma = async (req, res) => {
        strOrNull(data.telefone_secretaria), strOrNull(data.horario_atendimento),
        strOrNull(data.email_programa), strOrNull(data.regimento_url),
        strOrNull(data.regulamento_url), strOrNull(data.sucupira_url),
-       arrOrEmpty(data.palavras_chave), now, now, actor]
+       arrOrEmpty(data.palavras_chave),
+       slug, boolOr(data.microsite_ativo), strOrNull(data.logo_url),
+       strOrNull(data.cor_primaria), strOrNull(data.cor_secundaria), strOrNull(data.descricao_curta),
+       strOrNull(data.hero_imagem_url), strOrNull(data.endereco), strOrNull(data.whatsapp),
+       strOrNull(data.instagram_url), strOrNull(data.facebook_url), strOrNull(data.youtube_url),
+       strOrNull(data.mapa_embed),
+       now, actor]
     );
 
     await replaceModalidades(progId, data.modalidades);
     await handlePessoaVinculo(data.coordenador_atual, 'COORDENADOR_ATUAL', progId);
     await handlePessoaVinculo(data.substituto, 'SUBSTITUTO', progId);
     await handlePessoaVinculo(data.secretaria, 'TAE', progId);
+    await savePaginas(progId, data.paginas, actor);
 
-    res.status(201).json({ message: 'Programa criado com sucesso', id: progId });
+    res.status(201).json({ message: 'Programa criado com sucesso', id: progId, slug });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao criar programa', error: error.message });
   }
@@ -251,14 +345,24 @@ export const updatePrograma = async (req, res) => {
     const pick = (val, fallback) => (val !== undefined ? val : fallback);
     const actor = req.user?.id || null;
 
+    // Recalcula o slug se foi enviado (ou se o programa ainda nao tinha um).
+    let slug = existing.slug;
+    if (data.slug !== undefined || !existing.slug) {
+      slug = await resolveSlug(data.slug ?? existing.slug, data.nome || existing.nome, progId);
+    }
+
     await query(
       `UPDATE programas SET nome=$1, sigla=$2, site=$3, codigo_capes=$4, campus=$5, em_rede=$6,
         nome_rede=$7, grande_area=$8, area_conhecimento=$9, area_avaliacao=$10, linhas=$11,
         status=$12, status_descricao=$13, data_credenciamento=$14, data_descredenciamento=$15,
         bloco=$16, sala=$17, cep=$18, telefone_secretaria=$19, horario_atendimento=$20,
         email_programa=$21, regimento_url=$22, regulamento_url=$23, sucupira_url=$24,
-        palavras_chave=$25, atualizado_em=$26, atualizado_por=COALESCE($27, atualizado_por)
-       WHERE id=$28`,
+        palavras_chave=$25,
+        slug=$28, microsite_ativo=$29, logo_url=$30, cor_primaria=$31, cor_secundaria=$32,
+        descricao_curta=$33, hero_imagem_url=$34, endereco=$35, whatsapp=$36,
+        instagram_url=$37, facebook_url=$38, youtube_url=$39, mapa_embed=$40,
+        atualizado_em=$26, atualizado_por=COALESCE($27, atualizado_por)
+       WHERE id=$41`,
       [
         data.nome || existing.nome,
         data.sigla ? data.sigla.toUpperCase() : existing.sigla,
@@ -280,7 +384,16 @@ export const updatePrograma = async (req, res) => {
         pick(data.regulamento_url, existing.regulamento_url),
         pick(data.sucupira_url, existing.sucupira_url),
         Array.isArray(data.palavras_chave) ? data.palavras_chave : existing.palavras_chave,
-        new Date().toISOString(), actor, progId,
+        new Date().toISOString(), actor,
+        slug,
+        data.microsite_ativo !== undefined ? boolOr(data.microsite_ativo) : existing.microsite_ativo,
+        pick(data.logo_url, existing.logo_url), pick(data.cor_primaria, existing.cor_primaria),
+        pick(data.cor_secundaria, existing.cor_secundaria), pick(data.descricao_curta, existing.descricao_curta),
+        pick(data.hero_imagem_url, existing.hero_imagem_url), pick(data.endereco, existing.endereco),
+        pick(data.whatsapp, existing.whatsapp), pick(data.instagram_url, existing.instagram_url),
+        pick(data.facebook_url, existing.facebook_url), pick(data.youtube_url, existing.youtube_url),
+        pick(data.mapa_embed, existing.mapa_embed),
+        progId,
       ]
     );
 
@@ -288,8 +401,9 @@ export const updatePrograma = async (req, res) => {
     await handlePessoaVinculo(data.coordenador_atual, 'COORDENADOR_ATUAL', progId);
     await handlePessoaVinculo(data.substituto, 'SUBSTITUTO', progId);
     await handlePessoaVinculo(data.secretaria, 'TAE', progId);
+    await savePaginas(progId, data.paginas, actor);
 
-    res.json({ message: 'Programa atualizado com sucesso' });
+    res.json({ message: 'Programa atualizado com sucesso', slug });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao atualizar programa', error: error.message });
   }

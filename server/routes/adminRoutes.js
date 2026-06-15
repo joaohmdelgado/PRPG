@@ -8,7 +8,7 @@ import { getNews, getNewsById, createNews, updateNews, deleteNews } from '../con
 import { getEditais, getEditalById, createEdital, updateEdital, deleteEdital } from '../controllers/editaisController.js';
 import { getResolucoes, getResolucaoById, createResolucao, updateResolucao, deleteResolucao } from '../controllers/resolucoesController.js';
 import { getFormularios, getFormularioById, createFormulario, updateFormulario, deleteFormulario } from '../controllers/formulariosController.js';
-import { getProgramas, getProgramaById, createPrograma, updatePrograma, deletePrograma } from '../controllers/programasController.js';
+import { getProgramas, getProgramaById, getProgramaBySlug, createPrograma, updatePrograma, deletePrograma } from '../controllers/programasController.js';
 import { getCalendarios, getCalendarioById, createCalendario, updateCalendario, deleteCalendario } from '../controllers/calendariosController.js';
 import { getPortarias, getPortariaById, createPortaria, updatePortaria, deletePortaria } from '../controllers/portariasController.js';
 import { getGruposPesquisa, getGrupoPesquisaById, createGrupoPesquisa, updateGrupoPesquisa, deleteGrupoPesquisa } from '../controllers/gruposPesquisaController.js';
@@ -68,6 +68,7 @@ router.get('/resolucoes/:id', getResolucaoById);
 router.get('/formularios', getFormularios);
 router.get('/formularios/:id', getFormularioById);
 router.get('/programas', getProgramas);
+router.get('/programas/slug/:slug', getProgramaBySlug);
 router.get('/programas/:id', getProgramaById);
 router.get('/calendarios', getCalendarios);
 router.get('/calendarios/:id', getCalendarioById);

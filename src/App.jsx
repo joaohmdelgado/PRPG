@@ -1,7 +1,6 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
+import { Routes, Route, Link } from 'react-router-dom';
+import PublicLayout from './components/PublicLayout';
 import Home from './pages/Home';
 import Sobre from './pages/Sobre';
 import MissaoVisaoValores from './pages/MissaoVisaoValores';
@@ -26,6 +25,7 @@ import Reconhecimento from './pages/Reconhecimento';
 import Noticias from './pages/Noticias';
 import Noticia from './pages/Noticia';
 import Edital from './pages/Edital';
+import ProgramaSite from './pages/programa/ProgramaSite';
 
 // Admin Components
 import AdminLayout from './components/AdminLayout';
@@ -63,113 +63,119 @@ import AdminPageForm from './pages/admin/AdminPageForm';
 import AdminMetricas from './pages/admin/AdminMetricas';
 import PageView from './pages/PageView';
 
+function NotFoundPublic() {
+  return (
+    <div className="container mx-auto px-4 py-24 text-center min-h-[50vh] flex flex-col items-center justify-center">
+      <i className="fa-solid fa-compass text-gray-300 text-6xl mb-5"></i>
+      <h1 className="font-heading font-bold text-3xl text-ufrpe-blue mb-3">Página não encontrada</h1>
+      <p className="text-gray-600 mb-8">O endereço acessado não existe no portal da PRPG.</p>
+      <Link to="/" className="px-6 py-3 bg-ufrpe-blue hover:bg-ufrpe-yellow hover:text-ufrpe-blue text-white font-bold rounded-xl transition-all">
+        <i className="fa-solid fa-arrow-left mr-2"></i> Voltar para o Início
+      </Link>
+    </div>
+  );
+}
+
 function App() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Routes>
-        {/* Rotas Administrativas */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<RequireAuth />}>
-          <Route element={<AdminLayout />}>
-            <Route index element={<AdminNoticias />} />
-            <Route path="noticias" element={<AdminNoticias />} />
-            <Route path="noticias/nova" element={<AdminNoticiaForm />} />
-            <Route path="noticias/editar/:id" element={<AdminNoticiaForm />} />
-            <Route path="editais" element={<AdminEditais />} />
-            <Route path="editais/novo" element={<AdminEditalForm />} />
-            <Route path="editais/editar/:id" element={<AdminEditalForm />} />
-            <Route path="resolucoes" element={<AdminResolucoes />} />
-            <Route path="resolucoes/nova" element={<AdminResolucaoForm />} />
-            <Route path="resolucoes/editar/:id" element={<AdminResolucaoForm />} />
-            <Route path="formularios" element={<AdminFormularios />} />
-            <Route path="formularios/novo" element={<AdminFormularioForm />} />
-            <Route path="formularios/editar/:id" element={<AdminFormularioForm />} />
-            <Route path="programas" element={<AdminProgramas />} />
-            <Route path="programas/novo" element={<AdminProgramaForm />} />
-            <Route path="programas/editar/:id" element={<AdminProgramaForm />} />
-            <Route path="calendarios" element={<AdminCalendarios />} />
-            <Route path="calendarios/novo" element={<AdminCalendarioForm />} />
-            <Route path="calendarios/editar/:id" element={<AdminCalendarioForm />} />
-            <Route path="teses-dissertacoes" element={<AdminTesesList />} />
-            <Route path="teses-dissertacoes/nova" element={<AdminTeseForm />} />
-            <Route path="teses-dissertacoes/editar/:id" element={<AdminTeseForm />} />
-            <Route path="faq" element={<AdminFaqList />} />
-            <Route path="faq/novo" element={<AdminFaqForm />} />
-            <Route path="faq/editar/:id" element={<AdminFaqForm />} />
-            <Route path="disciplinas" element={<AdminDisciplinasList />} />
-            <Route path="disciplinas/nova" element={<AdminDisciplinaForm />} />
-            <Route path="disciplinas/editar/:id" element={<AdminDisciplinaForm />} />
-            <Route path="bolsas" element={<AdminBolsasList />} />
-            <Route path="bolsas/nova" element={<AdminBolsaForm />} />
-            <Route path="bolsas/editar/:id" element={<AdminBolsaForm />} />
-            <Route path="paginas" element={<AdminPagesList />} />
-            <Route path="paginas/nova" element={<AdminPageForm />} />
-            <Route path="paginas/editar/:id" element={<AdminPageForm />} />
-            <Route path="taxonomias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
-              <Route index element={<AdminTaxonomias />} />
-            </Route>
-            <Route path="portarias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
-              <Route index element={<AdminPortarias />} />
-              <Route path="nova" element={<AdminPortariaForm />} />
-              <Route path="editar/:id" element={<AdminPortariaForm />} />
-            </Route>
-            <Route path="grupos-pesquisa" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
-              <Route index element={<AdminGruposPesquisa />} />
-              <Route path="novo" element={<AdminGrupoPesquisaForm />} />
-              <Route path="editar/:id" element={<AdminGrupoPesquisaForm />} />
-            </Route>
-            <Route path="users" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
-              <Route index element={<AdminUsersList />} />
-              <Route path="novo" element={<AdminUserForm />} />
-              <Route path="editar/:id" element={<AdminUserForm />} />
-            </Route>
-            <Route path="metricas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
-              <Route index element={<AdminMetricas />} />
-            </Route>
+    <Routes>
+      {/* Rotas Administrativas */}
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin" element={<RequireAuth />}>
+        <Route element={<AdminLayout />}>
+          <Route index element={<AdminNoticias />} />
+          <Route path="noticias" element={<AdminNoticias />} />
+          <Route path="noticias/nova" element={<AdminNoticiaForm />} />
+          <Route path="noticias/editar/:id" element={<AdminNoticiaForm />} />
+          <Route path="editais" element={<AdminEditais />} />
+          <Route path="editais/novo" element={<AdminEditalForm />} />
+          <Route path="editais/editar/:id" element={<AdminEditalForm />} />
+          <Route path="resolucoes" element={<AdminResolucoes />} />
+          <Route path="resolucoes/nova" element={<AdminResolucaoForm />} />
+          <Route path="resolucoes/editar/:id" element={<AdminResolucaoForm />} />
+          <Route path="formularios" element={<AdminFormularios />} />
+          <Route path="formularios/novo" element={<AdminFormularioForm />} />
+          <Route path="formularios/editar/:id" element={<AdminFormularioForm />} />
+          <Route path="programas" element={<AdminProgramas />} />
+          <Route path="programas/novo" element={<AdminProgramaForm />} />
+          <Route path="programas/editar/:id" element={<AdminProgramaForm />} />
+          <Route path="calendarios" element={<AdminCalendarios />} />
+          <Route path="calendarios/novo" element={<AdminCalendarioForm />} />
+          <Route path="calendarios/editar/:id" element={<AdminCalendarioForm />} />
+          <Route path="teses-dissertacoes" element={<AdminTesesList />} />
+          <Route path="teses-dissertacoes/nova" element={<AdminTeseForm />} />
+          <Route path="teses-dissertacoes/editar/:id" element={<AdminTeseForm />} />
+          <Route path="faq" element={<AdminFaqList />} />
+          <Route path="faq/novo" element={<AdminFaqForm />} />
+          <Route path="faq/editar/:id" element={<AdminFaqForm />} />
+          <Route path="disciplinas" element={<AdminDisciplinasList />} />
+          <Route path="disciplinas/nova" element={<AdminDisciplinaForm />} />
+          <Route path="disciplinas/editar/:id" element={<AdminDisciplinaForm />} />
+          <Route path="bolsas" element={<AdminBolsasList />} />
+          <Route path="bolsas/nova" element={<AdminBolsaForm />} />
+          <Route path="bolsas/editar/:id" element={<AdminBolsaForm />} />
+          <Route path="paginas" element={<AdminPagesList />} />
+          <Route path="paginas/nova" element={<AdminPageForm />} />
+          <Route path="paginas/editar/:id" element={<AdminPageForm />} />
+          <Route path="taxonomias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+            <Route index element={<AdminTaxonomias />} />
+          </Route>
+          <Route path="portarias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+            <Route index element={<AdminPortarias />} />
+            <Route path="nova" element={<AdminPortariaForm />} />
+            <Route path="editar/:id" element={<AdminPortariaForm />} />
+          </Route>
+          <Route path="grupos-pesquisa" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+            <Route index element={<AdminGruposPesquisa />} />
+            <Route path="novo" element={<AdminGrupoPesquisaForm />} />
+            <Route path="editar/:id" element={<AdminGrupoPesquisaForm />} />
+          </Route>
+          <Route path="users" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+            <Route index element={<AdminUsersList />} />
+            <Route path="novo" element={<AdminUserForm />} />
+            <Route path="editar/:id" element={<AdminUserForm />} />
+          </Route>
+          <Route path="metricas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+            <Route index element={<AdminMetricas />} />
           </Route>
         </Route>
+      </Route>
 
-        {/* Rotas Públicas */}
-        <Route
-          path="*"
-          element={
-            <div className="flex flex-col min-h-screen w-full">
-              <Navbar />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/sobre" element={<Sobre />} />
-                  <Route path="/missao-visao-valores" element={<MissaoVisaoValores />} />
-                  <Route path="/historico" element={<Historico />} />
-                  <Route path="/estrutura-organizacional" element={<EstruturaOrganizacional />} />
-                  <Route path="/equipe" element={<Equipe />} />
-                  <Route path="/financeiro" element={<Financeiro />} />
-                  <Route path="/proext-pg" element={<ProextPg />} />
-                  <Route path="/programas" element={<ProgramasStrictoSensu />} />
-                  <Route path="/calendario-academico" element={<CalendarioAcademico />} />
-                  <Route path="/editais" element={<Editais />} />
-                  <Route path="/editais/:id" element={<Edital />} />
-                  <Route path="/resolucoes" element={<Resolucoes />} />
-                  <Route path="/formularios" element={<Formularios />} />
-                  <Route path="/relatorios-autoavaliacao" element={<RelatoriosAutoavaliacao />} />
-                  <Route path="/especializacao" element={<Especializacao />} />
-                  <Route path="/residencia-profissional" element={<ResidenciaProfissional />} />
-                  <Route path="/sobre-internacionalizacao" element={<SobreInternacionalizacao />} />
-                  <Route path="/alunos-estrangeiros" element={<AlunosEstrangeiros />} />
-                  <Route path="/capes-print" element={<CapesPrint />} />
-                  <Route path="/mobilidade-estudantil" element={<MobilidadeEstudantil />} />
-                  <Route path="/reconhecimento" element={<Reconhecimento />} />
-                  <Route path="/noticias" element={<Noticias />} />
-                  <Route path="/noticia/:id" element={<Noticia />} />
-                  <Route path="/p/:slug" element={<PageView />} />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
-          }
-        />
-      </Routes>
-    </div>
+      {/* Microsite dedicado do programa — header/menu/footer próprios, sem a casca da PRPG.
+          Segmento dinâmico: o React Router prioriza as rotas estáticas públicas abaixo,
+          então /sobre, /editais, /noticias etc. continuam sendo páginas da PRPG. */}
+      <Route path=":programaSlug/*" element={<ProgramaSite />} />
+
+      {/* Site público da PRPG (Navbar + Footer) */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/sobre" element={<Sobre />} />
+        <Route path="/missao-visao-valores" element={<MissaoVisaoValores />} />
+        <Route path="/historico" element={<Historico />} />
+        <Route path="/estrutura-organizacional" element={<EstruturaOrganizacional />} />
+        <Route path="/equipe" element={<Equipe />} />
+        <Route path="/financeiro" element={<Financeiro />} />
+        <Route path="/proext-pg" element={<ProextPg />} />
+        <Route path="/programas" element={<ProgramasStrictoSensu />} />
+        <Route path="/calendario-academico" element={<CalendarioAcademico />} />
+        <Route path="/editais" element={<Editais />} />
+        <Route path="/editais/:id" element={<Edital />} />
+        <Route path="/resolucoes" element={<Resolucoes />} />
+        <Route path="/formularios" element={<Formularios />} />
+        <Route path="/relatorios-autoavaliacao" element={<RelatoriosAutoavaliacao />} />
+        <Route path="/especializacao" element={<Especializacao />} />
+        <Route path="/residencia-profissional" element={<ResidenciaProfissional />} />
+        <Route path="/sobre-internacionalizacao" element={<SobreInternacionalizacao />} />
+        <Route path="/alunos-estrangeiros" element={<AlunosEstrangeiros />} />
+        <Route path="/capes-print" element={<CapesPrint />} />
+        <Route path="/mobilidade-estudantil" element={<MobilidadeEstudantil />} />
+        <Route path="/reconhecimento" element={<Reconhecimento />} />
+        <Route path="/noticias" element={<Noticias />} />
+        <Route path="/noticia/:id" element={<Noticia />} />
+        <Route path="/p/:slug" element={<PageView />} />
+        <Route path="*" element={<NotFoundPublic />} />
+      </Route>
+    </Routes>
   );
 }
 

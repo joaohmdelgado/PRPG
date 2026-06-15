@@ -1,5 +1,19 @@
 [
   {
+    "id": "pgh-2026-2",
+    "categoryId": "mestrado-doutorado",
+    "categoryTitle": "Mestrado e Doutorado",
+    "title": "Edital 02/2026 - Seleção Mestrado e Doutorado 2026.2 - PGH",
+    "publishedAt": "2026-04-24",
+    "deadline": "2026-06-15",
+    "year": 2026,
+    "description": "Processo seletivo para ingresso nos cursos de Mestrado e Doutorado do Programa de Pós-Graduação em História (PGH) da UFRPE, referente ao semestre letivo 2026.2.",
+    "downloadLink": "#",
+    "detailsLink": "#",
+    "numero": "02/2026",
+    "programaId": "532f0a45-fbef-4f3c-854b-9bc4c09c8874"
+  },
+  {
     "id": "1",
     "categoryId": "mestrado-doutorado",
     "categoryTitle": "Mestrado e Doutorado",

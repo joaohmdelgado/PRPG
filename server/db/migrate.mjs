@@ -46,7 +46,7 @@ async function main() {
     news, editais, resolucoes, formularios, portarias, teses_dissertacoes,
     faq, disciplinas, bolsas, pages, users, taxonomias, grupos_pesquisa,
     calendarios, calendario_milestones,
-    programas, pessoas, modalidades, vinculos, metricas_anuais
+    programas, programa_paginas, pessoas, modalidades, vinculos, metricas_anuais
     RESTART IDENTITY CASCADE`);
 
   console.log('Migrando entidades simples...');
@@ -77,14 +77,37 @@ async function main() {
     await query(
       `INSERT INTO programas
         (id,nome,sigla,site,codigo_capes,campus,em_rede,nome_rede,grande_area,
-         area_conhecimento,area_avaliacao,linhas,criado_em,atualizado_em)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+         area_conhecimento,area_avaliacao,linhas,
+         slug,microsite_ativo,logo_url,cor_primaria,cor_secundaria,descricao_curta,
+         hero_imagem_url,endereco,whatsapp,instagram_url,facebook_url,youtube_url,mapa_embed,
+         email_programa,telefone_secretaria,
+         criado_em,atualizado_em)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
+               $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)`,
       [p.id, p.nome, p.sigla, p.site, p.codigo_capes, p.campus, !!p.em_rede, p.nome_rede,
        p.grande_area, p.area_conhecimento, p.area_avaliacao,
-       Array.isArray(p.linhas) ? p.linhas : [], p.criado_em || null, p.atualizado_em || null]
+       Array.isArray(p.linhas) ? p.linhas : [],
+       p.slug || null, !!p.microsite_ativo, p.logo_url || null, p.cor_primaria || null,
+       p.cor_secundaria || null, p.descricao_curta || null, p.hero_imagem_url || null,
+       p.endereco || null, p.whatsapp || null, p.instagram_url || null, p.facebook_url || null,
+       p.youtube_url || null, p.mapa_embed || null,
+       p.email_programa || null, p.telefone_secretaria || null,
+       p.criado_em || null, p.atualizado_em || null]
     );
   }
   console.log(`  programas: ${programas.length}`);
+
+  const programaPaginas = read('programa_paginas.json') || [];
+  for (const pp of programaPaginas) {
+    await query(
+      `INSERT INTO programa_paginas
+        (id,programa_id,secao,titulo,body_value,body_summary,ord,visivel)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [pp.id, pp.programa_id, pp.secao, pp.titulo || null, pp.body_value || null,
+       pp.body_summary || null, intOrNull(pp.ord) ?? 0, pp.visivel !== false]
+    );
+  }
+  console.log(`  programa_paginas: ${programaPaginas.length}`);
 
   const pessoas = read('pessoas.json') || [];
   for (const p of pessoas) {

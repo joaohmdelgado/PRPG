@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { createRepository } from './repository.js';
 import { query } from './pool.js';
 
@@ -14,6 +15,7 @@ export const newsRepo = createRepository({
     content: r.content ?? [], author: r.author, authorRole: r.author_role,
     imageCaption: r.image_caption, tags: r.tags ?? [],
     quote: r.quote_text || r.quote_author ? { text: r.quote_text, author: r.quote_author } : undefined,
+    programaId: r.programa_id ?? null,
   }),
   toRow: (o) => ({
     id: o.id, title: o.title, category: o.category, category_slug: o.categorySlug,
@@ -21,6 +23,7 @@ export const newsRepo = createRepository({
     content: toArr(o.content), author: o.author, author_role: o.authorRole,
     image_caption: o.imageCaption, tags: toArr(o.tags),
     quote_text: o.quote?.text ?? null, quote_author: o.quote?.author ?? null,
+    programa_id: o.programaId || null,
   }),
 });
 
@@ -34,6 +37,7 @@ export const editaisRepo = createRepository({
     field_periodo: { data_inicio: r.periodo_data_inicio, data_fim: r.periodo_data_fim },
     numero: r.numero, erratas: r.erratas ?? [],
     resultadoParcial: r.resultado_parcial, resultadoFinal: r.resultado_final,
+    programaId: r.programa_id ?? null,
   }),
   toRow: (o) => ({
     id: o.id, category_id: o.categoryId, category_title: o.categoryTitle, title: o.title,
@@ -43,6 +47,7 @@ export const editaisRepo = createRepository({
     periodo_data_fim: o.field_periodo?.data_fim ?? null,
     numero: o.numero, erratas: JSON.stringify(o.erratas ?? []),
     resultado_parcial: o.resultadoParcial ?? null, resultado_final: o.resultadoFinal ?? null,
+    programa_id: o.programaId || null,
   }),
 });
 
@@ -297,6 +302,71 @@ export const metricasRepo = {
   async findByProgramaAno(programaId, ano) {
     const { rows } = await query('SELECT * FROM metricas_anuais WHERE programa_id = $1 AND ano = $2', [programaId, intOrNull(ano)]);
     return rows[0] ? metricaFromRow(rows[0]) : null;
+  },
+};
+
+// ===================== Paginas do microsite =======================
+// Texto livre (rich-text) por secao do microsite de cada programa.
+// Upsert por chave natural (programa_id, secao).
+const ppFromRow = (r) => ({
+  id: r.id, programaId: r.programa_id, secao: r.secao, titulo: r.titulo,
+  body: { value: r.body_value, summary: r.body_summary },
+  ord: r.ord, visivel: r.visivel,
+  criado_por: r.criado_por ?? null, atualizado_por: r.atualizado_por ?? null,
+});
+export const programaPaginasRepo = {
+  async getByPrograma(programaId, { includeHidden = false } = {}) {
+    const cond = includeHidden ? '' : ' AND visivel = TRUE';
+    const { rows } = await query(
+      `SELECT * FROM programa_paginas WHERE programa_id = $1${cond} ORDER BY ord ASC, secao ASC`,
+      [programaId]
+    );
+    return rows.map(ppFromRow);
+  },
+  async getSecao(programaId, secao) {
+    const { rows } = await query(
+      'SELECT * FROM programa_paginas WHERE programa_id = $1 AND secao = $2',
+      [programaId, secao]
+    );
+    return rows[0] ? ppFromRow(rows[0]) : null;
+  },
+  async upsert(programaId, secao, data, actor) {
+    const existing = await this.getSecao(programaId, secao);
+    const now = new Date().toISOString();
+    if (existing) {
+      const { rows } = await query(
+        `UPDATE programa_paginas SET titulo=$1, body_value=$2, body_summary=$3, ord=$4, visivel=$5,
+           atualizado_em=$6, atualizado_por=COALESCE($7, atualizado_por)
+         WHERE programa_id=$8 AND secao=$9 RETURNING *`,
+        [
+          data.titulo ?? existing.titulo ?? null,
+          data.body?.value ?? null,
+          data.body?.summary ?? null,
+          intOrNull(data.ord) ?? existing.ord ?? 0,
+          data.visivel != null ? !!data.visivel : existing.visivel,
+          now, actor ?? null, programaId, secao,
+        ]
+      );
+      return ppFromRow(rows[0]);
+    }
+    const { rows } = await query(
+      `INSERT INTO programa_paginas
+         (id, programa_id, secao, titulo, body_value, body_summary, ord, visivel, criado_por, atualizado_por)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$9) RETURNING *`,
+      [
+        crypto.randomUUID(), programaId, secao,
+        data.titulo ?? null, data.body?.value ?? null, data.body?.summary ?? null,
+        intOrNull(data.ord) ?? 0, data.visivel != null ? !!data.visivel : true, actor ?? null,
+      ]
+    );
+    return ppFromRow(rows[0]);
+  },
+  async remove(programaId, secao) {
+    const { rowCount } = await query(
+      'DELETE FROM programa_paginas WHERE programa_id = $1 AND secao = $2',
+      [programaId, secao]
+    );
+    return rowCount > 0;
   },
 };
 

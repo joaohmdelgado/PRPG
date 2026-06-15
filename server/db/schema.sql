@@ -42,7 +42,8 @@ CREATE TABLE IF NOT EXISTS news (
   image_caption TEXT,
   tags          TEXT[] DEFAULT '{}',
   quote_text    TEXT,
-  quote_author  TEXT
+  quote_author  TEXT,
+  programa_id   TEXT -- Fase 5: vincula a noticia a um programa (NULL = noticia global da PRPG)
 );
 
 -- ============================ Editais =============================
@@ -62,7 +63,8 @@ CREATE TABLE IF NOT EXISTS editais (
   numero              TEXT,
   erratas             JSONB DEFAULT '[]',
   resultado_parcial   TEXT,
-  resultado_final     TEXT
+  resultado_final     TEXT,
+  programa_id         TEXT -- Fase 5: vincula o edital a um programa (NULL = edital global da PRPG)
 );
 
 -- ===================== Resolucoes / Formularios ===================
@@ -134,8 +136,40 @@ CREATE TABLE IF NOT EXISTS programas (
   regulamento_url        TEXT,
   sucupira_url           TEXT,
   palavras_chave         TEXT[] DEFAULT '{}',
+  -- Fase 5: microsite dedicado do programa (identidade visual + contato/redes).
+  slug                   TEXT, -- segmento de URL do microsite (ex.: 'pgh'); unico via indice parcial
+  microsite_ativo        BOOLEAN DEFAULT FALSE,
+  logo_url               TEXT,
+  cor_primaria           TEXT, -- hex; fallback para o azul da PRPG
+  cor_secundaria         TEXT, -- hex; fallback para o amarelo da PRPG
+  descricao_curta        TEXT,
+  hero_imagem_url        TEXT,
+  endereco               TEXT,
+  whatsapp               TEXT,
+  instagram_url          TEXT,
+  facebook_url           TEXT,
+  youtube_url            TEXT,
+  mapa_embed             TEXT, -- src do iframe do Google Maps
   criado_em         TIMESTAMPTZ DEFAULT now(),
   atualizado_em     TIMESTAMPTZ DEFAULT now()
+);
+
+-- Paginas de texto livre (rich-text) por secao do microsite de cada programa.
+-- Uma linha por (programa, secao): 'sobre', 'historico', 'objetivos', 'linhas', etc.
+CREATE TABLE IF NOT EXISTS programa_paginas (
+  id            TEXT PRIMARY KEY,
+  programa_id   TEXT REFERENCES programas(id) ON DELETE CASCADE,
+  secao         TEXT NOT NULL,
+  titulo        TEXT,
+  body_value    TEXT,
+  body_summary  TEXT,
+  ord           INTEGER DEFAULT 0,
+  visivel       BOOLEAN DEFAULT TRUE,
+  criado_em     TIMESTAMPTZ DEFAULT now(),
+  atualizado_em TIMESTAMPTZ DEFAULT now(),
+  criado_por    TEXT,
+  atualizado_por TEXT,
+  UNIQUE (programa_id, secao)
 );
 
 CREATE TABLE IF NOT EXISTS pessoas (
@@ -290,3 +324,27 @@ ALTER TABLE bolsas             ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COL
 ALTER TABLE pages              ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
 ALTER TABLE programas          ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
 ALTER TABLE users              ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
+
+-- ===================== Microsites por programa (Fase 5) ===========
+-- Bloco idempotente: aplica as colunas/indices do microsite em bancos ja
+-- existentes (instalacoes novas ja recebem tudo via CREATE TABLE acima).
+ALTER TABLE programas
+  ADD COLUMN IF NOT EXISTS slug            TEXT,
+  ADD COLUMN IF NOT EXISTS microsite_ativo BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS logo_url        TEXT,
+  ADD COLUMN IF NOT EXISTS cor_primaria    TEXT,
+  ADD COLUMN IF NOT EXISTS cor_secundaria  TEXT,
+  ADD COLUMN IF NOT EXISTS descricao_curta TEXT,
+  ADD COLUMN IF NOT EXISTS hero_imagem_url TEXT,
+  ADD COLUMN IF NOT EXISTS endereco        TEXT,
+  ADD COLUMN IF NOT EXISTS whatsapp        TEXT,
+  ADD COLUMN IF NOT EXISTS instagram_url   TEXT,
+  ADD COLUMN IF NOT EXISTS facebook_url    TEXT,
+  ADD COLUMN IF NOT EXISTS youtube_url     TEXT,
+  ADD COLUMN IF NOT EXISTS mapa_embed      TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS programas_slug_uidx ON programas(slug) WHERE slug IS NOT NULL;
+
+ALTER TABLE news    ADD COLUMN IF NOT EXISTS programa_id TEXT;
+ALTER TABLE editais ADD COLUMN IF NOT EXISTS programa_id TEXT;
+CREATE INDEX IF NOT EXISTS news_programa_id_idx    ON news(programa_id);
+CREATE INDEX IF NOT EXISTS editais_programa_id_idx ON editais(programa_id);

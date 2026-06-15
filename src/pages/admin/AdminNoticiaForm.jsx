@@ -21,14 +21,24 @@ const AdminNoticiaForm = () => {
     content: '', // No form trataremos como string para facilitar, no JSON é array
     author: '',
     authorRole: '',
-    tags: ''
+    tags: '',
+    programaId: ''
   });
 
   const [loading, setLoading] = useState(isEditing);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [audit, setAudit] = useState(null);
+  const [programas, setProgramas] = useState([]);
   const users = useUsers();
+
+  // Lista de programas para vincular a notícia a um microsite (opcional).
+  useEffect(() => {
+    fetch(`${API_URL}/api/programas`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setProgramas(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
 
   // Helper para converter data para YYYY-MM-DD
   const parseDateToISO = (dateStr) => {
@@ -143,7 +153,8 @@ const AdminNoticiaForm = () => {
               content: contentHTML,
               author: data.author || '',
               authorRole: data.authorRole || '',
-              tags: Array.isArray(data.tags) ? data.tags.join(', ') : data.tags || ''
+              tags: Array.isArray(data.tags) ? data.tags.join(', ') : data.tags || '',
+              programaId: data.programaId || ''
             });
 
             if (editorInstanceRef.current) {
@@ -325,6 +336,24 @@ const AdminNoticiaForm = () => {
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
+            <select
+              name="programaId"
+              value={formData.programaId}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white"
+            >
+              <option value="">— Notícia geral da PRPG (sem programa) —</option>
+              {programas.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.sigla && p.sigla !== 'S/SIGLA' ? `${p.sigla} — ${p.nome}` : p.nome}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">Ao vincular, a notícia aparece também no microsite do programa.</p>
           </div>
 
           <div className="md:col-span-2">

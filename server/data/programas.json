@@ -481,7 +481,7 @@
   {
     "id": "532f0a45-fbef-4f3c-854b-9bc4c09c8874",
     "nome": "História",
-    "sigla": "S/SIGLA",
+    "sigla": "PGH",
     "site": "http://www.pgh.ufrpe.br/",
     "codigo_capes": "",
     "campus": "SEDE",
@@ -492,10 +492,23 @@
     "area_avaliacao": "",
     "linhas": [
       "Cultura, Patrimônio e Memória",
-      "Cultura, Política e Relações De Poder",
-      "Ensino De História e Cultura Regional",
-      "Estado, Sociedade e Cultura"
+      "Cultura, Política e Relações de Poder",
+      "Ensino de História, Culturas e Identidades",
+      "O Mundo Moderno e o Brasil Colonial e Imperial",
+      "Terra, Trabalho e Poder"
     ],
+    "slug": "pgh",
+    "microsite_ativo": true,
+    "cor_primaria": "#5a1a2b",
+    "cor_secundaria": "#c9a227",
+    "descricao_curta": "Programa de Pós-Graduação em História da UFRPE — Mestrado e Doutorado em História Social da Cultura Regional.",
+    "email_programa": "secretaria.pgh@ufrpe.br",
+    "telefone_secretaria": "(81) 3320-6461",
+    "whatsapp": "(81) 99795-7532",
+    "endereco": "Rua Dom Manoel de Medeiros, s/n — Dois Irmãos, Recife-PE, CEP 52171-900",
+    "instagram_url": "https://www.instagram.com/pgh.ufrpe",
+    "youtube_url": "https://www.youtube.com/@pghufrpe",
+    "mapa_embed": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3950.8570172108657!2d-34.94817!3d-8.013677399999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x7ab198ad41794ab%3A0x4536f257f56330d1!2sUFRPE!5e0!3m2!1spt-BR!2sbr!4v1778710761960!5m2!1spt-BR!2sbr",
     "criado_em": "2026-06-12T12:40:49.214Z",
     "atualizado_em": "2026-06-12T12:40:49.214Z"
   },

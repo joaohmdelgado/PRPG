@@ -1,7 +1,7 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Globe } from 'lucide-react';
 import { API_URL } from '../../api';
 import { LastEdited } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
@@ -78,7 +78,12 @@ const AdminProgramas = () => {
             {programas.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                  {item.nome} {item.sigla && `(${item.sigla})`}
+                  {item.nome} {item.sigla && item.sigla !== 'S/SIGLA' && `(${item.sigla})`}
+                  {item.slug && (
+                    <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${item.microsite_ativo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {item.microsite_ativo ? 'Microsite publicado' : 'Microsite rascunho'}
+                    </span>
+                  )}
                   <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
@@ -96,7 +101,18 @@ const AdminProgramas = () => {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-right flex justify-end gap-3">
-                  <Link 
+                  {item.slug && (
+                    <a
+                      href={`/${item.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-ufrpe-blue"
+                      title="Ver microsite"
+                    >
+                      <Globe size={18} />
+                    </a>
+                  )}
+                  <Link
                     to={`/admin/programas/editar/${item.id}`}
                     className="text-ufrpe-blue hover:text-ufrpe-yellow"
                   >

@@ -1,5 +1,41 @@
 [
   {
+    "id": "pgh-errata-1-seletivo-2026-2",
+    "title": "Errata 1 — Processo Seletivo 2026.2 (Mestrado e Doutorado)",
+    "category": "Editais",
+    "categorySlug": "editais",
+    "date": "05 de Maio, 2026",
+    "year": "2026",
+    "image": "https://prpg.ufrpe.br/themes/prpg_ufrpe/assets/img/Bras%C3%A3o%20UFRPE%20-%20Fundo%20Branco.png",
+    "excerpt": "Informamos aos interessados que há, na página oficial do PGH, ERRATA do Edital do Processo Seletivo de Mestrado e Doutorado 2026.2.",
+    "content": [
+      "Informamos aos interessados que está disponível na página oficial do Programa de Pós-Graduação em História (PGH) a Errata nº 1 referente ao Edital do Processo Seletivo de Mestrado e Doutorado 2026.2.",
+      "Recomendamos a leitura atenta do documento retificado, que substitui as informações anteriores no que for divergente. Em caso de dúvidas, entre em contato com a secretaria do programa."
+    ],
+    "author": "Secretaria PGH",
+    "authorRole": "Programa de Pós-Graduação em História",
+    "tags": ["#PGH", "#Seleção", "#Mestrado", "#Doutorado"],
+    "programaId": "532f0a45-fbef-4f3c-854b-9bc4c09c8874"
+  },
+  {
+    "id": "pgh-processo-seletivo-2026-2",
+    "title": "Processo Seletivo Mestrado e Doutorado 2026.2 — PGH UFRPE",
+    "category": "Editais",
+    "categorySlug": "editais",
+    "date": "24 de Abril, 2026",
+    "year": "2026",
+    "image": "https://prpg.ufrpe.br/themes/prpg_ufrpe/assets/img/Bras%C3%A3o%20UFRPE%20-%20Fundo%20Branco.png",
+    "excerpt": "Está aberto o processo seletivo para ingresso nos cursos de Mestrado e Doutorado do Programa de Pós-Graduação em História para o semestre 2026.2.",
+    "content": [
+      "O Programa de Pós-Graduação em História (PGH) da UFRPE torna público o edital de seleção para ingresso nos cursos de Mestrado e Doutorado no semestre letivo 2026.2.",
+      "As inscrições, a documentação exigida, o cronograma e as linhas de pesquisa disponíveis estão detalhados no edital. Acompanhe as datas e fique atento a eventuais erratas publicadas nesta página."
+    ],
+    "author": "Secretaria PGH",
+    "authorRole": "Programa de Pós-Graduação em História",
+    "tags": ["#PGH", "#Seleção", "#PósGraduação"],
+    "programaId": "532f0a45-fbef-4f3c-854b-9bc4c09c8874"
+  },
+  {
     "id": "workshop-inovacao-pesquisa",
     "title": "PRPG UFRPE promove Workshop de Inovação e Pesquisa",
     "category": "Pesquisa",

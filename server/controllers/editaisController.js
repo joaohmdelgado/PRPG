@@ -1,5 +1,13 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { editaisRepo } from '../db/repositories.js';
+import { query } from '../db/pool.js';
+
+// Resolve um parametro `programa` (id OU slug) para o id real do programa.
+const resolveProgramaId = async (param) => {
+  if (!param) return null;
+  const { rows } = await query('SELECT id FROM programas WHERE id = $1 OR slug = $1 LIMIT 1', [param]);
+  return rows[0]?.id ?? param;
+};
 
 const getLocalDateString = () => {
   const d = new Date();
@@ -43,7 +51,11 @@ const calculateEditalStatus = (edital) => {
 };
 
 export const getEditais = async (req, res) => {
-  const editais = await editaisRepo.getAll();
+  let editais = await editaisRepo.getAll();
+  if (req.query.programa) {
+    const pid = await resolveProgramaId(req.query.programa);
+    editais = editais.filter((e) => e.programaId === pid);
+  }
   res.json(editais.map(calculateEditalStatus));
 };
 

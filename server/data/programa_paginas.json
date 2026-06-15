@@ -1,0 +1,42 @@
+[
+  {
+    "id": "pgh-sobre",
+    "programa_id": "532f0a45-fbef-4f3c-854b-9bc4c09c8874",
+    "secao": "sobre",
+    "titulo": "Sobre o Programa",
+    "body_summary": "O Programa de Pós-Graduação em História (PGH) da UFRPE oferece Mestrado e Doutorado na área de concentração História Social da Cultura Regional.",
+    "body_value": "<p>O <strong>Programa de Pós-Graduação em História (PGH)</strong> da Universidade Federal Rural de Pernambuco oferece cursos de <strong>Mestrado</strong> e <strong>Doutorado</strong> acadêmicos, com área de concentração em <strong>História Social da Cultura Regional</strong>, sediados em Recife.</p><p>Iniciado em agosto de 2006 com o Mestrado Acadêmico e ampliado com o Doutorado em 2019, o programa consolida um espaço acadêmico para pesquisas no campo da História Social da Cultura, com flexibilidade teórica e diversidade temática.</p>",
+    "ord": 0,
+    "visivel": true
+  },
+  {
+    "id": "pgh-historico",
+    "programa_id": "532f0a45-fbef-4f3c-854b-9bc4c09c8874",
+    "secao": "historico",
+    "titulo": "Histórico do Programa",
+    "body_summary": "Da Licenciatura em História (1989) à criação do Mestrado (2006) e do Doutorado (2019).",
+    "body_value": "<p>O PGH iniciou em agosto de 2006 com o Mestrado Acadêmico, tendo como área de concentração a História Social da Cultura Regional. Sua origem está no corpo docente da Licenciatura em História da UFRPE, criada em 1989, com tradição no curso noturno e foco na formação de licenciados.</p><p>Entre 2004 e 2006, cursos de especialização <em>lato sensu</em> foram ofertados (Ensino de História, Ensino de História das Artes, História da Religião), atendendo cerca de 200 alunos por ano. A aprovação pela CAPES veio em 2006 (Ofício 251-03/2006/CTC/CAPES), com a primeira turma em 2006.2 e seleções anuais desde então.</p><p>No quadriênio 2013-2016 houve novo regimento, descredenciamento de docentes e a renomeação do programa para \"Programa de Pós-Graduação em História\" (Ofício nº 182/2016, de 14/12/2016). Em 2017-2018, ingressaram 13 docentes e o programa obteve nota 4 na avaliação quadrienal da CAPES. A proposta de doutorado foi aprovada em outubro de 2018, com a primeira turma em março de 2019.</p>",
+    "ord": 1,
+    "visivel": true
+  },
+  {
+    "id": "pgh-objetivos",
+    "programa_id": "532f0a45-fbef-4f3c-854b-9bc4c09c8874",
+    "secao": "objetivos",
+    "titulo": "Natureza, Finalidade e Objetivos",
+    "body_summary": "Órgão administrativo da UFRPE subordinado à PRPG, voltado à formação de recursos humanos de alto nível em História.",
+    "body_value": "<p><strong>Natureza:</strong> o PGH é um órgão administrativo da UFRPE, subordinado à Pró-Reitoria de Pós-Graduação (PRPG), seguindo suas orientações e as decisões dos Conselhos Superiores da Universidade.</p><p><strong>Finalidade:</strong> oferecer cursos de Mestrado e Doutorado que promovam formação e qualificação em alto nível de recursos humanos para atividades técnico-científicas, de pesquisa e de ensino superior na área de História.</p><p><strong>Objetivos institucionais:</strong></p><ul><li>Consolidar espaço acadêmico para pesquisas no campo da História Social da Cultura, com flexibilidade teórica e diversidade temática.</li><li>Investir no desenvolvimento intelectual de doutores e doutoras pesquisadores no campo da História Social da Cultura.</li><li>Formar, em nível <em>stricto sensu</em>, recursos humanos capazes de desenvolver atividades de ensino superior, pesquisas científicas relevantes e ações de valorização e difusão da cultura regional.</li></ul>",
+    "ord": 2,
+    "visivel": true
+  },
+  {
+    "id": "pgh-linhas",
+    "programa_id": "532f0a45-fbef-4f3c-854b-9bc4c09c8874",
+    "secao": "linhas",
+    "titulo": "Áreas e Linhas de Pesquisa",
+    "body_summary": "Área de concentração em História Social da Cultura Regional, organizada em cinco linhas de pesquisa.",
+    "body_value": "<p><strong>Área de concentração:</strong> História Social da Cultura Regional.</p><p><strong>Linhas de pesquisa:</strong></p><ul><li>Cultura, Patrimônio e Memória</li><li>Cultura, Política e Relações de Poder</li><li>Ensino de História, Culturas e Identidades</li><li>O Mundo Moderno e o Brasil Colonial e Imperial</li><li>Terra, Trabalho e Poder</li></ul>",
+    "ord": 3,
+    "visivel": true
+  }
+]

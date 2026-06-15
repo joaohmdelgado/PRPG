@@ -34,14 +34,24 @@ const AdminEditalForm = () => {
     year: new Date().getFullYear(),
     erratas: [],
     resultadoParcial: '',
-    resultadoFinal: ''
+    resultadoFinal: '',
+    programaId: ''
   });
 
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
   const [uploadingFields, setUploadingFields] = useState({});
   const [audit, setAudit] = useState(null);
+  const [programas, setProgramas] = useState([]);
   const users = useUsers();
+
+  // Lista de programas para vincular o edital a um microsite (opcional).
+  useEffect(() => {
+    fetch(`${API_URL}/api/programas`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setProgramas(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
 
   const editorRef = useRef(null);
   const editorInstanceRef = useRef(null);
@@ -127,7 +137,8 @@ const AdminEditalForm = () => {
               year: data.year || new Date().getFullYear(),
               erratas: data.erratas || [],
               resultadoParcial: data.resultadoParcial || '',
-              resultadoFinal: data.resultadoFinal || ''
+              resultadoFinal: data.resultadoFinal || '',
+              programaId: data.programaId || ''
             });
 
             if (editorInstanceRef.current) {
@@ -375,6 +386,24 @@ const AdminEditalForm = () => {
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
+            <select
+              name="programaId"
+              value={formData.programaId}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white"
+            >
+              <option value="">— Edital geral da PRPG (sem programa) —</option>
+              {programas.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.sigla && p.sigla !== 'S/SIGLA' ? `${p.sigla} — ${p.nome}` : p.nome}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">Ao vincular, o edital aparece também no microsite do programa.</p>
           </div>
 
           <div className="md:col-span-2 border border-gray-200 rounded-lg p-4 bg-gray-50/50">
