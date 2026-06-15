@@ -1,8 +1,20 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { faqRepo } from '../db/repositories.js';
+import { query } from '../db/pool.js';
+
+const resolveProgramaId = async (param) => {
+  if (!param) return null;
+  const { rows } = await query('SELECT id FROM programas WHERE id = $1 OR slug = $1 LIMIT 1', [param]);
+  return rows[0]?.id ?? param;
+};
 
 export const getFaqs = async (req, res) => {
-  res.json(await faqRepo.getAll());
+  const all = await faqRepo.getAll();
+  if (req.query.programa) {
+    const pid = await resolveProgramaId(req.query.programa);
+    return res.json(all.filter((f) => f.programaId === pid));
+  }
+  res.json(all);
 };
 
 export const getFaqById = async (req, res) => {

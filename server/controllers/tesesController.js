@@ -1,12 +1,23 @@
 import { isPlainObject } from '../utils/sanitize.js';
 import { tesesRepo, usersRepo } from '../db/repositories.js';
+import { query } from '../db/pool.js';
 
 const resolveUser = (u, fallbackId) =>
   u ? { id: u.id, nome: u.perfil_geral?.nome || u.email, email: u.email }
     : { id: fallbackId, nome: 'Usuário Desconhecido', email: '' };
 
+const resolveProgramaId = async (param) => {
+  if (!param) return null;
+  const { rows } = await query('SELECT id FROM programas WHERE id = $1 OR slug = $1 LIMIT 1', [param]);
+  return rows[0]?.id ?? param;
+};
+
 export const getTeses = async (req, res) => {
-  const teses = await tesesRepo.getAll();
+  let teses = await tesesRepo.getAll();
+  if (req.query.programa) {
+    const pid = await resolveProgramaId(req.query.programa);
+    teses = teses.filter((t) => t.programaId === pid);
+  }
   const users = await usersRepo.getAll();
   const byId = new Map(users.map((u) => [u.id, u]));
   res.json(teses.map((t) => ({ ...t, field_autor_resolved: resolveUser(byId.get(t.field_autor), t.field_autor) })));

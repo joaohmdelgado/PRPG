@@ -59,9 +59,11 @@ const docFromRow = (r) => ({
 const docToRow = (o) => ({
   id: o.id, section_id: o.sectionId, section_title: o.sectionTitle,
   category_title: o.categoryTitle, title: o.title, descricao: o.desc, link: o.link,
+  programa_id: o.programaId || null,
 });
-export const resolucoesRepo = createRepository({ table: 'resolucoes', fromRow: docFromRow, toRow: docToRow });
-export const formulariosRepo = createRepository({ table: 'formularios', fromRow: docFromRow, toRow: docToRow });
+const docFromRowFull = (r) => ({ ...docFromRow(r), programaId: r.programa_id || null });
+export const resolucoesRepo  = createRepository({ table: 'resolucoes',  fromRow: docFromRowFull, toRow: docToRow });
+export const formulariosRepo = createRepository({ table: 'formularios', fromRow: docFromRowFull, toRow: docToRow });
 
 // =========================== Portarias ============================
 export const portariasRepo = createRepository({
@@ -81,19 +83,20 @@ export const tesesRepo = createRepository({
   table: 'teses_dissertacoes',
   fromRow: (r) => ({
     id: r.id, title: r.title, field_ano: r.field_ano, field_arquivo: r.field_arquivo,
-    field_autor: r.field_autor, field_tipo_td: r.field_tipo_td,
+    field_autor: r.field_autor, field_tipo_td: r.field_tipo_td, programaId: r.programa_id || null,
   }),
   toRow: (o) => ({
     id: o.id, title: o.title, field_ano: o.field_ano || null, field_arquivo: o.field_arquivo || null,
     field_autor: o.field_autor || null, field_tipo_td: o.field_tipo_td || null,
+    programa_id: o.programaId || null,
   }),
 });
 
 // ============================== FAQ ===============================
 export const faqRepo = createRepository({
   table: 'faq',
-  fromRow: (r) => ({ id: r.id, title: r.title, field_resposta: r.field_resposta }),
-  toRow: (o) => ({ id: o.id, title: o.title, field_resposta: o.field_resposta || null }),
+  fromRow: (r) => ({ id: r.id, title: r.title, field_resposta: r.field_resposta, programaId: r.programa_id || null }),
+  toRow: (o) => ({ id: o.id, title: o.title, field_resposta: o.field_resposta || null, programa_id: o.programaId || null }),
 });
 
 // =========================== Disciplinas ==========================
@@ -102,12 +105,12 @@ export const disciplinasRepo = createRepository({
   fromRow: (r) => ({
     id: r.id, title: r.title, field_carga_horaria: r.field_carga_horaria,
     field_docente: r.field_docente, field_ementa: r.field_ementa,
-    field_tipo_disciplina: r.field_tipo_disciplina,
+    field_tipo_disciplina: r.field_tipo_disciplina, programaId: r.programa_id || null,
   }),
   toRow: (o) => ({
     id: o.id, title: o.title, field_carga_horaria: o.field_carga_horaria || null,
     field_docente: o.field_docente || null, field_ementa: o.field_ementa || null,
-    field_tipo_disciplina: o.field_tipo_disciplina || null,
+    field_tipo_disciplina: o.field_tipo_disciplina || null, programa_id: o.programaId || null,
   }),
 });
 
@@ -146,12 +149,12 @@ export const gruposRepo = createRepository({
   fromRow: (r) => ({
     id: r.id, title: r.title,
     body: { value: r.body_value, summary: r.body_summary },
-    field_lideres: r.field_lideres ?? [],
+    field_lideres: r.field_lideres ?? [], programaId: r.programa_id || null,
   }),
   toRow: (o) => ({
     id: o.id, title: o.title,
     body_value: o.body?.value ?? null, body_summary: o.body?.summary ?? null,
-    field_lideres: JSON.stringify(o.field_lideres ?? []),
+    field_lideres: JSON.stringify(o.field_lideres ?? []), programa_id: o.programaId || null,
   }),
 });
 

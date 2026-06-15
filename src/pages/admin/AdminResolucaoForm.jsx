@@ -24,15 +24,24 @@ const AdminResolucaoForm = () => {
     categoryTitle: '',
     title: '',
     desc: '',
-    link: ''
+    link: '',
+    programaId: ''
   });
 
   const [loading, setLoading] = useState(isEditing);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [existingCategories, setExistingCategories] = useState([]);
+  const [programas, setProgramas] = useState([]);
   const [audit, setAudit] = useState(null);
   const users = useUsers();
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/programas`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setProgramas(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
 
   const editorRef = useRef(null);
   const editorInstanceRef = useRef(null);
@@ -125,7 +134,8 @@ const AdminResolucaoForm = () => {
               categoryTitle: data.categoryTitle || '',
               title: data.title || '',
               desc: description,
-              link: data.link || ''
+              link: data.link || '',
+              programaId: data.programaId || ''
             });
 
             if (editorInstanceRef.current) {
@@ -248,6 +258,17 @@ const AdminResolucaoForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
+          <select name="programaId" value={formData.programaId} onChange={handleChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white text-sm">
+            <option value="">— Resolução geral da PRPG —</option>
+            {programas.map((p) => (
+              <option key={p.id} value={p.id}>{p.sigla && p.sigla !== 'S/SIGLA' ? `${p.sigla} — ${p.nome}` : p.nome}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>

@@ -2,11 +2,21 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { usePrograma, programaPath } from './ProgramaContext';
 
-const NAV = [
-  { label: 'Início', sub: '', icon: 'fa-house' },
-  { label: 'Sobre', sub: 'sobre', icon: 'fa-circle-info' },
+// Itens fixos (sempre visíveis) e itens dinâmicos (aparecem quando o programa tem conteúdo).
+const NAV_FIXOS = [
+  { label: 'Início',   sub: '',        icon: 'fa-house' },
+  { label: 'Sobre',    sub: 'sobre',   icon: 'fa-circle-info' },
   { label: 'Notícias', sub: 'noticias', icon: 'fa-newspaper' },
-  { label: 'Editais', sub: 'editais', icon: 'fa-file-lines' },
+  { label: 'Editais',  sub: 'editais', icon: 'fa-file-lines' },
+];
+const NAV_DINAMICOS = [
+  { label: 'Disciplinas',    sub: 'disciplinas',    icon: 'fa-book-open',    modulo: 'disciplinas' },
+  { label: 'Teses',          sub: 'teses',          icon: 'fa-graduation-cap', modulo: 'teses' },
+  { label: 'FAQ',            sub: 'faq',            icon: 'fa-circle-question', modulo: 'faq' },
+  { label: 'Grupos',         sub: 'grupos-pesquisa', icon: 'fa-microscope',   modulo: 'grupos' },
+  { label: 'Documentos',     sub: 'documentos',     icon: 'fa-folder-open',  modulo: 'resolucoes' },
+];
+const NAV_FIXOS_FIM = [
   { label: 'Contato', sub: 'contato', icon: 'fa-envelope' },
 ];
 
@@ -27,6 +37,10 @@ export default function ProgramaLayout({ children }) {
   const base = `/${slug}`;
   const rest = location.pathname.replace(base, '').replace(/^\//, '');
   const activeSub = rest.split('/')[0];
+
+  const modulos = programa.modulos || {};
+  const navDinamicos = NAV_DINAMICOS.filter((item) => (modulos[item.modulo] ?? 0) > 0);
+  const NAV = [...NAV_FIXOS, ...navDinamicos, ...NAV_FIXOS_FIM];
 
   const themeStyle = {
     '--prog-primary': programa.cor_primaria || '#1e2b4f',

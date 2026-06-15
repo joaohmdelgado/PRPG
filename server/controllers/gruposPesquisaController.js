@@ -1,9 +1,20 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { gruposRepo, usersRepo } from '../db/repositories.js';
+import { query } from '../db/pool.js';
+
+const resolveProgramaId = async (param) => {
+  if (!param) return null;
+  const { rows } = await query('SELECT id FROM programas WHERE id = $1 OR slug = $1 LIMIT 1', [param]);
+  return rows[0]?.id ?? param;
+};
 
 export const getGruposPesquisa = async (req, res) => {
   try {
-    const grupos = await gruposRepo.getAll();
+    let grupos = await gruposRepo.getAll();
+    if (req.query.programa) {
+      const pid = await resolveProgramaId(req.query.programa);
+      grupos = grupos.filter((g) => g.programaId === pid);
+    }
     const users = await usersRepo.getAll();
     const byId = new Map(users.map((u) => [u.id, u]));
     const resolved = grupos.map((g) => ({

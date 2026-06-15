@@ -16,11 +16,20 @@ const AdminTeseForm = () => {
     field_ano: '',
     field_arquivo: '',
     field_autor: '',
-    field_tipo_td: ''
+    field_tipo_td: '',
+    programaId: ''
   });
 
   const [alunos, setAlunos] = useState([]);
+  const [programas, setProgramas] = useState([]);
   const [loading, setLoading] = useState(isEditing);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/programas`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setProgramas(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
   const [error, setError] = useState('');
   const [audit, setAudit] = useState(null);
   const auditUsers = useUsers();
@@ -59,7 +68,8 @@ const AdminTeseForm = () => {
               field_ano: data.field_ano || '',
               field_arquivo: data.field_arquivo || '',
               field_autor: data.field_autor || '',
-              field_tipo_td: data.field_tipo_td || ''
+              field_tipo_td: data.field_tipo_td || '',
+              programaId: data.programaId || ''
             });
 
             // Se o autor estiver preenchido, inicializa o autocomplete
@@ -245,6 +255,18 @@ const AdminTeseForm = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
               placeholder="Digite o título do trabalho acadêmico..."
             />
+          </div>
+
+          {/* Programa */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
+            <select name="programaId" value={formData.programaId} onChange={(e) => setFormData(p => ({ ...p, programaId: e.target.value }))}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white text-sm">
+              <option value="">— Sem programa —</option>
+              {programas.map((p) => (
+                <option key={p.id} value={p.id}>{p.sigla && p.sigla !== 'S/SIGLA' ? `${p.sigla} — ${p.nome}` : p.nome}</option>
+              ))}
+            </select>
           </div>
 
           {/* Tipo (Tese ou Dissertação) */}

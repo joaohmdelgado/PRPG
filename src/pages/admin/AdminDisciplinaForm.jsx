@@ -16,14 +16,23 @@ const AdminDisciplinaForm = () => {
     field_carga_horaria: '',
     field_docente: '',
     field_ementa: '',
-    field_tipo_disciplina: ''
+    field_tipo_disciplina: '',
+    programaId: ''
   });
 
   const [professores, setProfessores] = useState([]);
+  const [programas, setProgramas] = useState([]);
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
   const [audit, setAudit] = useState(null);
   const auditUsers = useUsers();
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/programas`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setProgramas(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -59,7 +68,8 @@ const AdminDisciplinaForm = () => {
               field_carga_horaria: data.field_carga_horaria || '',
               field_docente: data.field_docente || '',
               field_ementa: data.field_ementa || '',
-              field_tipo_disciplina: data.field_tipo_disciplina || ''
+              field_tipo_disciplina: data.field_tipo_disciplina || '',
+              programaId: data.programaId || ''
             });
 
             // Se o docente estiver preenchido, inicializa o autocomplete
@@ -276,6 +286,19 @@ const AdminDisciplinaForm = () => {
               <option value="Eletiva">Eletiva</option>
               <option value="Obrigatória">Obrigatória</option>
             </select>
+          </div>
+
+          {/* Programa */}
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
+            <select name="programaId" value={formData.programaId} onChange={handleChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white text-sm">
+              <option value="">— Sem programa —</option>
+              {programas.map((p) => (
+                <option key={p.id} value={p.id}>{p.sigla && p.sigla !== 'S/SIGLA' ? `${p.sigla} — ${p.nome}` : p.nome}</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-gray-500">Ao vincular, a disciplina aparece no microsite do programa.</p>
           </div>
 
           {/* Docente Autocomplete */}

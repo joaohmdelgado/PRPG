@@ -1,12 +1,23 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { disciplinasRepo, usersRepo } from '../db/repositories.js';
+import { query } from '../db/pool.js';
 
 const resolveUser = (u, fallbackId) =>
   u ? { id: u.id, nome: u.perfil_geral?.nome || u.email, email: u.email }
     : { id: fallbackId, nome: 'Usuário Desconhecido', email: '' };
 
+const resolveProgramaId = async (param) => {
+  if (!param) return null;
+  const { rows } = await query('SELECT id FROM programas WHERE id = $1 OR slug = $1 LIMIT 1', [param]);
+  return rows[0]?.id ?? param;
+};
+
 export const getDisciplinas = async (req, res) => {
-  const disciplinas = await disciplinasRepo.getAll();
+  let disciplinas = await disciplinasRepo.getAll();
+  if (req.query.programa) {
+    const pid = await resolveProgramaId(req.query.programa);
+    disciplinas = disciplinas.filter((d) => d.programaId === pid);
+  }
   const users = await usersRepo.getAll();
   const byId = new Map(users.map((u) => [u.id, u]));
   res.json(disciplinas.map((d) => ({ ...d, field_docente_resolved: resolveUser(byId.get(d.field_docente), d.field_docente) })));

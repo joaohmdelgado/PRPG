@@ -344,7 +344,20 @@ ALTER TABLE programas
   ADD COLUMN IF NOT EXISTS mapa_embed      TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS programas_slug_uidx ON programas(slug) WHERE slug IS NOT NULL;
 
-ALTER TABLE news    ADD COLUMN IF NOT EXISTS programa_id TEXT;
-ALTER TABLE editais ADD COLUMN IF NOT EXISTS programa_id TEXT;
-CREATE INDEX IF NOT EXISTS news_programa_id_idx    ON news(programa_id);
-CREATE INDEX IF NOT EXISTS editais_programa_id_idx ON editais(programa_id);
+ALTER TABLE news             ADD COLUMN IF NOT EXISTS programa_id TEXT;
+ALTER TABLE editais          ADD COLUMN IF NOT EXISTS programa_id TEXT;
+ALTER TABLE disciplinas      ADD COLUMN IF NOT EXISTS programa_id TEXT;
+ALTER TABLE resolucoes       ADD COLUMN IF NOT EXISTS programa_id TEXT;
+ALTER TABLE formularios      ADD COLUMN IF NOT EXISTS programa_id TEXT;
+ALTER TABLE teses_dissertacoes ADD COLUMN IF NOT EXISTS programa_id TEXT;
+ALTER TABLE faq              ADD COLUMN IF NOT EXISTS programa_id TEXT;
+ALTER TABLE grupos_pesquisa  ADD COLUMN IF NOT EXISTS programa_id TEXT;
+
+CREATE INDEX IF NOT EXISTS news_programa_id_idx       ON news(programa_id);
+CREATE INDEX IF NOT EXISTS editais_programa_id_idx    ON editais(programa_id);
+CREATE INDEX IF NOT EXISTS disciplinas_prog_idx       ON disciplinas(programa_id);
+CREATE INDEX IF NOT EXISTS resolucoes_prog_idx        ON resolucoes(programa_id);
+CREATE INDEX IF NOT EXISTS formularios_prog_idx       ON formularios(programa_id);
+CREATE INDEX IF NOT EXISTS teses_prog_idx             ON teses_dissertacoes(programa_id);
+CREATE INDEX IF NOT EXISTS faq_prog_idx               ON faq(programa_id);
+CREATE INDEX IF NOT EXISTS grupos_prog_idx            ON grupos_pesquisa(programa_id);

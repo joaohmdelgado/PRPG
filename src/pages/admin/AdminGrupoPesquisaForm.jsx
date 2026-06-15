@@ -17,11 +17,20 @@ const AdminGrupoPesquisaForm = () => {
       value: '',
       summary: ''
     },
-    field_lideres: []
+    field_lideres: [],
+    programaId: ''
   });
 
   const [professores, setProfessores] = useState([]);
+  const [programas, setProgramas] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/programas`)
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d) => setProgramas(Array.isArray(d) ? d : []))
+      .catch(() => {});
+  }, []);
   const [error, setError] = useState('');
   const [audit, setAudit] = useState(null);
   const auditUsers = useUsers();
@@ -124,7 +133,8 @@ const AdminGrupoPesquisaForm = () => {
                 value: valueHTML,
                 summary: data.body?.summary || ''
               },
-              field_lideres: data.field_lideres || []
+              field_lideres: data.field_lideres || [],
+              programaId: data.programaId || ''
             });
 
             if (editorInstanceRef.current) {
@@ -263,6 +273,17 @@ const AdminGrupoPesquisaForm = () => {
       {error && <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">{error}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
+          <select name="programaId" value={formData.programaId} onChange={handleInputChange}
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white text-sm">
+            <option value="">— Sem programa —</option>
+            {programas.map((p) => (
+              <option key={p.id} value={p.id}>{p.sigla && p.sigla !== 'S/SIGLA' ? `${p.sigla} — ${p.nome}` : p.nome}</option>
+            ))}
+          </select>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
           <input 

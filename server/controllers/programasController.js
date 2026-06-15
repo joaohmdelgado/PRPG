@@ -205,7 +205,22 @@ export const getProgramaBySlug = async (req, res) => {
 
     const paginas = await programaPaginasRepo.getByPrograma(prog.id, { includeHidden: isAdmin });
 
-    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, paginas });
+    // Conta itens por módulo para o menu dinâmico do microsite.
+    const MODULOS_TABELAS = [
+      ['disciplinas', 'disciplinas'],
+      ['teses', 'teses_dissertacoes'],
+      ['faq', 'faq'],
+      ['grupos', 'grupos_pesquisa'],
+      ['resolucoes', 'resolucoes'],
+      ['formularios', 'formularios'],
+    ];
+    const modulos = {};
+    await Promise.all(MODULOS_TABELAS.map(async ([key, tbl]) => {
+      const { rows } = await query(`SELECT count(*)::int AS n FROM ${tbl} WHERE programa_id = $1`, [prog.id]);
+      modulos[key] = rows[0]?.n ?? 0;
+    }));
+
+    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, paginas, modulos });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar programa', error: error.message });
   }
