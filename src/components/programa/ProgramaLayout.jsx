@@ -11,6 +11,7 @@ const NAV_FIXOS = [
 ];
 const NAV_DINAMICOS = [
   { label: 'Corpo Docente',  sub: 'pessoas',        icon: 'fa-users',        modulo: 'pessoas' },
+  { label: 'Comissões',     sub: 'comissoes',      icon: 'fa-users-gear',   modulo: 'comissoes' },
   { label: 'Disciplinas',    sub: 'disciplinas',    icon: 'fa-book-open',    modulo: 'disciplinas' },
   { label: 'Teses',          sub: 'teses',          icon: 'fa-graduation-cap', modulo: 'teses' },
   { label: 'FAQ',            sub: 'faq',            icon: 'fa-circle-question', modulo: 'faq' },

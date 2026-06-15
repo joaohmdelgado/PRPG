@@ -132,18 +132,26 @@ export default function ProgramaHome() {
         {/* Em Números */}
         {(() => {
           const mod = programa.modulos || {};
+          const m = programa.metrica_recente;
           const stats = [
-            { label: 'Docentes', value: mod.pessoas, icon: 'fa-users' },
-            { label: 'Disciplinas', value: mod.disciplinas, icon: 'fa-book-open' },
-            { label: 'Teses e Dissertações', value: mod.teses, icon: 'fa-graduation-cap' },
-            { label: 'Grupos de Pesquisa', value: mod.grupos, icon: 'fa-microscope' },
-          ].filter((s) => s.value > 0);
+            { label: 'Docentes Permanentes', value: m?.docentes_permanentes ?? (mod.pessoas > 0 ? mod.pessoas : null), icon: 'fa-users' },
+            { label: 'Discentes (Mestrado)', value: m?.discentes_mestrado, icon: 'fa-user-graduate' },
+            { label: 'Discentes (Doutorado)', value: m?.discentes_doutorado, icon: 'fa-graduation-cap' },
+            { label: 'Artigos Publicados', value: m?.producao_artigos, icon: 'fa-book-open' },
+            { label: 'Teses Defendidas', value: m?.teses_defendidas ?? (mod.teses > 0 ? mod.teses : null), icon: 'fa-scroll' },
+            { label: 'Bolsistas CAPES', value: m?.bolsistas_capes, icon: 'fa-award' },
+            { label: 'Grupos de Pesquisa', value: mod.grupos > 0 ? mod.grupos : null, icon: 'fa-microscope' },
+            { label: 'Disciplinas', value: mod.disciplinas > 0 ? mod.disciplinas : null, icon: 'fa-book' },
+          ].filter((s) => s.value != null && s.value > 0);
           if (stats.length === 0) return null;
+          const cols = stats.length <= 3 ? stats.length : stats.length <= 4 ? 4 : stats.length <= 6 ? 3 : 4;
           return (
             <section>
-              <p className="text-[var(--prog-accent)] font-semibold uppercase tracking-wider text-xs mb-1">O programa em</p>
+              <p className="text-[var(--prog-accent)] font-semibold uppercase tracking-wider text-xs mb-1">
+                O programa em{m ? ` — Dados de ${m.ano}` : ''}
+              </p>
               <h2 className="font-heading font-black text-2xl md:text-3xl text-[var(--prog-primary)] mb-6">Números</h2>
-              <div className={`grid gap-4 grid-cols-2 ${stats.length >= 4 ? 'md:grid-cols-4' : `md:grid-cols-${stats.length}`}`}>
+              <div className={`grid gap-4 grid-cols-2 md:grid-cols-${cols}`}>
                 {stats.map((s) => (
                   <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
                     <i className={`fa-solid ${s.icon} text-2xl text-[var(--prog-accent)] mb-3 block`}></i>

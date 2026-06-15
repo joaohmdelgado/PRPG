@@ -1,7 +1,7 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Globe } from 'lucide-react';
+import { Plus, Edit2, Trash2, Globe, BarChart2, Users } from 'lucide-react';
 import { API_URL } from '../../api';
 import { LastEdited } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
@@ -112,6 +112,12 @@ const AdminProgramas = () => {
                       <Globe size={18} />
                     </a>
                   )}
+                  <Link to={`/admin/programas/${item.id}/comissoes`} className="text-gray-400 hover:text-ufrpe-blue" title="Comissões">
+                    <Users size={16} />
+                  </Link>
+                  <Link to={`/admin/programas/${item.id}/metricas`} className="text-gray-400 hover:text-ufrpe-blue" title="Métricas anuais">
+                    <BarChart2 size={16} />
+                  </Link>
                   <Link
                     to={`/admin/programas/editar/${item.id}`}
                     className="text-ufrpe-blue hover:text-ufrpe-yellow"
