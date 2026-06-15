@@ -439,6 +439,65 @@ export const deletePrograma = async (req, res) => {
 };
 
 // ──────────────────────────────────────────────────────────────────────────────
+// Busca interna do microsite (Fase 4)
+// ──────────────────────────────────────────────────────────────────────────────
+
+export const buscaPrograma = async (req, res) => {
+  try {
+    const prog = (await query('SELECT id FROM programas WHERE slug = $1', [req.params.slug])).rows[0];
+    if (!prog) return res.status(404).json({ message: 'Programa não encontrado' });
+
+    const q = (req.query.q || '').trim();
+    if (q.length < 2) return res.json([]);
+
+    const like = `%${q}%`;
+    const pid = prog.id;
+
+    const [news, editais, disciplinas, teses, faq, grupos] = await Promise.all([
+      query(
+        `SELECT id, title AS titulo, excerpt AS resumo, 'noticia' AS tipo FROM news
+         WHERE programa_id = $1 AND (title ILIKE $2 OR excerpt ILIKE $2 OR content::text ILIKE $2) LIMIT 5`,
+        [pid, like]
+      ),
+      query(
+        `SELECT id, title AS titulo, description AS resumo, 'edital' AS tipo FROM editais
+         WHERE programa_id = $1 AND (title ILIKE $2 OR description ILIKE $2) LIMIT 5`,
+        [pid, like]
+      ),
+      query(
+        `SELECT id, title AS titulo, desc AS resumo, 'disciplina' AS tipo FROM disciplinas
+         WHERE programa_id = $1 AND (title ILIKE $2 OR desc ILIKE $2) LIMIT 5`,
+        [pid, like]
+      ),
+      query(
+        `SELECT id, title AS titulo, '' AS resumo, 'tese' AS tipo FROM teses_dissertacoes
+         WHERE programa_id = $1 AND (title ILIKE $2 OR author ILIKE $2) LIMIT 5`,
+        [pid, like]
+      ),
+      query(
+        `SELECT id, title AS titulo, '' AS resumo, 'faq' AS tipo FROM faq
+         WHERE programa_id = $1 AND (title ILIKE $2 OR field_resposta ILIKE $2) LIMIT 5`,
+        [pid, like]
+      ),
+      query(
+        `SELECT id, title AS titulo, '' AS resumo, 'grupo' AS tipo FROM grupos_pesquisa
+         WHERE programa_id = $1 AND title ILIKE $2 LIMIT 5`,
+        [pid, like]
+      ),
+    ]);
+
+    const results = [
+      ...news.rows, ...editais.rows, ...disciplinas.rows,
+      ...teses.rows, ...faq.rows, ...grupos.rows,
+    ].map((r) => ({ ...r, resumo: r.resumo || '' }));
+
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro na busca', error: error.message });
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Corpo Docente (Fase 3)
 // ──────────────────────────────────────────────────────────────────────────────
 

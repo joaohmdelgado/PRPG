@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePrograma, programaPath } from './ProgramaContext';
 
 // Itens fixos (sempre visíveis) e itens dinâmicos (aparecem quando o programa tem conteúdo).
@@ -32,7 +32,10 @@ const SOCIALS = [
 export default function ProgramaLayout({ children }) {
   const { programa, slug } = usePrograma();
   const location = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchVal, setSearchVal] = useState('');
 
   const sigla = programa.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : null;
   const base = `/${slug}`;
@@ -110,17 +113,41 @@ export default function ProgramaLayout({ children }) {
               </li>
             ))}
           </ul>
-          {/* Atalho ao site antigo, se houver */}
-          {programa.site && (
-            <a href={programa.site} target="_blank" rel="noopener noreferrer"
-              className="hidden md:inline-flex items-center gap-2 text-xs text-gray-400 hover:text-[var(--prog-primary)] transition-colors">
-              <i className="fa-solid fa-arrow-up-right-from-square"></i> Site anterior
-            </a>
-          )}
-          {/* Mobile toggle */}
-          <button onClick={() => setOpen(!open)} className="md:hidden py-3 text-xl text-[var(--prog-primary)]" aria-label="Menu">
-            <i className={`fa-solid ${open ? 'fa-xmark' : 'fa-bars'}`}></i>
-          </button>
+          {/* Atalho ao site antigo + busca */}
+          <div className="flex items-center gap-2">
+            {programa.site && (
+              <a href={programa.site} target="_blank" rel="noopener noreferrer"
+                className="hidden md:inline-flex items-center gap-2 text-xs text-gray-400 hover:text-[var(--prog-primary)] transition-colors mr-2">
+                <i className="fa-solid fa-arrow-up-right-from-square"></i> Site anterior
+              </a>
+            )}
+            {searchOpen ? (
+              <form onSubmit={(e) => { e.preventDefault(); if (searchVal.trim().length >= 2) { navigate(`/${slug}/busca?q=${encodeURIComponent(searchVal.trim())}`); setSearchOpen(false); setSearchVal(''); } }}
+                className="flex items-center gap-1">
+                <input
+                  autoFocus
+                  type="text"
+                  value={searchVal}
+                  onChange={(e) => setSearchVal(e.target.value)}
+                  placeholder="Buscar..."
+                  className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-40 md:w-52 focus:outline-none focus:ring-2 focus:ring-[var(--prog-primary)]/20"
+                />
+                <button type="button" onClick={() => { setSearchOpen(false); setSearchVal(''); }}
+                  className="text-gray-400 hover:text-gray-600 p-1">
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              </form>
+            ) : (
+              <button onClick={() => setSearchOpen(true)}
+                className="p-2 text-gray-500 hover:text-[var(--prog-primary)] transition-colors" aria-label="Buscar">
+                <i className="fa-solid fa-magnifying-glass text-sm"></i>
+              </button>
+            )}
+            {/* Mobile toggle */}
+            <button onClick={() => setOpen(!open)} className="md:hidden py-3 px-1 text-xl text-[var(--prog-primary)]" aria-label="Menu">
+              <i className={`fa-solid ${open ? 'fa-xmark' : 'fa-bars'}`}></i>
+            </button>
+          </div>
         </div>
         {open && (
           <ul className="md:hidden border-t border-gray-100 bg-white">

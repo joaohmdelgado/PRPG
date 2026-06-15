@@ -129,6 +129,33 @@ export default function ProgramaHome() {
           </section>
         )}
 
+        {/* Em Números */}
+        {(() => {
+          const mod = programa.modulos || {};
+          const stats = [
+            { label: 'Docentes', value: mod.pessoas, icon: 'fa-users' },
+            { label: 'Disciplinas', value: mod.disciplinas, icon: 'fa-book-open' },
+            { label: 'Teses e Dissertações', value: mod.teses, icon: 'fa-graduation-cap' },
+            { label: 'Grupos de Pesquisa', value: mod.grupos, icon: 'fa-microscope' },
+          ].filter((s) => s.value > 0);
+          if (stats.length === 0) return null;
+          return (
+            <section>
+              <p className="text-[var(--prog-accent)] font-semibold uppercase tracking-wider text-xs mb-1">O programa em</p>
+              <h2 className="font-heading font-black text-2xl md:text-3xl text-[var(--prog-primary)] mb-6">Números</h2>
+              <div className={`grid gap-4 grid-cols-2 ${stats.length >= 4 ? 'md:grid-cols-4' : `md:grid-cols-${stats.length}`}`}>
+                {stats.map((s) => (
+                  <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
+                    <i className={`fa-solid ${s.icon} text-2xl text-[var(--prog-accent)] mb-3 block`}></i>
+                    <p className="font-heading font-black text-4xl text-[var(--prog-primary)]">{s.value}</p>
+                    <p className="text-xs text-gray-500 mt-1 font-medium">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
+
         {/* Contato resumido */}
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 md:p-10">
           <div className="grid md:grid-cols-2 gap-8 items-center">
