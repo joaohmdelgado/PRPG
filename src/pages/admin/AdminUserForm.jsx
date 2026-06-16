@@ -1,6 +1,6 @@
 import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save, Shield, Plus, Trash2, X, Search } from 'lucide-react';
 import { API_URL } from '../../api';
 import { AuditHeader } from '../../components/AuditInfo';
@@ -22,6 +22,7 @@ const AdminUserForm = () => {
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -283,7 +284,9 @@ const AdminUserForm = () => {
       });
 
       if (response.ok) {
-        navigate('/admin/users');
+        // Se veio de uma página de programa (discentes/docentes), volta lá.
+        const from = location.state?.from;
+        navigate(from || '/admin/users');
       } else {
         const data = await response.json();
         if (response.status === 409 && data.existing?.id) {
@@ -307,7 +310,7 @@ const AdminUserForm = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
-        <Link to="/admin/users" className="text-gray-500 hover:text-gray-700">
+        <Link to={location.state?.from || '/admin/users'} className="text-gray-500 hover:text-gray-700">
           <ArrowLeft size={24} />
         </Link>
         <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">

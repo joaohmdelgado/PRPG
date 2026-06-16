@@ -138,7 +138,7 @@ function App() {
             <Route path="novo" element={<AdminGrupoPesquisaForm />} />
             <Route path="editar/:id" element={<AdminGrupoPesquisaForm />} />
           </Route>
-          <Route path="users" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+          <Route path="users" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
             <Route index element={<AdminUsersList />} />
             <Route path="novo" element={<AdminUserForm />} />
             <Route path="editar/:id" element={<AdminUserForm />} />

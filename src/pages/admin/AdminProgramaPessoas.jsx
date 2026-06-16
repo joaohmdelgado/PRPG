@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Trash2, UserPlus, Search } from 'lucide-react';
+import { ArrowLeft, Trash2, UserPlus, Search, Pencil } from 'lucide-react';
 import { API_URL } from '../../api';
 import { isProgramaGestor } from '../../auth';
 
@@ -351,10 +351,22 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
                           )}
                           <p className="text-sm font-medium text-gray-800">{m.nome}</p>
                         </div>
-                        <button onClick={() => handleRemove(m.id)}
-                          className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded p-1.5 transition-colors">
-                          <Trash2 size={14} />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          {m.programa_id === id && (
+                            <Link
+                              to={`/admin/users/editar/${m.pessoa_id}`}
+                              state={{ from: `/admin/programas/${id}/${recurso}` }}
+                              title="Editar cadastro"
+                              className="text-gray-400 hover:text-ufrpe-blue hover:bg-blue-50 rounded p-1.5 transition-colors"
+                            >
+                              <Pencil size={14} />
+                            </Link>
+                          )}
+                          <button onClick={() => handleRemove(m.id)}
+                            className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded p-1.5 transition-colors">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

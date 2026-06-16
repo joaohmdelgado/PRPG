@@ -594,7 +594,7 @@ export const getDocentesAdmin = async (req, res) => {
     if (ids.length === 0) return res.json([]);
 
     const { rows: usrs } = await query(
-      `SELECT id, email, perfil_nome, perfil_foto_url FROM users WHERE id = ANY($1::text[])`,
+      `SELECT id, email, perfil_nome, perfil_foto_url, programa_id FROM users WHERE id = ANY($1::text[])`,
       [ids]
     );
     const byId = Object.fromEntries(usrs.map((u) => [u.id, u]));
@@ -603,7 +603,8 @@ export const getDocentesAdmin = async (req, res) => {
       vinculos.map((v) => {
         const u = byId[v.pessoa_id] || {};
         return { id: v.id, pessoa_id: v.pessoa_id, papel: v.papel, email_funcao: v.email_funcao || '',
-                 nome: u.perfil_nome || u.email || v.pessoa_id, foto_url: u.perfil_foto_url || null };
+                 nome: u.perfil_nome || u.email || v.pessoa_id, foto_url: u.perfil_foto_url || null,
+                 programa_id: u.programa_id || null };
       })
     );
   } catch (error) {
@@ -719,13 +720,14 @@ export const getDiscentesAdmin = async (req, res) => {
     const ids = vinculos.map((v) => v.pessoa_id);
     if (ids.length === 0) return res.json([]);
     const { rows: usrs } = await query(
-      `SELECT id, email, perfil_nome, perfil_foto_url FROM users WHERE id=ANY($1::text[])`, [ids]
+      `SELECT id, email, perfil_nome, perfil_foto_url, programa_id FROM users WHERE id=ANY($1::text[])`, [ids]
     );
     const byId = Object.fromEntries(usrs.map((u) => [u.id, u]));
     res.json(vinculos.map((v) => {
       const u = byId[v.pessoa_id] || {};
       return { id: v.id, pessoa_id: v.pessoa_id, papel: v.papel,
-               nome: u.perfil_nome || u.email || v.pessoa_id, foto_url: u.perfil_foto_url || null };
+               nome: u.perfil_nome || u.email || v.pessoa_id, foto_url: u.perfil_foto_url || null,
+               programa_id: u.programa_id || null };
     }));
   } catch (error) {
     res.status(500).json({ message: 'Erro ao listar discentes', error: error.message });
