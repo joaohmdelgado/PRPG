@@ -200,6 +200,29 @@ export const usersRepo = {
     const { rows } = await query('SELECT * FROM users WHERE email = $1', [email]);
     return rows[0] ? userFromRow(rows[0]) : null;
   },
+  // Usuários visíveis a um Gestor de Programa: os que o programa "possui"
+  // (programa_id = seu programa) OU os vinculados a ele por qualquer vínculo
+  // (ex.: egresso de outro programa que também consta neste). Egressos de outro
+  // programa aparecem aqui para leitura, mas a edição/exclusão fica restrita ao
+  // programa dono (ver usersController/requireProgramaOwnership).
+  async getScopedToPrograma(programaId) {
+    const { rows } = await query(
+      `SELECT DISTINCT u.* FROM users u
+       LEFT JOIN vinculos v ON v.pessoa_id = u.id AND v.programa_id = $1
+       WHERE u.programa_id = $1 OR v.id IS NOT NULL
+       ORDER BY u.criado_em ASC`,
+      [programaId]
+    );
+    return rows.map(userFromRow);
+  },
+  // True se o usuário tem algum vínculo (ativo ou não) com o programa.
+  async isLinkedToPrograma(userId, programaId) {
+    const { rows } = await query(
+      'SELECT 1 FROM vinculos WHERE pessoa_id = $1 AND programa_id = $2 LIMIT 1',
+      [userId, programaId]
+    );
+    return rows.length > 0;
+  },
 };
 
 // ========================== Calendarios ===========================

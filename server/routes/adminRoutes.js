@@ -30,7 +30,7 @@ import {
 } from '../middleware/authMiddleware.js';
 import {
   newsRepo, editaisRepo, resolucoesRepo, formulariosRepo, disciplinasRepo,
-  tesesRepo, faqRepo, gruposRepo, pagesRepo,
+  tesesRepo, faqRepo, gruposRepo, pagesRepo, usersRepo,
 } from '../db/repositories.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -126,9 +126,12 @@ router.post('/taxonomias', protect, requireRole(['Administrator', 'Gestor']), up
 // Leitura da lista de usuários: também o Gestor de Programa, que precisa dela
 // para escolher docentes/discentes/coordenadores do seu programa. Criar/excluir
 // usuários continua restrito a Admin/Gestor.
+// O Gestor de Programa também cadastra alunos/professores (escopados ao seu
+// programa via createUser) e pode excluir apenas os que o seu programa possui
+// (requireProgramaOwnership confere users.programa_id).
 router.get('/users', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getUsers);
-router.post('/users', protect, requireRole(['Administrator', 'Gestor']), createUser);
-router.delete('/users/:id', protect, requireRole(['Administrator', 'Gestor']), deleteUser);
+router.post('/users', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), createUser);
+router.delete('/users/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireProgramaOwnership((id) => usersRepo.getById(id)), deleteUser);
 
 // Portarias: leitura liberada também ao Gestor de Programa (para vincular à
 // coordenação do seu programa). Gestão (POST/PUT/DELETE) segue Admin/Gestor.

@@ -140,3 +140,104 @@ describe('limites do gestor de programa', () => {
     expect(cal.status).toBe(403);
   });
 });
+
+describe('cadastro de alunos/professores pelo gestor', () => {
+  it('cadastra aluno já vinculado ao próprio programa (ignora spoof de programa)', async () => {
+    const res = await asGestor(request(app).post('/api/users')).send({
+      email: 'aluno1@pga.com', roles: ['Aluno'], papelVinculo: 'DISCENTE_MESTRADO',
+      programaId: programaB, perfil_geral: { nome: 'Aluno Um' },
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.programaId).toBe(programaA);
+
+    const disc = await asGestor(request(app).get(`/api/programas/${programaA}/discentes`));
+    expect(disc.status).toBe(200);
+    expect(disc.body.some((d) => d.pessoa_id === res.body.id && d.papel === 'DISCENTE_MESTRADO')).toBe(true);
+  });
+
+  it('cadastra professor já vinculado como docente do programa', async () => {
+    const res = await asGestor(request(app).post('/api/users')).send({
+      email: 'prof1@pga.com', roles: ['Professor'], papelVinculo: 'DOCENTE_PERMANENTE',
+      perfil_geral: { nome: 'Prof Um' },
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.programaId).toBe(programaA);
+
+    const doc = await asGestor(request(app).get(`/api/programas/${programaA}/docentes`));
+    expect(doc.body.some((d) => d.pessoa_id === res.body.id)).toBe(true);
+  });
+
+  it('não pode criar papéis com poder (GestorPrograma/Administrator) (403)', async () => {
+    const a = await asGestor(request(app).post('/api/users'))
+      .send({ email: 'x@pga.com', roles: ['GestorPrograma'], programaId: programaA });
+    expect(a.status).toBe(403);
+    const b = await asGestor(request(app).post('/api/users'))
+      .send({ email: 'y@pga.com', roles: ['Administrator'] });
+    expect(b.status).toBe(403);
+  });
+
+  it('a lista de usuários do gestor mostra só os do seu programa', async () => {
+    await asGestor(request(app).post('/api/users'))
+      .send({ email: 'a-aluno@pga.com', roles: ['Aluno'], perfil_geral: { nome: 'A Aluno' } });
+    await asAdmin(request(app).post('/api/users')).send({
+      email: 'b-aluno@pgb.com', roles: ['Aluno'], programaId: programaB,
+      papelVinculo: 'DISCENTE_MESTRADO', perfil_geral: { nome: 'B Aluno' },
+    });
+
+    const res = await asGestor(request(app).get('/api/users'));
+    expect(res.status).toBe(200);
+    const emails = res.body.map((u) => u.email);
+    expect(emails).toContain('a-aluno@pga.com');
+    expect(emails).not.toContain('b-aluno@pgb.com');
+    expect(emails).not.toContain('admin@test.com');
+  });
+});
+
+describe('posse cruzada de alunos (regra de egresso)', () => {
+  it('gestor não edita nem exclui aluno de outro programa (403)', async () => {
+    const aluno = await asAdmin(request(app).post('/api/users')).send({
+      email: 'aluno-b@pgb.com', roles: ['Aluno'], programaId: programaB,
+      perfil_geral: { nome: 'Aluno B' },
+    });
+    const id = aluno.body.id;
+
+    const put = await asGestor(request(app).put(`/api/users/${id}`)).send({ perfil_geral: { nome: 'Hack' } });
+    expect(put.status).toBe(403);
+
+    const del = await asGestor(request(app).delete(`/api/users/${id}`));
+    expect(del.status).toBe(403);
+  });
+
+  it('egresso de outro programa fica visível, mas continua somente leitura', async () => {
+    const aluno = await asAdmin(request(app).post('/api/users')).send({
+      email: 'egresso@pgb.com', roles: ['Aluno'], programaId: programaB,
+      perfil_geral: { nome: 'Egresso X' },
+    });
+    const id = aluno.body.id;
+
+    const link = await asGestor(request(app).post(`/api/programas/${programaA}/discentes`))
+      .send({ pessoa_id: id, papel: 'EGRESSO' });
+    expect(link.status).toBe(201);
+
+    const lista = await asGestor(request(app).get('/api/users'));
+    expect(lista.body.map((u) => u.email)).toContain('egresso@pgb.com');
+
+    const put = await asGestor(request(app).put(`/api/users/${id}`)).send({ perfil_geral: { nome: 'Z' } });
+    expect(put.status).toBe(403);
+    const del = await asGestor(request(app).delete(`/api/users/${id}`));
+    expect(del.status).toBe(403);
+  });
+
+  it('gestor edita e exclui aluno do próprio programa', async () => {
+    const aluno = await asGestor(request(app).post('/api/users'))
+      .send({ email: 'meu-aluno@pga.com', roles: ['Aluno'], perfil_geral: { nome: 'Meu Aluno' } });
+    const id = aluno.body.id;
+
+    const put = await asGestor(request(app).put(`/api/users/${id}`))
+      .send({ perfil_geral: { nome: 'Meu Aluno (editado)' } });
+    expect(put.status).toBe(200);
+
+    const del = await asGestor(request(app).delete(`/api/users/${id}`));
+    expect(del.status).toBe(200);
+  });
+});

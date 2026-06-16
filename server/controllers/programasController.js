@@ -531,7 +531,7 @@ export const buscaPrograma = async (req, res) => {
 // Corpo Docente (Fase 3)
 // ──────────────────────────────────────────────────────────────────────────────
 
-const PAPEIS_DOCENTE = ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR'];
+export const PAPEIS_DOCENTE = ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR'];
 
 // Endpoint público: docentes do programa por slug (sem dados sensíveis).
 export const getProgramaDocentesPublic = async (req, res) => {
