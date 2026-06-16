@@ -200,6 +200,17 @@ export const usersRepo = {
     const { rows } = await query('SELECT * FROM users WHERE email = $1', [email]);
     return rows[0] ? userFromRow(rows[0]) : null;
   },
+  // Busca por CPF comparando só os dígitos (ignora pontuação de formatação,
+  // ex.: "123.456.789-00" casa com "12345678900"). Retorna null se vazio.
+  async findByCpf(cpf) {
+    const digits = String(cpf || '').replace(/\D/g, '');
+    if (!digits) return null;
+    const { rows } = await query(
+      "SELECT * FROM users WHERE regexp_replace(COALESCE(perfil_cpf,''), '\\D', '', 'g') = $1 LIMIT 1",
+      [digits]
+    );
+    return rows[0] ? userFromRow(rows[0]) : null;
+  },
   // Usuários visíveis a um Gestor de Programa: os que o programa "possui"
   // (programa_id = seu programa) OU os vinculados a ele por qualquer vínculo
   // (ex.: egresso de outro programa que também consta neste). Egressos de outro

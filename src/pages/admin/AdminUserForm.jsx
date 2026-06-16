@@ -37,6 +37,7 @@ const AdminUserForm = () => {
 
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
+  const [conflitoId, setConflitoId] = useState(null); // id do cadastro já existente (409)
   const [taxonomias, setTaxonomias] = useState({ entradas: [], linhas_pesquisa: [] });
   const users = useUsers();
 
@@ -249,6 +250,7 @@ const AdminUserForm = () => {
 
     setLoading(true);
     setError('');
+    setConflitoId(null);
 
     const cleanedTelefones = formData.perfil_geral.telefones.filter(t => t.trim() !== '');
 
@@ -284,7 +286,14 @@ const AdminUserForm = () => {
         navigate('/admin/users');
       } else {
         const data = await response.json();
-        setError(data.message || 'Erro ao salvar usuário');
+        if (response.status === 409 && data.existing?.id) {
+          // E-mail/CPF já cadastrado: aponta para o cadastro existente.
+          setConflitoId(data.existing.id);
+          setError(`${data.message}${data.existing.nome ? ` — ${data.existing.nome}` : ''}`);
+        } else {
+          setConflitoId(null);
+          setError(data.message || 'Erro ao salvar usuário');
+        }
       }
     } catch (err) {
       setError('Erro de conexão com o servidor');
@@ -310,7 +319,16 @@ const AdminUserForm = () => {
         <AuditHeader criadoPor={formData.criado_por} atualizadoPor={formData.atualizado_por} criadoEm={formData.criado_em} atualizadoEm={formData.atualizado_em} users={users} className="mb-6" />
       )}
 
-      {error && <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">{error}</div>}
+      {error && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">
+          {error}
+          {conflitoId && (
+            <Link to={`/admin/users/editar/${conflitoId}`} className="ml-2 underline font-medium hover:text-red-800">
+              Abrir cadastro existente
+            </Link>
+          )}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         

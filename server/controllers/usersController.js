@@ -72,15 +72,37 @@ export const createUser = async (req, res) => {
     const data = req.body;
 
     if (!data.email) return res.status(400).json({ message: 'E-mail é obrigatório' });
-    if (await usersRepo.findByEmail(data.email)) {
-      return res.status(400).json({ message: 'E-mail já cadastrado' });
+
+    const scoped = isProgramaScoped(req.user);
+
+    // ── Checagem de duplicidade (e-mail ou CPF) ──────────────────────────────
+    // Em vez de só recusar, identificamos o cadastro existente e devolvemos o
+    // mínimo (id + nome) para o painel oferecer o vínculo ao programa — sem
+    // criar conta duplicada nem transferir a posse. 409 = conflito. Para o
+    // Gestor de Programa, jaVinculado indica se a pessoa já é do seu programa.
+    const porEmail = await usersRepo.findByEmail(data.email);
+    const cpfInformado = data.perfil_geral?.cpf;
+    const porCpf = !porEmail && cpfInformado ? await usersRepo.findByCpf(cpfInformado) : null;
+    const duplicado = porEmail || porCpf;
+    if (duplicado) {
+      const programaGestor = scoped ? req.user.programaId : null;
+      const jaVinculado = programaGestor
+        ? (duplicado.programaId === programaGestor ||
+           await usersRepo.isLinkedToPrograma(duplicado.id, programaGestor))
+        : false;
+      return res.status(409).json({
+        message: porEmail
+          ? 'Já existe um cadastro com este e-mail.'
+          : 'Já existe um cadastro com este CPF.',
+        conflict: porEmail ? 'email' : 'cpf',
+        existing: { id: duplicado.id, nome: duplicado.perfil_geral?.nome || '', jaVinculado },
+      });
     }
 
     const roles = data.roles || ['Aluno'];
 
     // ── Cadastro feito por um Gestor de Programa ──────────────────────────────
     // Só pode criar alunos/professores e tudo fica vinculado ao SEU programa.
-    const scoped = isProgramaScoped(req.user);
     let papelVinculo = null;
     if (scoped) {
       if (!req.user.programaId) return res.status(403).json({ message: 'Gestor sem programa vinculado.' });

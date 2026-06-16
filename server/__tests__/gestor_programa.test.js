@@ -241,3 +241,59 @@ describe('posse cruzada de alunos (regra de egresso)', () => {
     expect(del.status).toBe(200);
   });
 });
+
+describe('cadastro de pessoa já existente (checagem de duplicidade)', () => {
+  it('e-mail de aluno de outro programa: 409, identifica e permite vincular sem duplicar', async () => {
+    const alunoB = await asAdmin(request(app).post('/api/users')).send({
+      email: 'reuso@pgb.com', roles: ['Aluno'], programaId: programaB,
+      papelVinculo: 'DISCENTE_MESTRADO', perfil_geral: { nome: 'Pessoa Reuso' },
+    });
+
+    // Gestor de A tenta cadastrar a mesma pessoa → conflito, sem criar conta nova.
+    const conf = await asGestor(request(app).post('/api/users')).send({
+      email: 'reuso@pgb.com', roles: ['Aluno'], papelVinculo: 'DISCENTE_DOUTORADO',
+      perfil_geral: { nome: 'Pessoa Reuso' },
+    });
+    expect(conf.status).toBe(409);
+    expect(conf.body.conflict).toBe('email');
+    expect(conf.body.existing.id).toBe(alunoB.body.id);
+    expect(conf.body.existing.jaVinculado).toBe(false);
+
+    // Procedimento: vincular o cadastro existente ao programa A.
+    const link = await asGestor(request(app).post(`/api/programas/${programaA}/discentes`))
+      .send({ pessoa_id: alunoB.body.id, papel: 'DISCENTE_DOUTORADO' });
+    expect(link.status).toBe(201);
+
+    const disc = await asGestor(request(app).get(`/api/programas/${programaA}/discentes`));
+    expect(disc.body.some((d) => d.pessoa_id === alunoB.body.id)).toBe(true);
+
+    // A posse continua do programa B: o gestor de A não edita a conta.
+    const put = await asGestor(request(app).put(`/api/users/${alunoB.body.id}`))
+      .send({ perfil_geral: { nome: 'Hack' } });
+    expect(put.status).toBe(403);
+  });
+
+  it('CPF já cadastrado em outro programa: 409 conflict=cpf (ignora pontuação)', async () => {
+    await asAdmin(request(app).post('/api/users')).send({
+      email: 'cpf-owner@pgb.com', roles: ['Aluno'], programaId: programaB,
+      perfil_geral: { nome: 'Dono CPF', cpf: '111.222.333-44' },
+    });
+
+    const conf = await asGestor(request(app).post('/api/users')).send({
+      email: 'outro-email@pga.com', roles: ['Aluno'],
+      perfil_geral: { nome: 'Outro', cpf: '11122233344' },
+    });
+    expect(conf.status).toBe(409);
+    expect(conf.body.conflict).toBe('cpf');
+  });
+
+  it('pessoa já vinculada ao próprio programa: 409 com jaVinculado=true', async () => {
+    await asGestor(request(app).post('/api/users'))
+      .send({ email: 'ja@pga.com', roles: ['Aluno'], perfil_geral: { nome: 'Já Vinculado' } });
+
+    const conf = await asGestor(request(app).post('/api/users'))
+      .send({ email: 'ja@pga.com', roles: ['Aluno'], perfil_geral: { nome: 'Já Vinculado' } });
+    expect(conf.status).toBe(409);
+    expect(conf.body.existing.jaVinculado).toBe(true);
+  });
+});

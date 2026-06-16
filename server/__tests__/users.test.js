@@ -28,10 +28,21 @@ describe('users — listagem', () => {
 });
 
 describe('users — criação', () => {
-  it('rejeita e-mail duplicado', async () => {
-    await asAdmin(request(app).post('/api/users')).send({ email: 'dup@test.com', roles: ['Aluno'] });
+  it('rejeita e-mail duplicado com 409 e aponta o cadastro existente', async () => {
+    const orig = await asAdmin(request(app).post('/api/users')).send({ email: 'dup@test.com', roles: ['Aluno'] });
     const res = await asAdmin(request(app).post('/api/users')).send({ email: 'dup@test.com', roles: ['Aluno'] });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(409);
+    expect(res.body.conflict).toBe('email');
+    expect(res.body.existing?.id).toBe(orig.body.id);
+  });
+
+  it('rejeita CPF duplicado com 409 (compara só dígitos, ignora pontuação)', async () => {
+    await asAdmin(request(app).post('/api/users'))
+      .send({ email: 'cpf-a@test.com', roles: ['Aluno'], perfil_geral: { nome: 'A', cpf: '123.456.789-00' } });
+    const res = await asAdmin(request(app).post('/api/users'))
+      .send({ email: 'cpf-b@test.com', roles: ['Aluno'], perfil_geral: { nome: 'B', cpf: '12345678900' } });
+    expect(res.status).toBe(409);
+    expect(res.body.conflict).toBe('cpf');
   });
 
   it('usa senha padrão Mudar123 quando não informada e oculta o hash', async () => {

@@ -26,6 +26,8 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
   const [showCreate, setShowCreate] = useState(false);
   const [novo, setNovo] = useState({ nome: '', email: '', cpf: '', siape: '' });
   const [creating, setCreating] = useState(false);
+  // Cadastro já existente detectado (e-mail/CPF) — oferece vínculo em vez de duplicar.
+  const [conflito, setConflito] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -67,6 +69,7 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
   const handleCreate = async (e) => {
     e.preventDefault();
     setError('');
+    setConflito(null);
     if (!novo.nome.trim() || !novo.email.trim()) {
       setError('Informe nome e e-mail.');
       return;
@@ -91,6 +94,10 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
         setNovo({ nome: '', email: '', cpf: '', siape: '' });
         setShowCreate(false);
         load();
+      } else if (r.status === 409) {
+        // Pessoa já cadastrada (outro programa ou aqui): oferece vínculo.
+        const d = await r.json();
+        setConflito({ ...(d.existing || {}), conflict: d.conflict });
       } else {
         const d = await r.json();
         setError(d.message || 'Erro ao cadastrar');
@@ -100,6 +107,28 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
     } finally {
       setCreating(false);
     }
+  };
+
+  // Confirma o vínculo de um cadastro já existente (detectado no 409) ao programa.
+  const handleVincularConflito = async () => {
+    if (!conflito?.id) return;
+    setError('');
+    try {
+      const r = await fetch(`${API_URL}/api/programas/${id}/${recurso}`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pessoa_id: conflito.id, papel }),
+      });
+      if (r.ok) {
+        setConflito(null);
+        setNovo({ nome: '', email: '', cpf: '', siape: '' });
+        setShowCreate(false);
+        load();
+      } else {
+        const d = await r.json();
+        setError(d.message || 'Erro ao vincular');
+      }
+    } catch { setError('Erro de conexão'); }
   };
 
   const handleRemove = async (vinculoId) => {
@@ -160,6 +189,7 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
 
         {showCreate ? (
           /* Cadastro de novo aluno/professor — nasce vinculado a este programa */
+          <>
           <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-gray-500 mb-1">Nome completo *</label>
@@ -208,6 +238,51 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
               </p>
             </div>
           </form>
+
+          {conflito && (
+            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
+              {conflito.jaVinculado ? (
+                <>
+                  <p className="text-amber-800">
+                    Já existe um cadastro desta pessoa
+                    {conflito.nome ? <> (<strong>{conflito.nome}</strong>)</> : ''} vinculado a este
+                    programa. Use <strong>“Vincular existente”</strong> para adicioná-la como{' '}
+                    <strong>{papeis[papel]}</strong>.
+                  </p>
+                  <button
+                    type="button" onClick={() => setConflito(null)}
+                    className="mt-3 text-xs px-3 py-1.5 rounded border border-amber-300 text-amber-800 hover:bg-amber-100"
+                  >
+                    Entendi
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-amber-800">
+                    Já existe um cadastro com este {conflito.conflict === 'cpf' ? 'CPF' : 'e-mail'}
+                    {conflito.nome ? <>: <strong>{conflito.nome}</strong></> : ''}. Deseja vinculá-la a
+                    este programa como <strong>{papeis[papel]}</strong>? A conta original é preservada
+                    (não é duplicada).
+                  </p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      type="button" onClick={handleVincularConflito}
+                      className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-ufrpe-blue text-white rounded hover:bg-[#2a3a66]"
+                    >
+                      <UserPlus size={13} /> Vincular ao programa
+                    </button>
+                    <button
+                      type="button" onClick={() => setConflito(null)}
+                      className="text-xs px-3 py-1.5 rounded border border-gray-300 text-gray-600 hover:bg-gray-100"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          </>
         ) : (
           /* Vincular usuário já cadastrado */
           <>
