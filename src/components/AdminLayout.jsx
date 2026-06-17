@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet,
   GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle,
-  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation
+  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages
 } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../auth';
 
@@ -27,6 +27,7 @@ const ADMINISTRACAO = [
   { to: '/admin/grupos-pesquisa', label: 'Grupos de Pesquisa', icon: Users },
   { to: '/admin/taxonomias', label: 'Taxonomias', icon: Tags },
   { to: '/admin/users', label: 'Usuários', icon: UserCog },
+  { to: '/admin/proficiencia', label: 'Proficiência', icon: Languages },
 ];
 
 // Navegação do Gestor de Programa: só conteúdo vinculável ao seu programa.
@@ -132,6 +133,12 @@ const AdminLayout = () => {
               </div>
             </>
           )}
+
+          {/* Inscrição de proficiência: disponível a qualquer usuário logado. */}
+          <SectionLabel>Aluno</SectionLabel>
+          <div className="space-y-1">
+            <NavItem to="/admin/proficiencia/inscricao" label="Inscrição Proficiência" icon={Languages} />
+          </div>
         </nav>
 
         <div className="p-3 border-t border-white/10">

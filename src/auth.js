@@ -3,6 +3,20 @@
 // conteúdo do seu próprio programa: o painel filtra listagens por esse programa
 // e esconde o seletor de programa nos formulários (o vínculo é automático).
 
+export const getToken = () => localStorage.getItem('token');
+
+// Id do usuário logado, lido do payload do JWT (sem verificar assinatura — só
+// para uso no cliente). Retorna null se não houver token válido.
+export const getUserId = () => {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    return JSON.parse(atob(token.split('.')[1]))?.id ?? null;
+  } catch {
+    return null;
+  }
+};
+
 export const getRoles = () => {
   try {
     return JSON.parse(localStorage.getItem('roles') || '[]');

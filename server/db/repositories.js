@@ -411,6 +411,63 @@ export const programaPaginasRepo = {
   },
 };
 
+// ===================== Proficiência em Línguas ====================
+export const periodosProficienciaRepo = createRepository({
+  table: 'proficiencia_periodos',
+  orderBy: 'data_inicio DESC NULLS LAST, criado_em DESC',
+  fromRow: (r) => ({
+    id: r.id, titulo: r.titulo, descricao: r.descricao,
+    dataInicio: r.data_inicio, dataFim: r.data_fim, ativo: r.ativo,
+  }),
+  toRow: (o) => ({
+    id: o.id, titulo: o.titulo, descricao: o.descricao ?? null,
+    data_inicio: o.dataInicio || null, data_fim: o.dataFim || null,
+    ativo: o.ativo != null ? !!o.ativo : true,
+  }),
+});
+
+const inscricaoProfFromRow = (r) => ({
+  id: r.id, periodoId: r.periodo_id, alunoId: r.aluno_id,
+  nome: r.nome, cpf: r.cpf, nivel: r.nivel, estrangeiro: r.estrangeiro,
+  linguas: r.linguas ?? [],
+  comprovanteResidenciaUrl: r.comprovante_residencia_url,
+  titularComprovante: r.titular_comprovante,
+  comprovanteVinculoUrl: r.comprovante_vinculo_url,
+  status: r.status, nota: r.nota != null ? Number(r.nota) : null,
+  resultado: r.resultado, observacao: r.observacao,
+});
+
+const inscricaoProfToRow = (o) => ({
+  id: o.id, periodo_id: o.periodoId || null, aluno_id: o.alunoId || null,
+  nome: o.nome, cpf: o.cpf ?? null, nivel: o.nivel ?? null,
+  estrangeiro: !!o.estrangeiro, linguas: toArr(o.linguas),
+  comprovante_residencia_url: o.comprovanteResidenciaUrl ?? null,
+  titular_comprovante: o.titularComprovante != null ? !!o.titularComprovante : true,
+  comprovante_vinculo_url: o.comprovanteVinculoUrl ?? null,
+  status: o.status || 'INSCRITO',
+  nota: numOrNull(o.nota), resultado: o.resultado ?? null,
+  observacao: o.observacao ?? null,
+});
+
+export const inscricoesProficienciaRepo = {
+  ...createRepository({
+    table: 'inscricoes_proficiencia',
+    orderBy: 'criado_em DESC',
+    fromRow: inscricaoProfFromRow,
+    toRow: inscricaoProfToRow,
+  }),
+  async getByAluno(alunoId) {
+    const { rows } = await query(
+      'SELECT * FROM inscricoes_proficiencia WHERE aluno_id = $1 ORDER BY criado_em DESC',
+      [alunoId]
+    );
+    return rows.map((r) => ({
+      ...inscricaoProfFromRow(r),
+      criado_por: r.criado_por ?? null, atualizado_por: r.atualizado_por ?? null,
+    }));
+  },
+};
+
 // =========================== Taxonomias ===========================
 // Modelada como chave -> lista de valores; o app a consome como um objeto.
 export const taxonomiasRepo = {

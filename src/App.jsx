@@ -65,6 +65,8 @@ import AdminBolsaForm from './pages/admin/AdminBolsaForm';
 import AdminPagesList from './pages/admin/AdminPagesList';
 import AdminPageForm from './pages/admin/AdminPageForm';
 import AdminMetricas from './pages/admin/AdminMetricas';
+import AdminProficiencia from './pages/admin/AdminProficiencia';
+import ProficienciaInscricao from './pages/admin/ProficienciaInscricao';
 import PageView from './pages/PageView';
 
 function NotFoundPublic() {
@@ -145,6 +147,12 @@ function App() {
           </Route>
           <Route path="metricas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
             <Route index element={<AdminMetricas />} />
+          </Route>
+          {/* Inscrição: qualquer usuário logado (aluno). */}
+          <Route path="proficiencia/inscricao" element={<ProficienciaInscricao />} />
+          {/* Gestão/avaliação: Admin/Gestor. */}
+          <Route path="proficiencia" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+            <Route index element={<AdminProficiencia />} />
           </Route>
         </Route>
       </Route>

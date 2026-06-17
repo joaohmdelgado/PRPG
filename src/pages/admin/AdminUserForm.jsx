@@ -14,7 +14,7 @@ const SITUACOES_ALUNO = ['Ativo', 'Trancado', 'Desligado', 'Concluído'];
 
 const emptyGeral = { nome: '', cpf: '', siape: '', telefones: [''] };
 const emptyAcademicos = { lattes: '', orcid: '', google_scholar: '', publons: '', linhas_pesquisa: '' };
-const emptyAluno = { nivel: 'Mestrando', entrada: '', orientador_id: '', qualificacao: '', defesa: '', situacao: 'Ativo', egresso: false };
+const emptyAluno = { nivel: 'Mestrando', entrada: '', orientador_id: '', qualificacao: '', defesa: '', situacao: 'Ativo', egresso: false, estrangeiro: false, nacionalidade: '' };
 const emptyProfessor = { tipo_professor: 'Permanente', programas: [] };
 const defaultPrivacidade = { perfil_publico: true, mostrar_email: true, mostrar_telefone: false, mostrar_lattes: true };
 
@@ -634,6 +634,16 @@ const AdminUserForm = () => {
               <div>
                 <label className="block text-sm font-medium mb-1">Data de Defesa</label>
                 <input type="date" name="defesa" value={formData.perfil_aluno.defesa} onChange={e => handleChange(e, 'perfil_aluno')} className="w-full border p-2 rounded bg-white" />
+              </div>
+              <div className="flex items-center pt-6">
+                <label className="flex items-center gap-2 font-medium">
+                  <input type="checkbox" name="estrangeiro" checked={!!formData.perfil_aluno.estrangeiro} onChange={e => handleChange(e, 'perfil_aluno')} className="w-5 h-5" />
+                  Aluno estrangeiro
+                </label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Nacionalidade</label>
+                <input type="text" name="nacionalidade" value={formData.perfil_aluno.nacionalidade || ''} onChange={e => handleChange(e, 'perfil_aluno')} placeholder="Ex.: Brasileira" className="w-full border p-2 rounded bg-white" />
               </div>
             </div>
           </section>

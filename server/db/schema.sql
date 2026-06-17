@@ -306,6 +306,47 @@ CREATE TABLE IF NOT EXISTS taxonomias (
   valores TEXT[] DEFAULT '{}'
 );
 
+-- ===================== Proficiência em Línguas ====================
+-- Períodos (editais) de exame de proficiência. As inscrições só são aceitas
+-- enquanto houver um período aberto (data_inicio <= hoje <= data_fim).
+CREATE TABLE IF NOT EXISTS proficiencia_periodos (
+  id            TEXT PRIMARY KEY,
+  titulo        TEXT NOT NULL,
+  descricao     TEXT,
+  data_inicio   TEXT, -- 'YYYY-MM-DD' (padrão do projeto)
+  data_fim      TEXT,
+  ativo         BOOLEAN DEFAULT TRUE,
+  criado_em     TIMESTAMPTZ DEFAULT now(),
+  atualizado_em TIMESTAMPTZ DEFAULT now(),
+  criado_por    TEXT,
+  atualizado_por TEXT
+);
+
+-- Inscrições de alunos no exame de proficiência.
+CREATE TABLE IF NOT EXISTS inscricoes_proficiencia (
+  id                          TEXT PRIMARY KEY,
+  periodo_id                  TEXT REFERENCES proficiencia_periodos(id) ON DELETE SET NULL,
+  aluno_id                    TEXT, -- users.id (resolvido na aplicação; pode ser nulo p/ cadastro avulso)
+  nome                        TEXT NOT NULL,
+  cpf                         TEXT,
+  nivel                       TEXT, -- Mestrado | Doutorado
+  estrangeiro                 BOOLEAN DEFAULT FALSE,
+  linguas                     TEXT[] DEFAULT '{}', -- Português | Inglês | Espanhol
+  comprovante_residencia_url  TEXT,
+  titular_comprovante         BOOLEAN DEFAULT TRUE,
+  comprovante_vinculo_url     TEXT, -- exigido quando titular_comprovante = FALSE
+  status                      TEXT NOT NULL DEFAULT 'INSCRITO', -- INSCRITO | AVALIADO
+  nota                        NUMERIC(4,2),
+  resultado                   TEXT, -- INSUFICIENTE | SUFICIENCIA | PROFICIENCIA (calculado da nota)
+  observacao                  TEXT,
+  criado_em                   TIMESTAMPTZ DEFAULT now(),
+  atualizado_em               TIMESTAMPTZ DEFAULT now(),
+  criado_por                  TEXT,
+  atualizado_por              TEXT
+);
+CREATE INDEX IF NOT EXISTS inscricoes_prof_aluno_idx   ON inscricoes_proficiencia(aluno_id);
+CREATE INDEX IF NOT EXISTS inscricoes_prof_periodo_idx ON inscricoes_proficiencia(periodo_id);
+
 -- ===================== Auditoria (Fase 3) =========================
 -- criado_por / atualizado_por (id do usuário) em todas as entidades de
 -- conteúdo. Bloco idempotente: vale para instalações novas, testes e

@@ -80,6 +80,17 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 | Users | usersController.js | users.json | `/api/users` |
 | Portarias | portariasController.js | portarias.json | `/api/portarias` (admin only) |
 | Research Groups | gruposPesquisaController.js | grupos_pesquisa.json | `/api/grupos-pesquisa` (admin only) |
+| Proficiência (línguas) | proficienciaController.js | tabelas `proficiencia_periodos` / `inscricoes_proficiencia` (sem JSON seed) | `/api/proficiencia/*` |
+
+**Proficiência em Línguas**: mini-sistema de inscrição e emissão de declaração.
+O aluno logado se inscreve (`POST /api/proficiencia/inscricoes`) em um período
+aberto, anexando comprovante de residência (+ comprovante de vínculo se não for
+o titular) e escolhendo a(s) língua(s) — Mestrado: 1; Doutorado: até 2;
+estrangeiro: Português + outra. Admin/Gestor gerenciam períodos, lançam a nota
+(`PUT .../:id/nota` → resultado: 5–7 suficiência, >7 proficiência, <5
+insuficiente) e geram a declaração em PDF no servidor via `pdfkit`
+(`GET .../:id/declaracao`). O campo `estrangeiro`/`nacionalidade` foi adicionado
+ao `perfil_aluno` (JSONB) no cadastro do usuário.
 
 ## Authentication & Authorization
 
