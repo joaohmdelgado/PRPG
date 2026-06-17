@@ -24,6 +24,9 @@ const AdminUserForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const currentUserRoles = (() => { try { return JSON.parse(localStorage.getItem('roles') || '[]'); } catch { return []; } })();
+  const isGestorPrograma = currentUserRoles.includes('GestorPrograma') && !currentUserRoles.includes('Administrator') && !currentUserRoles.includes('Gestor');
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -234,7 +237,7 @@ const AdminUserForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.roles.length === 0) {
+    if (!isGestorPrograma && formData.roles.length === 0) {
       setError('Selecione ao menos um papel (Role)');
       return;
     }
@@ -349,17 +352,31 @@ const AdminUserForm = () => {
             </div>
           </div>
           
-          <div className="mb-2">
-            <label className="block text-sm font-medium mb-2">Papéis (Roles) *</label>
-            <div className="flex flex-wrap gap-3">
-              {ROLES.map(role => (
-                <label key={role} className={`flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-colors ${formData.roles.includes(role) ? 'bg-ufrpe-blue/5 border-ufrpe-blue text-ufrpe-blue' : 'bg-white hover:bg-gray-100'}`}>
-                  <input type="checkbox" checked={formData.roles.includes(role)} onChange={() => handleRoleToggle(role)} className="hidden" />
-                  <Shield size={16} /> {ROLE_LABELS[role] || role}
-                </label>
-              ))}
+          {isGestorPrograma ? (
+            <div className="mb-2">
+              <label className="block text-sm font-medium mb-2">Papéis (Roles)</label>
+              <div className="flex flex-wrap gap-3">
+                {formData.roles.map(role => (
+                  <span key={role} className="flex items-center gap-2 px-3 py-2 rounded border bg-ufrpe-blue/5 border-ufrpe-blue text-ufrpe-blue">
+                    <Shield size={16} /> {ROLE_LABELS[role] || role}
+                  </span>
+                ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Os papéis do usuário só podem ser alterados por um Administrador ou Gestor PRPG.</p>
             </div>
-          </div>
+          ) : (
+            <div className="mb-2">
+              <label className="block text-sm font-medium mb-2">Papéis (Roles) *</label>
+              <div className="flex flex-wrap gap-3">
+                {ROLES.map(role => (
+                  <label key={role} className={`flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition-colors ${formData.roles.includes(role) ? 'bg-ufrpe-blue/5 border-ufrpe-blue text-ufrpe-blue' : 'bg-white hover:bg-gray-100'}`}>
+                    <input type="checkbox" checked={formData.roles.includes(role)} onChange={() => handleRoleToggle(role)} className="hidden" />
+                    <Shield size={16} /> {ROLE_LABELS[role] || role}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {formData.roles.includes('GestorPrograma') && (
             <div className="mt-4 bg-ufrpe-blue/5 border border-ufrpe-blue/20 rounded-lg p-4">
