@@ -24,6 +24,8 @@ import {
 } from '../controllers/proficienciaController.js';
 
 
+import { getTiposImportacao, runImportacao } from '../controllers/importController.js';
+
 import { login } from '../controllers/authController.js';
 import { getUsers, getUserById, createUser, updateUser, deleteUser } from '../controllers/usersController.js';
 import { getTaxonomias, updateTaxonomias } from '../controllers/taxonomiasController.js';
@@ -65,6 +67,18 @@ const upload = multer({
     }
   },
   limits: { fileSize: 15 * 1024 * 1024 }
+});
+
+// Upload em memória para arquivos de importação (JSON do site antigo). Não vai
+// para disco — o conteúdo é parseado e descartado após a importação.
+const importUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    const ok = file.mimetype === 'application/json' || file.mimetype === 'text/plain' ||
+      /\.(json|txt)$/i.test(file.originalname);
+    cb(ok ? null : new Error('Apenas arquivos JSON ou TXT são permitidos!'), ok);
+  },
+  limits: { fileSize: 15 * 1024 * 1024 },
 });
 
 const router = express.Router();
@@ -136,6 +150,12 @@ router.post('/taxonomias', protect, requireRole(['Administrator', 'Gestor']), up
 router.get('/users', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getUsers);
 router.post('/users', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), createUser);
 router.delete('/users/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireProgramaOwnership((id) => usersRepo.getById(id)), deleteUser);
+
+// Importação de dados do site antigo (somente Admin/Gestor da PRPG).
+router.get('/import/tipos', protect, requireRole(['Administrator', 'Gestor']), getTiposImportacao);
+router.post('/import/:tipo', protect, requireRole(['Administrator', 'Gestor']),
+  (req, res, next) => importUpload.single('file')(req, res, (err) => (err ? res.status(400).json({ message: err.message }) : next())),
+  runImportacao);
 
 // Portarias: leitura liberada também ao Gestor de Programa (para vincular à
 // coordenação do seu programa). Gestão (POST/PUT/DELETE) segue Admin/Gestor.

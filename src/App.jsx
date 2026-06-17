@@ -65,6 +65,7 @@ import AdminBolsaForm from './pages/admin/AdminBolsaForm';
 import AdminPagesList from './pages/admin/AdminPagesList';
 import AdminPageForm from './pages/admin/AdminPageForm';
 import AdminMetricas from './pages/admin/AdminMetricas';
+import AdminImportacao from './pages/admin/AdminImportacao';
 import AdminProficiencia from './pages/admin/AdminProficiencia';
 import ProficienciaInscricao from './pages/admin/ProficienciaInscricao';
 import PageView from './pages/PageView';
@@ -147,6 +148,9 @@ function App() {
           </Route>
           <Route path="metricas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
             <Route index element={<AdminMetricas />} />
+          </Route>
+          <Route path="importacao" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+            <Route index element={<AdminImportacao />} />
           </Route>
           {/* Inscrição: qualquer usuário logado (aluno). */}
           <Route path="proficiencia/inscricao" element={<ProficienciaInscricao />} />
