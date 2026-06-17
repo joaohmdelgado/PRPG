@@ -64,7 +64,8 @@ CREATE TABLE IF NOT EXISTS editais (
   erratas             JSONB DEFAULT '[]',
   resultado_parcial   TEXT,
   resultado_final     TEXT,
-  programa_id         TEXT -- Fase 5: vincula o edital a um programa (NULL = edital global da PRPG)
+  programa_id         TEXT, -- Fase 5: vincula o edital a um programa (NULL = edital global da PRPG)
+  proficiencia        BOOLEAN DEFAULT FALSE -- quando TRUE, o edital define o período de inscrição da proficiência
 );
 
 -- ===================== Resolucoes / Formularios ===================
@@ -325,7 +326,7 @@ CREATE TABLE IF NOT EXISTS proficiencia_periodos (
 -- Inscrições de alunos no exame de proficiência.
 CREATE TABLE IF NOT EXISTS inscricoes_proficiencia (
   id                          TEXT PRIMARY KEY,
-  periodo_id                  TEXT REFERENCES proficiencia_periodos(id) ON DELETE SET NULL,
+  periodo_id                  TEXT REFERENCES editais(id) ON DELETE SET NULL, -- edital marcado como proficiencia=true
   aluno_id                    TEXT, -- users.id (resolvido na aplicação; pode ser nulo p/ cadastro avulso)
   nome                        TEXT NOT NULL,
   cpf                         TEXT,

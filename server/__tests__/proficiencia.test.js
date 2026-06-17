@@ -26,10 +26,14 @@ afterAll(async () => {
 const asAdmin = (req) => req.set('Authorization', `Bearer ${adminToken}`);
 const asAluno = (req) => req.set('Authorization', `Bearer ${alunoToken}`);
 
-// Cria um período aberto (cobre hoje) e devolve seu id.
+// Cria um edital de proficiência com período aberto (cobre hoje) e devolve seu id.
 async function criarPeriodoAberto() {
-  const res = await asAdmin(request(app).post('/api/proficiencia/periodos'))
-    .send({ titulo: 'Proficiência Teste', dataInicio: '2000-01-01', dataFim: '2999-12-31' });
+  const res = await asAdmin(request(app).post('/api/editais'))
+    .send({
+      title: 'Proficiência Teste',
+      proficiencia: true,
+      field_periodo: { data_inicio: '2000-01-01', data_fim: '2999-12-31' },
+    });
   return res.body.id;
 }
 

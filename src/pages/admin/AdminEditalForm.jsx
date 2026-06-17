@@ -35,7 +35,8 @@ const AdminEditalForm = () => {
     erratas: [],
     resultadoParcial: '',
     resultadoFinal: '',
-    programaId: ''
+    programaId: '',
+    proficiencia: false
   });
 
   const [loading, setLoading] = useState(isEditing);
@@ -137,7 +138,8 @@ const AdminEditalForm = () => {
               erratas: data.erratas || [],
               resultadoParcial: data.resultadoParcial || '',
               resultadoFinal: data.resultadoFinal || '',
-              programaId: data.programaId || ''
+              programaId: data.programaId || '',
+              proficiencia: !!data.proficiencia
             });
 
             if (editorInstanceRef.current) {
@@ -157,8 +159,8 @@ const AdminEditalForm = () => {
   }, [id, isEditing]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handlePeriodChange = (e) => {
@@ -403,6 +405,25 @@ const AdminEditalForm = () => {
               ))}
             </select>
             <p className="mt-1 text-xs text-gray-500">Ao vincular, o edital aparece também no microsite do programa.</p>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="proficiencia"
+                checked={!!formData.proficiencia}
+                onChange={handleChange}
+                className="w-5 h-5 accent-ufrpe-blue"
+              />
+              <span className="text-sm font-medium text-gray-700">
+                Edital de Proficiência em Línguas
+              </span>
+            </label>
+            <p className="mt-1 text-xs text-gray-500 ml-8">
+              Quando marcado, as datas do período abaixo definem a janela de inscrições na proficiência.
+              Apenas um edital com esta opção deve estar vigente por vez.
+            </p>
           </div>
 
           <div className="md:col-span-2 border border-gray-200 rounded-lg p-4 bg-gray-50/50">

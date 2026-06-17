@@ -38,6 +38,7 @@ export const editaisRepo = createRepository({
     numero: r.numero, erratas: r.erratas ?? [],
     resultadoParcial: r.resultado_parcial, resultadoFinal: r.resultado_final,
     programaId: r.programa_id ?? null,
+    proficiencia: r.proficiencia ?? false,
   }),
   toRow: (o) => ({
     id: o.id, category_id: o.categoryId, category_title: o.categoryTitle, title: o.title,
@@ -48,6 +49,7 @@ export const editaisRepo = createRepository({
     numero: o.numero, erratas: JSON.stringify(o.erratas ?? []),
     resultado_parcial: o.resultadoParcial ?? null, resultado_final: o.resultadoFinal ?? null,
     programa_id: o.programaId || null,
+    proficiencia: o.proficiencia ? true : false,
   }),
 });
 

@@ -19,9 +19,8 @@ import { getBolsas, getBolsaById, createBolsa, updateBolsa, deleteBolsa } from '
 import { getPages, getPageById, getPageBySlug, createPage, updatePage, deletePage } from '../controllers/pagesController.js';
 import { getMetricas, getMetricaById, createMetrica, updateMetrica, deleteMetrica } from '../controllers/metricasController.js';
 import {
-  getPeriodos, getPeriodoAberto, createPeriodo, updatePeriodo, deletePeriodo,
-  createInscricao, getMinhasInscricoes, getInscricoes, getInscricaoById,
-  lancarNota, deleteInscricao, gerarDeclaracao,
+  getPeriodoAberto, createInscricao, getMinhasInscricoes, getInscricoes,
+  getInscricaoById, lancarNota, deleteInscricao, gerarDeclaracao,
 } from '../controllers/proficienciaController.js';
 
 
@@ -205,16 +204,10 @@ router.put('/pages/:id', protect, requireProgramaOwnership((id) => pagesRepo.get
 router.delete('/pages/:id', protect, requireProgramaOwnership((id) => pagesRepo.getById(id)), deletePage);
 
 // ===================== Proficiência em Línguas =====================
-// Período aberto (consultado pela página de inscrição do aluno logado).
+// O período de inscrição é controlado por um edital com proficiencia=TRUE.
 router.get('/proficiencia/periodo-aberto', protect, getPeriodoAberto);
-// Inscrição do próprio aluno logado.
 router.post('/proficiencia/inscricoes', protect, createInscricao);
 router.get('/proficiencia/inscricoes/minhas', protect, getMinhasInscricoes);
-// Gestão de períodos e avaliação (Admin/Gestor).
-router.get('/proficiencia/periodos', protect, requireRole(['Administrator', 'Gestor']), getPeriodos);
-router.post('/proficiencia/periodos', protect, requireRole(['Administrator', 'Gestor']), createPeriodo);
-router.put('/proficiencia/periodos/:id', protect, requireRole(['Administrator', 'Gestor']), updatePeriodo);
-router.delete('/proficiencia/periodos/:id', protect, requireRole(['Administrator', 'Gestor']), deletePeriodo);
 router.get('/proficiencia/inscricoes', protect, requireRole(['Administrator', 'Gestor']), getInscricoes);
 router.get('/proficiencia/inscricoes/:id', protect, requireRole(['Administrator', 'Gestor']), getInscricaoById);
 router.put('/proficiencia/inscricoes/:id/nota', protect, requireRole(['Administrator', 'Gestor']), lancarNota);

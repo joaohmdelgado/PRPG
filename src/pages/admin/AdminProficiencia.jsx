@@ -1,33 +1,33 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { API_URL } from '../../api';
-import { Languages, Plus, Trash2, FileText, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Languages, FileText, Loader2, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 
 const token = () => localStorage.getItem('token');
 const authHeaders = () => ({ Authorization: `Bearer ${token()}` });
 
 const RESULTADO_LABEL = {
   PROFICIENCIA: { txt: 'Proficiência', cls: 'bg-green-100 text-green-700' },
-  SUFICIENCIA: { txt: 'Suficiência', cls: 'bg-blue-100 text-blue-700' },
-  INSUFICIENTE: { txt: 'Insuficiente', cls: 'bg-red-100 text-red-700' },
+  SUFICIENCIA:  { txt: 'Suficiência',  cls: 'bg-blue-100 text-blue-700'  },
+  INSUFICIENTE: { txt: 'Insuficiente', cls: 'bg-red-100 text-red-700'    },
 };
 
 const AdminProficiencia = () => {
-  const [periodos, setPeriodos] = useState([]);
   const [inscricoes, setInscricoes] = useState([]);
+  const [periodoAberto, setPeriodoAberto] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
-  const [notas, setNotas] = useState({}); // id -> valor digitado
+  const [notas, setNotas] = useState({});
   const [salvandoId, setSalvandoId] = useState(null);
-  const [novoPeriodo, setNovoPeriodo] = useState({ titulo: '', dataInicio: '', dataFim: '', ativo: true });
 
   const carregar = async () => {
     try {
-      const [pRes, iRes] = await Promise.all([
-        fetch(`${API_URL}/api/proficiencia/periodos`, { headers: authHeaders() }),
+      const [iRes, pRes] = await Promise.all([
         fetch(`${API_URL}/api/proficiencia/inscricoes`, { headers: authHeaders() }),
+        fetch(`${API_URL}/api/proficiencia/periodo-aberto`, { headers: authHeaders() }),
       ]);
-      setPeriodos(pRes.ok ? await pRes.json() : []);
       setInscricoes(iRes.ok ? await iRes.json() : []);
+      setPeriodoAberto(pRes.ok ? await pRes.json() : null);
     } catch {
       setErro('Erro ao carregar dados.');
     } finally {
@@ -36,31 +36,6 @@ const AdminProficiencia = () => {
   };
 
   useEffect(() => { carregar(); }, []);
-
-  const criarPeriodo = async (e) => {
-    e.preventDefault();
-    setErro('');
-    try {
-      const res = await fetch(`${API_URL}/api/proficiencia/periodos`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify(novoPeriodo),
-      });
-      if (res.ok) {
-        setNovoPeriodo({ titulo: '', dataInicio: '', dataFim: '', ativo: true });
-        carregar();
-      } else {
-        const d = await res.json();
-        setErro(d.message || 'Erro ao criar período.');
-      }
-    } catch { setErro('Erro de conexão.'); }
-  };
-
-  const removerPeriodo = async (id) => {
-    if (!confirm('Remover este período?')) return;
-    await fetch(`${API_URL}/api/proficiencia/periodos/${id}`, { method: 'DELETE', headers: authHeaders() });
-    carregar();
-  };
 
   const lancarNota = async (id) => {
     const nota = notas[id];
@@ -74,25 +49,17 @@ const AdminProficiencia = () => {
         body: JSON.stringify({ nota: Number(nota) }),
       });
       const d = await res.json();
-      if (res.ok) {
-        setInscricoes((prev) => prev.map((i) => (i.id === id ? d : i)));
-      } else {
-        setErro(d.message || 'Erro ao lançar nota.');
-      }
+      if (res.ok) setInscricoes((prev) => prev.map((i) => (i.id === id ? d : i)));
+      else setErro(d.message || 'Erro ao lançar nota.');
     } catch { setErro('Erro de conexão.'); }
     finally { setSalvandoId(null); }
   };
 
-  // A rota da declaração é protegida; baixamos o PDF com o token e abrimos o blob.
   const abrirDeclaracao = async (id) => {
     setErro('');
     try {
       const res = await fetch(`${API_URL}/api/proficiencia/inscricoes/${id}/declaracao`, { headers: authHeaders() });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        setErro(d.message || 'Erro ao gerar declaração.');
-        return;
-      }
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setErro(d.message || 'Erro ao gerar declaração.'); return; }
       const blob = await res.blob();
       window.open(URL.createObjectURL(blob), '_blank');
     } catch { setErro('Erro de conexão ao gerar a declaração.'); }
@@ -109,58 +76,21 @@ const AdminProficiencia = () => {
         <h1 className="font-heading text-2xl font-bold text-ufrpe-blue">Proficiência em Línguas</h1>
       </div>
 
+      {/* Período vigente */}
+      <div className={`mb-6 flex items-start gap-3 rounded-lg border p-4 text-sm ${periodoAberto ? 'bg-green-50 border-green-200 text-green-800' : 'bg-amber-50 border-amber-200 text-amber-800'}`}>
+        {periodoAberto ? <CheckCircle2 size={18} className="shrink-0 mt-0.5" /> : <AlertCircle size={18} className="shrink-0 mt-0.5" />}
+        <div>
+          {periodoAberto
+            ? <>Período aberto: <strong>{periodoAberto.titulo}</strong>{periodoAberto.dataFim ? ` (até ${periodoAberto.dataFim})` : ''}.</>
+            : <>Não há período de inscrição aberto. Para abrir um, crie ou edite um <Link to="/admin/editais" className="underline font-medium">edital</Link> e marque <em>Edital de Proficiência em Línguas</em>.</>}
+        </div>
+      </div>
+
       {erro && (
         <div className="mb-4 flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 rounded p-3 text-sm">
           <AlertCircle size={18} className="shrink-0 mt-0.5" /> {erro}
         </div>
       )}
-
-      {/* Períodos */}
-      <section className="mb-8 bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="font-semibold text-gray-700 mb-3">Períodos de inscrição</h2>
-        <form onSubmit={criarPeriodo} className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end mb-4">
-          <div className="md:col-span-2">
-            <label className="block text-xs font-medium mb-1">Título *</label>
-            <input type="text" required value={novoPeriodo.titulo}
-              onChange={(e) => setNovoPeriodo((p) => ({ ...p, titulo: e.target.value }))}
-              className="w-full border p-2 rounded text-sm" placeholder="Ex.: Proficiência 2026.1" />
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-1">Início</label>
-            <input type="date" value={novoPeriodo.dataInicio}
-              onChange={(e) => setNovoPeriodo((p) => ({ ...p, dataInicio: e.target.value }))}
-              className="w-full border p-2 rounded text-sm" />
-          </div>
-          <div>
-            <label className="block text-xs font-medium mb-1">Fim</label>
-            <input type="date" value={novoPeriodo.dataFim}
-              onChange={(e) => setNovoPeriodo((p) => ({ ...p, dataFim: e.target.value }))}
-              className="w-full border p-2 rounded text-sm" />
-          </div>
-          <button type="submit" className="bg-ufrpe-blue text-white px-4 py-2 rounded hover:bg-[#2a3a66] flex items-center justify-center gap-1.5 text-sm">
-            <Plus size={16} /> Criar
-          </button>
-        </form>
-        {periodos.length === 0 ? (
-          <p className="text-sm text-gray-400">Nenhum período cadastrado.</p>
-        ) : (
-          <ul className="divide-y divide-gray-100">
-            {periodos.map((p) => (
-              <li key={p.id} className="py-2 flex items-center justify-between text-sm">
-                <span>
-                  <strong>{p.titulo}</strong>{' '}
-                  <span className="text-gray-400">
-                    {p.dataInicio || '—'} a {p.dataFim || '—'} {p.ativo ? '' : '(inativo)'}
-                  </span>
-                </span>
-                <button onClick={() => removerPeriodo(p.id)} className="text-red-600 hover:text-red-800">
-                  <Trash2 size={16} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
 
       {/* Inscrições */}
       <section className="bg-white rounded-lg border border-gray-200 p-5">
@@ -196,11 +126,15 @@ const AdminProficiencia = () => {
                       <td className="py-2 pr-3 space-y-0.5">
                         {i.comprovanteResidenciaUrl && (
                           <a href={`${API_URL}${i.comprovanteResidenciaUrl}`} target="_blank" rel="noopener noreferrer"
-                            className="block text-ufrpe-blue underline text-xs">Residência</a>
+                            className="flex items-center gap-1 text-ufrpe-blue underline text-xs">
+                            <ExternalLink size={10} /> Residência
+                          </a>
                         )}
                         {i.comprovanteVinculoUrl && (
                           <a href={`${API_URL}${i.comprovanteVinculoUrl}`} target="_blank" rel="noopener noreferrer"
-                            className="block text-ufrpe-blue underline text-xs">Vínculo</a>
+                            className="flex items-center gap-1 text-ufrpe-blue underline text-xs">
+                            <ExternalLink size={10} /> Vínculo
+                          </a>
                         )}
                       </td>
                       <td className="py-2 pr-3">
@@ -221,16 +155,17 @@ const AdminProficiencia = () => {
                         </div>
                       </td>
                       <td className="py-2 pr-3">
-                        {r ? <span className={`px-2 py-0.5 rounded text-xs font-medium ${r.cls}`}>{r.txt}</span>
+                        {r
+                          ? <span className={`px-2 py-0.5 rounded text-xs font-medium ${r.cls}`}>{r.txt}</span>
                           : <span className="text-gray-400 text-xs">—</span>}
                       </td>
                       <td className="py-2">
-                        {podeDeclarar ? (
-                          <button onClick={() => abrirDeclaracao(i.id)}
-                            className="text-xs border border-ufrpe-blue text-ufrpe-blue px-2 py-1 rounded hover:bg-ufrpe-blue hover:text-white flex items-center gap-1">
-                            <FileText size={12} /> Gerar PDF
-                          </button>
-                        ) : <span className="text-gray-300 text-xs">—</span>}
+                        {podeDeclarar
+                          ? <button onClick={() => abrirDeclaracao(i.id)}
+                              className="text-xs border border-ufrpe-blue text-ufrpe-blue px-2 py-1 rounded hover:bg-ufrpe-blue hover:text-white flex items-center gap-1">
+                              <FileText size={12} /> Gerar PDF
+                            </button>
+                          : <span className="text-gray-300 text-xs">—</span>}
                       </td>
                     </tr>
                   );
