@@ -50,7 +50,8 @@ const GRANDES_AREAS = [
 const MODALIDADE_TIPOS = [
   { id: 'M', label: 'Mestrado Acadêmico' },
   { id: 'D', label: 'Doutorado Acadêmico' },
-  { id: 'P', label: 'Mestrado Profissional' }
+  { id: 'P', label: 'Mestrado Profissional' },
+  { id: 'DP', label: 'Doutorado Profissional' }
 ];
 
 const NOTAS_CAPES = ['1', '2', '3', '4', '5', '6', '7', 'A'];
@@ -104,7 +105,6 @@ const initialFormData = {
   horario_atendimento: '',
   email_programa: '',
   regimento_url: '',
-  regulamento_url: '',
   sucupira_url: '',
   palavras_chave: '',
   modalidades: [],
@@ -253,7 +253,6 @@ const AdminProgramaForm = () => {
               horario_atendimento: data.horario_atendimento || '',
               email_programa: data.email_programa || '',
               regimento_url: data.regimento_url || '',
-              regulamento_url: data.regulamento_url || '',
               sucupira_url: data.sucupira_url || '',
               palavras_chave: Array.isArray(data.palavras_chave) ? data.palavras_chave.join(', ') : (data.palavras_chave || ''),
               coordenador_atual: data.coordenador_atual || { ...emptyPessoa },
@@ -679,10 +678,6 @@ const AdminProgramaForm = () => {
         <div>
           <label className="block text-sm font-medium mb-1">Regimento Interno (URL)</label>
           <input type="url" name="regimento_url" value={formData.regimento_url} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Regulamento de Admissão (URL)</label>
-          <input type="url" name="regulamento_url" value={formData.regulamento_url} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://" />
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">Página na Plataforma Sucupira (URL)</label>
