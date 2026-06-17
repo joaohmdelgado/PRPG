@@ -40,11 +40,11 @@ async function criarPeriodoAberto() {
 // ============================ Unit: regras ============================
 
 describe('calcularResultado', () => {
-  it('classifica as faixas: <5 insuficiente, 5–7 suficiência, >7 proficiência', () => {
+  it('classifica as faixas: <5 insuficiente, 5≤n<7 suficiência, ≥7 proficiência', () => {
     expect(calcularResultado(4.9)).toBe('INSUFICIENTE');
     expect(calcularResultado(5)).toBe('SUFICIENCIA');
-    expect(calcularResultado(7)).toBe('SUFICIENCIA');
-    expect(calcularResultado(7.01)).toBe('PROFICIENCIA');
+    expect(calcularResultado(6.9)).toBe('SUFICIENCIA');
+    expect(calcularResultado(7)).toBe('PROFICIENCIA');
     expect(calcularResultado(10)).toBe('PROFICIENCIA');
   });
 });

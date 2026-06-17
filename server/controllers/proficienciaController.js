@@ -12,7 +12,7 @@ export const calcularResultado = (nota) => {
   const n = Number(nota);
   if (Number.isNaN(n)) return null;
   if (n < 5) return 'INSUFICIENTE';
-  if (n <= 7) return 'SUFICIENCIA';
+  if (n < 7) return 'SUFICIENCIA';
   return 'PROFICIENCIA';
 };
 
