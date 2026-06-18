@@ -30,6 +30,10 @@ const map = (raw) => {
   if (!nome && !email) throw new Error('Registro sem nome e sem e-mail.');
   if (!email) throw new Error(`"${nome}" não possui e-mail — ignorado.`);
 
+  const linhas_target_ids = Array.isArray(raw.field_linhas_pesquisa)
+    ? raw.field_linhas_pesquisa.map((x) => String(x?.target_id ?? '').trim()).filter(Boolean)
+    : [];
+
   return {
     nome,
     email: email.toLowerCase(),
@@ -41,6 +45,7 @@ const map = (raw) => {
     google_scholar: first(raw.field_google_scholar, 'uri'),
     publons: first(raw.field_publons, 'uri'),
     uid_legado: first(raw.uid) || null,
+    linhas_target_ids,
   };
 };
 
@@ -75,6 +80,19 @@ const garantirVinculo = async (programaId, pessoaId, papel) => {
   return true;
 };
 
+// Resolve target_ids legados para labels usando programas.linhas JSONB.
+const resolverLinhas = async (programaId, target_ids) => {
+  if (!target_ids || target_ids.length === 0) return [];
+  const { rows } = await query('SELECT linhas FROM programas WHERE id=$1', [programaId]);
+  const linhas = rows[0]?.linhas || [];
+  return target_ids
+    .map((tid) => {
+      const found = linhas.find((l) => l && String(l.target_id) === String(tid));
+      return found ? found.label : null;
+    })
+    .filter(Boolean);
+};
+
 // Importa um único registro já mapeado. Em dryRun apenas calcula a ação prevista.
 // Retorna { acao, nome, email, mensagem }.
 const importOne = async (m, { programaId, actor, dryRun }) => {
@@ -91,9 +109,13 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     if (dryRun) {
       return { acao: 'atualizado', nome: m.nome, email: m.email, mensagem: 'Será vinculado a este programa.' };
     }
+    const linhasResolvidas = await resolverLinhas(programaId, m.linhas_target_ids);
+    const linhasAtuais = existente.dados_academicos?.linhas_pesquisa || [];
+    const linhasMerged = [...new Set([...linhasAtuais, ...linhasResolvidas])];
     const merged = {
       ...existente,
       roles: jaProfessor ? existente.roles : [...(existente.roles || []), 'Professor'],
+      dados_academicos: { ...(existente.dados_academicos || {}), linhas_pesquisa: linhasMerged },
       perfil_professor: {
         ...(existente.perfil_professor || {}),
         programas: jaNoPrograma ? programas : [...programas, programaId],
@@ -109,6 +131,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     return { acao: 'criado', nome: m.nome, email: m.email, mensagem: 'Novo professor será criado.' };
   }
 
+  const linhasResolvidas = await resolverLinhas(programaId, m.linhas_target_ids);
   const password_hash = await bcrypt.hash(SENHA_PADRAO, await bcrypt.genSalt(10));
   const novo = {
     id: crypto.randomUUID(),
@@ -120,7 +143,8 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     perfil_geral: { nome: m.nome, cpf: '', siape: '', foto_url: m.foto_url || '', telefones: [] },
     dados_academicos: {
       lattes: m.lattes || '', orcid: m.orcid || '',
-      google_scholar: m.google_scholar || '', publons: m.publons || '', linhas_pesquisa: [],
+      google_scholar: m.google_scholar || '', publons: m.publons || '',
+      linhas_pesquisa: linhasResolvidas,
     },
     perfil_aluno: null,
     perfil_professor: {
@@ -135,7 +159,8 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
   };
   const created = await usersRepo.create(novo, actor);
   await garantirVinculo(programaId, created.id, papel);
-  return { acao: 'criado', nome: m.nome, email: m.email, mensagem: 'Professor criado.' };
+  const linhasMsg = linhasResolvidas.length > 0 ? ` (${linhasResolvidas.length} linha(s) de pesquisa mapeada(s))` : '';
+  return { acao: 'criado', nome: m.nome, email: m.email, mensagem: `Professor criado.${linhasMsg}` };
 };
 
 export default {

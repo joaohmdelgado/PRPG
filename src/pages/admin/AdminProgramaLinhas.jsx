@@ -5,11 +5,13 @@ import { API_URL } from '../../api';
 
 const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
 
+const emptyNova = { label: '', target_id: '' };
+
 export default function AdminProgramaLinhas() {
   const { id } = useParams();
   const [programa, setPrograma] = useState(null);
   const [linhas, setLinhas] = useState([]);
-  const [nova, setNova] = useState('');
+  const [nova, setNova] = useState(emptyNova);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -23,7 +25,10 @@ export default function AdminProgramaLinhas() {
         fetch(`${API_URL}/api/programas/${id}/linhas`, { headers: auth() }),
       ]);
       if (rp.ok) setPrograma(await rp.json());
-      if (rl.ok) setLinhas(await rl.json());
+      if (rl.ok) {
+        const data = await rl.json();
+        setLinhas(data.map((l) => typeof l === 'object' ? l : { label: l, target_id: null }));
+      }
       setLoading(false);
     };
     load();
@@ -39,8 +44,9 @@ export default function AdminProgramaLinhas() {
         body: JSON.stringify({ linhas: lista }),
       });
       if (res.ok) {
-        setLinhas(await res.json());
-        setSuccess('Linhas de pesquisa salvas.');
+        const data = await res.json();
+        setLinhas(data.map((l) => typeof l === 'object' ? l : { label: l, target_id: null }));
+        setSuccess('Salvo.');
         setTimeout(() => setSuccess(''), 3000);
       } else {
         const d = await res.json();
@@ -54,12 +60,13 @@ export default function AdminProgramaLinhas() {
   };
 
   const adicionar = () => {
-    const v = nova.trim();
-    if (!v) return;
-    if (linhas.includes(v)) { setError('Linha já cadastrada.'); return; }
-    setNova('');
+    const label = nova.label.trim();
+    if (!label) return;
+    if (linhas.some((l) => l.label === label)) { setError('Linha já cadastrada.'); return; }
+    const target_id = nova.target_id.trim() || null;
+    setNova(emptyNova);
     setError('');
-    salvar([...linhas, v]);
+    salvar([...linhas, { label, target_id }]);
   };
 
   const remover = (idx) => salvar(linhas.filter((_, i) => i !== idx));
@@ -69,6 +76,11 @@ export default function AdminProgramaLinhas() {
     const swap = idx + delta;
     if (swap < 0 || swap >= arr.length) return;
     [arr[idx], arr[swap]] = [arr[swap], arr[idx]];
+    salvar(arr);
+  };
+
+  const atualizarTargetId = (idx, value) => {
+    const arr = linhas.map((l, i) => i === idx ? { ...l, target_id: value.trim() || null } : l);
     salvar(arr);
   };
 
@@ -100,7 +112,7 @@ export default function AdminProgramaLinhas() {
         </div>
       </div>
       <p className="text-sm text-gray-500 mb-6 ml-[3.25rem]">
-        Gerencie as linhas de pesquisa deste programa. A ordem aqui é a exibida no microsite.
+        Gerencie as linhas de pesquisa. O <strong>ID legado</strong> é o <code>target_id</code> do site antigo — necessário para importar professores corretamente.
       </p>
 
       {error && (
@@ -116,24 +128,33 @@ export default function AdminProgramaLinhas() {
 
       {/* Adicionar nova linha */}
       <div className="bg-white rounded-xl border border-gray-100 p-5 mb-5">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Nova linha de pesquisa</label>
-        <div className="flex gap-2">
+        <p className="text-sm font-medium text-gray-700 mb-3">Nova linha de pesquisa</p>
+        <div className="flex gap-2 mb-2">
           <input
             type="text"
-            value={nova}
-            onChange={(e) => setNova(e.target.value)}
+            value={nova.label}
+            onChange={(e) => setNova((v) => ({ ...v, label: e.target.value }))}
             onKeyDown={(e) => e.key === 'Enter' && adicionar()}
             placeholder="Ex: Inteligência Artificial e Aprendizado de Máquina"
             className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
           />
+          <input
+            type="text"
+            value={nova.target_id}
+            onChange={(e) => setNova((v) => ({ ...v, target_id: e.target.value }))}
+            onKeyDown={(e) => e.key === 'Enter' && adicionar()}
+            placeholder="ID legado"
+            className="w-32 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ufrpe-blue/30 outline-none font-mono"
+          />
           <button
             onClick={adicionar}
-            disabled={saving || !nova.trim()}
+            disabled={saving || !nova.label.trim()}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-ufrpe-blue text-white hover:bg-ufrpe-blue/90 disabled:opacity-50 shrink-0"
           >
             {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Adicionar
           </button>
         </div>
+        <p className="text-xs text-gray-400">O campo "ID legado" é o <code>target_id</code> do Drupal. Deixe em branco se não souber.</p>
       </div>
 
       {/* Lista */}
@@ -150,7 +171,14 @@ export default function AdminProgramaLinhas() {
                 <span className="text-xs text-gray-300 w-5 text-center shrink-0">{idx + 1}</span>
 
                 {/* Nome */}
-                <span className="flex-1 text-sm text-gray-700">{l}</span>
+                <span className="flex-1 text-sm text-gray-700">{l.label}</span>
+
+                {/* ID legado */}
+                <TargetIdInput
+                  value={l.target_id || ''}
+                  disabled={saving}
+                  onSave={(val) => atualizarTargetId(idx, val)}
+                />
 
                 {/* Ações */}
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
@@ -189,5 +217,25 @@ export default function AdminProgramaLinhas() {
         <p className="text-xs text-gray-400 mt-2 text-right">{linhas.length} linha{linhas.length !== 1 ? 's' : ''} cadastrada{linhas.length !== 1 ? 's' : ''}</p>
       )}
     </div>
+  );
+}
+
+// Input inline para editar o target_id com save-on-blur.
+function TargetIdInput({ value, disabled, onSave }) {
+  const [local, setLocal] = useState(value);
+  useEffect(() => setLocal(value), [value]);
+  const handleBlur = () => { if (local !== value) onSave(local); };
+  return (
+    <input
+      type="text"
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+      disabled={disabled}
+      placeholder="ID legado"
+      title="ID legado (target_id do Drupal)"
+      className="w-28 border border-gray-200 rounded px-2 py-1 text-xs font-mono text-gray-500 focus:ring-1 focus:ring-ufrpe-blue/30 outline-none disabled:opacity-40"
+    />
   );
 }

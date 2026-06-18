@@ -411,3 +411,20 @@ CREATE INDEX IF NOT EXISTS pages_programa_id_idx ON pages(programa_id);
 -- NULL = usuario sem programa (Administrator/Gestor da PRPG, professor, aluno, etc.).
 ALTER TABLE users ADD COLUMN IF NOT EXISTS programa_id TEXT REFERENCES programas(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS users_programa_id_idx ON users(programa_id);
+
+-- ======= Linhas de pesquisa por programa: TEXT[] → JSONB [{label,target_id}] =======
+-- Idempotente: só executa se a coluna ainda for TEXT[].
+DO $$
+BEGIN
+  IF (SELECT data_type FROM information_schema.columns
+      WHERE table_name='programas' AND column_name='linhas') = 'ARRAY' THEN
+    ALTER TABLE programas ADD COLUMN IF NOT EXISTS linhas_jsonb JSONB DEFAULT '[]';
+    UPDATE programas SET linhas_jsonb = (
+      SELECT COALESCE(jsonb_agg(jsonb_build_object('label', x, 'target_id', null)), '[]'::jsonb)
+      FROM unnest(linhas) x
+    ) WHERE linhas IS NOT NULL;
+    ALTER TABLE programas DROP COLUMN linhas;
+    ALTER TABLE programas RENAME COLUMN linhas_jsonb TO linhas;
+    RAISE NOTICE 'Coluna linhas migrada para JSONB.';
+  END IF;
+END$$;

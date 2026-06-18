@@ -869,14 +869,21 @@ export const getProgramaLinhas = async (req, res) => {
   }
 };
 
+const normalizeLinha = (l) => {
+  if (typeof l === 'string') return { label: l.trim(), target_id: null };
+  const label = String(l.label ?? '').trim();
+  const target_id = l.target_id != null ? String(l.target_id).trim() || null : null;
+  return { label, target_id };
+};
+
 export const updateProgramaLinhas = async (req, res) => {
   try {
     const { linhas } = req.body || {};
     if (!Array.isArray(linhas)) return res.status(400).json({ message: 'linhas deve ser um array' });
-    const sanitized = linhas.map((l) => String(l).trim()).filter(Boolean);
+    const sanitized = linhas.map(normalizeLinha).filter((l) => l.label);
     const { rows } = await query(
-      'UPDATE programas SET linhas=$1, atualizado_em=now() WHERE id=$2 RETURNING linhas',
-      [sanitized, req.params.id]
+      'UPDATE programas SET linhas=$1::jsonb, atualizado_em=now() WHERE id=$2 RETURNING linhas',
+      [JSON.stringify(sanitized), req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ message: 'Programa não encontrado' });
     res.json(rows[0].linhas);
