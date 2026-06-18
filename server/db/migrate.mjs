@@ -77,16 +77,15 @@ async function main() {
     await query(
       `INSERT INTO programas
         (id,nome,sigla,site,codigo_capes,campus,em_rede,nome_rede,grande_area,
-         area_conhecimento,area_avaliacao,linhas,
+         area_conhecimento,area_avaliacao,
          slug,microsite_ativo,logo_url,cor_primaria,cor_secundaria,descricao_curta,
          hero_imagem_url,endereco,whatsapp,instagram_url,facebook_url,youtube_url,mapa_embed,
          email_programa,telefone_secretaria,
          criado_em,atualizado_em)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
-               $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
+               $12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28)`,
       [p.id, p.nome, p.sigla, p.site, p.codigo_capes, p.campus, !!p.em_rede, p.nome_rede,
        p.grande_area, p.area_conhecimento, p.area_avaliacao,
-       Array.isArray(p.linhas) ? p.linhas : [],
        p.slug || null, !!p.microsite_ativo, p.logo_url || null, p.cor_primaria || null,
        p.cor_secundaria || null, p.descricao_curta || null, p.hero_imagem_url || null,
        p.endereco || null, p.whatsapp || null, p.instagram_url || null, p.facebook_url || null,
