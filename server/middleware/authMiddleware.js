@@ -1,6 +1,18 @@
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 
+// Popula req.user se um Bearer token válido estiver presente, mas não rejeita
+// requisições sem token (rotas públicas com comportamento diferenciado por papel).
+export const optionalProtect = (req, res, next) => {
+  const auth = req.headers.authorization;
+  if (auth && auth.startsWith('Bearer ')) {
+    try {
+      req.user = jwt.verify(auth.split(' ')[1], JWT_SECRET);
+    } catch { /* token inválido — trata como anônimo */ }
+  }
+  next();
+};
+
 export const protect = (req, res, next) => {
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {

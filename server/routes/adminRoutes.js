@@ -32,7 +32,7 @@ import { getUsers, getUserById, createUser, updateUser, deleteUser } from '../co
 import { getTaxonomias, updateTaxonomias } from '../controllers/taxonomiasController.js';
 
 import {
-  protect, requireRole, scopeProgramaWrite, requireProgramaOwnership,
+  protect, optionalProtect, requireRole, scopeProgramaWrite, requireProgramaOwnership,
   requireSelfPrograma, blockProgramaScoped,
 } from '../middleware/authMiddleware.js';
 import {
@@ -117,7 +117,7 @@ router.get('/programas/:id', getProgramaById);
 router.get('/calendarios', getCalendarios);
 router.get('/calendarios/:id', getCalendarioById);
 router.get('/taxonomias', getTaxonomias);
-router.get('/linhas-pesquisa', getLinhas);
+router.get('/linhas-pesquisa', optionalProtect, getLinhas);
 router.get('/linhas-pesquisa/:id', getLinhaById);
 router.get('/teses-dissertacoes', getTeses);
 router.get('/teses-dissertacoes/:id', getTeseById);

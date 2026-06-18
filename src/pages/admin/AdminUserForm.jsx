@@ -72,7 +72,9 @@ const AdminUserForm = () => {
 
   const fetchLinhas = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/linhas-pesquisa`);
+      const res = await fetch(`${API_URL}/api/linhas-pesquisa`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+      });
       if (res.ok) setTodasLinhas(await res.json());
     } catch (e) { console.error(e); }
   };

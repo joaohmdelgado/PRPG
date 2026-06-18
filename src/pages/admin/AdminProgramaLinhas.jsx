@@ -22,7 +22,7 @@ export default function AdminProgramaLinhas() {
       const [rp, rl, rt] = await Promise.all([
         fetch(`${API_URL}/api/programas/${id}`),
         fetch(`${API_URL}/api/programas/${id}/linhas`, { headers: auth() }),
-        fetch(`${API_URL}/api/linhas-pesquisa`),
+        fetch(`${API_URL}/api/linhas-pesquisa`, { headers: auth() }),
       ]);
       if (rp.ok) setPrograma(await rp.json());
       if (rt.ok) setTodasLinhas(await rt.json());
