@@ -255,6 +255,8 @@ export const updateUser = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
   try {
+    // Limpa órfãos: vinculos não têm FK em pessoa_id (polimórfico), então remove manually.
+    await query('DELETE FROM vinculos WHERE pessoa_id = $1', [req.params.id]);
     const ok = await usersRepo.remove(req.params.id);
     if (ok) res.json({ message: 'Usuário removido com sucesso' });
     else res.status(404).json({ message: 'Usuário não encontrado' });
