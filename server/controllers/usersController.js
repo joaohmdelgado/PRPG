@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { isPlainObject } from '../utils/sanitize.js';
-import { usersRepo } from '../db/repositories.js';
+import { usersRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { PAPEIS_DISCENTE, PAPEIS_DOCENTE } from './programasController.js';
 import { query } from '../db/pool.js';
@@ -60,7 +60,8 @@ export const getUserById = async (req, res) => {
     if (!isSelf && !isAdmin && !gestorPodeVer) {
       return res.status(403).json({ message: 'Acesso negado. Você não tem permissão para visualizar este perfil.' });
     }
-    res.json(stripHash(user));
+    const linhas_pesquisa = await linhasPesquisaRepo.getByUser(user.id);
+    res.json({ ...stripHash(user), linhas_pesquisa });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar usuário', error: error.message });
   }
@@ -166,6 +167,11 @@ export const createUser = async (req, res) => {
       await vincularAoPrograma(ownerProgramaId, created.id, papelVinculo);
     }
 
+    if (Array.isArray(data.linhas_pesquisa_ids) && data.linhas_pesquisa_ids.length > 0) {
+      const ids = data.linhas_pesquisa_ids.map(Number).filter((n) => !isNaN(n) && n > 0);
+      await linhasPesquisaRepo.setForUser(created.id, ids);
+    }
+
     res.status(201).json(stripHash(created));
   } catch (error) {
     res.status(500).json({ message: 'Erro ao criar usuário', error: error.message });
@@ -234,6 +240,13 @@ export const updateUser = async (req, res) => {
     };
 
     const updated = await usersRepo.update(req.params.id, merged, req.user?.id);
+
+    if (data.linhas_pesquisa_ids !== undefined) {
+      const ids = (Array.isArray(data.linhas_pesquisa_ids) ? data.linhas_pesquisa_ids : [])
+        .map(Number).filter((n) => !isNaN(n) && n > 0);
+      await linhasPesquisaRepo.setForUser(req.params.id, ids);
+    }
+
     res.json(stripHash(updated));
   } catch (error) {
     res.status(500).json({ message: 'Erro ao atualizar usuário', error: error.message });

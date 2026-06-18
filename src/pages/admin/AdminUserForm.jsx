@@ -42,7 +42,9 @@ const AdminUserForm = () => {
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
   const [conflitoId, setConflitoId] = useState(null); // id do cadastro já existente (409)
-  const [taxonomias, setTaxonomias] = useState({ entradas: [], linhas_pesquisa: [] });
+  const [taxonomias, setTaxonomias] = useState({ entradas: [] });
+  const [todasLinhas, setTodasLinhas] = useState([]);
+  const [selectedLinhasIds, setSelectedLinhasIds] = useState(new Set());
   const users = useUsers();
 
   const [programasList, setProgramasList] = useState([]);
@@ -50,6 +52,7 @@ const AdminUserForm = () => {
   useEffect(() => {
     fetchTaxonomias();
     fetchProgramas();
+    fetchLinhas();
     if (isEditing) fetchUser();
   }, [id, isEditing]);
 
@@ -64,6 +67,13 @@ const AdminUserForm = () => {
     try {
       const res = await fetch(`${API_URL}/api/taxonomias`);
       if (res.ok) setTaxonomias(await res.json());
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchLinhas = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/linhas-pesquisa`);
+      if (res.ok) setTodasLinhas(await res.json());
     } catch (e) { console.error(e); }
   };
 
@@ -94,14 +104,16 @@ const AdminUserForm = () => {
             ...data.perfil_geral, 
             telefones: parsedTelefones 
           },
-          dados_academicos: { 
-            ...emptyAcademicos, 
+          dados_academicos: {
+            ...emptyAcademicos,
             ...data.dados_academicos,
-            linhas_pesquisa: data.dados_academicos?.linhas_pesquisa?.join('\n') || ''
           },
           perfil_aluno: data.perfil_aluno || null,
           perfil_professor: data.perfil_professor ? { programas: [], ...data.perfil_professor } : null
         });
+        if (Array.isArray(data.linhas_pesquisa)) {
+          setSelectedLinhasIds(new Set(data.linhas_pesquisa.map((l) => l.id)));
+        }
       } else {
         setError('Usuário não encontrado');
       }
@@ -264,10 +276,7 @@ const AdminUserForm = () => {
         ...formData.perfil_geral,
         telefones: cleanedTelefones
       },
-      dados_academicos: {
-        ...formData.dados_academicos,
-        linhas_pesquisa: formData.dados_academicos.linhas_pesquisa ? formData.dados_academicos.linhas_pesquisa.split('\n').filter(l => l) : []
-      }
+      linhas_pesquisa_ids: [...selectedLinhasIds],
     };
 
     if (!payload.password) delete payload.password; // Não enviar senha vazia na edição
@@ -487,23 +496,30 @@ const AdminUserForm = () => {
               <div><label className="block text-sm font-medium mb-1">Google Scholar (URL)</label><input type="url" name="google_scholar" value={formData.dados_academicos.google_scholar} onChange={e => handleChange(e, 'dados_academicos')} className="w-full border p-2 rounded" /></div>
               <div><label className="block text-sm font-medium mb-1">Publons (URL)</label><input type="url" name="publons" value={formData.dados_academicos.publons} onChange={e => handleChange(e, 'dados_academicos')} className="w-full border p-2 rounded" /></div>
               
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Linhas de Pesquisa (Uma por linha ou use as Oficiais)</label>
-                <div className="flex gap-4">
-                  <textarea name="linhas_pesquisa" value={formData.dados_academicos.linhas_pesquisa} onChange={e => handleChange(e, 'dados_academicos')} rows="3" className="w-full border p-2 rounded flex-1" />
-                  {taxonomias.linhas_pesquisa.length > 0 && (
-                    <div className="w-1/3 bg-gray-50 border rounded p-2 text-sm overflow-y-auto max-h-24">
-                      <strong className="block mb-1">Taxonomias Oficiais:</strong>
-                      {taxonomias.linhas_pesquisa.map(l => {
-                        const label = typeof l === 'object' ? l.label : l;
-                        return (
-                          <div key={label} className="cursor-pointer text-ufrpe-blue hover:underline" onClick={() => handleChange({target:{name:'linhas_pesquisa', value: formData.dados_academicos.linhas_pesquisa ? formData.dados_academicos.linhas_pesquisa + '\n' + label : label}}, 'dados_academicos')}>{label}</div>
-                        );
-                      })}
-                    </div>
-                  )}
+              {todasLinhas.length > 0 && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-2">Linhas de Pesquisa</label>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden max-h-52 overflow-y-auto">
+                    {todasLinhas.map((l) => {
+                      const sel = selectedLinhasIds.has(l.id);
+                      return (
+                        <label key={l.id}
+                          className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${sel ? 'bg-ufrpe-blue/5' : 'hover:bg-gray-50'} border-b border-gray-50 last:border-0`}>
+                          <input type="checkbox" checked={sel}
+                            onChange={() => setSelectedLinhasIds((prev) => {
+                              const next = new Set(prev);
+                              if (next.has(l.id)) next.delete(l.id); else next.add(l.id);
+                              return next;
+                            })}
+                            className="w-4 h-4 accent-ufrpe-blue" />
+                          <span className="flex-1 text-sm text-gray-700">{l.nome}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">{selectedLinhasIds.size} selecionada(s)</p>
                 </div>
-              </div>
+              )}
             </div>
           </section>
         )}

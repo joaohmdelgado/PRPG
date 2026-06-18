@@ -80,17 +80,24 @@ const garantirVinculo = async (programaId, pessoaId, papel) => {
   return true;
 };
 
-// Resolve target_ids legados para labels usando programas.linhas JSONB.
-const resolverLinhas = async (programaId, target_ids) => {
+// Resolve target_ids legados para IDs da tabela linhas_pesquisa.
+const resolverLinhasIds = async (programaId, target_ids) => {
   if (!target_ids || target_ids.length === 0) return [];
-  const { rows } = await query('SELECT linhas FROM programas WHERE id=$1', [programaId]);
-  const linhas = rows[0]?.linhas || [];
-  return target_ids
-    .map((tid) => {
-      const found = linhas.find((l) => l && String(l.target_id) === String(tid));
-      return found ? found.label : null;
-    })
-    .filter(Boolean);
+  const { rows } = await query(
+    `SELECT id FROM linhas_pesquisa
+     WHERE target_id = ANY($1::text[]) AND (programa_id = $2 OR programa_id IS NULL)`,
+    [target_ids.map(String), programaId]
+  );
+  return rows.map((r) => r.id);
+};
+
+const vincularLinhas = async (userId, linhaIds) => {
+  for (const id of linhaIds) {
+    await query(
+      'INSERT INTO user_linhas_pesquisa (user_id, linha_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+      [userId, id]
+    );
+  }
 };
 
 // Importa um único registro já mapeado. Em dryRun apenas calcula a ação prevista.
@@ -109,13 +116,10 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     if (dryRun) {
       return { acao: 'atualizado', nome: m.nome, email: m.email, mensagem: 'Será vinculado a este programa.' };
     }
-    const linhasResolvidas = await resolverLinhas(programaId, m.linhas_target_ids);
-    const linhasAtuais = existente.dados_academicos?.linhas_pesquisa || [];
-    const linhasMerged = [...new Set([...linhasAtuais, ...linhasResolvidas])];
+    const linhaIds = await resolverLinhasIds(programaId, m.linhas_target_ids);
     const merged = {
       ...existente,
       roles: jaProfessor ? existente.roles : [...(existente.roles || []), 'Professor'],
-      dados_academicos: { ...(existente.dados_academicos || {}), linhas_pesquisa: linhasMerged },
       perfil_professor: {
         ...(existente.perfil_professor || {}),
         programas: jaNoPrograma ? programas : [...programas, programaId],
@@ -123,6 +127,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
       atualizado_em: new Date().toISOString(),
     };
     await usersRepo.update(existente.id, merged, actor);
+    if (linhaIds.length > 0) await vincularLinhas(existente.id, linhaIds);
     await garantirVinculo(programaId, existente.id, papel);
     return { acao: 'atualizado', nome: m.nome, email: m.email, mensagem: 'Vinculado a este programa.' };
   }
@@ -131,7 +136,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     return { acao: 'criado', nome: m.nome, email: m.email, mensagem: 'Novo professor será criado.' };
   }
 
-  const linhasResolvidas = await resolverLinhas(programaId, m.linhas_target_ids);
+  const linhaIds = await resolverLinhasIds(programaId, m.linhas_target_ids);
   const password_hash = await bcrypt.hash(SENHA_PADRAO, await bcrypt.genSalt(10));
   const novo = {
     id: crypto.randomUUID(),
@@ -144,7 +149,6 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     dados_academicos: {
       lattes: m.lattes || '', orcid: m.orcid || '',
       google_scholar: m.google_scholar || '', publons: m.publons || '',
-      linhas_pesquisa: linhasResolvidas,
     },
     perfil_aluno: null,
     perfil_professor: {
@@ -158,8 +162,9 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     atualizado_em: new Date().toISOString(),
   };
   const created = await usersRepo.create(novo, actor);
+  if (linhaIds.length > 0) await vincularLinhas(created.id, linhaIds);
   await garantirVinculo(programaId, created.id, papel);
-  const linhasMsg = linhasResolvidas.length > 0 ? ` (${linhasResolvidas.length} linha(s) de pesquisa mapeada(s))` : '';
+  const linhasMsg = linhaIds.length > 0 ? ` (${linhaIds.length} linha(s) de pesquisa mapeada(s))` : '';
   return { acao: 'criado', nome: m.nome, email: m.email, mensagem: `Professor criado.${linhasMsg}` };
 };
 

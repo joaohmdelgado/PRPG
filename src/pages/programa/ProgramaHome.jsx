@@ -122,7 +122,7 @@ export default function ProgramaHome() {
                   <span className="shrink-0 h-10 w-10 rounded-lg bg-[var(--prog-primary)]/5 text-[var(--prog-primary)] flex items-center justify-center">
                     <i className={`fa-solid ${LINHA_ICONS[i % LINHA_ICONS.length]}`}></i>
                   </span>
-                  <span className="text-sm font-medium text-gray-700 leading-snug">{typeof linha === 'object' ? linha.label : linha}</span>
+                  <span className="text-sm font-medium text-gray-700 leading-snug">{linha.nome || linha.label || linha}</span>
                 </div>
               ))}
             </div>

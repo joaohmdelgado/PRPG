@@ -172,7 +172,7 @@ const userFromRow = (r) => ({
   },
   dados_academicos: {
     lattes: r.acad_lattes, orcid: r.acad_orcid, google_scholar: r.acad_google_scholar,
-    publons: r.acad_publons, linhas_pesquisa: r.acad_linhas_pesquisa ?? [],
+    publons: r.acad_publons,
   },
   perfil_aluno: r.perfil_aluno ?? null,
   perfil_professor: r.perfil_professor ?? null,
@@ -189,7 +189,6 @@ const userToRow = (o) => ({
   acad_lattes: o.dados_academicos?.lattes ?? null, acad_orcid: o.dados_academicos?.orcid ?? null,
   acad_google_scholar: o.dados_academicos?.google_scholar ?? null,
   acad_publons: o.dados_academicos?.publons ?? null,
-  acad_linhas_pesquisa: toArr(o.dados_academicos?.linhas_pesquisa),
   perfil_aluno: o.perfil_aluno != null ? JSON.stringify(o.perfil_aluno) : null,
   perfil_professor: o.perfil_professor != null ? JSON.stringify(o.perfil_professor) : null,
   programa_id: o.programaId || null,
@@ -472,48 +471,108 @@ export const inscricoesProficienciaRepo = {
 
 // =========================== Taxonomias ===========================
 // Modelada como chave -> lista de valores; o app a consome como um objeto.
-// Exceção: linhas_pesquisa retorna [{label, target_id}] e aceita o mesmo formato
-// (target_ids ficam na coluna meta JSONB, labels ficam em valores TEXT[]).
 export const taxonomiasRepo = {
   async getAll() {
-    const { rows } = await query('SELECT chave, valores, meta FROM taxonomias');
+    const { rows } = await query('SELECT chave, valores FROM taxonomias');
     const obj = {};
     for (const r of rows) {
-      if (r.chave === 'linhas_pesquisa') {
-        const targetIds = r.meta?.target_ids || {};
-        obj[r.chave] = (r.valores ?? []).map((label) => ({
-          label,
-          target_id: targetIds[label] || null,
-        }));
-      } else {
-        obj[r.chave] = r.valores ?? [];
-      }
+      obj[r.chave] = r.valores ?? [];
     }
     return obj;
   },
   async replaceAll(taxonomias) {
     for (const [chave, valores] of Object.entries(taxonomias || {})) {
-      if (chave === 'linhas_pesquisa' && Array.isArray(valores) && valores.length > 0 && typeof valores[0] === 'object') {
-        // Array de {label, target_id}
-        const labels = valores.map((v) => String(v.label ?? '').trim()).filter(Boolean);
-        const targetIds = {};
-        for (const v of valores) {
-          const label = String(v.label ?? '').trim();
-          if (label && v.target_id) targetIds[label] = String(v.target_id).trim();
-        }
-        await query(
-          `INSERT INTO taxonomias (chave, valores, meta) VALUES ($1, $2, $3)
-           ON CONFLICT (chave) DO UPDATE SET valores = EXCLUDED.valores, meta = EXCLUDED.meta`,
-          [chave, labels, JSON.stringify({ target_ids: targetIds })]
-        );
-      } else {
-        await query(
-          `INSERT INTO taxonomias (chave, valores) VALUES ($1, $2)
-           ON CONFLICT (chave) DO UPDATE SET valores = EXCLUDED.valores`,
-          [chave, toArr(valores)]
-        );
-      }
+      await query(
+        `INSERT INTO taxonomias (chave, valores) VALUES ($1, $2)
+         ON CONFLICT (chave) DO UPDATE SET valores = EXCLUDED.valores`,
+        [chave, toArr(valores)]
+      );
     }
     return taxonomiasRepo.getAll();
+  },
+};
+
+// =================== Linhas de Pesquisa ===========================
+export const linhasPesquisaRepo = {
+  async getAll(programaId = null) {
+    const sql = programaId
+      ? 'SELECT * FROM linhas_pesquisa WHERE programa_id = $1 ORDER BY nome'
+      : 'SELECT * FROM linhas_pesquisa ORDER BY nome';
+    const { rows } = await query(sql, programaId ? [programaId] : []);
+    return rows;
+  },
+  async getById(id) {
+    const { rows } = await query('SELECT * FROM linhas_pesquisa WHERE id = $1', [id]);
+    return rows[0] || null;
+  },
+  async create(data) {
+    const { rows } = await query(
+      'INSERT INTO linhas_pesquisa (nome, programa_id, target_id) VALUES ($1, $2, $3) RETURNING *',
+      [data.nome.trim(), data.programa_id || null, data.target_id?.trim() || null]
+    );
+    return rows[0];
+  },
+  async update(id, data) {
+    const { rows } = await query(
+      'UPDATE linhas_pesquisa SET nome=$1, programa_id=$2, target_id=$3 WHERE id=$4 RETURNING *',
+      [data.nome.trim(), data.programa_id || null, data.target_id?.trim() || null, id]
+    );
+    return rows[0] || null;
+  },
+  async remove(id) {
+    const { rowCount } = await query('DELETE FROM linhas_pesquisa WHERE id=$1', [id]);
+    return rowCount > 0;
+  },
+  async getByPrograma(programaId) {
+    const { rows } = await query(
+      `SELECT lp.* FROM programa_linhas_pesquisa plp
+       JOIN linhas_pesquisa lp ON lp.id = plp.linha_id
+       WHERE plp.programa_id = $1 ORDER BY lp.nome`,
+      [programaId]
+    );
+    return rows;
+  },
+  async setForPrograma(programaId, linhaIds) {
+    await query('DELETE FROM programa_linhas_pesquisa WHERE programa_id = $1', [programaId]);
+    for (const id of linhaIds) {
+      await query(
+        'INSERT INTO programa_linhas_pesquisa (programa_id, linha_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [programaId, id]
+      );
+    }
+    return this.getByPrograma(programaId);
+  },
+  async getByUser(userId) {
+    const { rows } = await query(
+      `SELECT lp.* FROM user_linhas_pesquisa ulp
+       JOIN linhas_pesquisa lp ON lp.id = ulp.linha_id
+       WHERE ulp.user_id = $1 ORDER BY lp.nome`,
+      [userId]
+    );
+    return rows;
+  },
+  async setForUser(userId, linhaIds) {
+    await query('DELETE FROM user_linhas_pesquisa WHERE user_id = $1', [userId]);
+    for (const id of linhaIds) {
+      await query(
+        'INSERT INTO user_linhas_pesquisa (user_id, linha_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [userId, id]
+      );
+    }
+    return this.getByUser(userId);
+  },
+  async getAllByPrograma() {
+    const { rows } = await query(
+      `SELECT plp.programa_id, lp.id, lp.nome
+       FROM programa_linhas_pesquisa plp
+       JOIN linhas_pesquisa lp ON lp.id = plp.linha_id
+       ORDER BY lp.nome`
+    );
+    const map = {};
+    for (const r of rows) {
+      if (!map[r.programa_id]) map[r.programa_id] = [];
+      map[r.programa_id].push({ id: r.id, nome: r.nome });
+    }
+    return map;
   },
 };

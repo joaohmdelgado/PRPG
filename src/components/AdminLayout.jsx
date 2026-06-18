@@ -25,6 +25,7 @@ const ADMINISTRACAO = [
   { to: '/admin/metricas', label: 'Dashboard / Métricas', icon: LayoutDashboard },
   { to: '/admin/portarias', label: 'Portarias', icon: FileCheck },
   { to: '/admin/grupos-pesquisa', label: 'Grupos de Pesquisa', icon: Users },
+  { to: '/admin/linhas-pesquisa', label: 'Linhas de Pesquisa', icon: FlaskConical },
   { to: '/admin/taxonomias', label: 'Taxonomias', icon: Tags },
   { to: '/admin/users', label: 'Usuários', icon: UserCog },
   { to: '/admin/proficiencia', label: 'Proficiência', icon: Languages },

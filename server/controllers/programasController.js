@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
-import { usersRepo, portariasRepo, programaPaginasRepo } from '../db/repositories.js';
+import { usersRepo, portariasRepo, programaPaginasRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { sanitizeHtml } from '../utils/sanitize.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
@@ -120,6 +120,7 @@ export const getProgramas = async (req, res) => {
     const programas = (await query('SELECT * FROM programas ORDER BY nome')).rows;
     const related = await loadRelated();
     const isAdmin = checkAdmin(req);
+    const linhasPorPrograma = await linhasPesquisaRepo.getAllByPrograma();
 
     const result = programas.map((prog) => {
       const progModalidades = related.modalidades.filter((m) => m.programa_id === prog.id);
@@ -134,7 +135,12 @@ export const getProgramas = async (req, res) => {
         if (v.papel === 'TAE') secretaria = filterSensitivePessoa(combined, isAdmin);
       });
 
-      return { ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria };
+      return {
+        ...prog,
+        modalidades: progModalidades,
+        coordenador_atual, substituto, secretaria,
+        linhas: linhasPorPrograma[prog.id] || [],
+      };
     });
 
     res.json(result);
@@ -175,8 +181,9 @@ export const getProgramaById = async (req, res) => {
     historico_coordenadores.sort((a, b) => histKey(b).localeCompare(histKey(a)));
 
     const paginas = await programaPaginasRepo.getByPrograma(prog.id, { includeHidden: isAdmin });
+    const linhas = await linhasPesquisaRepo.getByPrograma(prog.id);
 
-    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, historico_coordenadores, paginas });
+    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, historico_coordenadores, paginas, linhas });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar programa', error: error.message });
   }
@@ -204,6 +211,7 @@ export const getProgramaBySlug = async (req, res) => {
     });
 
     const paginas = await programaPaginasRepo.getByPrograma(prog.id, { includeHidden: isAdmin });
+    const linhas = await linhasPesquisaRepo.getByPrograma(prog.id);
 
     // Conta itens por módulo para o menu dinâmico do microsite.
     const MODULOS_TABELAS = [
@@ -252,8 +260,8 @@ export const getProgramaBySlug = async (req, res) => {
     );
     const metrica_recente = metricasRows[0] || null;
 
-    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, paginas, modulos,
-               historico_coordenadores, comissoes, metrica_recente });
+    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, paginas, linhas,
+               modulos, historico_coordenadores, comissoes, metrica_recente });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar programa', error: error.message });
   }
@@ -861,32 +869,20 @@ export const getProgramaMetricasPublic = async (req, res) => {
 
 export const getProgramaLinhas = async (req, res) => {
   try {
-    const { rows } = await query('SELECT linhas FROM programas WHERE id=$1', [req.params.id]);
-    if (!rows[0]) return res.status(404).json({ message: 'Programa não encontrado' });
-    res.json(rows[0].linhas || []);
+    const rows = await linhasPesquisaRepo.getByPrograma(req.params.id);
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar linhas', error: error.message });
   }
 };
 
-const normalizeLinha = (l) => {
-  if (typeof l === 'string') return { label: l.trim(), target_id: null };
-  const label = String(l.label ?? '').trim();
-  const target_id = l.target_id != null ? String(l.target_id).trim() || null : null;
-  return { label, target_id };
-};
-
 export const updateProgramaLinhas = async (req, res) => {
   try {
-    const { linhas } = req.body || {};
-    if (!Array.isArray(linhas)) return res.status(400).json({ message: 'linhas deve ser um array' });
-    const sanitized = linhas.map(normalizeLinha).filter((l) => l.label);
-    const { rows } = await query(
-      'UPDATE programas SET linhas=$1::jsonb, atualizado_em=now() WHERE id=$2 RETURNING linhas',
-      [JSON.stringify(sanitized), req.params.id]
-    );
-    if (!rows[0]) return res.status(404).json({ message: 'Programa não encontrado' });
-    res.json(rows[0].linhas);
+    const { linha_ids } = req.body || {};
+    if (!Array.isArray(linha_ids)) return res.status(400).json({ message: 'linha_ids deve ser um array' });
+    const ids = linha_ids.map(Number).filter((n) => !isNaN(n) && n > 0);
+    const rows = await linhasPesquisaRepo.setForPrograma(req.params.id, ids);
+    res.json(rows);
   } catch (error) {
     res.status(500).json({ message: 'Erro ao atualizar linhas', error: error.message });
   }

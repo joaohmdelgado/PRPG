@@ -59,7 +59,7 @@ export default function ProgramasStrictoSensu() {
       const matchSearch = prog.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           prog.sigla.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (prog.area_conhecimento && prog.area_conhecimento.toLowerCase().includes(searchTerm.toLowerCase())) ||
-                          (prog.linhas && prog.linhas.some(l => l.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+                          (prog.linhas && prog.linhas.some(l => (l.nome || l.label || l).toLowerCase().includes(searchTerm.toLowerCase()))) ||
                           (prog.palavras_chave && prog.palavras_chave.some(k => k.toLowerCase().includes(searchTerm.toLowerCase())));
       
       let matchRede = true;
@@ -308,7 +308,7 @@ export default function ProgramasStrictoSensu() {
                                       <span className="absolute left-0 top-1 text-ufrpe-yellow text-[8px]">
                                         <i className="fa-solid fa-circle"></i>
                                       </span>
-                                      {linha}
+                                      {linha.nome || linha.label || linha}
                                     </li>
                                   ))}
                                 </ul>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Save, FlaskConical, Loader2 } from 'lucide-react';
+import { ArrowLeft, FlaskConical, Loader2, Save } from 'lucide-react';
 import { API_URL } from '../../api';
 
 const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
@@ -8,13 +8,13 @@ const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}`, 
 export default function AdminProgramaLinhas() {
   const { id } = useParams();
   const [programa, setPrograma] = useState(null);
-  const [linhas, setLinhas] = useState([]);       // [{label, target_id}]
-  const [oficiais, setOficiais] = useState([]);   // [{label, target_id}] da taxonomia
-  const [novaLabel, setNovaLabel] = useState('');
+  const [todasLinhas, setTodasLinhas] = useState([]);
+  const [selecionados, setSelecionados] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -22,82 +22,52 @@ export default function AdminProgramaLinhas() {
       const [rp, rl, rt] = await Promise.all([
         fetch(`${API_URL}/api/programas/${id}`),
         fetch(`${API_URL}/api/programas/${id}/linhas`, { headers: auth() }),
-        fetch(`${API_URL}/api/taxonomias`),
+        fetch(`${API_URL}/api/linhas-pesquisa`),
       ]);
       if (rp.ok) setPrograma(await rp.json());
+      if (rt.ok) setTodasLinhas(await rt.json());
       if (rl.ok) {
-        const data = await rl.json();
-        setLinhas(data.map((l) => (typeof l === 'object' ? l : { label: l, target_id: null })));
-      }
-      if (rt.ok) {
-        const data = await rt.json();
-        const lp = data.linhas_pesquisa || [];
-        setOficiais(lp.map((l) => (typeof l === 'object' ? l : { label: l, target_id: null })));
+        const atual = await rl.json();
+        setSelecionados(new Set(atual.map((l) => l.id)));
       }
       setLoading(false);
     };
     load();
   }, [id]);
 
-  const salvar = async (lista) => {
-    setSaving(true);
-    setError('');
+  const toggle = (linhaId) => {
+    setSelecionados((prev) => {
+      const next = new Set(prev);
+      if (next.has(linhaId)) next.delete(linhaId);
+      else next.add(linhaId);
+      return next;
+    });
+  };
+
+  const salvar = async () => {
+    setSaving(true); setError('');
     try {
-      const res = await fetch(`${API_URL}/api/programas/${id}/linhas`, {
-        method: 'PUT',
-        headers: auth(),
-        body: JSON.stringify({ linhas: lista }),
+      const r = await fetch(`${API_URL}/api/programas/${id}/linhas`, {
+        method: 'PUT', headers: auth(),
+        body: JSON.stringify({ linha_ids: [...selecionados] }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setLinhas(data.map((l) => (typeof l === 'object' ? l : { label: l, target_id: null })));
+      if (r.ok) {
+        const data = await r.json();
+        setSelecionados(new Set(data.map((l) => l.id)));
         setSuccess('Salvo.');
         setTimeout(() => setSuccess(''), 3000);
       } else {
-        const d = await res.json();
+        const d = await r.json();
         setError(d.message || 'Erro ao salvar.');
       }
-    } catch {
-      setError('Erro de conexão.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const toggleOficial = (o) => {
-    const existe = linhas.some((l) => l.label === o.label);
-    if (existe) {
-      salvar(linhas.filter((l) => l.label !== o.label));
-    } else {
-      salvar([...linhas, { label: o.label, target_id: o.target_id || null }]);
-    }
-  };
-
-  const adicionarCustom = () => {
-    const label = novaLabel.trim();
-    if (!label) return;
-    if (linhas.some((l) => l.label === label)) { setError('Linha já cadastrada.'); return; }
-    setNovaLabel('');
-    setError('');
-    salvar([...linhas, { label, target_id: null }]);
-  };
-
-  const remover = (idx) => salvar(linhas.filter((_, i) => i !== idx));
-
-  const mover = (idx, delta) => {
-    const arr = [...linhas];
-    const swap = idx + delta;
-    if (swap < 0 || swap >= arr.length) return;
-    [arr[idx], arr[swap]] = [arr[swap], arr[idx]];
-    salvar(arr);
+    } catch { setError('Erro de conexão.'); }
+    setSaving(false);
   };
 
   const sigla = programa?.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : programa?.nome;
-
-  // Linhas oficiais ainda não adicionadas ao programa
-  const oficiaisdisponiveis = oficiais.filter((o) => !linhas.some((l) => l.label === o.label));
-  // Linhas do programa não presentes na taxonomia (custom)
-  const linhasCustom = linhas.filter((l) => !oficiais.some((o) => o.label === l.label));
+  const linhasFiltradas = search.trim()
+    ? todasLinhas.filter((l) => l.nome.toLowerCase().includes(search.toLowerCase()))
+    : todasLinhas;
 
   if (loading) {
     return (
@@ -121,114 +91,66 @@ export default function AdminProgramaLinhas() {
         </div>
       </div>
       <p className="text-sm text-gray-500 mb-6 ml-[3.25rem]">
-        Selecione as linhas oficiais da taxonomia ou adicione linhas específicas deste programa.
+        Selecione as linhas cadastradas que este programa oferece.
+        Para adicionar novas linhas, acesse{' '}
+        <Link to="/admin/linhas-pesquisa" className="text-ufrpe-blue underline">Linhas de Pesquisa</Link>.
       </p>
 
-      {error && (
-        <div className="bg-red-50 text-red-700 border border-red-100 rounded-lg px-4 py-2.5 text-sm mb-4">{error}</div>
-      )}
-      {success && (
-        <div className="bg-green-50 text-green-700 border border-green-100 rounded-lg px-4 py-2.5 text-sm mb-4 flex items-center gap-2">
-          <Save size={15} /> {success}
-        </div>
-      )}
+      {error && <div className="bg-red-50 text-red-700 border border-red-100 rounded-lg px-4 py-2.5 text-sm mb-4">{error}</div>}
+      {success && <div className="bg-green-50 text-green-700 border border-green-100 rounded-lg px-4 py-2.5 text-sm mb-4 flex items-center gap-2"><Save size={15} /> {success}</div>}
 
-      {/* Linhas oficiais da taxonomia */}
-      {oficiais.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-100 p-5 mb-5">
-          <p className="text-sm font-medium text-gray-700 mb-3">Linhas oficiais da PRPG</p>
-          <div className="flex flex-wrap gap-2">
-            {oficiais.map((o) => {
-              const selecionada = linhas.some((l) => l.label === o.label);
-              return (
-                <button
-                  key={o.label}
-                  onClick={() => toggleOficial(o)}
-                  disabled={saving}
-                  title={o.target_id ? `ID legado: ${o.target_id}` : undefined}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors disabled:opacity-50 ${
-                    selecionada
-                      ? 'bg-ufrpe-blue text-white border-ufrpe-blue'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-ufrpe-blue hover:text-ufrpe-blue'
-                  }`}
-                >
-                  {selecionada ? '✓ ' : '+ '}{o.label}
-                </button>
-              );
-            })}
+      {todasLinhas.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-100 p-8 text-center text-gray-400 text-sm">
+          Nenhuma linha de pesquisa cadastrada.{' '}
+          <Link to="/admin/linhas-pesquisa" className="text-ufrpe-blue underline">Cadastrar agora</Link>.
+        </div>
+      ) : (
+        <>
+          <div className="bg-white rounded-xl border border-gray-100 p-5 mb-4 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-medium text-gray-700">
+                {selecionados.size} de {todasLinhas.length} selecionada(s)
+              </p>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Filtrar linhas..."
+                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-ufrpe-blue/30 outline-none w-52"
+              />
+            </div>
+
+            <div className="space-y-1 max-h-80 overflow-y-auto pr-1">
+              {linhasFiltradas.map((l) => {
+                const sel = selecionados.has(l.id);
+                return (
+                  <label key={l.id}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${sel ? 'bg-ufrpe-blue/5 border border-ufrpe-blue/20' : 'hover:bg-gray-50 border border-transparent'}`}>
+                    <input
+                      type="checkbox"
+                      checked={sel}
+                      onChange={() => toggle(l.id)}
+                      className="w-4 h-4 rounded text-ufrpe-blue accent-ufrpe-blue"
+                    />
+                    <span className="flex-1 text-sm text-gray-700">{l.nome}</span>
+                    {l.target_id && (
+                      <span className="text-xs font-mono text-gray-400" title="ID legado">{l.target_id}</span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
           </div>
-          <p className="text-xs text-gray-400 mt-3">
-            Clique para selecionar/remover. As linhas marcadas aparecem no microsite do programa.
-          </p>
-        </div>
-      )}
 
-      {/* Adicionar linha personalizada */}
-      <div className="bg-white rounded-xl border border-gray-100 p-5 mb-5">
-        <p className="text-sm font-medium text-gray-700 mb-3">Linha específica deste programa</p>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={novaLabel}
-            onChange={(e) => setNovaLabel(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && adicionarCustom()}
-            placeholder="Ex: Biotecnologia Aplicada à Saúde Animal"
-            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
-          />
           <button
-            onClick={adicionarCustom}
-            disabled={saving || !novaLabel.trim()}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-ufrpe-blue text-white hover:bg-ufrpe-blue/90 disabled:opacity-50 shrink-0"
+            onClick={salvar}
+            disabled={saving}
+            className="flex items-center gap-2 px-6 py-2.5 bg-ufrpe-blue text-white rounded-lg text-sm font-medium hover:bg-ufrpe-blue/90 disabled:opacity-50"
           >
-            {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Adicionar
+            {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
+            Salvar seleção
           </button>
-        </div>
-        <p className="text-xs text-gray-400 mt-2">
-          Use para linhas que não constam na lista oficial. Para mapear o ID legado (Drupal), cadastre a linha nas <a href="/admin/taxonomias" className="underline hover:text-ufrpe-blue">Taxonomias</a>.
-        </p>
-      </div>
-
-      {/* Lista das linhas do programa */}
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-        {linhas.length === 0 ? (
-          <div className="text-center py-14 text-gray-400 text-sm">Nenhuma linha de pesquisa cadastrada.</div>
-        ) : (
-          <ul className="divide-y divide-gray-50">
-            {linhas.map((l, idx) => {
-              const isOficial = oficiais.some((o) => o.label === l.label);
-              return (
-                <li key={idx} className="flex items-center gap-3 px-5 py-3 group hover:bg-gray-50/60 transition-colors">
-                  <span className="text-xs text-gray-300 w-5 text-center shrink-0">{idx + 1}</span>
-                  <span className="flex-1 text-sm text-gray-700">{l.label}</span>
-                  {l.target_id && (
-                    <span className="text-xs font-mono text-gray-400 bg-gray-50 border border-gray-100 rounded px-1.5 py-0.5 shrink-0" title="ID legado (Drupal)">
-                      {l.target_id}
-                    </span>
-                  )}
-                  {!isOficial && (
-                    <span className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded px-1.5 py-0.5 shrink-0">personalizada</span>
-                  )}
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
-                    <button onClick={() => mover(idx, -1)} disabled={idx === 0 || saving}
-                      className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 disabled:opacity-20" title="Mover para cima">▲</button>
-                    <button onClick={() => mover(idx, 1)} disabled={idx === linhas.length - 1 || saving}
-                      className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-600 disabled:opacity-20" title="Mover para baixo">▼</button>
-                    <button onClick={() => remover(idx)} disabled={saving}
-                      className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 disabled:opacity-20" title="Remover">
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
-
-      {linhas.length > 0 && (
-        <p className="text-xs text-gray-400 mt-2 text-right">
-          {linhas.length} linha{linhas.length !== 1 ? 's' : ''} · {linhas.length - linhasCustom.length} oficial{linhas.length - linhasCustom.length !== 1 ? 'is' : ''}{linhasCustom.length > 0 ? ` · ${linhasCustom.length} personalizada${linhasCustom.length !== 1 ? 's' : ''}` : ''}
-        </p>
+        </>
       )}
     </div>
   );

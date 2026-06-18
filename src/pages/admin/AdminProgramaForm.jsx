@@ -259,7 +259,7 @@ const AdminProgramaForm = () => {
               substituto: data.substituto || { ...emptyPessoa },
               secretaria: data.secretaria || { ...emptyPessoa },
               modalidades: data.modalidades || [],
-              linhas: data.linhas ? data.linhas.join('\n') : ''
+              linhas: ''
             });
           } else {
             setError('Programa não encontrado');
@@ -358,7 +358,6 @@ const AdminProgramaForm = () => {
 
       const payload = {
         ...formData,
-        linhas: formData.linhas ? formData.linhas.split('\n').map(l => l.trim()).filter(l => l) : [],
         palavras_chave: formData.palavras_chave ? formData.palavras_chave.split(/[\n,]/).map(p => p.trim()).filter(p => p) : [],
       };
 
@@ -610,10 +609,6 @@ const AdminProgramaForm = () => {
         <div>
           <label className="block text-sm font-medium mb-1">Área de Avaliação CAPES</label>
           <input type="text" name="area_avaliacao" value={formData.area_avaliacao} onChange={handleChange} className="w-full border p-2 rounded" />
-        </div>
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1">Linhas de Pesquisa (Uma por linha)</label>
-          <textarea name="linhas" value={formData.linhas} onChange={handleChange} className="w-full border p-2 rounded" rows="4" placeholder="Sua primeira linha de pesquisa..." />
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">Palavras-chave (separadas por vírgula)</label>

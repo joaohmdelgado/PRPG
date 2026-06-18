@@ -44,6 +44,7 @@ import AdminProgramaForm from './pages/admin/AdminProgramaForm';
 import AdminProgramaComissoes from './pages/admin/AdminProgramaComissoes';
 import AdminProgramaMetricas from './pages/admin/AdminProgramaMetricas';
 import AdminProgramaLinhas from './pages/admin/AdminProgramaLinhas';
+import AdminLinhasPesquisa from './pages/admin/AdminLinhasPesquisa';
 import AdminProgramaDiscentes from './pages/admin/AdminProgramaDiscentes';
 import AdminProgramaDocentes from './pages/admin/AdminProgramaDocentes';
 import AdminCalendarios from './pages/admin/AdminCalendarios';
@@ -149,6 +150,9 @@ function App() {
             <Route index element={<AdminUsersList />} />
             <Route path="novo" element={<AdminUserForm />} />
             <Route path="editar/:id" element={<AdminUserForm />} />
+          </Route>
+          <Route path="linhas-pesquisa" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
+            <Route index element={<AdminLinhasPesquisa />} />
           </Route>
           <Route path="metricas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
             <Route index element={<AdminMetricas />} />

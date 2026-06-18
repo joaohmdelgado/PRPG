@@ -432,3 +432,66 @@ END$$;
 
 -- ======= Taxonomias: adiciona coluna meta JSONB (idempotente) =======
 ALTER TABLE taxonomias ADD COLUMN IF NOT EXISTS meta JSONB DEFAULT '{}';
+
+-- =================== Linhas de Pesquisa (tabela própria) ==========
+-- Substitui programas.linhas JSONB e a entrada linhas_pesquisa em taxonomias.
+-- programa_id = programa ao qual a linha está primariamente associada (opcional).
+CREATE TABLE IF NOT EXISTS linhas_pesquisa (
+  id          SERIAL PRIMARY KEY,
+  nome        TEXT NOT NULL,
+  programa_id TEXT REFERENCES programas(id) ON DELETE SET NULL,
+  target_id   TEXT  -- ID legado do Drupal; remover após concluir importações
+);
+CREATE INDEX IF NOT EXISTS linhas_pesquisa_prog_idx ON linhas_pesquisa(programa_id);
+
+-- Programas selecionam suas linhas de pesquisa (N:M).
+CREATE TABLE IF NOT EXISTS programa_linhas_pesquisa (
+  programa_id TEXT    REFERENCES programas(id)       ON DELETE CASCADE,
+  linha_id    INTEGER REFERENCES linhas_pesquisa(id) ON DELETE CASCADE,
+  PRIMARY KEY (programa_id, linha_id)
+);
+
+-- Usuários (professores e alunos) referenciam suas linhas de pesquisa (N:M).
+CREATE TABLE IF NOT EXISTS user_linhas_pesquisa (
+  user_id  TEXT    REFERENCES users(id)              ON DELETE CASCADE,
+  linha_id INTEGER REFERENCES linhas_pesquisa(id)    ON DELETE CASCADE,
+  PRIMARY KEY (user_id, linha_id)
+);
+
+-- Migração: programas.linhas JSONB → tabela linhas_pesquisa + programa_linhas_pesquisa
+-- Idempotente: só executa se a coluna ainda existir em programas.
+DO $$
+DECLARE
+  r        RECORD;
+  elem     JSONB;
+  lnome    TEXT;
+  ltid     TEXT;
+  new_id   INTEGER;
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'programas' AND column_name = 'linhas'
+  ) THEN
+    FOR r IN SELECT id, linhas FROM programas WHERE linhas IS NOT NULL LOOP
+      FOR elem IN SELECT * FROM jsonb_array_elements(COALESCE(r.linhas, '[]'::jsonb)) LOOP
+        lnome := trim(elem->>'label');
+        ltid  := NULLIF(trim(COALESCE(elem->>'target_id', '')), '');
+        IF lnome IS NOT NULL AND lnome <> '' THEN
+          INSERT INTO linhas_pesquisa (nome, programa_id, target_id)
+          VALUES (lnome, r.id, ltid)
+          RETURNING id INTO new_id;
+          INSERT INTO programa_linhas_pesquisa (programa_id, linha_id)
+          VALUES (r.id, new_id);
+        END IF;
+      END LOOP;
+    END LOOP;
+    ALTER TABLE programas DROP COLUMN linhas;
+    RAISE NOTICE 'Coluna programas.linhas migrada para tabela linhas_pesquisa.';
+  END IF;
+END$$;
+
+-- Remove entrada linhas_pesquisa de taxonomias (agora tem tabela própria).
+DELETE FROM taxonomias WHERE chave = 'linhas_pesquisa';
+
+-- Remove acad_linhas_pesquisa de users (substituída por user_linhas_pesquisa).
+ALTER TABLE users DROP COLUMN IF EXISTS acad_linhas_pesquisa;
