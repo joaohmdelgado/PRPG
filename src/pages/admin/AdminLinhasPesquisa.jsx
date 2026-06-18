@@ -117,7 +117,7 @@ export default function AdminLinhasPesquisa() {
   });
 
   return (
-    <div className="max-w-4xl">
+    <div className="w-full">
       <div className="flex items-center gap-3 mb-6">
         <FlaskConical className="text-ufrpe-blue" size={24} />
         <div>
@@ -134,8 +134,8 @@ export default function AdminLinhasPesquisa() {
         <p className="text-sm font-medium text-gray-700 mb-3">
           {isGestor ? `Nova linha de pesquisa para ${programa?.sigla || programa?.nome}` : 'Nova linha de pesquisa'}
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="md:col-span-1">
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
             <input
               type="text"
               value={form.nome}
@@ -146,7 +146,7 @@ export default function AdminLinhasPesquisa() {
             />
           </div>
           {!isGestor && (
-            <div>
+            <div className="min-w-48">
               <select
                 value={form.programa_id}
                 onChange={(e) => setForm((v) => ({ ...v, programa_id: e.target.value }))}
@@ -159,7 +159,7 @@ export default function AdminLinhasPesquisa() {
               </select>
             </div>
           )}
-          <div className={`flex gap-2 ${!isGestor ? '' : 'md:col-span-2'}`}>
+          <div className="flex gap-2">
             <input
               type="text"
               value={form.target_id}
@@ -172,7 +172,7 @@ export default function AdminLinhasPesquisa() {
             <button
               onClick={criar}
               disabled={saving || !form.nome.trim()}
-              className="flex items-center gap-1.5 px-4 py-2 bg-ufrpe-blue text-white rounded-lg text-sm font-medium hover:bg-ufrpe-blue/90 disabled:opacity-50 shrink-0"
+              className="flex items-center gap-1.5 px-4 py-2 bg-ufrpe-blue text-white rounded-lg text-sm font-medium hover:bg-ufrpe-blue/90 disabled:opacity-50 shrink-0 whitespace-nowrap"
             >
               {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Adicionar
             </button>
@@ -224,20 +224,20 @@ export default function AdminLinhasPesquisa() {
               .map((l) => (
                 <li key={l.id} className="px-5 py-3 group hover:bg-gray-50/60 transition-colors">
                   {editId === l.id ? (
-                    <div className={`grid gap-2 items-center ${isGestor ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+                    <div className="flex gap-2 items-center">
                       <input
                         type="text"
                         value={editForm.nome}
                         onChange={(e) => setEditForm((v) => ({ ...v, nome: e.target.value }))}
                         onKeyDown={(e) => e.key === 'Enter' && salvarEdicao(l.id)}
                         autoFocus
-                        className="border border-ufrpe-blue/30 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
+                        className="flex-1 border border-ufrpe-blue/30 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
                       />
                       {!isGestor && (
                         <select
                           value={editForm.programa_id}
                           onChange={(e) => setEditForm((v) => ({ ...v, programa_id: e.target.value }))}
-                          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
+                          className="min-w-48 border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
                         >
                           <option value="">Sem programa</option>
                           {programas.map((p) => (
@@ -245,14 +245,7 @@ export default function AdminLinhasPesquisa() {
                           ))}
                         </select>
                       )}
-                      <div className={`flex gap-2 items-center ${isGestor ? '' : ''}`}>
-                        <input
-                          type="text"
-                          value={editForm.target_id}
-                          onChange={(e) => setEditForm((v) => ({ ...v, target_id: e.target.value }))}
-                          placeholder="ID legado"
-                          className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-mono focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
-                        />
+                      <div className="flex gap-2 items-center shrink-0">
                         <button onClick={() => salvarEdicao(l.id)} disabled={saving}
                           className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-50">
                           <Check size={15} />
