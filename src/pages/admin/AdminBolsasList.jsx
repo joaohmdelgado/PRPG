@@ -1,4 +1,5 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, Award, Calendar } from 'lucide-react';
@@ -12,6 +13,7 @@ const AdminBolsasList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const users = useUsers();
+  const { confirm, ConfirmModal } = useConfirm();
 
   const fetchBolsas = async () => {
     try {
@@ -32,7 +34,7 @@ const AdminBolsasList = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir este registro de bolsa?')) {
+    if (await confirm('Tem certeza que deseja excluir este registro de bolsa?')) {
       try {
         const response = await fetch(`${API_URL}/api/bolsas/${id}`, {
           method: 'DELETE',
@@ -183,6 +185,7 @@ const AdminBolsasList = () => {
           </tbody>
         </table>
       </div>
+      {ConfirmModal}
     </div>
   );
 };

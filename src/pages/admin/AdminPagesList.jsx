@@ -1,4 +1,5 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, File, ExternalLink } from 'lucide-react';
@@ -13,6 +14,7 @@ const AdminPagesList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const users = useUsers();
+  const { confirm, ConfirmModal } = useConfirm();
 
   const fetchPages = async () => {
     try {
@@ -33,7 +35,7 @@ const AdminPagesList = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta página?')) {
+    if (await confirm('Tem certeza que deseja excluir esta página?')) {
       try {
         const response = await fetch(`${API_URL}/api/pages/${id}`, {
           method: 'DELETE',
@@ -155,6 +157,7 @@ const AdminPagesList = () => {
           </tbody>
         </table>
       </div>
+      {ConfirmModal}
     </div>
   );
 };

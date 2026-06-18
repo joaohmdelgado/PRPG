@@ -1,4 +1,5 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Save, Trash2, Edit2, X, GraduationCap, Users, Award, BarChart3 } from 'lucide-react';
 import { API_URL } from '../../api';
@@ -34,6 +35,7 @@ export default function AdminMetricas() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
 
+  const { confirm, ConfirmModal } = useConfirm();
   const token = localStorage.getItem('token');
   const authHeaders = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
@@ -110,7 +112,7 @@ export default function AdminMetricas() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Excluir este registro de métricas?')) return;
+    if (!await confirm('Excluir este registro de métricas?')) return;
     const res = await fetch(`${API_URL}/api/metricas/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) fetchAll();
   };
@@ -269,6 +271,7 @@ export default function AdminMetricas() {
           </table>
         </div>
       </div>
+      {ConfirmModal}
     </div>
   );
 }

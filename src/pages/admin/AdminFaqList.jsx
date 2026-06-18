@@ -1,4 +1,5 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, HelpCircle } from 'lucide-react';
@@ -13,6 +14,7 @@ const AdminFaqList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const users = useUsers();
+  const { confirm, ConfirmModal } = useConfirm();
 
   const fetchFaqs = async () => {
     try {
@@ -33,7 +35,7 @@ const AdminFaqList = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta pergunta frequente?')) {
+    if (await confirm('Tem certeza que deseja excluir esta pergunta frequente?')) {
       try {
         const response = await fetch(`${API_URL}/api/faq/${id}`, {
           method: 'DELETE',
@@ -142,6 +144,7 @@ const AdminFaqList = () => {
           </tbody>
         </table>
       </div>
+      {ConfirmModal}
     </div>
   );
 };

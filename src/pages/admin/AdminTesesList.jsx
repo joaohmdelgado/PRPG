@@ -1,4 +1,5 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, BookOpen, GraduationCap, FileText } from 'lucide-react';
@@ -13,6 +14,7 @@ const AdminTesesList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const users = useUsers();
+  const { confirm, ConfirmModal } = useConfirm();
 
   const fetchTeses = async () => {
     try {
@@ -33,7 +35,7 @@ const AdminTesesList = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta tese/dissertação?')) {
+    if (await confirm('Tem certeza que deseja excluir esta tese/dissertação?')) {
       try {
         const response = await fetch(`${API_URL}/api/teses-dissertacoes/${id}`, {
           method: 'DELETE',
@@ -188,6 +190,7 @@ const AdminTesesList = () => {
           </tbody>
         </table>
       </div>
+      {ConfirmModal}
     </div>
   );
 };

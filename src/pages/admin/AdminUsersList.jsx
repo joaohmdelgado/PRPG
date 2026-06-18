@@ -1,4 +1,6 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { useConfirm } from '../../components/admin/ConfirmModal';
+import { useToast } from '../../components/admin/Toast';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2 } from 'lucide-react';
@@ -6,6 +8,8 @@ import { API_URL } from '../../api';
 import { LastEdited } from '../../components/AuditInfo';
 
 const AdminUsersList = () => {
+  const { confirm, ConfirmModal } = useConfirm();
+  const { toast, Toasts } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,7 +39,7 @@ const AdminUsersList = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Tem certeza que deseja remover este usuário?')) return;
+    if (!await confirm('Tem certeza que deseja remover este usuário?')) return;
     
     try {
       const response = await fetch(`${API_URL}/api/users/${id}`, {
@@ -47,10 +51,10 @@ const AdminUsersList = () => {
       if (response.ok) {
         fetchUsers();
       } else {
-        alert('Erro ao remover usuário');
+        toast.error('Erro ao remover usuário');
       }
     } catch (err) {
-      alert('Erro de conexão');
+      toast.error('Erro de conexão');
     }
   };
 
@@ -154,6 +158,8 @@ const AdminUsersList = () => {
           </tbody>
         </table>
       </div>
+      {ConfirmModal}
+      {Toasts}
     </div>
   );
 };

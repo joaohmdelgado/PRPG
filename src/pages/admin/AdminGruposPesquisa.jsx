@@ -1,4 +1,6 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { useConfirm } from '../../components/admin/ConfirmModal';
+import { useToast } from '../../components/admin/Toast';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Users } from 'lucide-react';
@@ -13,6 +15,8 @@ const AdminGruposPesquisa = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const users = useUsers();
+  const { confirm, ConfirmModal } = useConfirm();
+  const { toast, Toasts } = useToast();
 
   const fetchGrupos = async () => {
     try {
@@ -41,7 +45,7 @@ const AdminGruposPesquisa = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Tem certeza que deseja remover este grupo de pesquisa?')) return;
+    if (!await confirm('Tem certeza que deseja remover este grupo de pesquisa?')) return;
     
     try {
       const response = await fetch(`${API_URL}/api/grupos-pesquisa/${id}`, {
@@ -53,10 +57,10 @@ const AdminGruposPesquisa = () => {
       if (response.ok) {
         fetchGrupos();
       } else {
-        alert('Erro ao remover grupo de pesquisa');
+        toast.error('Erro ao remover grupo de pesquisa');
       }
     } catch (err) {
-      alert('Erro de conexão com o servidor');
+      toast.error('Erro de conexão com o servidor');
     }
   };
 
@@ -133,6 +137,8 @@ const AdminGruposPesquisa = () => {
           </tbody>
         </table>
       </div>
+      {ConfirmModal}
+      {Toasts}
     </div>
   );
 };

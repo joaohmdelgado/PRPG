@@ -1,4 +1,5 @@
 import { FormSkeleton } from '../../components/admin/AdminUI';
+import { useToast } from '../../components/admin/Toast';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Upload, FileText, Trash2, Search, X, Book } from 'lucide-react';
@@ -23,6 +24,7 @@ const AdminDisciplinaForm = () => {
 
   const [professores, setProfessores] = useState([]);
   const [programas, setProgramas] = useState([]);
+  const { toast, Toasts } = useToast();
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
   const [audit, setAudit] = useState(null);
@@ -130,11 +132,11 @@ const AdminDisciplinaForm = () => {
         }));
       } else {
         const errData = await response.json();
-        alert(errData.message || 'Erro ao enviar a ementa PDF');
+        toast.error(errData.message || 'Erro ao enviar a ementa PDF');
       }
     } catch (error) {
       console.error('Erro de upload:', error);
-      alert('Erro de conexão ao enviar a ementa');
+      toast.error('Erro de conexão ao enviar a ementa');
     } finally {
       setUploading(false);
     }
@@ -453,6 +455,7 @@ const AdminDisciplinaForm = () => {
           </button>
         </div>
       </form>
+      {Toasts}
     </div>
   );
 };

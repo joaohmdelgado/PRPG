@@ -1,4 +1,6 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { useConfirm } from '../../components/admin/ConfirmModal';
+import { useToast } from '../../components/admin/Toast';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, FileCheck, Eye } from 'lucide-react';
@@ -12,6 +14,8 @@ const AdminPortarias = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const users = useUsers();
+  const { confirm, ConfirmModal } = useConfirm();
+  const { toast, Toasts } = useToast();
 
   const fetchPortarias = async () => {
     try {
@@ -42,7 +46,7 @@ const AdminPortarias = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Tem certeza que deseja remover esta portaria?')) return;
+    if (!await confirm('Tem certeza que deseja remover esta portaria?')) return;
     
     try {
       const response = await fetch(`${API_URL}/api/portarias/${id}`, {
@@ -54,10 +58,10 @@ const AdminPortarias = () => {
       if (response.ok) {
         fetchPortarias();
       } else {
-        alert('Erro ao remover portaria');
+        toast.error('Erro ao remover portaria');
       }
     } catch (err) {
-      alert('Erro de conexão com o servidor');
+      toast.error('Erro de conexão com o servidor');
     }
   };
 
@@ -168,6 +172,8 @@ const AdminPortarias = () => {
           </tbody>
         </table>
       </div>
+      {ConfirmModal}
+      {Toasts}
     </div>
   );
 };

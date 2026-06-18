@@ -1,4 +1,5 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
@@ -12,6 +13,7 @@ const AdminResolucoes = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const users = useUsers();
+  const { confirm, ConfirmModal } = useConfirm();
 
   const fetchResolucoes = async () => {
     try {
@@ -30,7 +32,7 @@ const AdminResolucoes = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta resolução?')) {
+    if (await confirm('Tem certeza que deseja excluir esta resolução?')) {
       try {
         const response = await fetch(`${API_URL}/api/resolucoes/${id}`, {
           method: 'DELETE',
@@ -110,6 +112,7 @@ const AdminResolucoes = () => {
           </tbody>
         </table>
       </div>
+      {ConfirmModal}
     </div>
   );
 };

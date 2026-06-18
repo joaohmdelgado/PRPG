@@ -1,4 +1,5 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, Book, FileText } from 'lucide-react';
@@ -13,6 +14,7 @@ const AdminDisciplinasList = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const users = useUsers();
+  const { confirm, ConfirmModal } = useConfirm();
 
   const fetchDisciplinas = async () => {
     try {
@@ -33,7 +35,7 @@ const AdminDisciplinasList = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir esta disciplina?')) {
+    if (await confirm('Tem certeza que deseja excluir esta disciplina?')) {
       try {
         const response = await fetch(`${API_URL}/api/disciplinas/${id}`, {
           method: 'DELETE',
@@ -182,6 +184,7 @@ const AdminDisciplinasList = () => {
           </tbody>
         </table>
       </div>
+      {ConfirmModal}
     </div>
   );
 };

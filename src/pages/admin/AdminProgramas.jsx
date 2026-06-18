@@ -1,4 +1,5 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Globe, BarChart2 } from 'lucide-react';
@@ -11,6 +12,7 @@ const AdminProgramas = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const users = useUsers();
+  const { confirm, ConfirmModal } = useConfirm();
 
   const fetchProgramas = async () => {
     try {
@@ -29,7 +31,7 @@ const AdminProgramas = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    if (window.confirm('Tem certeza que deseja excluir este programa?')) {
+    if (await confirm('Tem certeza que deseja excluir este programa?')) {
       try {
         const response = await fetch(`${API_URL}/api/programas/${id}`, {
           method: 'DELETE',
@@ -136,6 +138,7 @@ const AdminProgramas = () => {
           </tbody>
         </table>
       </div>
+      {ConfirmModal}
     </div>
   );
 };
