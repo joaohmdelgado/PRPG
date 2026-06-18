@@ -81,11 +81,13 @@ const garantirVinculo = async (programaId, pessoaId, papel) => {
 };
 
 // Resolve target_ids legados para IDs da tabela linhas_pesquisa.
+// Busca apenas linhas que pertencem explicitamente ao programa — não usa linhas genéricas,
+// pois professores devem estar vinculados às linhas do seu próprio programa.
 const resolverLinhasIds = async (programaId, target_ids) => {
   if (!target_ids || target_ids.length === 0) return [];
   const { rows } = await query(
     `SELECT id FROM linhas_pesquisa
-     WHERE target_id = ANY($1::text[]) AND (programa_id = $2 OR programa_id IS NULL)`,
+     WHERE target_id = ANY($1::text[]) AND programa_id = $2`,
     [target_ids.map(String), programaId]
   );
   return rows.map((r) => r.id);
