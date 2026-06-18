@@ -472,20 +472,47 @@ export const inscricoesProficienciaRepo = {
 
 // =========================== Taxonomias ===========================
 // Modelada como chave -> lista de valores; o app a consome como um objeto.
+// Exceção: linhas_pesquisa retorna [{label, target_id}] e aceita o mesmo formato
+// (target_ids ficam na coluna meta JSONB, labels ficam em valores TEXT[]).
 export const taxonomiasRepo = {
   async getAll() {
-    const { rows } = await query('SELECT chave, valores FROM taxonomias');
+    const { rows } = await query('SELECT chave, valores, meta FROM taxonomias');
     const obj = {};
-    for (const r of rows) obj[r.chave] = r.valores ?? [];
+    for (const r of rows) {
+      if (r.chave === 'linhas_pesquisa') {
+        const targetIds = r.meta?.target_ids || {};
+        obj[r.chave] = (r.valores ?? []).map((label) => ({
+          label,
+          target_id: targetIds[label] || null,
+        }));
+      } else {
+        obj[r.chave] = r.valores ?? [];
+      }
+    }
     return obj;
   },
   async replaceAll(taxonomias) {
     for (const [chave, valores] of Object.entries(taxonomias || {})) {
-      await query(
-        `INSERT INTO taxonomias (chave, valores) VALUES ($1, $2)
-         ON CONFLICT (chave) DO UPDATE SET valores = EXCLUDED.valores`,
-        [chave, toArr(valores)]
-      );
+      if (chave === 'linhas_pesquisa' && Array.isArray(valores) && valores.length > 0 && typeof valores[0] === 'object') {
+        // Array de {label, target_id}
+        const labels = valores.map((v) => String(v.label ?? '').trim()).filter(Boolean);
+        const targetIds = {};
+        for (const v of valores) {
+          const label = String(v.label ?? '').trim();
+          if (label && v.target_id) targetIds[label] = String(v.target_id).trim();
+        }
+        await query(
+          `INSERT INTO taxonomias (chave, valores, meta) VALUES ($1, $2, $3)
+           ON CONFLICT (chave) DO UPDATE SET valores = EXCLUDED.valores, meta = EXCLUDED.meta`,
+          [chave, labels, JSON.stringify({ target_ids: targetIds })]
+        );
+      } else {
+        await query(
+          `INSERT INTO taxonomias (chave, valores) VALUES ($1, $2)
+           ON CONFLICT (chave) DO UPDATE SET valores = EXCLUDED.valores`,
+          [chave, toArr(valores)]
+        );
+      }
     }
     return taxonomiasRepo.getAll();
   },

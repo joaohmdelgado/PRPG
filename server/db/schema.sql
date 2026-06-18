@@ -304,7 +304,8 @@ CREATE TABLE IF NOT EXISTS pages (
 -- Configuracao chave -> lista de valores (entradas, linhas_pesquisa, etc.).
 CREATE TABLE IF NOT EXISTS taxonomias (
   chave   TEXT PRIMARY KEY,
-  valores TEXT[] DEFAULT '{}'
+  valores TEXT[] DEFAULT '{}',
+  meta    JSONB  DEFAULT '{}'
 );
 
 -- ===================== Proficiência em Línguas ====================
@@ -428,3 +429,6 @@ BEGIN
     RAISE NOTICE 'Coluna linhas migrada para JSONB.';
   END IF;
 END$$;
+
+-- ======= Taxonomias: adiciona coluna meta JSONB (idempotente) =======
+ALTER TABLE taxonomias ADD COLUMN IF NOT EXISTS meta JSONB DEFAULT '{}';

@@ -494,9 +494,12 @@ const AdminUserForm = () => {
                   {taxonomias.linhas_pesquisa.length > 0 && (
                     <div className="w-1/3 bg-gray-50 border rounded p-2 text-sm overflow-y-auto max-h-24">
                       <strong className="block mb-1">Taxonomias Oficiais:</strong>
-                      {taxonomias.linhas_pesquisa.map(l => (
-                        <div key={l} className="cursor-pointer text-ufrpe-blue hover:underline" onClick={() => handleChange({target:{name:'linhas_pesquisa', value: formData.dados_academicos.linhas_pesquisa ? formData.dados_academicos.linhas_pesquisa + '\n' + l : l}}, 'dados_academicos')}>{l}</div>
-                      ))}
+                      {taxonomias.linhas_pesquisa.map(l => {
+                        const label = typeof l === 'object' ? l.label : l;
+                        return (
+                          <div key={label} className="cursor-pointer text-ufrpe-blue hover:underline" onClick={() => handleChange({target:{name:'linhas_pesquisa', value: formData.dados_academicos.linhas_pesquisa ? formData.dados_academicos.linhas_pesquisa + '\n' + label : label}}, 'dados_academicos')}>{label}</div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
