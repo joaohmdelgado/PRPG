@@ -54,6 +54,10 @@ const AdminUsersList = () => {
     }
   };
 
+  // Rótulo do programa: usa a sigla, salvo quando vazia/genérica, aí o nome.
+  const labelPrograma = (p) =>
+    p.sigla && p.sigla !== 'S/SIGLA' ? p.sigla : p.nome;
+
   if (loading) return <TableSkeleton />;
 
   return (
@@ -77,6 +81,7 @@ const AdminUsersList = () => {
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="p-4 font-medium text-gray-600">Nome / E-mail</th>
               <th className="p-4 font-medium text-gray-600">Papéis (Roles)</th>
+              <th className="p-4 font-medium text-gray-600">Programas</th>
               <th className="p-4 font-medium text-gray-600">Visibilidade</th>
               <th className="p-4 font-medium text-gray-600 text-right">Ações</th>
             </tr>
@@ -97,6 +102,24 @@ const AdminUsersList = () => {
                       </span>
                     ))}
                   </div>
+                </td>
+                <td className="p-4">
+                  {!user.roles.includes('Professor') ? (
+                    <span className="text-gray-300 text-sm">—</span>
+                  ) : user.programas_vinculo?.length > 0 ? (
+                    <div className="flex gap-1 flex-wrap">
+                      {user.programas_vinculo.map((p) => (
+                        <span key={p.id} title={p.nome}
+                          className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
+                          {labelPrograma(p)}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="bg-amber-50 text-amber-700 text-xs px-2 py-1 rounded-full font-medium">
+                      Sem vínculo
+                    </span>
+                  )}
                 </td>
                 <td className="p-4">
                   {user.privacidade?.perfil_publico ? (
@@ -126,7 +149,7 @@ const AdminUsersList = () => {
               </tr>
             ))}
             {users.length === 0 && (
-              <EmptyRow colSpan={4} message="Nenhum usuário cadastrado." />
+              <EmptyRow colSpan={5} message="Nenhum usuário cadastrado." />
             )}
           </tbody>
         </table>

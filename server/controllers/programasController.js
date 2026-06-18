@@ -647,15 +647,33 @@ export const addDocente = async (req, res) => {
   }
 };
 
-// Remove (inativa) vínculo de docente.
+// Remove (inativa) vínculo de docente. O professor permanece na base — apenas
+// deixa de pertencer a este programa. Mantém perfil_professor.programas em
+// sincronia para não ficar com programa fantasma (origem do "já cadastrado" na
+// importação). Se ficar sem nenhum programa, fica como "Sem vínculo" na lista.
 export const removeDocente = async (req, res) => {
   try {
-    const { rowCount } = await query(
-      `UPDATE vinculos SET ativo=FALSE WHERE id=$1 AND programa_id=$2 AND papel=ANY($3::text[])`,
+    const { rows } = await query(
+      `SELECT pessoa_id, programa_id FROM vinculos
+       WHERE id=$1 AND programa_id=$2 AND papel=ANY($3::text[])`,
       [req.params.vinculoId, req.params.id, PAPEIS_DOCENTE]
     );
-    if (rowCount > 0) res.json({ message: 'Docente removido' });
-    else res.status(404).json({ message: 'Vínculo não encontrado' });
+    if (rows.length === 0) return res.status(404).json({ message: 'Vínculo não encontrado' });
+    const { pessoa_id, programa_id } = rows[0];
+
+    await query(`UPDATE vinculos SET ativo=FALSE WHERE id=$1`, [req.params.vinculoId]);
+
+    const user = await usersRepo.getById(pessoa_id);
+    if (Array.isArray(user?.perfil_professor?.programas)) {
+      const programas = user.perfil_professor.programas.filter((p) => p !== programa_id);
+      if (programas.length !== user.perfil_professor.programas.length) {
+        await usersRepo.update(pessoa_id, {
+          ...user,
+          perfil_professor: { ...user.perfil_professor, programas },
+        });
+      }
+    }
+    res.json({ message: 'Docente removido' });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao remover docente', error: error.message });
   }

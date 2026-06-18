@@ -63,15 +63,31 @@ const parse = (buffer) => {
   return data;
 };
 
-// Garante o vínculo docente (papel permanente/colaborador) entre o usuário e o programa.
+// Indica se a pessoa tem vínculo docente ATIVO no programa — fonte de verdade
+// para "já está neste programa" (imune a perfil_professor.programas desatualizado).
+const temVinculoDocenteAtivo = async (programaId, pessoaId) => {
+  const { rows } = await query(
+    'SELECT 1 FROM vinculos WHERE programa_id=$1 AND pessoa_id=$2 AND papel=ANY($3::text[]) AND ativo=TRUE',
+    [programaId, pessoaId, PAPEIS_DOCENTE]
+  );
+  return rows.length > 0;
+};
+
+// Garante o vínculo docente (papel permanente/colaborador) entre o usuário e o
+// programa. Se já existir um vínculo inativo (professor removido antes), reativa
+// em vez de criar uma linha duplicada.
 const garantirVinculo = async (programaId, pessoaId, papel) => {
   const existente = (
     await query(
-      'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id=$2 AND papel=ANY($3::text[]) AND ativo=TRUE',
+      'SELECT id, ativo FROM vinculos WHERE programa_id=$1 AND pessoa_id=$2 AND papel=ANY($3::text[]) ORDER BY ativo DESC LIMIT 1',
       [programaId, pessoaId, PAPEIS_DOCENTE]
     )
   ).rows[0];
-  if (existente) return false;
+  if (existente) {
+    if (existente.ativo) return false;
+    await query('UPDATE vinculos SET ativo=TRUE, papel=$2 WHERE id=$1', [existente.id, papel]);
+    return true;
+  }
   await query(
     `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, ativo, criado_em)
      VALUES ($1,$2,$3,$4,TRUE,$5)`,
@@ -111,7 +127,9 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
   if (existente) {
     const jaProfessor = (existente.roles || []).includes('Professor');
     const programas = existente.perfil_professor?.programas || [];
-    const jaNoPrograma = programas.includes(programaId);
+    // Fonte de verdade é o vínculo ATIVO, não o array (que pode estar desatualizado
+    // de remoções antigas). Só é "inalterado" se realmente houver vínculo ativo.
+    const jaNoPrograma = await temVinculoDocenteAtivo(programaId, existente.id);
     if (jaProfessor && jaNoPrograma) {
       return { acao: 'inalterado', nome: m.nome, email: m.email, mensagem: 'Já cadastrado neste programa.' };
     }
@@ -124,7 +142,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
       roles: jaProfessor ? existente.roles : [...(existente.roles || []), 'Professor'],
       perfil_professor: {
         ...(existente.perfil_professor || {}),
-        programas: jaNoPrograma ? programas : [...programas, programaId],
+        programas: programas.includes(programaId) ? programas : [...programas, programaId],
       },
       atualizado_em: new Date().toISOString(),
     };

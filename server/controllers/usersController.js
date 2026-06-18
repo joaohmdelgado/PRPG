@@ -26,6 +26,25 @@ const vincularAoPrograma = async (programaId, pessoaId, papel) => {
   );
 };
 
+// Anexa a cada usuário a lista de programas em que ele tem vínculo docente ATIVO
+// (id/sigla/nome), para a lista de Usuários exibir os programas ou "Sem vínculo".
+const anexarProgramasVinculo = async (users) => {
+  const ids = users.map((u) => u.id);
+  if (ids.length === 0) return users;
+  const { rows } = await query(
+    `SELECT v.pessoa_id, p.id AS programa_id, p.sigla, p.nome
+       FROM vinculos v
+       JOIN programas p ON p.id = v.programa_id
+      WHERE v.ativo = TRUE AND v.papel = ANY($1::text[]) AND v.pessoa_id = ANY($2::text[])`,
+    [PAPEIS_DOCENTE, ids]
+  );
+  const porPessoa = {};
+  for (const r of rows) {
+    (porPessoa[r.pessoa_id] ||= []).push({ id: r.programa_id, sigla: r.sigla, nome: r.nome });
+  }
+  return users.map((u) => ({ ...u, programas_vinculo: porPessoa[u.id] || [] }));
+};
+
 export const getUsers = async (req, res) => {
   try {
     // Gestor de Programa só enxerga usuários do seu programa (donos + vinculados,
@@ -33,10 +52,10 @@ export const getUsers = async (req, res) => {
     if (isProgramaScoped(req.user)) {
       if (!req.user.programaId) return res.status(403).json({ message: 'Gestor sem programa vinculado.' });
       const scoped = await usersRepo.getScopedToPrograma(req.user.programaId);
-      return res.json(scoped.map(stripHash));
+      return res.json(await anexarProgramasVinculo(scoped.map(stripHash)));
     }
     const users = await usersRepo.getAll();
-    res.json(users.map(stripHash));
+    res.json(await anexarProgramasVinculo(users.map(stripHash)));
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar usuários', error: error.message });
   }
