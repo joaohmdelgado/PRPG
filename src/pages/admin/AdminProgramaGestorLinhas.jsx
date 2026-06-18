@@ -104,7 +104,7 @@ export default function AdminProgramaGestorLinhas() {
   const sigla = programa?.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : programa?.nome;
 
   return (
-    <div className="max-w-4xl">
+    <div className="w-full">
       <div className="flex items-center gap-3 mb-6">
         <Link to={`/admin/programas/${id}`}
           className="text-gray-400 hover:text-gray-600 bg-gray-100 hover:bg-gray-200 p-2 rounded-lg transition-colors">
@@ -123,8 +123,8 @@ export default function AdminProgramaGestorLinhas() {
       {/* Formulário de criação */}
       <div className="bg-white rounded-xl border border-gray-100 p-5 mb-5 shadow-sm">
         <p className="text-sm font-medium text-gray-700 mb-3">Nova linha de pesquisa</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="md:col-span-2">
+        <div className="flex gap-3 items-end">
+          <div className="flex-1">
             <input
               type="text"
               value={form.nome}
@@ -137,7 +137,7 @@ export default function AdminProgramaGestorLinhas() {
           <button
             onClick={criar}
             disabled={saving || !form.nome.trim()}
-            className="flex items-center gap-1.5 px-4 py-2 bg-ufrpe-blue text-white rounded-lg text-sm font-medium hover:bg-ufrpe-blue/90 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 bg-ufrpe-blue text-white rounded-lg text-sm font-medium hover:bg-ufrpe-blue/90 disabled:opacity-50 shrink-0 whitespace-nowrap"
           >
             {saving ? <Loader2 size={15} className="animate-spin" /> : <Plus size={15} />} Adicionar
           </button>
@@ -173,16 +173,16 @@ export default function AdminProgramaGestorLinhas() {
             {linhasFiltradas.map((l) => (
               <li key={l.id} className="px-5 py-3 group hover:bg-gray-50/60 transition-colors">
                 {editId === l.id ? (
-                  <div className="grid gap-2 items-center grid-cols-1 md:grid-cols-2">
+                  <div className="flex gap-2 items-center">
                     <input
                       type="text"
                       value={editForm.nome}
                       onChange={(e) => setEditForm((v) => ({ ...v, nome: e.target.value }))}
                       onKeyDown={(e) => e.key === 'Enter' && salvarEdicao(l.id)}
                       autoFocus
-                      className="border border-ufrpe-blue/30 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
+                      className="flex-1 border border-ufrpe-blue/30 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
                     />
-                    <div className="flex gap-2 items-center">
+                    <div className="flex gap-2 items-center shrink-0">
                       <button onClick={() => salvarEdicao(l.id)} disabled={saving}
                         className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 disabled:opacity-50">
                         <Check size={15} />
