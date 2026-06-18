@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FlaskConical, Plus, Trash2, Pencil, Check, X, Loader2, Search } from 'lucide-react';
 import { API_URL } from '../../api';
+import { isProgramaGestor, getGestorPrograma } from '../../auth';
 
 const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
 
@@ -19,6 +20,10 @@ export default function AdminLinhasPesquisa() {
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState(emptyForm);
+
+  const isGestor = isProgramaGestor();
+  const programa = getGestorPrograma();
+  const meuProgramaId = programa?.id || null;
 
   useEffect(() => {
     load();
@@ -45,9 +50,10 @@ export default function AdminLinhasPesquisa() {
     if (!form.nome.trim()) { setError('Nome é obrigatório.'); return; }
     setSaving(true); setError('');
     try {
+      const programaId = isGestor ? meuProgramaId : (form.programa_id || null);
       const r = await fetch(`${API_URL}/api/linhas-pesquisa`, {
         method: 'POST', headers: auth(),
-        body: JSON.stringify({ nome: form.nome, programa_id: form.programa_id || null, target_id: form.target_id || null }),
+        body: JSON.stringify({ nome: form.nome, programa_id: programaId, target_id: form.target_id || null }),
       });
       const d = await r.json();
       if (r.ok) {
@@ -69,9 +75,10 @@ export default function AdminLinhasPesquisa() {
     if (!editForm.nome.trim()) { setError('Nome é obrigatório.'); return; }
     setSaving(true); setError('');
     try {
+      const programaId = isGestor ? meuProgramaId : (editForm.programa_id || null);
       const r = await fetch(`${API_URL}/api/linhas-pesquisa/${id}`, {
         method: 'PUT', headers: auth(),
-        body: JSON.stringify({ nome: editForm.nome, programa_id: editForm.programa_id || null, target_id: editForm.target_id || null }),
+        body: JSON.stringify({ nome: editForm.nome, programa_id: programaId, target_id: editForm.target_id || null }),
       });
       const d = await r.json();
       if (r.ok) {
@@ -124,7 +131,9 @@ export default function AdminLinhasPesquisa() {
 
       {/* Formulário de criação */}
       <div className="bg-white rounded-xl border border-gray-100 p-5 mb-5 shadow-sm">
-        <p className="text-sm font-medium text-gray-700 mb-3">Nova linha de pesquisa</p>
+        <p className="text-sm font-medium text-gray-700 mb-3">
+          {isGestor ? `Nova linha de pesquisa para ${programa?.sigla || programa?.nome}` : 'Nova linha de pesquisa'}
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="md:col-span-1">
             <input
@@ -136,19 +145,21 @@ export default function AdminLinhasPesquisa() {
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
             />
           </div>
-          <div>
-            <select
-              value={form.programa_id}
-              onChange={(e) => setForm((v) => ({ ...v, programa_id: e.target.value }))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
-            >
-              <option value="">Programa (opcional)</option>
-              {programas.map((p) => (
-                <option key={p.id} value={p.id}>{p.sigla || p.nome}</option>
-              ))}
-            </select>
-          </div>
-          <div className="flex gap-2">
+          {!isGestor && (
+            <div>
+              <select
+                value={form.programa_id}
+                onChange={(e) => setForm((v) => ({ ...v, programa_id: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
+              >
+                <option value="">Programa (opcional)</option>
+                {programas.map((p) => (
+                  <option key={p.id} value={p.id}>{p.sigla || p.nome}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className={`flex gap-2 ${!isGestor ? '' : 'md:col-span-2'}`}>
             <input
               type="text"
               value={form.target_id}
@@ -181,17 +192,19 @@ export default function AdminLinhasPesquisa() {
             className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
           />
         </div>
-        <select
-          value={filtroPrograma}
-          onChange={(e) => setFiltroPrograma(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none min-w-40"
-        >
-          <option value="">Todos os programas</option>
-          <option value="__sem__">Sem programa</option>
-          {programas.map((p) => (
-            <option key={p.id} value={p.id}>{p.sigla || p.nome}</option>
-          ))}
-        </select>
+        {!isGestor && (
+          <select
+            value={filtroPrograma}
+            onChange={(e) => setFiltroPrograma(e.target.value)}
+            className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none min-w-40"
+          >
+            <option value="">Todos os programas</option>
+            <option value="__sem__">Sem programa</option>
+            {programas.map((p) => (
+              <option key={p.id} value={p.id}>{p.sigla || p.nome}</option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Lista */}
@@ -211,7 +224,7 @@ export default function AdminLinhasPesquisa() {
               .map((l) => (
                 <li key={l.id} className="px-5 py-3 group hover:bg-gray-50/60 transition-colors">
                   {editId === l.id ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center">
+                    <div className={`grid gap-2 items-center ${isGestor ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
                       <input
                         type="text"
                         value={editForm.nome}
@@ -220,17 +233,19 @@ export default function AdminLinhasPesquisa() {
                         autoFocus
                         className="border border-ufrpe-blue/30 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
                       />
-                      <select
-                        value={editForm.programa_id}
-                        onChange={(e) => setEditForm((v) => ({ ...v, programa_id: e.target.value }))}
-                        className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
-                      >
-                        <option value="">Sem programa</option>
-                        {programas.map((p) => (
-                          <option key={p.id} value={p.id}>{p.sigla || p.nome}</option>
-                        ))}
-                      </select>
-                      <div className="flex gap-2 items-center">
+                      {!isGestor && (
+                        <select
+                          value={editForm.programa_id}
+                          onChange={(e) => setEditForm((v) => ({ ...v, programa_id: e.target.value }))}
+                          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
+                        >
+                          <option value="">Sem programa</option>
+                          {programas.map((p) => (
+                            <option key={p.id} value={p.id}>{p.sigla || p.nome}</option>
+                          ))}
+                        </select>
+                      )}
+                      <div className={`flex gap-2 items-center ${isGestor ? '' : ''}`}>
                         <input
                           type="text"
                           value={editForm.target_id}
@@ -266,8 +281,9 @@ export default function AdminLinhasPesquisa() {
                           className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-ufrpe-blue disabled:opacity-20" title="Editar">
                           <Pencil size={14} />
                         </button>
-                        <button onClick={() => remover(l.id)} disabled={saving}
-                          className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 disabled:opacity-20" title="Remover">
+                        <button onClick={() => remover(l.id)} disabled={saving || isGestor}
+                          className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 disabled:opacity-20"
+                          title={isGestor ? 'Apenas administrador pode deletar' : 'Remover'}>
                           <Trash2 size={14} />
                         </button>
                       </div>
