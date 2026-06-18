@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
+import { isProgramaGestor } from './auth';
 import PublicLayout from './components/PublicLayout';
 import Home from './pages/Home';
 import Sobre from './pages/Sobre';
@@ -44,6 +45,7 @@ import AdminProgramaForm from './pages/admin/AdminProgramaForm';
 import AdminProgramaComissoes from './pages/admin/AdminProgramaComissoes';
 import AdminProgramaMetricas from './pages/admin/AdminProgramaMetricas';
 import AdminProgramaLinhas from './pages/admin/AdminProgramaLinhas';
+import AdminProgramaGestorLinhas from './pages/admin/AdminProgramaGestorLinhas';
 import AdminLinhasPesquisa from './pages/admin/AdminLinhasPesquisa';
 import AdminProgramaDiscentes from './pages/admin/AdminProgramaDiscentes';
 import AdminProgramaDocentes from './pages/admin/AdminProgramaDocentes';
@@ -85,6 +87,11 @@ function NotFoundPublic() {
   );
 }
 
+function ProgramaLinhasRouter() {
+  const isGestor = isProgramaGestor();
+  return isGestor ? <AdminProgramaGestorLinhas /> : <AdminProgramaLinhas />;
+}
+
 function App() {
   return (
     <Routes>
@@ -113,7 +120,7 @@ function App() {
           <Route path="programas/:id/comissoes" element={<AdminProgramaComissoes />} />
           <Route path="programas/:id/metricas" element={<AdminProgramaMetricas />} />
           <Route path="programas/:id/linhas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
-            <Route index element={<AdminProgramaLinhas />} />
+            <Route index element={<ProgramaLinhasRouter />} />
           </Route>
           <Route path="calendarios" element={<AdminCalendarios />} />
           <Route path="calendarios/novo" element={<AdminCalendarioForm />} />

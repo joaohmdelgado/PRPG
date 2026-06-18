@@ -281,9 +281,9 @@ export default function AdminLinhasPesquisa() {
                           className="p-1.5 rounded hover:bg-gray-100 text-gray-400 hover:text-ufrpe-blue disabled:opacity-20" title="Editar">
                           <Pencil size={14} />
                         </button>
-                        <button onClick={() => remover(l.id)} disabled={saving || isGestor}
+                        <button onClick={() => remover(l.id)} disabled={saving}
                           className="p-1.5 rounded hover:bg-red-50 text-gray-400 hover:text-red-600 disabled:opacity-20"
-                          title={isGestor ? 'Apenas administrador pode deletar' : 'Remover'}>
+                          title="Remover">
                           <Trash2 size={14} />
                         </button>
                       </div>

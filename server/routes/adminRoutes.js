@@ -148,7 +148,7 @@ router.post('/upload', protect, (req, res) => {
 router.post('/taxonomias', protect, requireRole(['Administrator', 'Gestor']), updateTaxonomias);
 router.post('/linhas-pesquisa', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), createLinha);
 router.put('/linhas-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), updateLinha);
-router.delete('/linhas-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor']), deleteLinha);
+router.delete('/linhas-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), deleteLinha);
 // Leitura da lista de usuários: também o Gestor de Programa, que precisa dela
 // para escolher docentes/discentes/coordenadores do seu programa. Criar/excluir
 // usuários continua restrito a Admin/Gestor.

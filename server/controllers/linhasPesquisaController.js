@@ -74,8 +74,8 @@ export const deleteLinha = async (req, res) => {
     const linha = await linhasPesquisaRepo.getById(req.params.id);
     if (!linha) return res.status(404).json({ message: 'Linha não encontrada' });
 
-    if (isProgramaScoped(req.user)) {
-      return res.status(403).json({ message: 'Gestor de programa não pode deletar linhas de pesquisa.' });
+    if (isProgramaScoped(req.user) && req.user.programaId && linha.programa_id !== req.user.programaId) {
+      return res.status(403).json({ message: 'Você só pode deletar linhas do seu programa.' });
     }
 
     const ok = await linhasPesquisaRepo.remove(req.params.id);
