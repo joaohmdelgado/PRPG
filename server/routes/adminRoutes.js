@@ -8,7 +8,7 @@ import { getNews, getNewsById, createNews, updateNews, deleteNews } from '../con
 import { getEditais, getEditalById, createEdital, updateEdital, deleteEdital } from '../controllers/editaisController.js';
 import { getResolucoes, getResolucaoById, createResolucao, updateResolucao, deleteResolucao } from '../controllers/resolucoesController.js';
 import { getFormularios, getFormularioById, createFormulario, updateFormulario, deleteFormulario } from '../controllers/formulariosController.js';
-import { getProgramas, getProgramaById, getProgramaBySlug, createPrograma, updatePrograma, deletePrograma, getProgramaDocentesPublic, getDocentesAdmin, addDocente, removeDocente, buscaPrograma, getComissoesAdmin, addComissaoMembro, removeComissaoMembro, getProgramaMetricasPublic, getProgramaDiscentesPublic, getDiscentesAdmin, addDiscente, removeDiscente } from '../controllers/programasController.js';
+import { getProgramas, getProgramaById, getProgramaBySlug, createPrograma, updatePrograma, deletePrograma, getProgramaDocentesPublic, getDocentesAdmin, addDocente, removeDocente, buscaPrograma, getComissoesAdmin, addComissaoMembro, removeComissaoMembro, getProgramaMetricasPublic, getProgramaDiscentesPublic, getDiscentesAdmin, addDiscente, removeDiscente, getProgramaLinhas, updateProgramaLinhas } from '../controllers/programasController.js';
 import { getCalendarios, getCalendarioById, createCalendario, updateCalendario, deleteCalendario } from '../controllers/calendariosController.js';
 import { getPortarias, getPortariaById, createPortaria, updatePortaria, deletePortaria } from '../controllers/portariasController.js';
 import { getGruposPesquisa, getGrupoPesquisaById, createGrupoPesquisa, updateGrupoPesquisa, deleteGrupoPesquisa } from '../controllers/gruposPesquisaController.js';
@@ -109,6 +109,8 @@ router.delete('/programas/:id/comissoes/:vinculoId', protect, requireSelfProgram
 router.get('/programas/:id/discentes', protect, requireSelfPrograma, getDiscentesAdmin);
 router.post('/programas/:id/discentes', protect, requireSelfPrograma, addDiscente);
 router.delete('/programas/:id/discentes/:vinculoId', protect, requireSelfPrograma, removeDiscente);
+router.get('/programas/:id/linhas', protect, requireSelfPrograma, getProgramaLinhas);
+router.put('/programas/:id/linhas', protect, requireSelfPrograma, updateProgramaLinhas);
 // Rota genérica DEPOIS das específicas
 router.get('/programas/:id', getProgramaById);
 router.get('/calendarios', getCalendarios);

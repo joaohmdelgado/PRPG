@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet,
   GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle,
-  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload
+  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical
 } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../auth';
 
@@ -47,6 +47,7 @@ const gestorConteudo = (programaId) => [
   { to: '/admin/paginas', label: 'Páginas', icon: File },
   { to: `/admin/programas/${programaId}/docentes`, label: 'Docentes', icon: Presentation },
   { to: `/admin/programas/${programaId}/discentes`, label: 'Discentes', icon: UserCheck },
+  { to: `/admin/programas/${programaId}/linhas`, label: 'Linhas de Pesquisa', icon: FlaskConical },
   { to: `/admin/programas/editar/${programaId}`, label: 'Meu Programa', icon: GraduationCap },
 ];
 

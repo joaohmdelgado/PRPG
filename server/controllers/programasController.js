@@ -854,3 +854,33 @@ export const getProgramaMetricasPublic = async (req, res) => {
     res.status(500).json({ message: 'Erro ao buscar métricas', error: error.message });
   }
 };
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Linhas de Pesquisa por programa
+// ──────────────────────────────────────────────────────────────────────────────
+
+export const getProgramaLinhas = async (req, res) => {
+  try {
+    const { rows } = await query('SELECT linhas FROM programas WHERE id=$1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ message: 'Programa não encontrado' });
+    res.json(rows[0].linhas || []);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao buscar linhas', error: error.message });
+  }
+};
+
+export const updateProgramaLinhas = async (req, res) => {
+  try {
+    const { linhas } = req.body || {};
+    if (!Array.isArray(linhas)) return res.status(400).json({ message: 'linhas deve ser um array' });
+    const sanitized = linhas.map((l) => String(l).trim()).filter(Boolean);
+    const { rows } = await query(
+      'UPDATE programas SET linhas=$1, atualizado_em=now() WHERE id=$2 RETURNING linhas',
+      [sanitized, req.params.id]
+    );
+    if (!rows[0]) return res.status(404).json({ message: 'Programa não encontrado' });
+    res.json(rows[0].linhas);
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao atualizar linhas', error: error.message });
+  }
+};

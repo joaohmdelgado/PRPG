@@ -43,6 +43,7 @@ import AdminProgramas from './pages/admin/AdminProgramas';
 import AdminProgramaForm from './pages/admin/AdminProgramaForm';
 import AdminProgramaComissoes from './pages/admin/AdminProgramaComissoes';
 import AdminProgramaMetricas from './pages/admin/AdminProgramaMetricas';
+import AdminProgramaLinhas from './pages/admin/AdminProgramaLinhas';
 import AdminProgramaDiscentes from './pages/admin/AdminProgramaDiscentes';
 import AdminProgramaDocentes from './pages/admin/AdminProgramaDocentes';
 import AdminCalendarios from './pages/admin/AdminCalendarios';
@@ -110,6 +111,9 @@ function App() {
           <Route path="programas/:id/docentes" element={<AdminProgramaDocentes />} />
           <Route path="programas/:id/comissoes" element={<AdminProgramaComissoes />} />
           <Route path="programas/:id/metricas" element={<AdminProgramaMetricas />} />
+          <Route path="programas/:id/linhas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
+            <Route index element={<AdminProgramaLinhas />} />
+          </Route>
           <Route path="calendarios" element={<AdminCalendarios />} />
           <Route path="calendarios/novo" element={<AdminCalendarioForm />} />
           <Route path="calendarios/editar/:id" element={<AdminCalendarioForm />} />
