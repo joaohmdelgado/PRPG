@@ -1,6 +1,7 @@
 import professoresImporter from './professoresImporter.js';
 import alunosImporter from './alunosImporter.js';
 import disciplinasImporter from './disciplinasImporter.js';
+import tesesImporter from './tesesImporter.js';
 
 // Registro central dos importadores. Cada importador expõe:
 //   id, label, descricao, requiresPrograma, disponivel,
@@ -11,6 +12,7 @@ const importers = {
   [professoresImporter.id]: professoresImporter,
   [alunosImporter.id]: alunosImporter,
   [disciplinasImporter.id]: disciplinasImporter,
+  [tesesImporter.id]: tesesImporter,
 };
 
 // Tipos planejados, ainda sem implementação. Aparecem desabilitados no painel.
