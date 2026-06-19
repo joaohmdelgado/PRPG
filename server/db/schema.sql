@@ -555,3 +555,34 @@ BEGIN
       ('situacao_aluno','Desistente','7');
   END IF;
 END$$;
+
+-- 'Trancado' não vem da importação (não tem target_id), mas compõe a lista de
+-- situações possíveis do aluno. Inserido como global, idempotente.
+INSERT INTO taxonomia_refs (campo, valor, target_id)
+SELECT 'situacao_aluno', 'Trancado', NULL
+WHERE NOT EXISTS (
+  SELECT 1 FROM taxonomia_refs
+  WHERE campo='situacao_aluno' AND valor='Trancado' AND programa_id IS NULL
+);
+
+-- Unificação: 'Períodos de Entrada' antes vivia em taxonomias.entradas (lista
+-- simples) e agora tem fonte única em taxonomia_refs. Migra quaisquer períodos
+-- que existiam só na lista antiga (sem target_id), preservando-os. Idempotente.
+INSERT INTO taxonomia_refs (campo, valor, target_id)
+SELECT 'entrada', t.v, NULL
+FROM (SELECT unnest(valores) AS v FROM taxonomias WHERE chave='entradas') t
+WHERE NOT EXISTS (
+  SELECT 1 FROM taxonomia_refs r
+  WHERE r.campo='entrada' AND r.valor = t.v AND r.programa_id IS NULL
+);
+-- A chave 'entradas' deixa de ser usada (derivada de taxonomia_refs em getAll).
+DELETE FROM taxonomias WHERE chave='entradas';
+
+-- Renomeia as situações antigas dos alunos para o vocabulário unificado.
+-- Ativo→Matriculado, Desligado→Desistente, Concluído→Egresso (Trancado mantém).
+UPDATE users SET perfil_aluno = jsonb_set(perfil_aluno, '{situacao}', '"Matriculado"')
+  WHERE perfil_aluno ? 'situacao' AND perfil_aluno->>'situacao' = 'Ativo';
+UPDATE users SET perfil_aluno = jsonb_set(perfil_aluno, '{situacao}', '"Desistente"')
+  WHERE perfil_aluno ? 'situacao' AND perfil_aluno->>'situacao' = 'Desligado';
+UPDATE users SET perfil_aluno = jsonb_set(perfil_aluno, '{situacao}', '"Egresso"')
+  WHERE perfil_aluno ? 'situacao' AND perfil_aluno->>'situacao' = 'Concluído';

@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet,
   GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle,
-  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Replace
+  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical
 } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../auth';
 
@@ -27,7 +27,6 @@ const ADMINISTRACAO = [
   { to: '/admin/grupos-pesquisa', label: 'Grupos de Pesquisa', icon: Users },
   { to: '/admin/linhas-pesquisa', label: 'Linhas de Pesquisa', icon: FlaskConical },
   { to: '/admin/taxonomias', label: 'Taxonomias', icon: Tags },
-  { to: '/admin/taxonomia-refs', label: 'Refs. de Importação', icon: Replace },
   { to: '/admin/users', label: 'Usuários', icon: UserCog },
   { to: '/admin/proficiencia', label: 'Proficiência', icon: Languages },
   { to: '/admin/importacao', label: 'Importação', icon: Upload },

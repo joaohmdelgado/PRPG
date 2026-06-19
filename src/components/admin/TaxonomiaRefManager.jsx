@@ -1,29 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Replace, Plus, Trash2, Pencil, Check, X, Loader2, Search } from 'lucide-react';
+import { Plus, Trash2, Pencil, Check, X, Loader2, Search } from 'lucide-react';
 import { API_URL } from '../../api';
 import { isProgramaGestor, getGestorPrograma } from '../../auth';
-import { useConfirm } from '../../components/admin/ConfirmModal';
-import { useToast } from '../../components/admin/Toast';
+import { useConfirm } from './ConfirmModal';
+import { useToast } from './Toast';
 
 const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
 
-// Campos de taxonomia legada que o importador resolve por target_id.
-const CAMPOS = [
-  { id: 'entrada', label: 'Semestre de entrada' },
-  { id: 'situacao_aluno', label: 'Situação do aluno' },
-];
-const campoLabel = (id) => CAMPOS.find((c) => c.id === id)?.label || id;
+// CRUD completo de um único campo de taxonomia de referência (entrada,
+// situacao_aluno, ...). Cada valor pode ser global (padrão) ou específico de um
+// programa, e carrega o target_id legado usado na importação. É a fonte única
+// dessas listas — a mesma consumida pelo formulário do aluno e pela importação.
+//
+// Props:
+//   campo            id do campo em taxonomia_refs (ex.: 'entrada')
+//   valorPlaceholder placeholder do input de valor
+export default function TaxonomiaRefManager({ campo, valorPlaceholder = 'Valor' }) {
+  const emptyForm = { valor: '', programa_id: '', target_id: '' };
 
-const emptyForm = { campo: 'entrada', valor: '', programa_id: '', target_id: '' };
-
-export default function AdminTaxonomiaRefs() {
   const [refs, setRefs] = useState([]);
   const [programas, setProgramas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  const [filtroCampo, setFiltroCampo] = useState('');
   const [filtroPrograma, setFiltroPrograma] = useState('');
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
@@ -39,12 +39,12 @@ export default function AdminTaxonomiaRefs() {
   useEffect(() => {
     load();
     fetchProgramas();
-  }, []);
+  }, [campo]);
 
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch(`${API_URL}/api/taxonomia-refs`, { headers: auth() });
+      const r = await fetch(`${API_URL}/api/taxonomia-refs?campo=${encodeURIComponent(campo)}`, { headers: auth() });
       if (r.ok) setRefs(await r.json());
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -58,7 +58,7 @@ export default function AdminTaxonomiaRefs() {
   };
 
   const ordenar = (lista) =>
-    [...lista].sort((a, b) => a.campo.localeCompare(b.campo) || a.valor.localeCompare(b.valor, 'pt', { numeric: true }));
+    [...lista].sort((a, b) => a.valor.localeCompare(b.valor, 'pt', { numeric: true }));
 
   const criar = async () => {
     if (!form.valor.trim()) { setError('Valor é obrigatório.'); return; }
@@ -67,13 +67,13 @@ export default function AdminTaxonomiaRefs() {
       const programaId = isGestor ? meuProgramaId : (form.programa_id || null);
       const r = await fetch(`${API_URL}/api/taxonomia-refs`, {
         method: 'POST', headers: auth(),
-        body: JSON.stringify({ campo: form.campo, valor: form.valor, programa_id: programaId, target_id: form.target_id || null }),
+        body: JSON.stringify({ campo, valor: form.valor, programa_id: programaId, target_id: form.target_id || null }),
       });
       const d = await r.json();
       if (r.ok) {
         setRefs((prev) => ordenar([...prev, d]));
-        setForm((v) => ({ ...emptyForm, campo: v.campo }));
-        toast.success('Referência criada.');
+        setForm(emptyForm);
+        toast.success('Adicionado.');
       } else setError(d.message || 'Erro ao criar.');
     } catch { setError('Erro de conexão.'); }
     setSaving(false);
@@ -81,7 +81,7 @@ export default function AdminTaxonomiaRefs() {
 
   const iniciarEdicao = (ref) => {
     setEditId(ref.id);
-    setEditForm({ campo: ref.campo, valor: ref.valor, programa_id: ref.programa_id || '', target_id: ref.target_id || '' });
+    setEditForm({ valor: ref.valor, programa_id: ref.programa_id || '', target_id: ref.target_id || '' });
   };
 
   const salvarEdicao = async (id) => {
@@ -91,26 +91,26 @@ export default function AdminTaxonomiaRefs() {
       const programaId = isGestor ? meuProgramaId : (editForm.programa_id || null);
       const r = await fetch(`${API_URL}/api/taxonomia-refs/${id}`, {
         method: 'PUT', headers: auth(),
-        body: JSON.stringify({ campo: editForm.campo, valor: editForm.valor, programa_id: programaId, target_id: editForm.target_id || null }),
+        body: JSON.stringify({ campo, valor: editForm.valor, programa_id: programaId, target_id: editForm.target_id || null }),
       });
       const d = await r.json();
       if (r.ok) {
         setRefs((prev) => ordenar(prev.map((l) => l.id === id ? d : l)));
         setEditId(null);
-        toast.success('Referência atualizada.');
+        toast.success('Atualizado.');
       } else setError(d.message || 'Erro ao salvar.');
     } catch { setError('Erro de conexão.'); }
     setSaving(false);
   };
 
   const remover = async (id) => {
-    if (!await confirm('Remover esta referência de importação?')) return;
+    if (!await confirm('Remover este item?')) return;
     setSaving(true); setError('');
     try {
       const r = await fetch(`${API_URL}/api/taxonomia-refs/${id}`, { method: 'DELETE', headers: auth() });
       if (r.ok) {
         setRefs((prev) => prev.filter((l) => l.id !== id));
-        toast.success('Referência removida.');
+        toast.success('Removido.');
       } else {
         const d = await r.json();
         toast.error(d.message || 'Erro ao remover.');
@@ -123,52 +123,30 @@ export default function AdminTaxonomiaRefs() {
 
   const refsFiltradas = ordenar(refs).filter((l) => {
     const matchBusca = !search.trim() || l.valor.toLowerCase().includes(search.toLowerCase()) || (l.target_id || '').includes(search.trim());
-    const matchCampo = !filtroCampo || l.campo === filtroCampo;
     const matchProg = !filtroPrograma
       ? true
       : filtroPrograma === '__global__' ? !l.programa_id : l.programa_id === filtroPrograma;
-    return matchBusca && matchCampo && matchProg;
+    return matchBusca && matchProg;
   });
 
   return (
     <div className="w-full">
-      <div className="flex items-center gap-3 mb-6">
-        <Replace className="text-ufrpe-blue" size={24} />
-        <div>
-          <h1 className="font-heading text-2xl font-bold text-ufrpe-blue leading-tight">Referências de Importação</h1>
-          <p className="text-sm text-gray-500">
-            Mapeia o <span className="font-mono">target_id</span> legado do site antigo para um valor canônico.
-            Usado na importação de alunos. Referências sem programa valem como padrão (global).
-          </p>
-        </div>
-      </div>
-
       {error && <div className="bg-red-50 text-red-700 border border-red-100 rounded-lg px-4 py-2.5 text-sm mb-4">{error}</div>}
 
       {/* Formulário de criação */}
       <div className="bg-white rounded-xl border border-gray-100 p-5 mb-5 shadow-sm">
         <p className="text-sm font-medium text-gray-700 mb-3">
-          {isGestor ? `Nova referência para ${programa?.sigla || programa?.nome}` : 'Nova referência'}
+          {isGestor ? `Novo item para ${programa?.sigla || programa?.nome}` : 'Novo item'}
         </p>
         <div className="flex gap-3 items-end flex-wrap">
-          <div className="min-w-48">
-            <label className="block text-xs text-gray-500 mb-1">Campo</label>
-            <select
-              value={form.campo}
-              onChange={(e) => setForm((v) => ({ ...v, campo: e.target.value }))}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
-            >
-              {CAMPOS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-            </select>
-          </div>
           <div className="flex-1 min-w-40">
-            <label className="block text-xs text-gray-500 mb-1">Valor canônico *</label>
+            <label className="block text-xs text-gray-500 mb-1">Valor *</label>
             <input
               type="text"
               value={form.valor}
               onChange={(e) => setForm((v) => ({ ...v, valor: e.target.value }))}
               onKeyDown={(e) => e.key === 'Enter' && criar()}
-              placeholder={form.campo === 'entrada' ? 'ex.: 2023.1' : 'ex.: Matriculado'}
+              placeholder={valorPlaceholder}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
             />
           </div>
@@ -195,7 +173,7 @@ export default function AdminTaxonomiaRefs() {
               onChange={(e) => setForm((v) => ({ ...v, target_id: e.target.value }))}
               onKeyDown={(e) => e.key === 'Enter' && criar()}
               placeholder="target_id"
-              title="ID legado do Drupal (target_id) — chave de resolução na importação"
+              title="ID legado do site antigo (target_id) — usado só na importação. Pode deixar vazio."
               className="w-32 border border-gray-200 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
             />
           </div>
@@ -221,14 +199,6 @@ export default function AdminTaxonomiaRefs() {
             className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
           />
         </div>
-        <select
-          value={filtroCampo}
-          onChange={(e) => setFiltroCampo(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none min-w-40"
-        >
-          <option value="">Todos os campos</option>
-          {CAMPOS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-        </select>
         {!isGestor && (
           <select
             value={filtroPrograma}
@@ -252,7 +222,7 @@ export default function AdminTaxonomiaRefs() {
           </div>
         ) : refsFiltradas.length === 0 ? (
           <div className="text-center py-14 text-gray-400 text-sm">
-            {refs.length === 0 ? 'Nenhuma referência cadastrada.' : 'Nenhuma referência encontrada.'}
+            {refs.length === 0 ? 'Nenhum item cadastrado.' : 'Nenhum item encontrado.'}
           </div>
         ) : (
           <ul className="divide-y divide-gray-50">
@@ -260,15 +230,6 @@ export default function AdminTaxonomiaRefs() {
               <li key={l.id} className="px-5 py-3 group hover:bg-gray-50/60 transition-colors">
                 {editId === l.id ? (
                   <div className="flex gap-2 items-center flex-wrap">
-                    {!isGestor && (
-                      <select
-                        value={editForm.campo}
-                        onChange={(e) => setEditForm((v) => ({ ...v, campo: e.target.value }))}
-                        className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:ring-2 focus:ring-ufrpe-blue/30 outline-none"
-                      >
-                        {CAMPOS.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-                      </select>
-                    )}
                     <input
                       type="text"
                       value={editForm.valor}
@@ -310,9 +271,6 @@ export default function AdminTaxonomiaRefs() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded px-1.5 py-0.5 shrink-0 w-36 truncate" title={campoLabel(l.campo)}>
-                      {campoLabel(l.campo)}
-                    </span>
                     <span className="flex-1 text-sm text-gray-800 font-medium">{l.valor}</span>
                     {l.programa_id ? (
                       <span className="text-xs text-ufrpe-blue bg-blue-50 border border-blue-100 rounded px-1.5 py-0.5 shrink-0">
@@ -323,7 +281,7 @@ export default function AdminTaxonomiaRefs() {
                         global
                       </span>
                     )}
-                    <span className="text-xs font-mono text-gray-400 bg-gray-50 border border-gray-100 rounded px-1.5 py-0.5 shrink-0 w-16 text-center" title="ID legado">
+                    <span className="text-xs font-mono text-gray-400 bg-gray-50 border border-gray-100 rounded px-1.5 py-0.5 shrink-0 w-16 text-center" title="ID legado (importação)">
                       {l.target_id || '—'}
                     </span>
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
@@ -346,7 +304,7 @@ export default function AdminTaxonomiaRefs() {
 
       {refs.length > 0 && (
         <p className="text-xs text-gray-400 mt-2 text-right">
-          {refsFiltradas.length} de {refs.length} referência(s)
+          {refsFiltradas.length} de {refs.length} item(ns)
         </p>
       )}
       {ConfirmModal}

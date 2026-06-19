@@ -471,6 +471,11 @@ export const inscricoesProficienciaRepo = {
 
 // =========================== Taxonomias ===========================
 // Modelada como chave -> lista de valores; o app a consome como um objeto.
+// 'entradas' (períodos) e 'situacoes_aluno' não têm linhas próprias aqui: são
+// derivadas da fonte única taxonomia_refs (campos 'entrada' e 'situacao_aluno'),
+// para que o CRUD dessas listas seja o mesmo usado na importação.
+const SITUACOES_ALUNO_ORDEM = ['Matriculado', 'Trancado', 'Desistente', 'Egresso'];
+
 export const taxonomiasRepo = {
   async getAll() {
     const { rows } = await query('SELECT chave, valores FROM taxonomias');
@@ -478,10 +483,24 @@ export const taxonomiasRepo = {
     for (const r of rows) {
       obj[r.chave] = r.valores ?? [];
     }
+    // Períodos de entrada: valores canônicos distintos das referências.
+    const ent = await query(
+      `SELECT DISTINCT valor FROM taxonomia_refs WHERE campo='entrada' ORDER BY valor`
+    );
+    obj.entradas = ent.rows.map((r) => r.valor);
+    // Situações do aluno: na ordem lógica conhecida, demais ao final.
+    const sit = await query(`SELECT DISTINCT valor FROM taxonomia_refs WHERE campo='situacao_aluno'`);
+    const sitVals = sit.rows.map((r) => r.valor);
+    obj.situacoes_aluno = [
+      ...SITUACOES_ALUNO_ORDEM.filter((s) => sitVals.includes(s)),
+      ...sitVals.filter((s) => !SITUACOES_ALUNO_ORDEM.includes(s)).sort((a, b) => a.localeCompare(b, 'pt')),
+    ];
     return obj;
   },
   async replaceAll(taxonomias) {
     for (const [chave, valores] of Object.entries(taxonomias || {})) {
+      // Derivadas de taxonomia_refs — geridas pelo CRUD próprio, nunca aqui.
+      if (chave === 'entradas' || chave === 'situacoes_aluno') continue;
       await query(
         `INSERT INTO taxonomias (chave, valores) VALUES ($1, $2)
          ON CONFLICT (chave) DO UPDATE SET valores = EXCLUDED.valores`,

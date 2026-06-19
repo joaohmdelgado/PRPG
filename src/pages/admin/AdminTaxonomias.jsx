@@ -3,25 +3,30 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Search } from 'lucide-react';
 import { API_URL } from '../../api';
+import TaxonomiaRefManager from '../../components/admin/TaxonomiaRefManager';
 
 const auth = () => ({
   'Content-Type': 'application/json',
   Authorization: `Bearer ${localStorage.getItem('token')}`,
 });
 
+// Abas baseadas em taxonomia_refs (CRUD completo, com programa + ID legado).
+const REF_TABS = [
+  { key: 'entrada', label: 'Períodos de Entrada', valorPlaceholder: 'ex.: 2024.1' },
+  { key: 'situacao_aluno', label: 'Situação do Aluno', valorPlaceholder: 'ex.: Matriculado' },
+];
+// Abas de listas simples (taxonomias chave -> valores[]).
+const SIMPLE_TABS = [
+  { key: 'subcategorias_resolucao', label: 'Subcategorias de Resolução', placeholder: 'Nova subcategoria (Ex: Credenciamento de Docentes)' },
+  { key: 'tipo_bolsa', label: 'Tipos de Bolsa', placeholder: 'Novo tipo de bolsa (Ex: CNPq - Mestrado)' },
+];
+
 const AdminTaxonomias = () => {
-  const [taxonomias, setTaxonomias] = useState({
-    entradas: [],
-    subcategorias_resolucao: [],
-    tipo_bolsa: [],
-  });
-  const [newEntrada, setNewEntrada] = useState('');
-  const [newSubcategoria, setNewSubcategoria] = useState('');
-  const [newTipoBolsa, setNewTipoBolsa] = useState('');
+  const [taxonomias, setTaxonomias] = useState({ subcategorias_resolucao: [], tipo_bolsa: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [activeTab, setActiveTab] = useState('entradas');
+  const [activeTab, setActiveTab] = useState('entrada');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => { fetchTaxonomias(); }, []);
@@ -32,7 +37,6 @@ const AdminTaxonomias = () => {
       if (response.ok) {
         const data = await response.json();
         setTaxonomias({
-          entradas: data.entradas || [],
           subcategorias_resolucao: data.subcategorias_resolucao || [],
           tipo_bolsa: data.tipo_bolsa || [],
         });
@@ -44,6 +48,7 @@ const AdminTaxonomias = () => {
     }
   };
 
+  // As listas simples ainda são salvas em bloco via POST /api/taxonomias.
   const handleSave = async (updatedData) => {
     try {
       const response = await fetch(`${API_URL}/api/taxonomias`, {
@@ -54,7 +59,6 @@ const AdminTaxonomias = () => {
       if (response.ok) {
         const data = await response.json();
         setTaxonomias({
-          entradas: data.entradas || [],
           subcategorias_resolucao: data.subcategorias_resolucao || [],
           tipo_bolsa: data.tipo_bolsa || [],
         });
@@ -68,48 +72,19 @@ const AdminTaxonomias = () => {
     }
   };
 
-  const addEntrada = () => {
-    if (!newEntrada.trim()) return;
-    const updated = { ...taxonomias, entradas: [...taxonomias.entradas, newEntrada.trim()] };
-    setTaxonomias(updated);
-    setNewEntrada('');
-    handleSave(updated);
-  };
-  const removeEntrada = (index) => {
-    const updated = { ...taxonomias, entradas: taxonomias.entradas.filter((_, i) => i !== index) };
-    setTaxonomias(updated);
-    handleSave(updated);
-  };
-
-  const addSubcategoria = () => {
-    if (!newSubcategoria.trim()) return;
-    const updated = { ...taxonomias, subcategorias_resolucao: [...(taxonomias.subcategorias_resolucao || []), newSubcategoria.trim()] };
-    setTaxonomias(updated);
-    setNewSubcategoria('');
-    handleSave(updated);
-  };
-  const removeSubcategoria = (index) => {
-    const updated = { ...taxonomias, subcategorias_resolucao: (taxonomias.subcategorias_resolucao || []).filter((_, i) => i !== index) };
-    setTaxonomias(updated);
-    handleSave(updated);
-  };
-
-  const addTipoBolsa = () => {
-    if (!newTipoBolsa.trim()) return;
-    const updated = { ...taxonomias, tipo_bolsa: [...(taxonomias.tipo_bolsa || []), newTipoBolsa.trim()] };
-    setTaxonomias(updated);
-    setNewTipoBolsa('');
-    handleSave(updated);
-  };
-  const removeTipoBolsa = (index) => {
-    const updated = { ...taxonomias, tipo_bolsa: (taxonomias.tipo_bolsa || []).filter((_, i) => i !== index) };
-    setTaxonomias(updated);
-    handleSave(updated);
-  };
-
   const handleTabChange = (tab) => { setActiveTab(tab); setSearchQuery(''); };
 
+  const simpleTab = SIMPLE_TABS.find((t) => t.key === activeTab);
+  const refTab = REF_TABS.find((t) => t.key === activeTab);
+
   if (loading) return <TableSkeleton />;
+
+  const tabBtn = (key, label) => (
+    <button key={key} onClick={() => handleTabChange(key)}
+      className={`py-3 px-4 text-sm font-semibold border-b-2 transition-all shrink-0 ${activeTab === key ? 'border-ufrpe-blue text-ufrpe-blue' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+      {label}
+    </button>
+  );
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-2">
@@ -119,7 +94,7 @@ const AdminTaxonomias = () => {
         </Link>
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Gerenciar Taxonomias</h2>
-          <p className="text-sm text-gray-500">Configure as listas de opções e subcategorias dinâmicas do sistema</p>
+          <p className="text-sm text-gray-500">Configure as listas de opções dinâmicas do sistema</p>
         </div>
       </div>
 
@@ -128,55 +103,40 @@ const AdminTaxonomias = () => {
 
       {/* Tabs */}
       <div className="flex border-b border-gray-200 mb-6 overflow-x-auto gap-2">
-        {[
-          { key: 'entradas', label: `Períodos de Entrada (${taxonomias.entradas.length})` },
-          { key: 'subcategorias_resolucao', label: `Subcategorias de Resolução (${(taxonomias.subcategorias_resolucao || []).length})` },
-          { key: 'tipo_bolsa', label: `Tipos de Bolsa (${(taxonomias.tipo_bolsa || []).length})` },
-        ].map(({ key, label }) => (
-          <button key={key} onClick={() => handleTabChange(key)}
-            className={`py-3 px-4 text-sm font-semibold border-b-2 transition-all shrink-0 ${activeTab === key ? 'border-ufrpe-blue text-ufrpe-blue' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
-            {label}
-          </button>
-        ))}
+        {REF_TABS.map((t) => tabBtn(t.key, t.label))}
+        {SIMPLE_TABS.map((t) => tabBtn(t.key, `${t.label} (${(taxonomias[t.key] || []).length})`))}
       </div>
 
-      <SimpleListTab
-        items={
-          activeTab === 'entradas' ? taxonomias.entradas :
-          activeTab === 'tipo_bolsa' ? (taxonomias.tipo_bolsa || []) :
-          (taxonomias.subcategorias_resolucao || [])
-        }
-        placeholder={
-          activeTab === 'entradas' ? 'Novo período (Ex: 2024.1)' :
-          activeTab === 'tipo_bolsa' ? 'Novo tipo de bolsa (Ex: CNPq - Mestrado)' :
-          'Nova subcategoria (Ex: Credenciamento de Docentes)'
-        }
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onAdd={(val) => {
-          if (activeTab === 'entradas') {
-            const updated = { ...taxonomias, entradas: [...taxonomias.entradas, val] };
+      {refTab && (
+        <>
+          <p className="text-sm text-gray-500 mb-4 -mt-2">
+            Lista usada no cadastro do aluno. O <span className="font-mono">ID legado</span> é
+            opcional e serve apenas para a importação do site antigo (pode variar por programa).
+          </p>
+          <TaxonomiaRefManager
+            key={refTab.key}
+            campo={refTab.key}
+            valorPlaceholder={refTab.valorPlaceholder}
+          />
+        </>
+      )}
+
+      {simpleTab && (
+        <SimpleListTab
+          items={taxonomias[simpleTab.key] || []}
+          placeholder={simpleTab.placeholder}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onAdd={(val) => {
+            const updated = { ...taxonomias, [simpleTab.key]: [...(taxonomias[simpleTab.key] || []), val] };
             setTaxonomias(updated); handleSave(updated);
-          } else if (activeTab === 'tipo_bolsa') {
-            const updated = { ...taxonomias, tipo_bolsa: [...(taxonomias.tipo_bolsa || []), val] };
+          }}
+          onRemove={(idx) => {
+            const updated = { ...taxonomias, [simpleTab.key]: (taxonomias[simpleTab.key] || []).filter((_, i) => i !== idx) };
             setTaxonomias(updated); handleSave(updated);
-          } else {
-            const updated = { ...taxonomias, subcategorias_resolucao: [...(taxonomias.subcategorias_resolucao || []), val] };
-            setTaxonomias(updated); handleSave(updated);
-          }
-        }}
-        onRemove={(idx) => {
-          let updated;
-          if (activeTab === 'entradas') {
-            updated = { ...taxonomias, entradas: taxonomias.entradas.filter((_, i) => i !== idx) };
-          } else if (activeTab === 'tipo_bolsa') {
-            updated = { ...taxonomias, tipo_bolsa: (taxonomias.tipo_bolsa || []).filter((_, i) => i !== idx) };
-          } else {
-            updated = { ...taxonomias, subcategorias_resolucao: (taxonomias.subcategorias_resolucao || []).filter((_, i) => i !== idx) };
-          }
-          setTaxonomias(updated); handleSave(updated);
-        }}
-      />
+          }}
+        />
+      )}
     </div>
   );
 };

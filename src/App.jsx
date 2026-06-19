@@ -47,7 +47,6 @@ import AdminProgramaMetricas from './pages/admin/AdminProgramaMetricas';
 import AdminProgramaLinhas from './pages/admin/AdminProgramaLinhas';
 import AdminProgramaGestorLinhas from './pages/admin/AdminProgramaGestorLinhas';
 import AdminLinhasPesquisa from './pages/admin/AdminLinhasPesquisa';
-import AdminTaxonomiaRefs from './pages/admin/AdminTaxonomiaRefs';
 import AdminProgramaDiscentes from './pages/admin/AdminProgramaDiscentes';
 import AdminProgramaDocentes from './pages/admin/AdminProgramaDocentes';
 import AdminCalendarios from './pages/admin/AdminCalendarios';
@@ -161,9 +160,6 @@ function App() {
           </Route>
           <Route path="linhas-pesquisa" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
             <Route index element={<AdminLinhasPesquisa />} />
-          </Route>
-          <Route path="taxonomia-refs" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
-            <Route index element={<AdminTaxonomiaRefs />} />
           </Route>
           <Route path="metricas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
             <Route index element={<AdminMetricas />} />

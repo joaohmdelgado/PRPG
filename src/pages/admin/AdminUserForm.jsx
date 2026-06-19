@@ -10,11 +10,12 @@ const ROLES = ['Administrator', 'Gestor', 'GestorPrograma', 'Secretário(a)', 'P
 const ROLE_LABELS = { GestorPrograma: 'Gestor de Programa' };
 const NIVEIS = ['Mestrando', 'Mestre', 'Doutorando', 'Doutor'];
 const TIPOS_PROFESSOR = ['Permanente', 'Colaborador', 'Visitante'];
-const SITUACOES_ALUNO = ['Ativo', 'Trancado', 'Desligado', 'Concluído'];
+// Fallback caso a taxonomia (taxonomias.situacoes_aluno) ainda não tenha carregado.
+const SITUACOES_ALUNO_FALLBACK = ['Matriculado', 'Trancado', 'Desistente', 'Egresso'];
 
 const emptyGeral = { nome: '', cpf: '', siape: '', telefones: [''] };
 const emptyAcademicos = { lattes: '', orcid: '', google_scholar: '', publons: '', linhas_pesquisa: '' };
-const emptyAluno = { nivel: 'Mestrando', entrada: '', orientador_id: '', qualificacao: '', defesa: '', situacao: 'Ativo', egresso: false, estrangeiro: false, nacionalidade: '' };
+const emptyAluno = { nivel: 'Mestrando', entrada: '', orientador_id: '', qualificacao: '', defesa: '', situacao: 'Matriculado', egresso: false, estrangeiro: false, nacionalidade: '' };
 const emptyProfessor = { tipo_professor: 'Permanente', programas: [] };
 const defaultPrivacidade = { perfil_publico: true, mostrar_email: true, mostrar_telefone: false, mostrar_lattes: true };
 
@@ -42,7 +43,7 @@ const AdminUserForm = () => {
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
   const [conflitoId, setConflitoId] = useState(null); // id do cadastro já existente (409)
-  const [taxonomias, setTaxonomias] = useState({ entradas: [] });
+  const [taxonomias, setTaxonomias] = useState({ entradas: [], situacoes_aluno: [] });
   const [todasLinhas, setTodasLinhas] = useState([]);
   const [selectedLinhasIds, setSelectedLinhasIds] = useState(new Set());
   const users = useUsers();
@@ -639,7 +640,13 @@ const AdminUserForm = () => {
               <div>
                 <label className="block text-sm font-medium mb-1">Situação do Aluno</label>
                 <select name="situacao" value={formData.perfil_aluno.situacao} onChange={e => handleChange(e, 'perfil_aluno')} className="w-full border p-2 rounded bg-white">
-                  {SITUACOES_ALUNO.map(s => <option key={s} value={s}>{s}</option>)}
+                  {(() => {
+                    const opcoes = taxonomias.situacoes_aluno?.length ? taxonomias.situacoes_aluno : SITUACOES_ALUNO_FALLBACK;
+                    // Garante que o valor atual (ex.: situação legada) apareça mesmo fora da lista.
+                    const atual = formData.perfil_aluno.situacao;
+                    const lista = atual && !opcoes.includes(atual) ? [atual, ...opcoes] : opcoes;
+                    return lista.map(s => <option key={s} value={s}>{s}</option>);
+                  })()}
                 </select>
               </div>
               <div className="flex items-center pt-6">
