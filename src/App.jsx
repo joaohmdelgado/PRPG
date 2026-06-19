@@ -71,7 +71,7 @@ import AdminPageForm from './pages/admin/AdminPageForm';
 import AdminMetricas from './pages/admin/AdminMetricas';
 import AdminImportacao from './pages/admin/AdminImportacao';
 import AdminProficiencia from './pages/admin/AdminProficiencia';
-import ProficienciaInscricao from './pages/admin/ProficienciaInscricao';
+import ProficienciaInscricao from './pages/ProficienciaInscricao';
 import PageView from './pages/PageView';
 
 function NotFoundPublic() {
@@ -167,8 +167,6 @@ function App() {
           <Route path="importacao" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
             <Route index element={<AdminImportacao />} />
           </Route>
-          {/* Inscrição: qualquer usuário logado (aluno). */}
-          <Route path="proficiencia/inscricao" element={<ProficienciaInscricao />} />
           {/* Gestão/avaliação: Admin/Gestor. */}
           <Route path="proficiencia" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
             <Route index element={<AdminProficiencia />} />
@@ -197,6 +195,7 @@ function App() {
         <Route path="/editais/:id" element={<Edital />} />
         <Route path="/resolucoes" element={<Resolucoes />} />
         <Route path="/formularios" element={<Formularios />} />
+        <Route path="/proficiencia/inscricao" element={<ProficienciaInscricao />} />
         <Route path="/relatorios-autoavaliacao" element={<RelatoriosAutoavaliacao />} />
         <Route path="/especializacao" element={<Especializacao />} />
         <Route path="/residencia-profissional" element={<ResidenciaProfissional />} />

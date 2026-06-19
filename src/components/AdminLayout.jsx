@@ -136,12 +136,6 @@ const AdminLayout = () => {
               </div>
             </>
           )}
-
-          {/* Inscrição de proficiência: disponível a qualquer usuário logado. */}
-          <SectionLabel>Aluno</SectionLabel>
-          <div className="space-y-1">
-            <NavItem to="/admin/proficiencia/inscricao" label="Inscrição Proficiência" icon={Languages} />
-          </div>
         </nav>
 
         <div className="p-3 border-t border-white/10">

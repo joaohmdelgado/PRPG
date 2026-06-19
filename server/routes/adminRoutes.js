@@ -239,8 +239,18 @@ router.delete('/pages/:id', protect, requireProgramaOwnership((id) => pagesRepo.
 
 // ===================== Proficiência em Línguas =====================
 // O período de inscrição é controlado por um edital com proficiencia=TRUE.
-router.get('/proficiencia/periodo-aberto', protect, getPeriodoAberto);
-router.post('/proficiencia/inscricoes', protect, createInscricao);
+// Consulta do período aberto e a própria inscrição são públicas: o aluno se
+// inscreve sem precisar de login.
+router.get('/proficiencia/periodo-aberto', getPeriodoAberto);
+router.post('/proficiencia/inscricoes', createInscricao);
+// Upload público dos comprovantes da inscrição (mesmas regras do /upload).
+router.post('/proficiencia/upload', (req, res) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) return res.status(400).json({ message: err.message });
+    if (!req.file) return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
+    res.json({ url: `/uploads/${req.file.filename}`, originalName: req.file.originalname });
+  });
+});
 router.get('/proficiencia/inscricoes/minhas', protect, getMinhasInscricoes);
 router.get('/proficiencia/inscricoes', protect, requireRole(['Administrator', 'Gestor']), getInscricoes);
 router.get('/proficiencia/inscricoes/:id', protect, requireRole(['Administrator', 'Gestor']), getInscricaoById);
