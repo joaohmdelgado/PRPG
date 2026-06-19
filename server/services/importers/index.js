@@ -1,4 +1,5 @@
 import professoresImporter from './professoresImporter.js';
+import alunosImporter from './alunosImporter.js';
 
 // Registro central dos importadores. Cada importador expõe:
 //   id, label, descricao, requiresPrograma, disponivel,
@@ -7,11 +8,11 @@ import professoresImporter from './professoresImporter.js';
 // que o painel já os liste como "em breve".
 const importers = {
   [professoresImporter.id]: professoresImporter,
+  [alunosImporter.id]: alunosImporter,
 };
 
 // Tipos planejados, ainda sem implementação. Aparecem desabilitados no painel.
 const placeholders = [
-  { id: 'alunos', label: 'Alunos', descricao: 'Importa discentes do site antigo.', requiresPrograma: true, disponivel: false },
   { id: 'noticias', label: 'Notícias', descricao: 'Importa notícias do site antigo.', requiresPrograma: true, disponivel: false },
   { id: 'disciplinas', label: 'Disciplinas', descricao: 'Importa disciplinas do site antigo.', requiresPrograma: true, disponivel: false },
   { id: 'teses', label: 'Teses e Dissertações', descricao: 'Importa teses/dissertações do site antigo.', requiresPrograma: true, disponivel: false },

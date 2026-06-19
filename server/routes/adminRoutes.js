@@ -25,6 +25,7 @@ import {
 
 
 import { getLinhas, getLinhaById, createLinha, updateLinha, deleteLinha } from '../controllers/linhasPesquisaController.js';
+import { getTaxonomiaRefs, getTaxonomiaRefById, createTaxonomiaRef, updateTaxonomiaRef, deleteTaxonomiaRef } from '../controllers/taxonomiaRefsController.js';
 import { getTiposImportacao, runImportacao } from '../controllers/importController.js';
 
 import { login } from '../controllers/authController.js';
@@ -119,6 +120,8 @@ router.get('/calendarios/:id', getCalendarioById);
 router.get('/taxonomias', getTaxonomias);
 router.get('/linhas-pesquisa', optionalProtect, getLinhas);
 router.get('/linhas-pesquisa/:id', getLinhaById);
+router.get('/taxonomia-refs', optionalProtect, getTaxonomiaRefs);
+router.get('/taxonomia-refs/:id', optionalProtect, getTaxonomiaRefById);
 router.get('/teses-dissertacoes', getTeses);
 router.get('/teses-dissertacoes/:id', getTeseById);
 router.get('/faq', getFaqs);
@@ -149,6 +152,9 @@ router.post('/taxonomias', protect, requireRole(['Administrator', 'Gestor']), up
 router.post('/linhas-pesquisa', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), createLinha);
 router.put('/linhas-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), updateLinha);
 router.delete('/linhas-pesquisa/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), deleteLinha);
+router.post('/taxonomia-refs', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), createTaxonomiaRef);
+router.put('/taxonomia-refs/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), updateTaxonomiaRef);
+router.delete('/taxonomia-refs/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), deleteTaxonomiaRef);
 // Leitura da lista de usuários: também o Gestor de Programa, que precisa dela
 // para escolher docentes/discentes/coordenadores do seu programa. Criar/excluir
 // usuários continua restrito a Admin/Gestor.

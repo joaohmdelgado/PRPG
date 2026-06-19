@@ -576,3 +576,60 @@ export const linhasPesquisaRepo = {
     return map;
   },
 };
+
+// ================= Referências de Taxonomia (importação) ==========
+// Mapeia target_id legado do Drupal -> valor canônico, por campo. NULL em
+// programa_id = referência global; uma linha de programa sobrescreve a global.
+export const taxonomiaRefsRepo = {
+  // Lista refs filtrando por campo e/ou programa. Quando programaId é dado,
+  // retorna as do programa + as globais (programa_id IS NULL).
+  async getAll({ campo = null, programaId = null } = {}) {
+    const where = [];
+    const params = [];
+    if (campo) { params.push(campo); where.push(`campo = $${params.length}`); }
+    if (programaId) {
+      params.push(programaId);
+      where.push(`(programa_id = $${params.length} OR programa_id IS NULL)`);
+    }
+    const sql = `SELECT * FROM taxonomia_refs${where.length ? ' WHERE ' + where.join(' AND ') : ''}
+                 ORDER BY campo, valor`;
+    const { rows } = await query(sql, params);
+    return rows;
+  },
+  async getById(id) {
+    const { rows } = await query('SELECT * FROM taxonomia_refs WHERE id = $1', [id]);
+    return rows[0] || null;
+  },
+  async create(data) {
+    const { rows } = await query(
+      'INSERT INTO taxonomia_refs (campo, valor, programa_id, target_id) VALUES ($1,$2,$3,$4) RETURNING *',
+      [data.campo?.trim(), data.valor?.trim(), data.programa_id || null, data.target_id?.toString().trim() || null]
+    );
+    return rows[0];
+  },
+  async update(id, data) {
+    const { rows } = await query(
+      'UPDATE taxonomia_refs SET campo=$1, valor=$2, programa_id=$3, target_id=$4 WHERE id=$5 RETURNING *',
+      [data.campo?.trim(), data.valor?.trim(), data.programa_id || null, data.target_id?.toString().trim() || null, id]
+    );
+    return rows[0] || null;
+  },
+  async remove(id) {
+    const { rowCount } = await query('DELETE FROM taxonomia_refs WHERE id=$1', [id]);
+    return rowCount > 0;
+  },
+  // Resolve um target_id legado para o valor canônico. Prefere a referência do
+  // programa; cai na global (programa_id IS NULL). Retorna null se não houver.
+  async resolve(campo, targetId, programaId = null) {
+    const tid = targetId == null ? null : String(targetId).trim();
+    if (!tid) return null;
+    const { rows } = await query(
+      `SELECT valor FROM taxonomia_refs
+       WHERE campo = $1 AND target_id = $2 AND (programa_id = $3 OR programa_id IS NULL)
+       ORDER BY (programa_id IS NULL) ASC
+       LIMIT 1`,
+      [campo, tid, programaId]
+    );
+    return rows[0]?.valor ?? null;
+  },
+};

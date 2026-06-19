@@ -495,3 +495,63 @@ DELETE FROM taxonomias WHERE chave = 'linhas_pesquisa';
 
 -- Remove acad_linhas_pesquisa de users (substituída por user_linhas_pesquisa).
 ALTER TABLE users DROP COLUMN IF EXISTS acad_linhas_pesquisa;
+
+-- ============== Referências de Taxonomia (importação legada) ==============
+-- Mapeia o target_id legado do Drupal para um valor canônico, por campo.
+-- Espelha linhas_pesquisa: editável via CRUD, com target_id temporário.
+-- programa_id NULL = referência GLOBAL (padrão); uma linha com programa_id
+-- preenchido SOBRESCREVE a global para aquele programa. A resolução na
+-- importação busca primeiro a do programa, depois cai na global.
+CREATE TABLE IF NOT EXISTS taxonomia_refs (
+  id          SERIAL PRIMARY KEY,
+  campo       TEXT NOT NULL,        -- 'entrada' | 'situacao_aluno'
+  valor       TEXT NOT NULL,        -- valor canônico ('2023.1', 'Egresso')
+  programa_id TEXT REFERENCES programas(id) ON DELETE CASCADE,  -- NULL = global
+  target_id   TEXT                  -- ID legado do Drupal (chave de resolução)
+);
+-- A chave de resolução é (campo, programa_id, target_id). COALESCE trata o
+-- NULL global como valor concreto para que a unicidade/idempotência funcione.
+CREATE UNIQUE INDEX IF NOT EXISTS taxonomia_refs_uidx
+  ON taxonomia_refs(campo, COALESCE(programa_id, ''), target_id);
+CREATE INDEX IF NOT EXISTS taxonomia_refs_lookup_idx ON taxonomia_refs(campo, target_id);
+
+-- Seed GLOBAL (programa_id NULL) dos mapeamentos do Profiap. Idempotente:
+-- só insere se ainda não houver nenhuma referência global para o campo.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM taxonomia_refs WHERE campo='entrada' AND programa_id IS NULL) THEN
+    INSERT INTO taxonomia_refs (campo, valor, target_id) VALUES
+      ('entrada','2000.1','17'),('entrada','2000.2','18'),
+      ('entrada','2001.1','19'),('entrada','2001.2','20'),
+      ('entrada','2002.1','21'),('entrada','2002.2','22'),
+      ('entrada','2003.1','23'),('entrada','2003.2','24'),
+      ('entrada','2004.1','25'),('entrada','2004.2','26'),
+      ('entrada','2005.1','27'),('entrada','2005.2','45'),
+      ('entrada','2006.1','28'),('entrada','2006.2','46'),
+      ('entrada','2007.1','29'),('entrada','2007.2','47'),
+      ('entrada','2008.1','30'),('entrada','2008.1','31'),
+      ('entrada','2008.2','48'),
+      ('entrada','2009.1','32'),('entrada','2009.2','49'),
+      ('entrada','2010.1','33'),('entrada','2010.2','50'),
+      ('entrada','2011.1','34'),('entrada','2011.2','51'),
+      ('entrada','2012.1','35'),('entrada','2012.2','52'),
+      ('entrada','2013.1','36'),('entrada','2013.2','53'),
+      ('entrada','2014.1','37'),('entrada','2014.2','54'),
+      ('entrada','2015.1','38'),('entrada','2015.2','55'),
+      ('entrada','2016.1','39'),('entrada','2016.2','56'),
+      ('entrada','2017.1','40'),('entrada','2017.2','57'),
+      ('entrada','2018.1','41'),('entrada','2018.2','58'),
+      ('entrada','2019.1','42'),('entrada','2019.2','59'),
+      ('entrada','2020.1','43'),('entrada','2020.2','60'),
+      ('entrada','2021.1','44'),('entrada','2021.2','61'),
+      ('entrada','2022.1','2111'),('entrada','2022.2','2112'),
+      ('entrada','2023.1','2107'),('entrada','2023.2','2108'),
+      ('entrada','2024.1','2109'),('entrada','2024.2','2110');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM taxonomia_refs WHERE campo='situacao_aluno' AND programa_id IS NULL) THEN
+    INSERT INTO taxonomia_refs (campo, valor, target_id) VALUES
+      ('situacao_aluno','Matriculado','5'),
+      ('situacao_aluno','Egresso','6'),
+      ('situacao_aluno','Desistente','7');
+  END IF;
+END$$;
