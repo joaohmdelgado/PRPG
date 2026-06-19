@@ -74,8 +74,8 @@ export const getPeriodoAberto = async (req, res) => {
   res.json({
     id: edital.id,
     titulo: edital.title,
-    dataInicio: edital.field_periodo?.data_inicio ?? null,
-    dataFim: edital.field_periodo?.data_fim ?? null,
+    dataInicio: edital.field_periodo?.data_inicio ?? edital.periodo_data_inicio ?? null,
+    dataFim: edital.field_periodo?.data_fim ?? edital.periodo_data_fim ?? null,
   });
 };
 

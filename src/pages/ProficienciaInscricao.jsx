@@ -171,7 +171,7 @@ export default function ProficienciaInscricao() {
                 <form onSubmit={submit} className="bg-white rounded-lg border border-gray-200 p-6 space-y-5">
                   <p className="text-sm text-gray-500">
                     Período aberto: <strong>{periodo.titulo}</strong>
-                    {periodo.dataFim ? ` (até ${periodo.dataFim})` : ''}
+                    {periodo.dataFim ? ` (até ${new Date(periodo.dataFim + 'T12:00:00').toLocaleDateString('pt-BR')})` : ''}
                   </p>
 
                   {erro && (
