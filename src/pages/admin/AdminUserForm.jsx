@@ -5,6 +5,7 @@ import { ArrowLeft, Save, Shield, Plus, Trash2, X, Search } from 'lucide-react';
 import { API_URL } from '../../api';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
+import NACIONALIDADES from '../../data/nacionalidades';
 
 const ROLES = ['Administrator', 'Gestor', 'GestorPrograma', 'Secretário(a)', 'Professor', 'Aluno'];
 const ROLE_LABELS = { GestorPrograma: 'Gestor de Programa' };
@@ -15,8 +16,8 @@ const SITUACOES_ALUNO_FALLBACK = ['Matriculado', 'Trancado', 'Desistente', 'Egre
 
 const emptyGeral = { nome: '', cpf: '', siape: '', telefones: [''] };
 const emptyAcademicos = { lattes: '', orcid: '', google_scholar: '', publons: '', linhas_pesquisa: '' };
-const emptyAluno = { nivel: 'Mestrando', entrada: '', orientador_id: '', qualificacao: '', defesa: '', situacao: 'Matriculado', egresso: false, estrangeiro: false, nacionalidade: '' };
-const emptyProfessor = { tipo_professor: 'Permanente', programas: [] };
+const emptyAluno = { nivel: 'Mestrando', entrada: '', orientador_id: '', qualificacao: '', defesa: '', situacao: 'Matriculado', estrangeiro: false, nacionalidade: 'brasileiro(a)' };
+const emptyProfessor = { tipo_professor: 'Permanente', programas: [], estrangeiro: false, nacionalidade: 'brasileiro(a)' };
 const defaultPrivacidade = { perfil_publico: true, mostrar_email: true, mostrar_telefone: false, mostrar_lattes: true };
 
 const AdminUserForm = () => {
@@ -609,6 +610,21 @@ const AdminUserForm = () => {
                 </div>
               )}
             </div>
+            <div className="flex items-center pt-2">
+              <label className="flex items-center gap-2 font-medium">
+                <input type="checkbox" name="estrangeiro" checked={!!formData.perfil_professor.estrangeiro} onChange={e => handleChange(e, 'perfil_professor')} className="w-5 h-5" />
+                Professor estrangeiro
+              </label>
+            </div>
+            {formData.perfil_professor.estrangeiro && (
+              <div>
+                <label className="block text-sm font-medium mb-1">Nacionalidade</label>
+                <select name="nacionalidade" value={formData.perfil_professor.nacionalidade || ''} onChange={e => handleChange(e, 'perfil_professor')} className="w-full border p-2 rounded bg-white">
+                  <option value="">Selecione...</option>
+                  {NACIONALIDADES.map(n => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </div>
+            )}
           </section>
         )}
 
@@ -649,12 +665,6 @@ const AdminUserForm = () => {
                   })()}
                 </select>
               </div>
-              <div className="flex items-center pt-6">
-                <label className="flex items-center gap-2 font-medium">
-                  <input type="checkbox" name="egresso" checked={formData.perfil_aluno.egresso} onChange={e => handleChange(e, 'perfil_aluno')} className="w-5 h-5" />
-                  Marcar como Egresso
-                </label>
-              </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Data de Qualificação</label>
                 <input type="date" name="qualificacao" value={formData.perfil_aluno.qualificacao} onChange={e => handleChange(e, 'perfil_aluno')} className="w-full border p-2 rounded bg-white" />
@@ -669,10 +679,15 @@ const AdminUserForm = () => {
                   Aluno estrangeiro
                 </label>
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Nacionalidade</label>
-                <input type="text" name="nacionalidade" value={formData.perfil_aluno.nacionalidade || ''} onChange={e => handleChange(e, 'perfil_aluno')} placeholder="Ex.: Brasileira" className="w-full border p-2 rounded bg-white" />
-              </div>
+              {formData.perfil_aluno.estrangeiro && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Nacionalidade</label>
+                  <select name="nacionalidade" value={formData.perfil_aluno.nacionalidade || ''} onChange={e => handleChange(e, 'perfil_aluno')} className="w-full border p-2 rounded bg-white">
+                    <option value="">Selecione...</option>
+                    {NACIONALIDADES.map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+              )}
             </div>
           </section>
         )}

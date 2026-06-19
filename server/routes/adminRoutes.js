@@ -245,7 +245,7 @@ router.get('/proficiencia/inscricoes/minhas', protect, getMinhasInscricoes);
 router.get('/proficiencia/inscricoes', protect, requireRole(['Administrator', 'Gestor']), getInscricoes);
 router.get('/proficiencia/inscricoes/:id', protect, requireRole(['Administrator', 'Gestor']), getInscricaoById);
 router.put('/proficiencia/inscricoes/:id/nota', protect, requireRole(['Administrator', 'Gestor']), lancarNota);
-router.delete('/proficiencia/inscricoes/:id', protect, requireRole(['Administrator', 'Gestor']), deleteInscricao);
+router.delete('/proficiencia/inscricoes/:id', protect, requireRole(['Administrator']), deleteInscricao);
 router.get('/proficiencia/inscricoes/:id/declaracao', protect, requireRole(['Administrator', 'Gestor']), gerarDeclaracao);
 
 export default router;

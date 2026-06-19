@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URL } from '../../api';
-import { Languages, FileText, Loader2, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
+import { Languages, FileText, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trash2 } from 'lucide-react';
+import { useConfirm } from '../../components/admin/ConfirmModal';
 
 const token = () => localStorage.getItem('token');
 const authHeaders = () => ({ Authorization: `Bearer ${token()}` });
@@ -12,6 +13,11 @@ const RESULTADO_LABEL = {
   INSUFICIENTE: { txt: 'Insuficiente', cls: 'bg-red-100 text-red-700'    },
 };
 
+const isAdmin = () => {
+  try { return JSON.parse(localStorage.getItem('roles') || '[]').includes('Administrator'); }
+  catch { return false; }
+};
+
 const AdminProficiencia = () => {
   const [inscricoes, setInscricoes] = useState([]);
   const [periodoAberto, setPeriodoAberto] = useState(null);
@@ -19,6 +25,9 @@ const AdminProficiencia = () => {
   const [erro, setErro] = useState('');
   const [notas, setNotas] = useState({});
   const [salvandoId, setSalvandoId] = useState(null);
+  const [excluindoId, setExcluindoId] = useState(null);
+  const { confirm, ConfirmModal } = useConfirm();
+  const admin = isAdmin();
 
   const carregar = async () => {
     try {
@@ -53,6 +62,22 @@ const AdminProficiencia = () => {
       else setErro(d.message || 'Erro ao lançar nota.');
     } catch { setErro('Erro de conexão.'); }
     finally { setSalvandoId(null); }
+  };
+
+  const excluirInscricao = async (id) => {
+    const confirmado = await confirm('Confirma a exclusão desta inscrição? Esta ação é irreversível.');
+    if (!confirmado) return;
+    setExcluindoId(id);
+    setErro('');
+    try {
+      const res = await fetch(`${API_URL}/api/proficiencia/inscricoes/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders(),
+      });
+      if (res.ok) setInscricoes((prev) => prev.filter((i) => i.id !== id));
+      else { const d = await res.json().catch(() => ({})); setErro(d.message || 'Erro ao excluir inscrição.'); }
+    } catch { setErro('Erro de conexão.'); }
+    finally { setExcluindoId(null); }
   };
 
   const abrirDeclaracao = async (id) => {
@@ -108,7 +133,8 @@ const AdminProficiencia = () => {
                   <th className="py-2 pr-3">Documentos</th>
                   <th className="py-2 pr-3">Nota</th>
                   <th className="py-2 pr-3">Resultado</th>
-                  <th className="py-2">Declaração</th>
+                  <th className="py-2 pr-3">Declaração</th>
+                  {admin && <th className="py-2"></th>}
                 </tr>
               </thead>
               <tbody>
@@ -159,7 +185,7 @@ const AdminProficiencia = () => {
                           ? <span className={`px-2 py-0.5 rounded text-xs font-medium ${r.cls}`}>{r.txt}</span>
                           : <span className="text-gray-400 text-xs">—</span>}
                       </td>
-                      <td className="py-2">
+                      <td className="py-2 pr-3">
                         {podeDeclarar
                           ? <button onClick={() => abrirDeclaracao(i.id)}
                               className="text-xs border border-ufrpe-blue text-ufrpe-blue px-2 py-1 rounded hover:bg-ufrpe-blue hover:text-white flex items-center gap-1">
@@ -167,6 +193,18 @@ const AdminProficiencia = () => {
                             </button>
                           : <span className="text-gray-300 text-xs">—</span>}
                       </td>
+                      {admin && (
+                        <td className="py-2">
+                          <button
+                            onClick={() => excluirInscricao(i.id)}
+                            disabled={excluindoId === i.id}
+                            className="text-xs border border-red-400 text-red-500 px-2 py-1 rounded hover:bg-red-500 hover:text-white disabled:opacity-50 flex items-center gap-1"
+                            title="Excluir inscrição"
+                          >
+                            {excluindoId === i.id ? <Loader2 className="animate-spin" size={12} /> : <Trash2 size={12} />}
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -175,6 +213,8 @@ const AdminProficiencia = () => {
           </div>
         )}
       </section>
+
+      {ConfirmModal}
     </div>
   );
 };
