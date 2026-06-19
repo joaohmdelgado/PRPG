@@ -7,16 +7,19 @@ import { Plus, Edit2, Trash2, Users } from 'lucide-react';
 import { API_URL } from '../../api';
 import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
+import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
 
 const AdminGruposPesquisa = () => {
   const [grupos, setGrupos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const users = useUsers();
   const { confirm, ConfirmModal } = useConfirm();
   const { toast, Toasts } = useToast();
+  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(grupos);
 
   const fetchGrupos = async () => {
     try {
@@ -64,6 +67,17 @@ const AdminGruposPesquisa = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!selectedCount) return;
+    if (!await confirm(`Excluir ${selectedCount === 1 ? 'o grupo selecionado' : `os ${selectedCount} grupos selecionados`}? Esta ação não pode ser desfeita.`)) return;
+    setDeleting(true);
+    const { failed } = await bulkDelete(`${API_URL}/api/grupos-pesquisa`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    setDeleting(false);
+    if (failed) toast.error(`${failed} ${failed === 1 ? 'grupo não pôde ser removido' : 'grupos não puderam ser removidos'}.`);
+    clear();
+    fetchGrupos();
+  };
+
   if (loading) return <TableSkeleton />;
 
   return (
@@ -84,10 +98,15 @@ const AdminGruposPesquisa = () => {
 
       {error && <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">{error}</div>}
 
+      <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
+
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-6 py-3 w-px">
+                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={grupos.length === 0} />
+              </th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500 w-1/3">Título</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500 w-1/3">Líderes</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500 w-1/4">Resumo</th>
@@ -101,7 +120,10 @@ const AdminGruposPesquisa = () => {
                 : 'Nenhum líder associado';
 
               return (
-                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${isSelected(item.id) ? 'bg-ufrpe-blue/5' : ''}`}>
+                  <td className="px-6 py-4">
+                    <RowCheckbox checked={isSelected(item.id)} onToggle={() => toggle(item.id)} label={`Selecionar ${item.title}`} />
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                     {item.title}
                     <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
@@ -132,7 +154,7 @@ const AdminGruposPesquisa = () => {
               );
             })}
             {grupos.length === 0 && (
-              <EmptyRow colSpan={4} message="Nenhum grupo de pesquisa cadastrado." />
+              <EmptyRow colSpan={5} message="Nenhum grupo de pesquisa cadastrado." />
             )}
           </tbody>
         </table>

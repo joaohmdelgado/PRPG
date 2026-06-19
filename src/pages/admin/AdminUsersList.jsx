@@ -6,13 +6,16 @@ import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { API_URL } from '../../api';
 import { LastEdited } from '../../components/AuditInfo';
+import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 
 const AdminUsersList = () => {
   const { confirm, ConfirmModal } = useConfirm();
   const { toast, Toasts } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
+  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(users);
 
   const fetchUsers = async () => {
     try {
@@ -58,6 +61,17 @@ const AdminUsersList = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!selectedCount) return;
+    if (!await confirm(`Excluir ${selectedCount === 1 ? 'o usuário selecionado' : `os ${selectedCount} usuários selecionados`}? Esta ação não pode ser desfeita.`)) return;
+    setDeleting(true);
+    const { failed } = await bulkDelete(`${API_URL}/api/users`, selectedIds);
+    setDeleting(false);
+    if (failed) toast.error(`${failed} ${failed === 1 ? 'usuário não pôde ser removido' : 'usuários não puderam ser removidos'}.`);
+    clear();
+    fetchUsers();
+  };
+
   // Rótulo do programa: usa a sigla, salvo quando vazia/genérica, aí o nome.
   const labelPrograma = (p) =>
     p.sigla && p.sigla !== 'S/SIGLA' ? p.sigla : p.nome;
@@ -79,10 +93,15 @@ const AdminUsersList = () => {
 
       {error && <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">{error}</div>}
 
+      <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
+
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="p-4 w-px">
+                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={users.length === 0} />
+              </th>
               <th className="p-4 font-medium text-gray-600">Nome / E-mail</th>
               <th className="p-4 font-medium text-gray-600">Papéis (Roles)</th>
               <th className="p-4 font-medium text-gray-600">Programas</th>
@@ -92,7 +111,10 @@ const AdminUsersList = () => {
           </thead>
           <tbody>
             {users.map(user => (
-              <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+              <tr key={user.id} className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${isSelected(user.id) ? 'bg-ufrpe-blue/5' : ''}`}>
+                <td className="p-4">
+                  <RowCheckbox checked={isSelected(user.id)} onToggle={() => toggle(user.id)} label={`Selecionar ${user.perfil_geral?.nome || user.email}`} />
+                </td>
                 <td className="p-4">
                   <div className="font-medium text-gray-800">{user.perfil_geral?.nome || 'Sem Nome'}</div>
                   <div className="text-sm text-gray-500">{user.email}</div>
@@ -153,7 +175,7 @@ const AdminUsersList = () => {
               </tr>
             ))}
             {users.length === 0 && (
-              <EmptyRow colSpan={5} message="Nenhum usuário cadastrado." />
+              <EmptyRow colSpan={6} message="Nenhum usuário cadastrado." />
             )}
           </tbody>
         </table>

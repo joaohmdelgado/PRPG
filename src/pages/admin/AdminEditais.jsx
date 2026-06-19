@@ -6,14 +6,17 @@ import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { API_URL } from '../../api';
 import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
+import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
 
 const AdminEditais = () => {
   const [editais, setEditais] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
   const users = useUsers();
   const { confirm, ConfirmModal } = useConfirm();
+  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(editais);
 
   const fetchEditais = async () => {
     try {
@@ -52,6 +55,16 @@ const AdminEditais = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!selectedCount) return;
+    if (!await confirm(`Excluir ${selectedCount === 1 ? 'o edital selecionado' : `os ${selectedCount} editais selecionados`}? Esta ação não pode ser desfeita.`)) return;
+    setDeleting(true);
+    await bulkDelete(`${API_URL}/api/editais`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    setDeleting(false);
+    clear();
+    fetchEditais();
+  };
+
   if (loading) return <TableSkeleton />;
 
   return (
@@ -67,10 +80,15 @@ const AdminEditais = () => {
         </Link>
       </div>
 
+      <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
+
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-6 py-3 w-px">
+                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={editais.length === 0} />
+              </th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Título</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Categoria</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Situação</th>
@@ -80,7 +98,10 @@ const AdminEditais = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {editais.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50">
+              <tr key={item.id} className={`hover:bg-gray-50 ${isSelected(item.id) ? 'bg-ufrpe-blue/5' : ''}`}>
+                <td className="px-6 py-4">
+                  <RowCheckbox checked={isSelected(item.id)} onToggle={() => toggle(item.id)} label={`Selecionar ${item.title}`} />
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   {item.title}
                   <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
@@ -113,7 +134,7 @@ const AdminEditais = () => {
               </tr>
             ))}
             {editais.length === 0 && (
-              <EmptyRow colSpan={5} message="Nenhum edital encontrado." />
+              <EmptyRow colSpan={6} message="Nenhum edital encontrado." />
             )}
           </tbody>
         </table>

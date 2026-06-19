@@ -6,6 +6,7 @@ import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { API_URL } from '../../api';
 import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
+import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
 
 const formatDate = (dateStr) => {
@@ -26,9 +27,11 @@ const formatDate = (dateStr) => {
 const AdminNoticias = () => {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
   const users = useUsers();
   const { confirm, ConfirmModal } = useConfirm();
+  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(news);
 
   const fetchNews = async () => {
     try {
@@ -67,6 +70,16 @@ const AdminNoticias = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!selectedCount) return;
+    if (!await confirm(`Excluir ${selectedCount === 1 ? 'a notícia selecionada' : `as ${selectedCount} notícias selecionadas`}? Esta ação não pode ser desfeita.`)) return;
+    setDeleting(true);
+    await bulkDelete(`${API_URL}/api/news`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    setDeleting(false);
+    clear();
+    fetchNews();
+  };
+
   if (loading) return <TableSkeleton />;
 
   return (
@@ -82,10 +95,15 @@ const AdminNoticias = () => {
         </Link>
       </div>
 
+      <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
+
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-6 py-3 w-px">
+                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={news.length === 0} />
+              </th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Título</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Categoria</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Data</th>
@@ -94,7 +112,10 @@ const AdminNoticias = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {news.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50">
+              <tr key={item.id} className={`hover:bg-gray-50 ${isSelected(item.id) ? 'bg-ufrpe-blue/5' : ''}`}>
+                <td className="px-6 py-4">
+                  <RowCheckbox checked={isSelected(item.id)} onToggle={() => toggle(item.id)} label={`Selecionar ${item.title}`} />
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   {item.title}
                   <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
@@ -122,7 +143,7 @@ const AdminNoticias = () => {
               </tr>
             ))}
             {news.length === 0 && (
-              <EmptyRow colSpan={4} message="Nenhuma notícia encontrada." />
+              <EmptyRow colSpan={5} message="Nenhuma notícia encontrada." />
             )}
           </tbody>
         </table>

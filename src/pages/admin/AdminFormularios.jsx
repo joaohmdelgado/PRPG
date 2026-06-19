@@ -6,14 +6,17 @@ import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { API_URL } from '../../api';
 import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
+import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
 
 const AdminFormularios = () => {
   const [formularios, setFormularios] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
   const users = useUsers();
   const { confirm, ConfirmModal } = useConfirm();
+  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(formularios);
 
   const fetchFormularios = async () => {
     try {
@@ -52,6 +55,16 @@ const AdminFormularios = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (!selectedCount) return;
+    if (!await confirm(`Excluir ${selectedCount === 1 ? 'o formulário selecionado' : `os ${selectedCount} formulários selecionados`}? Esta ação não pode ser desfeita.`)) return;
+    setDeleting(true);
+    await bulkDelete(`${API_URL}/api/formularios`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    setDeleting(false);
+    clear();
+    fetchFormularios();
+  };
+
   if (loading) return <TableSkeleton />;
 
   return (
@@ -67,10 +80,15 @@ const AdminFormularios = () => {
         </Link>
       </div>
 
+      <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
+
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-6 py-3 w-px">
+                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={formularios.length === 0} />
+              </th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Título</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Seção</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Subcategoria</th>
@@ -79,7 +97,10 @@ const AdminFormularios = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {formularios.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50">
+              <tr key={item.id} className={`hover:bg-gray-50 ${isSelected(item.id) ? 'bg-ufrpe-blue/5' : ''}`}>
+                <td className="px-6 py-4">
+                  <RowCheckbox checked={isSelected(item.id)} onToggle={() => toggle(item.id)} label={`Selecionar ${item.title}`} />
+                </td>
                 <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                   {item.title}
                   <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
@@ -107,7 +128,7 @@ const AdminFormularios = () => {
               </tr>
             ))}
             {formularios.length === 0 && (
-              <EmptyRow colSpan={4} message="Nenhum formulário encontrado." />
+              <EmptyRow colSpan={5} message="Nenhum formulário encontrado." />
             )}
           </tbody>
         </table>

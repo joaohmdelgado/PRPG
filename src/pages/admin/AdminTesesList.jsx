@@ -6,11 +6,13 @@ import { Plus, Edit2, Trash2, Search, BookOpen, GraduationCap, FileText } from '
 import { API_URL } from '../../api';
 import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
+import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
 
 const AdminTesesList = () => {
   const [teses, setTeses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const users = useUsers();
@@ -71,6 +73,18 @@ const AdminTesesList = () => {
     return title.toLowerCase().includes(query) || autor.toLowerCase().includes(query);
   });
 
+  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(filteredTeses);
+
+  const handleBulkDelete = async () => {
+    if (!selectedCount) return;
+    if (!await confirm(`Excluir ${selectedCount === 1 ? 'o registro selecionado' : `os ${selectedCount} registros selecionados`}? Esta ação não pode ser desfeita.`)) return;
+    setDeleting(true);
+    await bulkDelete(`${API_URL}/api/teses-dissertacoes`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    setDeleting(false);
+    clear();
+    fetchTeses();
+  };
+
   if (loading) {
     return (
       <TableSkeleton />
@@ -112,10 +126,15 @@ const AdminTesesList = () => {
         />
       </div>
 
+      <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
+
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="px-6 py-3 w-px">
+                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={filteredTeses.length === 0} />
+              </th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Título</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Tipo</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Autor (Aluno)</th>
@@ -126,7 +145,10 @@ const AdminTesesList = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {filteredTeses.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+              <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${isSelected(item.id) ? 'bg-ufrpe-blue/5' : ''}`}>
+                <td className="px-6 py-4">
+                  <RowCheckbox checked={isSelected(item.id)} onToggle={() => toggle(item.id)} label={`Selecionar ${item.title}`} />
+                </td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs md:max-w-md" title={item.title}>
                   <div className="truncate">{item.title}</div>
                   <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
@@ -185,7 +207,7 @@ const AdminTesesList = () => {
               </tr>
             ))}
             {filteredTeses.length === 0 && (
-              <EmptyRow colSpan={6} message="Nenhuma tese ou dissertação encontrada." />
+              <EmptyRow colSpan={7} message="Nenhuma tese ou dissertação encontrada." />
             )}
           </tbody>
         </table>
