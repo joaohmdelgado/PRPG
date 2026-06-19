@@ -115,14 +115,8 @@ export default function ProgramaLayout({ children }) {
               </li>
             ))}
           </ul>
-          {/* Atalho ao site antigo + busca */}
+          {/* Busca */}
           <div className="flex items-center gap-2">
-            {programa.site && (
-              <a href={programa.site} target="_blank" rel="noopener noreferrer"
-                className="hidden md:inline-flex items-center gap-2 text-xs text-gray-400 hover:text-[var(--prog-primary)] transition-colors mr-2">
-                <i className="fa-solid fa-arrow-up-right-from-square"></i> Site anterior
-              </a>
-            )}
             {searchOpen ? (
               <form onSubmit={(e) => { e.preventDefault(); if (searchVal.trim().length >= 2) { navigate(`/${slug}/busca?q=${encodeURIComponent(searchVal.trim())}`); setSearchOpen(false); setSearchVal(''); } }}
                 className="flex items-center gap-1">

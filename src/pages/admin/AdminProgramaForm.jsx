@@ -555,10 +555,6 @@ const AdminProgramaForm = () => {
           <input type="text" name="codigo_capes" value={formData.codigo_capes} onChange={handleChange} className="w-full border p-2 rounded" placeholder="Ex: 25003011022P7" />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Site</label>
-          <input type="url" name="site" value={formData.site} onChange={handleChange} className="w-full border p-2 rounded" placeholder="https://" />
-        </div>
-        <div>
           <label className="block text-sm font-medium mb-1">Campus</label>
           <select name="campus" value={formData.campus} onChange={handleChange} className="w-full border p-2 rounded">
             <option value="SEDE">Sede Recife</option>
@@ -574,7 +570,7 @@ const AdminProgramaForm = () => {
           Programa em Rede
         </label>
         {formData.em_rede && (
-          <input type="text" name="nome_rede" value={formData.nome_rede} onChange={handleChange} placeholder="Nome da Rede (ex: PROFIAP)" className="border p-2 rounded flex-1" />
+          <input type="url" name="nome_rede" value={formData.nome_rede} onChange={handleChange} placeholder="Site da Rede (ex: https://profiap.org.br)" className="border p-2 rounded flex-1" />
         )}
       </div>
 
