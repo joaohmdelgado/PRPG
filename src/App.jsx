@@ -72,6 +72,7 @@ import AdminMetricas from './pages/admin/AdminMetricas';
 import AdminImportacao from './pages/admin/AdminImportacao';
 import AdminProficiencia from './pages/admin/AdminProficiencia';
 import ProficienciaInscricao from './pages/ProficienciaInscricao';
+import ProficienciaInscricaoSucesso from './pages/ProficienciaInscricaoSucesso';
 import PageView from './pages/PageView';
 
 function NotFoundPublic() {
@@ -196,6 +197,7 @@ function App() {
         <Route path="/resolucoes" element={<Resolucoes />} />
         <Route path="/formularios" element={<Formularios />} />
         <Route path="/proficiencia/inscricao" element={<ProficienciaInscricao />} />
+        <Route path="/proficiencia/inscricao/sucesso" element={<ProficienciaInscricaoSucesso />} />
         <Route path="/relatorios-autoavaliacao" element={<RelatoriosAutoavaliacao />} />
         <Route path="/especializacao" element={<Especializacao />} />
         <Route path="/residencia-profissional" element={<ResidenciaProfissional />} />

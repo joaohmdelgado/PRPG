@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { API_URL } from '../api';
 import { Languages, Upload, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
@@ -14,12 +14,12 @@ const regraLinguas = ({ nivel, estrangeiro }) => {
 };
 
 export default function ProficienciaInscricao() {
+  const navigate = useNavigate();
   const [periodo, setPeriodo] = useState(null);
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [uploadField, setUploadField] = useState(null);
   const [erro, setErro] = useState('');
-  const [sucesso, setSucesso] = useState('');
 
   // Verificação do aluno matriculado a partir do nome completo.
   // estado: 'idle' | 'checking' | 'ok' | 'notfound'
@@ -132,7 +132,6 @@ export default function ProficienciaInscricao() {
   const submit = async (e) => {
     e.preventDefault();
     setErro('');
-    setSucesso('');
     setEnviando(true);
     try {
       const res = await fetch(`${API_URL}/api/proficiencia/inscricoes`, {
@@ -142,14 +141,12 @@ export default function ProficienciaInscricao() {
       });
       const data = await res.json();
       if (res.ok) {
-        setSucesso('Inscrição enviada com sucesso!');
-        setForm({
-          nome: '', cpf: '', nivel: 'Mestrado', estrangeiro: false,
-          linguas: [], comprovanteResidenciaUrl: '', titularComprovante: true,
-          comprovanteVinculoUrl: '',
+        // Redireciona para a página de confirmação (com SEO próprio), passando
+        // o estado que autoriza a exibição e o protocolo gerado.
+        navigate('/proficiencia/inscricao/sucesso', {
+          state: { fromInscricao: true, protocolo: data?.id },
         });
-        setVerificacao('idle');
-        setNomeVerificado('');
+        return;
       } else {
         setErro(data.message || 'Não foi possível enviar a inscrição.');
       }
@@ -196,13 +193,6 @@ export default function ProficienciaInscricao() {
                 <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4">
                   <AlertCircle size={20} className="shrink-0 mt-0.5" />
                   <p>Não há período de inscrição aberto no momento.</p>
-                </div>
-              )}
-
-              {periodo && sucesso && (
-                <div className="flex items-start gap-2 bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 mb-6">
-                  <CheckCircle2 size={20} className="shrink-0 mt-0.5" />
-                  <p>{sucesso}</p>
                 </div>
               )}
 
