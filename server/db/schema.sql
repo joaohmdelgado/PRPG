@@ -113,7 +113,6 @@ CREATE TABLE IF NOT EXISTS programas (
   id                TEXT PRIMARY KEY,
   nome              TEXT,
   sigla             TEXT,
-  site              TEXT,
   codigo_capes      TEXT,
   campus            TEXT,
   em_rede           BOOLEAN DEFAULT FALSE,

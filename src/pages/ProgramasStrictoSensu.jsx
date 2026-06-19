@@ -371,16 +371,6 @@ export default function ProgramasStrictoSensu() {
                                 )}
                               </div>
                             )}
-                            {prog.site && (
-                              <a
-                                href={prog.site}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="block w-full text-center py-2.5 bg-gray-50 border border-gray-100 text-ufrpe-blue font-bold text-sm rounded-lg hover:bg-ufrpe-blue hover:border-ufrpe-blue hover:text-white transition-colors"
-                              >
-                                <i className="fa-solid fa-arrow-up-right-from-square mr-2 opacity-50"></i> Site do Programa
-                              </a>
-                            )}
                           </div>
                         </div>
                       ))}

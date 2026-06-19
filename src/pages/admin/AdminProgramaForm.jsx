@@ -85,7 +85,6 @@ const initialFormData = {
   nome: '',
   sigla: '',
   codigo_capes: '',
-  site: '',
   campus: 'SEDE',
   em_rede: false,
   nome_rede: '',

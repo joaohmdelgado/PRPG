@@ -348,7 +348,7 @@ export const createPrograma = async (req, res) => {
 
     await query(
       `INSERT INTO programas
-        (id,nome,sigla,site,codigo_capes,campus,em_rede,nome_rede,grande_area,
+        (id,nome,sigla,codigo_capes,campus,em_rede,nome_rede,grande_area,
          area_conhecimento,area_avaliacao,
          status,status_descricao,data_credenciamento,data_descredenciamento,
          bloco,sala,cep,telefone_secretaria,horario_atendimento,email_programa,
@@ -356,11 +356,11 @@ export const createPrograma = async (req, res) => {
          slug,microsite_ativo,logo_url,cor_primaria,cor_secundaria,descricao_curta,
          hero_imagem_url,endereco,whatsapp,instagram_url,facebook_url,youtube_url,mapa_embed,
          criado_em,atualizado_em,criado_por,atualizado_por)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
-               $12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,
-               $26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,
-               $39,$39,$40,$40)`,
-      [progId, data.nome, data.sigla ? data.sigla.toUpperCase() : '', data.site || '',
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
+               $11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,
+               $25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,
+               $38,$38,$39,$39)`,
+      [progId, data.nome, data.sigla ? data.sigla.toUpperCase() : '',
        data.codigo_capes || '', data.campus || 'SEDE', data.em_rede || false, data.nome_rede || '',
        data.grande_area || '', data.area_conhecimento || '', data.area_avaliacao || '',
        normalizeStatus(data.status), strOrNull(data.status_descricao),
@@ -407,21 +407,21 @@ export const updatePrograma = async (req, res) => {
     }
 
     await query(
-      `UPDATE programas SET nome=$1, sigla=$2, site=$3, codigo_capes=$4, campus=$5, em_rede=$6,
-        nome_rede=$7, grande_area=$8, area_conhecimento=$9, area_avaliacao=$10,
-        status=$11, status_descricao=$12, data_credenciamento=$13, data_descredenciamento=$14,
-        bloco=$15, sala=$16, cep=$17, telefone_secretaria=$18, horario_atendimento=$19,
-        email_programa=$20, regimento_url=$21, regulamento_url=$22, sucupira_url=$23,
-        palavras_chave=$24,
-        slug=$27, microsite_ativo=$28, logo_url=$29, cor_primaria=$30, cor_secundaria=$31,
-        descricao_curta=$32, hero_imagem_url=$33, endereco=$34, whatsapp=$35,
-        instagram_url=$36, facebook_url=$37, youtube_url=$38, mapa_embed=$39,
-        atualizado_em=$25, atualizado_por=COALESCE($26, atualizado_por)
-       WHERE id=$40`,
+      `UPDATE programas SET nome=$1, sigla=$2, codigo_capes=$3, campus=$4, em_rede=$5,
+        nome_rede=$6, grande_area=$7, area_conhecimento=$8, area_avaliacao=$9,
+        status=$10, status_descricao=$11, data_credenciamento=$12, data_descredenciamento=$13,
+        bloco=$14, sala=$15, cep=$16, telefone_secretaria=$17, horario_atendimento=$18,
+        email_programa=$19, regimento_url=$20, regulamento_url=$21, sucupira_url=$22,
+        palavras_chave=$23,
+        slug=$26, microsite_ativo=$27, logo_url=$28, cor_primaria=$29, cor_secundaria=$30,
+        descricao_curta=$31, hero_imagem_url=$32, endereco=$33, whatsapp=$34,
+        instagram_url=$35, facebook_url=$36, youtube_url=$37, mapa_embed=$38,
+        atualizado_em=$24, atualizado_por=COALESCE($25, atualizado_por)
+       WHERE id=$39`,
       [
         data.nome || existing.nome,
         data.sigla ? data.sigla.toUpperCase() : existing.sigla,
-        pick(data.site, existing.site), pick(data.codigo_capes, existing.codigo_capes),
+        pick(data.codigo_capes, existing.codigo_capes),
         data.campus || existing.campus, pick(data.em_rede, existing.em_rede),
         pick(data.nome_rede, existing.nome_rede), pick(data.grande_area, existing.grande_area),
         pick(data.area_conhecimento, existing.area_conhecimento),
