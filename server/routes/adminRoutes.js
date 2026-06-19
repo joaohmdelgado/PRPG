@@ -20,7 +20,7 @@ import { getPages, getPageById, getPageBySlug, createPage, updatePage, deletePag
 import { getMetricas, getMetricaById, createMetrica, updateMetrica, deleteMetrica } from '../controllers/metricasController.js';
 import {
   getPeriodoAberto, createInscricao, getMinhasInscricoes, getInscricoes,
-  getInscricaoById, lancarNota, deleteInscricao, gerarDeclaracao,
+  getInscricaoById, lancarNota, deleteInscricao, gerarDeclaracao, verificarAluno,
 } from '../controllers/proficienciaController.js';
 
 
@@ -242,6 +242,7 @@ router.delete('/pages/:id', protect, requireProgramaOwnership((id) => pagesRepo.
 // Consulta do período aberto e a própria inscrição são públicas: o aluno se
 // inscreve sem precisar de login.
 router.get('/proficiencia/periodo-aberto', getPeriodoAberto);
+router.post('/proficiencia/verificar-aluno', verificarAluno);
 router.post('/proficiencia/inscricoes', createInscricao);
 // Upload público dos comprovantes da inscrição (mesmas regras do /upload).
 router.post('/proficiencia/upload', (req, res) => {

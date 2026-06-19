@@ -79,6 +79,36 @@ export const getPeriodoAberto = async (req, res) => {
   });
 };
 
+// ===================== Verificação de aluno matriculado =====================
+
+// Papéis de vínculo que caracterizam um discente ativo (matriculado), excluindo egressos.
+const PAPEIS_DISCENTE_ATIVO = ['DISCENTE_MESTRADO', 'DISCENTE_DOUTORADO', 'DISCENTE_PROFISSIONAL'];
+
+// Normaliza um nome para comparação: tira espaços das pontas, colapsa espaços
+// internos e passa para minúsculas. Mantém os acentos (o nome deve bater por igual).
+const normalizarNome = (nome) =>
+  String(nome || '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+// Verifica (publicamente) se o nome completo informado corresponde EXATAMENTE ao
+// nome de um aluno matriculado (vínculo discente ativo) em algum programa.
+export const verificarAluno = async (req, res) => {
+  if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
+  const alvo = normalizarNome(req.body.nome);
+  if (!alvo) return res.status(400).json({ message: 'Informe o nome completo.' });
+
+  const { rows } = await query(
+    `SELECT 1
+       FROM users u
+       JOIN vinculos v ON v.pessoa_id = u.id
+      WHERE v.ativo = TRUE
+        AND v.papel = ANY($1::text[])
+        AND lower(regexp_replace(btrim(u.perfil_geral->>'nome'), '\\s+', ' ', 'g')) = $2
+      LIMIT 1`,
+    [PAPEIS_DISCENTE_ATIVO, alvo]
+  );
+  res.json({ encontrado: rows.length > 0 });
+};
+
 // ============================== Inscrições ==============================
 
 export const createInscricao = async (req, res) => {
