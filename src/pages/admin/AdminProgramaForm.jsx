@@ -372,6 +372,16 @@ const AdminProgramaForm = () => {
 
       if (response.ok) {
         if (!isEditing) localStorage.removeItem(DRAFT_KEY);
+        // Se o gestor logado é deste programa, sincroniza o slug no localStorage
+        // para que o botão "Ver microsite" reflita o novo endereço sem precisar de novo login.
+        const gestorAtual = getGestorPrograma();
+        if (gestorAtual && gestorAtual.id === id) {
+          const saved = await response.json().catch(() => null);
+          // O servidor normaliza/gera o slug (inclusive quando o campo fica em
+          // branco); prioriza o valor persistido e só recorre ao do formulário.
+          const novoSlug = saved?.slug || formData.slug || gestorAtual.slug;
+          localStorage.setItem('gestorPrograma', JSON.stringify({ ...gestorAtual, slug: novoSlug }));
+        }
         navigate('/admin/programas');
       } else if (response.status === 401) {
         navigate('/admin/login');
