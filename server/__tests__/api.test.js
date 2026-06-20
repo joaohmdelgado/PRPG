@@ -127,12 +127,21 @@ describe('pages — slug', () => {
 describe('taxonomias', () => {
   it('retorna objeto e persiste atualização', async () => {
     const upd = await auth(request(app).post('/api/taxonomias')).send({
-      entradas: ['a', 'b'],
       tipo_bolsa: ['CAPES'],
     });
     expect(upd.status).toBe(200);
     const get = await request(app).get('/api/taxonomias');
-    expect(get.body.entradas).toEqual(['a', 'b']);
     expect(get.body.tipo_bolsa).toEqual(['CAPES']);
+  });
+
+  it('ignora chaves derivadas (entradas/situacoes_aluno) no POST', async () => {
+    // entradas e situacoes_aluno vêm de taxonomia_refs e têm CRUD próprio;
+    // o replaceAll deve ignorá-las silenciosamente em vez de persistir lixo.
+    const upd = await auth(request(app).post('/api/taxonomias')).send({
+      entradas: ['a', 'b'],
+    });
+    expect(upd.status).toBe(200);
+    const get = await request(app).get('/api/taxonomias');
+    expect(get.body.entradas).toEqual([]);
   });
 });
