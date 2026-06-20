@@ -4,6 +4,10 @@ import { isPlainObject } from '../utils/sanitize.js';
 import { usersRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { PAPEIS_DISCENTE, PAPEIS_DOCENTE } from './programasController.js';
+
+// Papéis (docente + discente) que representam vínculo a um programa, para
+// exibir os programas de qualquer usuário (aluno ou professor) na lista.
+const PAPEIS_VINCULO_PROGRAMA = [...PAPEIS_DOCENTE, ...PAPEIS_DISCENTE];
 import { query } from '../db/pool.js';
 
 const stripHash = (u) => {
@@ -26,8 +30,9 @@ const vincularAoPrograma = async (programaId, pessoaId, papel) => {
   );
 };
 
-// Anexa a cada usuário a lista de programas em que ele tem vínculo docente ATIVO
-// (id/sigla/nome), para a lista de Usuários exibir os programas ou "Sem vínculo".
+// Anexa a cada usuário a lista de programas em que ele tem vínculo ATIVO
+// (docente ou discente: id/sigla/nome), para a lista de Usuários exibir os
+// programas ou "Sem vínculo".
 const anexarProgramasVinculo = async (users) => {
   const ids = users.map((u) => u.id);
   if (ids.length === 0) return users;
@@ -36,7 +41,7 @@ const anexarProgramasVinculo = async (users) => {
        FROM vinculos v
        JOIN programas p ON p.id = v.programa_id
       WHERE v.ativo = TRUE AND v.papel = ANY($1::text[]) AND v.pessoa_id = ANY($2::text[])`,
-    [PAPEIS_DOCENTE, ids]
+    [PAPEIS_VINCULO_PROGRAMA, ids]
   );
   const porPessoa = {};
   for (const r of rows) {
