@@ -246,7 +246,10 @@ router.get('/proficiencia/periodo-aberto', getPeriodoAberto);
 router.post('/proficiencia/verificar-aluno', verificarAluno);
 // Verificação pública de autenticidade da declaração (acessada pelo QR code).
 router.get('/proficiencia/declaracoes/:codigo', verificarDeclaracao);
-router.post('/proficiencia/inscricoes', createInscricao);
+// optionalProtect: quando o aluno está logado, o token popula req.user para
+// prefixar nome/CPF do cadastro e vincular a inscrição (alunoId); anônimos
+// ainda podem se inscrever informando os dados no corpo.
+router.post('/proficiencia/inscricoes', optionalProtect, createInscricao);
 // Upload público dos comprovantes da inscrição (mesmas regras do /upload).
 router.post('/proficiencia/upload', (req, res) => {
   upload.single('file')(req, res, (err) => {
