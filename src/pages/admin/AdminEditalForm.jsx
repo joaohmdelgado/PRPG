@@ -37,7 +37,8 @@ const AdminEditalForm = () => {
     resultadoParcial: '',
     resultadoFinal: '',
     programaId: '',
-    proficiencia: false
+    proficiencia: false,
+    proficienciaDataProva: ''
   });
 
   const { toast, Toasts } = useToast();
@@ -141,7 +142,8 @@ const AdminEditalForm = () => {
               resultadoParcial: data.resultadoParcial || '',
               resultadoFinal: data.resultadoFinal || '',
               programaId: data.programaId || '',
-              proficiencia: !!data.proficiencia
+              proficiencia: !!data.proficiencia,
+              proficienciaDataProva: data.proficienciaDataProva || ''
             });
 
             if (editorInstanceRef.current) {
@@ -426,6 +428,24 @@ const AdminEditalForm = () => {
               Quando marcado, as datas do período abaixo definem a janela de inscrições na proficiência.
               Apenas um edital com esta opção deve estar vigente por vez.
             </p>
+
+            {formData.proficiencia && (
+              <div className="mt-4 ml-8">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Data da Prova de Proficiência
+                </label>
+                <input
+                  type="date"
+                  name="proficienciaDataProva"
+                  value={formData.proficienciaDataProva || ''}
+                  onChange={handleChange}
+                  className="w-full md:w-72 px-4 py-2 border border-gray-300 bg-white rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Aparece na declaração emitida aos aprovados (&quot;...no dia &lt;data&gt;...&quot;).
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="md:col-span-2 border border-gray-200 rounded-lg p-4 bg-gray-50/50">

@@ -1,7 +1,13 @@
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { existsSync } from 'fs';
 import PDFDocument from 'pdfkit';
 import { isPlainObject } from '../utils/sanitize.js';
 import { inscricoesProficienciaRepo, editaisRepo, usersRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ASSETS_DIR = path.join(__dirname, '../assets');
 
 // ============================ Regras de domínio ============================
 
@@ -102,7 +108,7 @@ export const verificarAluno = async (req, res) => {
        JOIN vinculos v ON v.pessoa_id = u.id
       WHERE v.ativo = TRUE
         AND v.papel = ANY($1::text[])
-        AND lower(regexp_replace(btrim(u.perfil_geral->>'nome'), '\\s+', ' ', 'g')) = $2
+        AND lower(regexp_replace(btrim(u.perfil_nome), '\\s+', ' ', 'g')) = $2
       LIMIT 1`,
     [PAPEIS_DISCENTE_ATIVO, alvo]
   );
@@ -205,6 +211,27 @@ export const deleteInscricao = async (req, res) => {
 
 const RESULTADO_LABEL = { SUFICIENCIA: 'SUFICIÊNCIA', PROFICIENCIA: 'PROFICIÊNCIA' };
 
+const MESES = [
+  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+];
+
+// Formata 'YYYY-MM-DD' como '20 de agosto de 2025' (sem deslocamento de fuso).
+const dataPorExtenso = (iso) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+  if (!m) return null;
+  const [, ano, mes, dia] = m;
+  return `${Number(dia)} de ${MESES[Number(mes) - 1]} de ${ano}`;
+};
+
+// Forma adjetiva da língua para a declaração ("Língua INGLESA").
+const LINGUA_ADJETIVO = { 'Português': 'PORTUGUESA', 'Inglês': 'INGLESA', 'Espanhol': 'ESPANHOLA' };
+const linguasPorExtenso = (linguas) => {
+  const adj = (linguas || []).map((l) => LINGUA_ADJETIVO[l] || l.toUpperCase());
+  if (adj.length <= 1) return adj.join('');
+  return `${adj.slice(0, -1).join(', ')} e ${adj[adj.length - 1]}`;
+};
+
 export const gerarDeclaracao = async (req, res) => {
   const insc = await inscricoesProficienciaRepo.getById(req.params.id);
   if (!insc) return res.status(404).json({ message: 'Inscrição não encontrada.' });
@@ -215,38 +242,80 @@ export const gerarDeclaracao = async (req, res) => {
     return res.status(409).json({ message: 'Nota insuficiente: não há declaração a emitir.' });
   }
 
+  // Data da prova vem do edital que abriu o período (proficienciaDataProva).
+  const edital = insc.periodoId ? await editaisRepo.getById(insc.periodoId) : null;
+  const dataProva = dataPorExtenso(edital?.proficienciaDataProva);
+
   const tipo = RESULTADO_LABEL[insc.resultado];
-  const linguas = (insc.linguas || []).join(', ');
-  const dataExt = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const linguasAdj = linguasPorExtenso(insc.linguas);
+  const plural = (insc.linguas || []).length > 1;
+  const notaFmt = Number(insc.nota).toFixed(1).replace('.', ',');
+  const dataEmissao = dataPorExtenso(new Date().toISOString().slice(0, 10));
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="declaracao-proficiencia-${insc.id}.pdf"`);
 
-  const doc = new PDFDocument({ size: 'A4', margins: { top: 80, bottom: 72, left: 72, right: 72 } });
+  const doc = new PDFDocument({ size: 'A4', margins: { top: 56, bottom: 56, left: 72, right: 72 } });
   doc.pipe(res);
 
-  doc.fontSize(11).font('Helvetica')
+  // ----- Cabeçalho: brasão da República + identificação institucional -----
+  const brasao = path.join(ASSETS_DIR, 'brasao-republica.png');
+  if (existsSync(brasao)) {
+    doc.image(brasao, doc.page.width / 2 - 30, doc.y, { width: 60 });
+    doc.moveDown(0.5);
+    doc.y += 38;
+  }
+  doc.fontSize(11).font('Helvetica-Bold')
     .text('UNIVERSIDADE FEDERAL RURAL DE PERNAMBUCO', { align: 'center' })
-    .text('PRÓ-REITORIA DE PÓS-GRADUAÇÃO (PRPG)', { align: 'center' });
-  doc.moveDown(3);
+    .text('PRÓ-REITORIA DE PÓS-GRADUAÇÃO - PRPG', { align: 'center' })
+    .text('NÚCLEO DE IDIOMAS - NID-NucLi/DL', { align: 'center' })
+    .text('NÚCLEO DE INTERNACIONALIZAÇÃO - NINTER/INSTITUTO IPÊ', { align: 'center' });
 
-  doc.fontSize(16).font('Helvetica-Bold')
-    .text(`DECLARAÇÃO DE ${tipo} EM LÍNGUA`, { align: 'center' });
-  doc.moveDown(3);
-
-  const notaFmt = Number(insc.nota).toFixed(2).replace('.', ',');
-  const corpo =
-    `Declaramos, para os devidos fins, que ${insc.nome}, ` +
-    `inscrito(a) no CPF nº ${insc.cpf}, aluno(a) de ${insc.nivel}, ` +
-    `obteve ${tipo} na avaliação de proficiência em língua ` +
-    `(${linguas}), com nota ${notaFmt}.`;
-
-  doc.fontSize(12).font('Helvetica').text(corpo, { align: 'justify', lineGap: 6 });
   doc.moveDown(4);
-  doc.text(`Recife, ${dataExt}.`, { align: 'right' });
-  doc.moveDown(5);
-  doc.text('_______________________________________', { align: 'center' });
-  doc.text('Pró-Reitoria de Pós-Graduação — UFRPE', { align: 'center' });
+  doc.fontSize(16).font('Helvetica-Bold').text('DECLARAÇÃO', { align: 'center' });
+  doc.moveDown(4);
+
+  // ----- Corpo -----
+  doc.fontSize(12).font('Helvetica');
+  doc.text('Declaramos, para os devidos fins, que ', { align: 'justify', lineGap: 6, continued: true })
+    .font('Helvetica-Bold').text(insc.nome, { continued: true })
+    .font('Helvetica').text(', CPF nº ', { continued: true })
+    .font('Helvetica-Bold').text(insc.cpf, { continued: true })
+    .font('Helvetica').text(', realizou o ', { continued: true })
+    .font('Helvetica-Bold').text('Teste de Proficiência', { continued: true })
+    .font('Helvetica').text(`${plural ? ' das Línguas ' : ' de Língua '}`, { continued: true })
+    .font('Helvetica-Bold').text(linguasAdj, { continued: true })
+    .font('Helvetica').text(
+      ', promovido pela Pró-Reitoria de Pós-Graduação, em parceria com o Núcleo de Idiomas - NID '
+      + 'e o Núcleo de Internacionalização do Instituto Ipê - NINTER/Ipê'
+      + (dataProva ? `, no dia ${dataProva}` : '')
+      + ', obtendo a ',
+      { continued: true })
+    .font('Helvetica-Bold').text('nota ', { continued: true })
+    .font('Helvetica-Bold').text(notaFmt, { continued: true })
+    .font('Helvetica').text(`, com resultado de ${tipo}, sendo, portanto, considerado(a) `, { continued: true })
+    .font('Helvetica-Bold').text('APROVADO(A)', { continued: true })
+    .font('Helvetica').text('.', { continued: false });
+
+  doc.moveDown(1.5);
+  doc.text('Esta declaração terá ', { align: 'justify', lineGap: 6, continued: true })
+    .font('Helvetica-Bold').text('validade de 4 (quatro) anos', { continued: true })
+    .font('Helvetica').text(', contados a partir da data de sua emissão.', { continued: false });
+
+  doc.moveDown(3);
+  if (dataEmissao) doc.text(`Recife, ${dataEmissao}.`, { align: 'right' });
+
+  // ----- Assinatura -----
+  doc.moveDown(4);
+  const assinatura = path.join(ASSETS_DIR, 'assinatura-nid.png');
+  if (existsSync(assinatura)) {
+    const w = 200;
+    doc.image(assinatura, doc.page.width / 2 - w / 2, doc.y, { width: w });
+  } else {
+    doc.fontSize(12).font('Helvetica-Bold').text('Prof.ª Flávia Farias de Oliveira', { align: 'center' });
+    doc.font('Helvetica').text('Núcleo de Idiomas - NID', { align: 'center' });
+    doc.text('SIAPE nº 1037173', { align: 'center' });
+  }
 
   doc.end();
 };

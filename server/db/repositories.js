@@ -39,6 +39,7 @@ export const editaisRepo = createRepository({
     resultadoParcial: r.resultado_parcial, resultadoFinal: r.resultado_final,
     programaId: r.programa_id ?? null,
     proficiencia: r.proficiencia ?? false,
+    proficienciaDataProva: r.proficiencia_data_prova ?? null,
   }),
   toRow: (o) => ({
     id: o.id, category_id: o.categoryId, category_title: o.categoryTitle, title: o.title,
@@ -50,6 +51,7 @@ export const editaisRepo = createRepository({
     resultado_parcial: o.resultadoParcial ?? null, resultado_final: o.resultadoFinal ?? null,
     programa_id: o.programaId || null,
     proficiencia: o.proficiencia ? true : false,
+    proficiencia_data_prova: o.proficienciaDataProva || null,
   }),
 });
 

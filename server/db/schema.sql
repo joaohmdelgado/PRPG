@@ -65,7 +65,8 @@ CREATE TABLE IF NOT EXISTS editais (
   resultado_parcial   TEXT,
   resultado_final     TEXT,
   programa_id         TEXT, -- Fase 5: vincula o edital a um programa (NULL = edital global da PRPG)
-  proficiencia        BOOLEAN DEFAULT FALSE -- quando TRUE, o edital define o período de inscrição da proficiência
+  proficiencia        BOOLEAN DEFAULT FALSE, -- quando TRUE, o edital define o período de inscrição da proficiência
+  proficiencia_data_prova TEXT -- data da prova de proficiência (usada na declaração)
 );
 
 -- ===================== Resolucoes / Formularios ===================
