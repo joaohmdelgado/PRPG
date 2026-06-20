@@ -2,6 +2,7 @@ import professoresImporter from './professoresImporter.js';
 import alunosImporter from './alunosImporter.js';
 import disciplinasImporter from './disciplinasImporter.js';
 import tesesImporter from './tesesImporter.js';
+import noticiasImporter from './noticiasImporter.js';
 
 // Registro central dos importadores. Cada importador expõe:
 //   id, label, descricao, requiresPrograma, disponivel,
@@ -13,14 +14,11 @@ const importers = {
   [alunosImporter.id]: alunosImporter,
   [disciplinasImporter.id]: disciplinasImporter,
   [tesesImporter.id]: tesesImporter,
+  [noticiasImporter.id]: noticiasImporter,
 };
 
 // Tipos planejados, ainda sem implementação. Aparecem desabilitados no painel.
-const placeholders = [
-  { id: 'noticias', label: 'Notícias', descricao: 'Importa notícias do site antigo.', requiresPrograma: true, disponivel: false },
-  { id: 'disciplinas', label: 'Disciplinas', descricao: 'Importa disciplinas do site antigo.', requiresPrograma: true, disponivel: false },
-  { id: 'teses', label: 'Teses e Dissertações', descricao: 'Importa teses/dissertações do site antigo.', requiresPrograma: true, disponivel: false },
-];
+const placeholders = [];
 
 export const getImporter = (tipo) => importers[tipo] || null;
 
