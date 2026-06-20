@@ -341,6 +341,8 @@ CREATE TABLE IF NOT EXISTS inscricoes_proficiencia (
   nota                        NUMERIC(4,2),
   resultado                   TEXT, -- INSUFICIENTE | SUFICIENCIA | PROFICIENCIA (calculado da nota)
   observacao                  TEXT,
+  codigo_verificacao          TEXT, -- UUID público p/ verificar autenticidade (gerado na 1a emissão)
+  emitida_em                  TIMESTAMPTZ, -- data congelada da 1a emissão da declaração
   criado_em                   TIMESTAMPTZ DEFAULT now(),
   atualizado_em               TIMESTAMPTZ DEFAULT now(),
   criado_por                  TEXT,
@@ -348,6 +350,7 @@ CREATE TABLE IF NOT EXISTS inscricoes_proficiencia (
 );
 CREATE INDEX IF NOT EXISTS inscricoes_prof_aluno_idx   ON inscricoes_proficiencia(aluno_id);
 CREATE INDEX IF NOT EXISTS inscricoes_prof_periodo_idx ON inscricoes_proficiencia(periodo_id);
+CREATE UNIQUE INDEX IF NOT EXISTS inscricoes_prof_codigo_idx ON inscricoes_proficiencia(codigo_verificacao);
 
 -- ===================== Auditoria (Fase 3) =========================
 -- criado_por / atualizado_por (id do usuário) em todas as entidades de

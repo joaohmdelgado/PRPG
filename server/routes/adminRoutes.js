@@ -21,6 +21,7 @@ import { getMetricas, getMetricaById, createMetrica, updateMetrica, deleteMetric
 import {
   getPeriodoAberto, createInscricao, getMinhasInscricoes, getInscricoes,
   getInscricaoById, lancarNota, deleteInscricao, gerarDeclaracao, verificarAluno,
+  verificarDeclaracao,
 } from '../controllers/proficienciaController.js';
 
 
@@ -243,6 +244,8 @@ router.delete('/pages/:id', protect, requireProgramaOwnership((id) => pagesRepo.
 // inscreve sem precisar de login.
 router.get('/proficiencia/periodo-aberto', getPeriodoAberto);
 router.post('/proficiencia/verificar-aluno', verificarAluno);
+// Verificação pública de autenticidade da declaração (acessada pelo QR code).
+router.get('/proficiencia/declaracoes/:codigo', verificarDeclaracao);
 router.post('/proficiencia/inscricoes', createInscricao);
 // Upload público dos comprovantes da inscrição (mesmas regras do /upload).
 router.post('/proficiencia/upload', (req, res) => {

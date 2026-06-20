@@ -438,6 +438,8 @@ const inscricaoProfFromRow = (r) => ({
   comprovanteVinculoUrl: r.comprovante_vinculo_url,
   status: r.status, nota: r.nota != null ? Number(r.nota) : null,
   resultado: r.resultado, observacao: r.observacao,
+  codigoVerificacao: r.codigo_verificacao ?? null,
+  emitidaEm: r.emitida_em ?? null,
 });
 
 const inscricaoProfToRow = (o) => ({
@@ -450,6 +452,8 @@ const inscricaoProfToRow = (o) => ({
   status: o.status || 'INSCRITO',
   nota: numOrNull(o.nota), resultado: o.resultado ?? null,
   observacao: o.observacao ?? null,
+  codigo_verificacao: o.codigoVerificacao ?? null,
+  emitida_em: o.emitidaEm ?? null,
 });
 
 export const inscricoesProficienciaRepo = {

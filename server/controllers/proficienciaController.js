@@ -1,13 +1,20 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
+import { randomUUID } from 'crypto';
 import PDFDocument from 'pdfkit';
+import QRCode from 'qrcode';
 import { isPlainObject } from '../utils/sanitize.js';
 import { inscricoesProficienciaRepo, editaisRepo, usersRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS_DIR = path.join(__dirname, '../assets');
+
+// Origem pública do site (onde mora a página de verificação). Em produção,
+// definir PUBLIC_SITE_URL (ex.: https://prpg.ufrpe.br); em dev cai no Vite local.
+const PUBLIC_SITE_URL = (process.env.PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/+$/, '');
+const urlVerificacao = (codigo) => `${PUBLIC_SITE_URL}/declaracoes/proficiencia/${codigo}`;
 
 // ============================ Regras de domínio ============================
 
@@ -242,6 +249,17 @@ export const gerarDeclaracao = async (req, res) => {
     return res.status(409).json({ message: 'Nota insuficiente: não há declaração a emitir.' });
   }
 
+  // Código de verificação (UUID público) e data de emissão são congelados na
+  // PRIMEIRA emissão: a partir daí o PDF é reproduzível e a página pública
+  // confere com o papel. Reemissões reaproveitam os mesmos valores.
+  let codigo = insc.codigoVerificacao;
+  let emitidaEm = insc.emitidaEm;
+  if (!codigo || !emitidaEm) {
+    codigo = codigo || randomUUID();
+    emitidaEm = emitidaEm || new Date().toISOString();
+    await inscricoesProficienciaRepo.update(insc.id, { codigoVerificacao: codigo, emitidaEm }, req.user?.id);
+  }
+
   // Data da prova vem do edital que abriu o período (proficienciaDataProva).
   const edital = insc.periodoId ? await editaisRepo.getById(insc.periodoId) : null;
   const dataProva = dataPorExtenso(edital?.proficienciaDataProva);
@@ -250,13 +268,32 @@ export const gerarDeclaracao = async (req, res) => {
   const linguasAdj = linguasPorExtenso(insc.linguas);
   const plural = (insc.linguas || []).length > 1;
   const notaFmt = Number(insc.nota).toFixed(1).replace('.', ',');
-  const dataEmissao = dataPorExtenso(new Date().toISOString().slice(0, 10));
+  const dataEmissao = dataPorExtenso(new Date(emitidaEm).toISOString().slice(0, 10));
+
+  // QR code (PNG) apontando para a página pública de verificação.
+  const linkVerificacao = urlVerificacao(codigo);
+  let qrBuffer = null;
+  try {
+    qrBuffer = await QRCode.toBuffer(linkVerificacao, { margin: 1, width: 180, errorCorrectionLevel: 'M' });
+  } catch { /* sem QR não impede a emissão */ }
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="declaracao-proficiencia-${insc.id}.pdf"`);
 
   const doc = new PDFDocument({ size: 'A4', margins: { top: 56, bottom: 56, left: 72, right: 72 } });
   doc.pipe(res);
+
+  // ----- Marca d'água: logo UFRPE centralizado com baixa opacidade -----
+  const ufrpeLogo = path.join(ASSETS_DIR, 'ufrpe.jpg');
+  if (existsSync(ufrpeLogo)) {
+    const wmW = 460;
+    const wmX = (doc.page.width - wmW) / 2;
+    const wmY = (doc.page.height - wmW * 1.2) / 2 - 80;
+    doc.save();
+    doc.opacity(0.07);
+    doc.image(ufrpeLogo, wmX, wmY, { width: wmW });
+    doc.restore();
+  }
 
   // ----- Cabeçalho: brasão da República + identificação institucional -----
   const brasao = path.join(ASSETS_DIR, 'brasao-republica.png');
@@ -275,41 +312,45 @@ export const gerarDeclaracao = async (req, res) => {
   doc.fontSize(16).font('Helvetica-Bold').text('DECLARAÇÃO', { align: 'center' });
   doc.moveDown(4);
 
-  // ----- Corpo -----
-  doc.fontSize(12).font('Helvetica');
+  // ----- Corpo (justificado) -----
+  // Tamanhos: texto base 12, negritos 13, nome do inscrito 15
+  const szBase = 12;
+  const szBold = 13;
+  const szNome = 13;
+
+  doc.fontSize(szBase).font('Helvetica');
   doc.text('Declaramos, para os devidos fins, que ', { align: 'justify', lineGap: 6, continued: true })
-    .font('Helvetica-Bold').text(insc.nome, { continued: true })
-    .font('Helvetica').text(', CPF nº ', { continued: true })
-    .font('Helvetica-Bold').text(insc.cpf, { continued: true })
-    .font('Helvetica').text(', realizou o ', { continued: true })
-    .font('Helvetica-Bold').text('Teste de Proficiência', { continued: true })
-    .font('Helvetica').text(`${plural ? ' das Línguas ' : ' de Língua '}`, { continued: true })
-    .font('Helvetica-Bold').text(linguasAdj, { continued: true })
-    .font('Helvetica').text(
+    .fontSize(szNome).font('Helvetica-Bold').text(insc.nome, { lineGap: 6, continued: true })
+    .fontSize(szBase).font('Helvetica').text(', CPF nº ', { continued: true })
+    .fontSize(szBold).font('Helvetica-Bold').text(insc.cpf, { continued: true })
+    .fontSize(szBase).font('Helvetica').text(', realizou o ', { continued: true })
+    .fontSize(szBold).font('Helvetica-Bold').text('Teste de Proficiência', { continued: true })
+    .fontSize(szBase).font('Helvetica').text(`${plural ? ' das Línguas ' : ' de Língua '}`, { continued: true })
+    .fontSize(szBold).font('Helvetica-Bold').text(linguasAdj, { continued: true })
+    .fontSize(szBase).font('Helvetica').text(
       ', promovido pela Pró-Reitoria de Pós-Graduação, em parceria com o Núcleo de Idiomas - NID '
       + 'e o Núcleo de Internacionalização do Instituto Ipê - NINTER/Ipê'
       + (dataProva ? `, no dia ${dataProva}` : '')
       + ', obtendo a ',
       { continued: true })
-    .font('Helvetica-Bold').text('nota ', { continued: true })
-    .font('Helvetica-Bold').text(notaFmt, { continued: true })
-    .font('Helvetica').text(`, com resultado de ${tipo}, sendo, portanto, considerado(a) `, { continued: true })
-    .font('Helvetica-Bold').text('APROVADO(A)', { continued: true })
-    .font('Helvetica').text('.', { continued: false });
+    .fontSize(szBold).font('Helvetica-Bold').text(`nota ${notaFmt}`, { continued: true })
+    .fontSize(szBase).font('Helvetica').text(`, com resultado de ${tipo}, sendo, portanto, considerado(a) `, { continued: true })
+    .fontSize(szBold).font('Helvetica-Bold').text('APROVADO(A)', { continued: true })
+    .fontSize(szBase).font('Helvetica').text('.', { continued: false, align: 'justify' });
 
   doc.moveDown(1.5);
-  doc.text('Esta declaração terá ', { align: 'justify', lineGap: 6, continued: true })
-    .font('Helvetica-Bold').text('validade de 4 (quatro) anos', { continued: true })
-    .font('Helvetica').text(', contados a partir da data de sua emissão.', { continued: false });
+  doc.fontSize(szBase).font('Helvetica').text('Esta declaração terá ', { align: 'justify', lineGap: 6, continued: true })
+    .fontSize(szBold).font('Helvetica-Bold').text('validade de 4 (quatro) anos', { continued: true })
+    .fontSize(szBase).font('Helvetica').text(', contados a partir da data de sua emissão.', { continued: false, align: 'justify' });
 
-  doc.moveDown(3);
-  if (dataEmissao) doc.text(`Recife, ${dataEmissao}.`, { align: 'right' });
+  doc.moveDown(2.5);
+  if (dataEmissao) doc.fontSize(12).font('Helvetica').text(`Recife, ${dataEmissao}.`, { align: 'center' });
 
-  // ----- Assinatura -----
-  doc.moveDown(4);
+  // ----- Assinatura (centralizada) -----
+  doc.moveDown(2);
   const assinatura = path.join(ASSETS_DIR, 'assinatura-nid.png');
   if (existsSync(assinatura)) {
-    const w = 200;
+    const w = 180;
     doc.image(assinatura, doc.page.width / 2 - w / 2, doc.y, { width: w });
   } else {
     doc.fontSize(12).font('Helvetica-Bold').text('Prof.ª Flávia Farias de Oliveira', { align: 'center' });
@@ -317,5 +358,94 @@ export const gerarDeclaracao = async (req, res) => {
     doc.text('SIAPE nº 1037173', { align: 'center' });
   }
 
+  // ----- Rodapé institucional (fixo no fim da página) -----
+  const footerLineHeight = 11;
+  const footerTotalH = footerLineHeight * 3 + 4;
+  const footerY = doc.page.height - doc.page.margins.bottom - footerTotalH;
+  const footerX = doc.page.margins.left;
+  const footerW = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+
+  // ----- Autenticação: QR code + código de verificação (acima do rodapé) -----
+  // Centralizado em uma caixa própria, com folga acima do rodapé para não
+  // colidir com a assinatura (a imagem da assinatura não avança o doc.y).
+  const qrSize = 64;
+  const authBlockH = qrSize + 6;
+  const authY = footerY - authBlockH - 16;
+  const authText =
+    'Documento emitido eletronicamente. Verifique a autenticidade lendo o QR code ao lado, '
+    + 'ou acesse o endereço e confira os dados desta declaração:';
+  const txtX = footerX + qrSize + 14;
+  const txtW = footerW - qrSize - 14;
+  if (qrBuffer) {
+    doc.image(qrBuffer, footerX, authY, { width: qrSize, height: qrSize });
+  }
+  doc.fontSize(8).font('Helvetica').fillColor('#333333')
+    .text(authText, txtX, authY, { width: txtW, align: 'left', lineGap: 1 });
+  doc.fontSize(8).font('Helvetica-Bold').fillColor('#1a4d8f')
+    .text(linkVerificacao, txtX, doc.y + 2, { width: txtW, align: 'left' });
+  doc.fontSize(7.5).font('Helvetica').fillColor('#666666')
+    .text(`Código de verificação: ${codigo}`, txtX, doc.y + 2, { width: txtW, align: 'left' });
+  doc.fillColor('black');
+
+  doc.fontSize(9).font('Helvetica')
+    .text('_________________________________________________________________________________', footerX, footerY, { align: 'center', width: footerW, lineBreak: false })
+    .text('Universidade Federal Rural de Pernambuco - Rua Dom Manuel de Medeiros, s/n, Dois Irmãos - Recife/PE', footerX, footerY + footerLineHeight + 4, { align: 'center', width: footerW })
+    .text('CEP: 52171-900', footerX, footerY + footerLineHeight * 2 + 4, { align: 'center', width: footerW });
+
   doc.end();
+};
+
+// ===================== Verificação pública da declaração =====================
+
+// Mascara o CPF para exibição pública (LGPD): mantém só os blocos do meio.
+// '123.456.789-00' / '12345678900' -> '***.456.789-**'
+const mascararCpf = (cpf) => {
+  const d = String(cpf || '').replace(/\D/g, '');
+  if (d.length !== 11) return null;
+  return `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**`;
+};
+
+// Soma anos a uma data ISO e devolve 'YYYY-MM-DD'.
+const somarAnos = (iso, anos) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+  if (!m) return null;
+  const [, ano, mes, dia] = m;
+  return `${Number(ano) + anos}-${mes}-${dia}`;
+};
+
+// Endpoint PÚBLICO: dado o código de verificação, devolve os dados canônicos da
+// declaração para conferência contra o documento impresso. Sem dados sensíveis
+// completos (CPF mascarado; sem comprovantes nem id interno).
+export const verificarDeclaracao = async (req, res) => {
+  const codigo = String(req.params.codigo || '').trim();
+  if (!codigo) return res.status(400).json({ message: 'Código não informado.' });
+
+  const { rows } = await query(
+    'SELECT * FROM inscricoes_proficiencia WHERE codigo_verificacao = $1 LIMIT 1',
+    [codigo]
+  );
+  const r = rows[0];
+  // Só é "autêntica" se existe, foi avaliada e teve resultado emissível.
+  if (!r || r.status !== 'AVALIADO' || !r.resultado || r.resultado === 'INSUFICIENTE' || !r.emitida_em) {
+    return res.status(404).json({ valido: false, message: 'Declaração não encontrada ou inválida.' });
+  }
+
+  const edital = r.periodo_id ? await editaisRepo.getById(r.periodo_id) : null;
+  const emissaoIso = new Date(r.emitida_em).toISOString().slice(0, 10);
+  const validadeIso = somarAnos(emissaoIso, 4);
+
+  res.json({
+    valido: true,
+    nome: r.nome,
+    cpf: mascararCpf(r.cpf),
+    nivel: r.nivel,
+    linguas: r.linguas ?? [],
+    nota: r.nota != null ? Number(r.nota) : null,
+    resultado: r.resultado,
+    resultadoLabel: RESULTADO_LABEL[r.resultado] || r.resultado,
+    dataProva: edital?.proficienciaDataProva || null,
+    dataEmissao: emissaoIso,
+    dataValidade: validadeIso,
+    codigoVerificacao: r.codigo_verificacao,
+  });
 };

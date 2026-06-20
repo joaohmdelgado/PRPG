@@ -92,6 +92,17 @@ insuficiente) e geram a declaração em PDF no servidor via `pdfkit`
 (`GET .../:id/declaracao`). O campo `estrangeiro`/`nacionalidade` foi adicionado
 ao `perfil_aluno` (JSONB) no cadastro do usuário.
 
+**Autenticação da declaração**: na 1ª emissão, a declaração recebe um
+`codigo_verificacao` (UUID, `crypto.randomUUID()`) e uma data `emitida_em`
+congelada (ambos em `inscricoes_proficiencia`); reemissões reaproveitam os
+mesmos valores, tornando o PDF reproduzível. O PDF imprime um **QR code**
+(lib `qrcode`) + o link/código apontando para `PUBLIC_SITE_URL` (env, default
+`http://localhost:3000`) na rota pública `/declaracoes/proficiencia/:codigo`
+(`src/pages/DeclaracaoProficiencia.jsx`). Essa página consome o endpoint público
+`GET /api/proficiencia/declaracoes/:codigo` (`verificarDeclaracao`), que reexibe
+os dados canônicos (nome, **CPF mascarado**, língua, resultado, nota, validade
+de 4 anos) para conferência contra o papel.
+
 ## Authentication & Authorization
 
 **Roles**:

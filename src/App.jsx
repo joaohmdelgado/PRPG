@@ -26,6 +26,7 @@ import Reconhecimento from './pages/Reconhecimento';
 import Noticias from './pages/Noticias';
 import Noticia from './pages/Noticia';
 import Edital from './pages/Edital';
+import DeclaracaoProficiencia from './pages/DeclaracaoProficiencia';
 import ProgramaSite from './pages/programa/ProgramaSite';
 
 // Admin Components
@@ -198,6 +199,7 @@ function App() {
         <Route path="/formularios" element={<Formularios />} />
         <Route path="/proficiencia/inscricao" element={<ProficienciaInscricao />} />
         <Route path="/proficiencia/inscricao/sucesso" element={<ProficienciaInscricaoSucesso />} />
+        <Route path="/declaracoes/proficiencia/:codigo" element={<DeclaracaoProficiencia />} />
         <Route path="/relatorios-autoavaliacao" element={<RelatoriosAutoavaliacao />} />
         <Route path="/especializacao" element={<Especializacao />} />
         <Route path="/residencia-profissional" element={<ResidenciaProfissional />} />
