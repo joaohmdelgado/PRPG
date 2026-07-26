@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trash2, X } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 
 /**
  * Seleção em massa para as listas do painel admin.
@@ -126,17 +126,13 @@ export function BulkActionBar({ count, onDelete, onClear, deleting }) {
 
 /**
  * Exclui em massa via DELETE individual por item (não há endpoint em lote).
- * `apiBase` ex.: `${API_URL}/api/news`. Retorna { succeeded, failed }.
+ * `apiPath` ex.: `/api/news`. Retorna { succeeded, failed }.
  */
-export async function bulkDelete(apiBase, ids, { onUnauthorized } = {}) {
-  const token = localStorage.getItem('token');
+export async function bulkDelete(apiPath, ids, { onUnauthorized } = {}) {
   let unauthorized = false;
   const results = await Promise.allSettled(
     ids.map((id) =>
-      fetch(`${apiBase}/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      }).then((res) => {
+      apiFetch(`${apiPath}/${encodeURIComponent(id)}`, { method: 'DELETE' }).then((res) => {
         if (res.status === 401 || res.status === 403) unauthorized = true;
         if (!res.ok) throw new Error(String(res.status));
         return id;

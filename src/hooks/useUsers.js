@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { API_URL } from '../api';
+import { apiFetch } from '../api';
 
 // Busca a lista de usuários uma vez (para resolver criado_por/atualizado_por em
 // nomes). Endpoint é restrito a Admin/Gestor; sem permissão retorna lista vazia
@@ -11,9 +11,7 @@ export default function useUsers() {
     let active = true;
     (async () => {
       try {
-        const r = await fetch(`${API_URL}/api/users`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
+        const r = await apiFetch('/api/users');
         if (r.ok && active) setUsers(await r.json());
       } catch (e) {
         // silencioso

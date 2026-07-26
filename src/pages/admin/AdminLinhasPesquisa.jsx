@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FlaskConical, Plus, Trash2, Pencil, Check, X, Loader2, Search } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { isProgramaGestor, getGestorPrograma } from '../../auth';
-
-const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
 
 const emptyForm = { nome: '', programa_id: '', target_id: '' };
 
@@ -33,7 +31,7 @@ export default function AdminLinhasPesquisa() {
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch(`${API_URL}/api/linhas-pesquisa`, { headers: auth() });
+      const r = await apiFetch('/api/linhas-pesquisa');
       if (r.ok) setLinhas(await r.json());
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -41,7 +39,7 @@ export default function AdminLinhasPesquisa() {
 
   const fetchProgramas = async () => {
     try {
-      const r = await fetch(`${API_URL}/api/programas`);
+      const r = await apiFetch('/api/programas');
       if (r.ok) setProgramas(await r.json());
     } catch (e) { console.error(e); }
   };
@@ -51,9 +49,9 @@ export default function AdminLinhasPesquisa() {
     setSaving(true); setError('');
     try {
       const programaId = isGestor ? meuProgramaId : (form.programa_id || null);
-      const r = await fetch(`${API_URL}/api/linhas-pesquisa`, {
-        method: 'POST', headers: auth(),
-        body: JSON.stringify({ nome: form.nome, programa_id: programaId, target_id: form.target_id || null }),
+      const r = await apiFetch('/api/linhas-pesquisa', {
+        method: 'POST',
+        json: { nome: form.nome, programa_id: programaId, target_id: form.target_id || null },
       });
       const d = await r.json();
       if (r.ok) {
@@ -76,9 +74,9 @@ export default function AdminLinhasPesquisa() {
     setSaving(true); setError('');
     try {
       const programaId = isGestor ? meuProgramaId : (editForm.programa_id || null);
-      const r = await fetch(`${API_URL}/api/linhas-pesquisa/${id}`, {
-        method: 'PUT', headers: auth(),
-        body: JSON.stringify({ nome: editForm.nome, programa_id: programaId, target_id: editForm.target_id || null }),
+      const r = await apiFetch(`/api/linhas-pesquisa/${id}`, {
+        method: 'PUT',
+        json: { nome: editForm.nome, programa_id: programaId, target_id: editForm.target_id || null },
       });
       const d = await r.json();
       if (r.ok) {
@@ -95,7 +93,7 @@ export default function AdminLinhasPesquisa() {
     if (!confirm('Remover esta linha de pesquisa? Isso removerá também as associações com programas e usuários.')) return;
     setSaving(true); setError('');
     try {
-      const r = await fetch(`${API_URL}/api/linhas-pesquisa/${id}`, { method: 'DELETE', headers: auth() });
+      const r = await apiFetch(`/api/linhas-pesquisa/${id}`, { method: 'DELETE' });
       if (r.ok) {
         setLinhas((prev) => prev.filter((l) => l.id !== id));
         setSuccess('Linha removida.');

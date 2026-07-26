@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { API_URL } from '../api';
+import { apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 
 export default function PageView() {
@@ -14,7 +14,7 @@ export default function PageView() {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch(`${API_URL}/api/pages/slug/${slug}`);
+        const response = await apiFetch(`/api/pages/slug/${slug}`, { auth: false });
         if (response.ok) {
           const data = await response.json();
           setPage(data);

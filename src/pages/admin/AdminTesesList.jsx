@@ -3,7 +3,7 @@ import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, BookOpen, GraduationCap, FileText } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
@@ -20,7 +20,7 @@ const AdminTesesList = () => {
 
   const fetchTeses = async () => {
     try {
-      const response = await fetch(withProgramaScope(`${API_URL}/api/teses-dissertacoes`));
+      const response = await apiFetch(withProgramaScope('/api/teses-dissertacoes'));
       if (response.ok) {
         const data = await response.json();
         setTeses(data);
@@ -39,13 +39,8 @@ const AdminTesesList = () => {
   const handleDelete = async (id) => {
     if (await confirm('Tem certeza que deseja excluir esta tese/dissertação?')) {
       try {
-        const response = await fetch(`${API_URL}/api/teses-dissertacoes/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
+        const response = await apiFetch(`/api/teses-dissertacoes/${id}`, { method: 'DELETE' });
+
         if (response.ok) {
           fetchTeses();
         } else if (response.status === 401) {
@@ -79,7 +74,7 @@ const AdminTesesList = () => {
     if (!selectedCount) return;
     if (!await confirm(`Excluir ${selectedCount === 1 ? 'o registro selecionado' : `os ${selectedCount} registros selecionados`}? Esta ação não pode ser desfeita.`)) return;
     setDeleting(true);
-    await bulkDelete(`${API_URL}/api/teses-dissertacoes`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    await bulkDelete('/api/teses-dissertacoes', selectedIds, { onUnauthorized: () => navigate('/admin/login') });
     setDeleting(false);
     clear();
     fetchTeses();

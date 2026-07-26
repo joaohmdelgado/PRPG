@@ -3,7 +3,7 @@ import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, Award, Calendar } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
@@ -19,7 +19,7 @@ const AdminBolsasList = () => {
 
   const fetchBolsas = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/bolsas`);
+      const response = await apiFetch('/api/bolsas');
       if (response.ok) {
         const data = await response.json();
         setBolsas(data);
@@ -38,13 +38,8 @@ const AdminBolsasList = () => {
   const handleDelete = async (id) => {
     if (await confirm('Tem certeza que deseja excluir este registro de bolsa?')) {
       try {
-        const response = await fetch(`${API_URL}/api/bolsas/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
+        const response = await apiFetch(`/api/bolsas/${id}`, { method: 'DELETE' });
+
         if (response.ok) {
           fetchBolsas();
         } else if (response.status === 401) {
@@ -91,7 +86,7 @@ const AdminBolsasList = () => {
     if (!selectedCount) return;
     if (!await confirm(`Excluir ${selectedCount === 1 ? 'o registro de bolsa selecionado' : `os ${selectedCount} registros de bolsa selecionados`}? Esta ação não pode ser desfeita.`)) return;
     setDeleting(true);
-    await bulkDelete(`${API_URL}/api/bolsas`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    await bulkDelete('/api/bolsas', selectedIds, { onUnauthorized: () => navigate('/admin/login') });
     setDeleting(false);
     clear();
     fetchBolsas();

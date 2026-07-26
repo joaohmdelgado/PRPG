@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { API_URL } from '../api';
+import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 
 const formatDate = (dateStr) => {
@@ -26,7 +26,7 @@ export default function Noticia() {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/news`);
+        const response = await apiFetch('/api/news', { auth: false });
         const data = await response.json();
         setNoticiasData(data);
       } catch (error) {

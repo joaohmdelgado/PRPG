@@ -3,7 +3,7 @@ import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, Book, FileText } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
@@ -20,7 +20,7 @@ const AdminDisciplinasList = () => {
 
   const fetchDisciplinas = async () => {
     try {
-      const response = await fetch(withProgramaScope(`${API_URL}/api/disciplinas`));
+      const response = await apiFetch(withProgramaScope('/api/disciplinas'));
       if (response.ok) {
         const data = await response.json();
         setDisciplinas(data);
@@ -39,13 +39,8 @@ const AdminDisciplinasList = () => {
   const handleDelete = async (id) => {
     if (await confirm('Tem certeza que deseja excluir esta disciplina?')) {
       try {
-        const response = await fetch(`${API_URL}/api/disciplinas/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
+        const response = await apiFetch(`/api/disciplinas/${id}`, { method: 'DELETE' });
+
         if (response.ok) {
           fetchDisciplinas();
         } else if (response.status === 401) {
@@ -73,7 +68,7 @@ const AdminDisciplinasList = () => {
     if (!selectedCount) return;
     if (!await confirm(`Excluir ${selectedCount === 1 ? 'a disciplina selecionada' : `as ${selectedCount} disciplinas selecionadas`}? Esta ação não pode ser desfeita.`)) return;
     setDeleting(true);
-    await bulkDelete(`${API_URL}/api/disciplinas`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    await bulkDelete('/api/disciplinas', selectedIds, { onUnauthorized: () => navigate('/admin/login') });
     setDeleting(false);
     clear();
     fetchDisciplinas();

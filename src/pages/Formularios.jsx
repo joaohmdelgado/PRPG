@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL } from '../api';
+import { apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 
 export default function Formularios() {
@@ -11,7 +11,7 @@ export default function Formularios() {
   useEffect(() => {
     const fetchFormularios = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/formularios`);
+        const response = await apiFetch('/api/formularios', { auth: false });
         const data = await response.json();
 
         // As seções principais com ordem de exibição pré-definida

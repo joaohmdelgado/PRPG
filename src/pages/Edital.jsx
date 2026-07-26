@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { API_URL } from '../api';
+import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 
 const formatDate = (dateStr) => {
@@ -19,7 +19,7 @@ export default function Edital() {
   useEffect(() => {
     const fetchEdital = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/editais/${id}`);
+        const response = await apiFetch(`/api/editais/${id}`, { auth: false });
         if (response.ok) {
           const data = await response.json();
           setEdital(data);

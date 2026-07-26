@@ -3,7 +3,7 @@ import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, HelpCircle } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
@@ -20,7 +20,7 @@ const AdminFaqList = () => {
 
   const fetchFaqs = async () => {
     try {
-      const response = await fetch(withProgramaScope(`${API_URL}/api/faq`));
+      const response = await apiFetch(withProgramaScope('/api/faq'));
       if (response.ok) {
         const data = await response.json();
         setFaqs(data);
@@ -39,13 +39,8 @@ const AdminFaqList = () => {
   const handleDelete = async (id) => {
     if (await confirm('Tem certeza que deseja excluir esta pergunta frequente?')) {
       try {
-        const response = await fetch(`${API_URL}/api/faq/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
+        const response = await apiFetch(`/api/faq/${id}`, { method: 'DELETE' });
+
         if (response.ok) {
           fetchFaqs();
         } else if (response.status === 401) {
@@ -70,7 +65,7 @@ const AdminFaqList = () => {
     if (!selectedCount) return;
     if (!await confirm(`Excluir ${selectedCount === 1 ? 'a pergunta selecionada' : `as ${selectedCount} perguntas selecionadas`}? Esta ação não pode ser desfeita.`)) return;
     setDeleting(true);
-    await bulkDelete(`${API_URL}/api/faq`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    await bulkDelete('/api/faq', selectedIds, { onUnauthorized: () => navigate('/admin/login') });
     setDeleting(false);
     clear();
     fetchFaqs();

@@ -4,7 +4,7 @@ import { useToast } from '../../components/admin/Toast';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, FileCheck, Eye } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
@@ -22,11 +22,7 @@ const AdminPortarias = () => {
 
   const fetchPortarias = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/portarias`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await apiFetch('/api/portarias');
       if (response.ok) {
         const data = await response.json();
         // Ordenar por data da portaria decrescente
@@ -52,12 +48,7 @@ const AdminPortarias = () => {
     if (!await confirm('Tem certeza que deseja remover esta portaria?')) return;
     
     try {
-      const response = await fetch(`${API_URL}/api/portarias/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await apiFetch(`/api/portarias/${id}`, { method: 'DELETE' });
       if (response.ok) {
         fetchPortarias();
       } else {
@@ -72,7 +63,7 @@ const AdminPortarias = () => {
     if (!selectedCount) return;
     if (!await confirm(`Excluir ${selectedCount === 1 ? 'a portaria selecionada' : `as ${selectedCount} portarias selecionadas`}? Esta ação não pode ser desfeita.`)) return;
     setDeleting(true);
-    const { failed } = await bulkDelete(`${API_URL}/api/portarias`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    const { failed } = await bulkDelete('/api/portarias', selectedIds, { onUnauthorized: () => navigate('/admin/login') });
     setDeleting(false);
     if (failed) toast.error(`${failed} ${failed === 1 ? 'portaria não pôde ser removida' : 'portarias não puderam ser removidas'}.`);
     clear();

@@ -3,7 +3,7 @@ import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Calendar } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
@@ -19,7 +19,7 @@ const AdminCalendarios = () => {
 
   const fetchCalendarios = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/calendarios`);
+      const response = await apiFetch('/api/calendarios');
       const data = await response.json();
       setCalendarios(data);
     } catch (error) {
@@ -36,13 +36,8 @@ const AdminCalendarios = () => {
   const handleDelete = async (id) => {
     if (await confirm('Tem certeza que deseja excluir este calendário?')) {
       try {
-        const response = await fetch(`${API_URL}/api/calendarios/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
+        const response = await apiFetch(`/api/calendarios/${id}`, { method: 'DELETE' });
+
         if (response.ok) {
           fetchCalendarios();
         } else if (response.status === 401) {
@@ -58,7 +53,7 @@ const AdminCalendarios = () => {
     if (!selectedCount) return;
     if (!await confirm(`Excluir ${selectedCount === 1 ? 'o calendário selecionado' : `os ${selectedCount} calendários selecionados`}? Esta ação não pode ser desfeita.`)) return;
     setDeleting(true);
-    await bulkDelete(`${API_URL}/api/calendarios`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    await bulkDelete('/api/calendarios', selectedIds, { onUnauthorized: () => navigate('/admin/login') });
     setDeleting(false);
     clear();
     fetchCalendarios();

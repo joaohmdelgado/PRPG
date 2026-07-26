@@ -4,7 +4,7 @@ import { useToast } from '../../components/admin/Toast';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Users } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
@@ -23,11 +23,7 @@ const AdminGruposPesquisa = () => {
 
   const fetchGrupos = async () => {
     try {
-      const response = await fetch(withProgramaScope(`${API_URL}/api/grupos-pesquisa`), {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await apiFetch(withProgramaScope('/api/grupos-pesquisa'));
       if (response.ok) {
         const data = await response.json();
         setGrupos(data);
@@ -51,12 +47,7 @@ const AdminGruposPesquisa = () => {
     if (!await confirm('Tem certeza que deseja remover este grupo de pesquisa?')) return;
     
     try {
-      const response = await fetch(`${API_URL}/api/grupos-pesquisa/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await apiFetch(`/api/grupos-pesquisa/${id}`, { method: 'DELETE' });
       if (response.ok) {
         fetchGrupos();
       } else {
@@ -71,7 +62,7 @@ const AdminGruposPesquisa = () => {
     if (!selectedCount) return;
     if (!await confirm(`Excluir ${selectedCount === 1 ? 'o grupo selecionado' : `os ${selectedCount} grupos selecionados`}? Esta ação não pode ser desfeita.`)) return;
     setDeleting(true);
-    const { failed } = await bulkDelete(`${API_URL}/api/grupos-pesquisa`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
+    const { failed } = await bulkDelete('/api/grupos-pesquisa', selectedIds, { onUnauthorized: () => navigate('/admin/login') });
     setDeleting(false);
     if (failed) toast.error(`${failed} ${failed === 1 ? 'grupo não pôde ser removido' : 'grupos não puderam ser removidos'}.`);
     clear();

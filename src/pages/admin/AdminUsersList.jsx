@@ -4,7 +4,7 @@ import { useToast } from '../../components/admin/Toast';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Edit, Trash2, Search, X } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 
@@ -55,11 +55,7 @@ const AdminUsersList = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/users`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await apiFetch('/api/users');
       if (response.ok) {
         const data = await response.json();
         setUsers(data);
@@ -81,12 +77,7 @@ const AdminUsersList = () => {
     if (!await confirm('Tem certeza que deseja remover este usuário?')) return;
     
     try {
-      const response = await fetch(`${API_URL}/api/users/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
       if (response.ok) {
         fetchUsers();
       } else {
@@ -101,7 +92,7 @@ const AdminUsersList = () => {
     if (!selectedCount) return;
     if (!await confirm(`Excluir ${selectedCount === 1 ? 'o usuário selecionado' : `os ${selectedCount} usuários selecionados`}? Esta ação não pode ser desfeita.`)) return;
     setDeleting(true);
-    const { failed } = await bulkDelete(`${API_URL}/api/users`, selectedIds);
+    const { failed } = await bulkDelete('/api/users', selectedIds);
     setDeleting(false);
     if (failed) toast.error(`${failed} ${failed === 1 ? 'usuário não pôde ser removido' : 'usuários não puderam ser removidos'}.`);
     clear();

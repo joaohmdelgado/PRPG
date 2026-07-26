@@ -2,7 +2,7 @@ import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
 import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Save, Trash2, Edit2, X, GraduationCap, Users, Award, BarChart3 } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 
 const INT_FIELDS = [
   { key: 'docentes_permanentes', label: 'Docentes permanentes' },
@@ -36,14 +36,12 @@ export default function AdminMetricas() {
   const [loading, setLoading] = useState(true);
 
   const { confirm, ConfirmModal } = useConfirm();
-  const token = localStorage.getItem('token');
-  const authHeaders = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
   const fetchAll = async () => {
     try {
       const [pr, mr] = await Promise.all([
-        fetch(`${API_URL}/api/programas`).then((r) => r.json()),
-        fetch(`${API_URL}/api/metricas`, { headers: { Authorization: `Bearer ${token}` } }).then((r) => (r.ok ? r.json() : [])),
+        apiFetch('/api/programas').then((r) => r.json()),
+        apiFetch('/api/metricas').then((r) => (r.ok ? r.json() : [])),
       ]);
       setProgramas(pr);
       setMetricas(mr);
@@ -99,9 +97,9 @@ export default function AdminMetricas() {
     if (!form.programa_id) { setError('Selecione um programa.'); return; }
     if (!form.ano) { setError('Informe o ano.'); return; }
 
-    const url = editingId ? `${API_URL}/api/metricas/${editingId}` : `${API_URL}/api/metricas`;
+    const path = editingId ? `/api/metricas/${editingId}` : '/api/metricas';
     const method = editingId ? 'PUT' : 'POST';
-    const res = await fetch(url, { method, headers: authHeaders, body: JSON.stringify(form) });
+    const res = await apiFetch(path, { method, json: form });
     if (res.ok) {
       cancelEdit();
       fetchAll();
@@ -113,7 +111,7 @@ export default function AdminMetricas() {
 
   const handleDelete = async (id) => {
     if (!await confirm('Excluir este registro de métricas?')) return;
-    const res = await fetch(`${API_URL}/api/metricas/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    const res = await apiFetch(`/api/metricas/${id}`, { method: 'DELETE' });
     if (res.ok) fetchAll();
   };
 

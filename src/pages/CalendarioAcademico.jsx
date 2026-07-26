@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL } from '../api';
+import { apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 
 export default function CalendarioAcademico() {
@@ -10,7 +10,7 @@ export default function CalendarioAcademico() {
   useEffect(() => {
     const fetchCalendarios = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/calendarios`);
+        const response = await apiFetch('/api/calendarios', { auth: false });
         const data = await response.json();
         setCalendariosData(data);
       } catch (error) {
