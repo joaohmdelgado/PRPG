@@ -37,6 +37,7 @@ import {
   protect, optionalProtect, requireRole, scopeProgramaWrite, requireProgramaOwnership,
   requireSelfPrograma, blockProgramaScoped,
 } from '../middleware/authMiddleware.js';
+import { loginLimiter, uploadLimiter } from '../middleware/rateLimit.js';
 import {
   newsRepo, editaisRepo, resolucoesRepo, formulariosRepo, disciplinasRepo,
   tesesRepo, faqRepo, gruposRepo, pagesRepo, usersRepo,
@@ -60,13 +61,28 @@ const storage = multer.diskStorage({
   }
 });
 
+// Allowlist de uploads de conteúdo/comprovantes: extensão E mimetype precisam
+// concordar. SVG e HTML são recusados de propósito — seriam servidos a partir
+// do domínio confiável em /uploads e abririam um vetor de XSS armazenado; checar
+// só o mimetype (controlado pelo cliente) também permitiria forjar a extensão.
+const ALLOWED_UPLOAD = {
+  '.pdf': ['application/pdf'],
+  '.png': ['image/png'],
+  '.jpg': ['image/jpeg'],
+  '.jpeg': ['image/jpeg'],
+  '.gif': ['image/gif'],
+  '.webp': ['image/webp'],
+};
+
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/')) {
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const allowedMimes = ALLOWED_UPLOAD[ext];
+    if (allowedMimes && allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Apenas arquivos PDF ou imagens são permitidos!'));
+      cb(new Error('Tipo de arquivo não permitido. Envie PDF, PNG, JPG, GIF ou WEBP.'));
     }
   },
   limits: { fileSize: 15 * 1024 * 1024 }
@@ -135,11 +151,11 @@ router.get('/pages', getPages);
 router.get('/pages/:id', getPageById);
 router.get('/pages/slug/:slug', getPageBySlug);
 
-// Autenticação
-router.post('/login', login);
+// Autenticação (com limite de tentativas por IP contra força bruta)
+router.post('/login', loginLimiter, login);
 
 // Uploads (qualquer usuário logado)
-router.post('/upload', protect, (req, res) => {
+router.post('/upload', uploadLimiter, protect, (req, res) => {
   upload.single('file')(req, res, (err) => {
     if (err) return res.status(400).json({ message: err.message });
     if (!req.file) return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
@@ -250,8 +266,9 @@ router.get('/proficiencia/declaracoes/:codigo', verificarDeclaracao);
 // prefixar nome/CPF do cadastro e vincular a inscrição (alunoId); anônimos
 // ainda podem se inscrever informando os dados no corpo.
 router.post('/proficiencia/inscricoes', optionalProtect, createInscricao);
-// Upload público dos comprovantes da inscrição (mesmas regras do /upload).
-router.post('/proficiencia/upload', (req, res) => {
+// Upload público dos comprovantes da inscrição (mesmas regras do /upload, com
+// limite de taxa por IP — é uma rota anônima, alvo fácil de abuso de storage).
+router.post('/proficiencia/upload', uploadLimiter, (req, res) => {
   upload.single('file')(req, res, (err) => {
     if (err) return res.status(400).json({ message: err.message });
     if (!req.file) return res.status(400).json({ message: 'Nenhum arquivo enviado.' });

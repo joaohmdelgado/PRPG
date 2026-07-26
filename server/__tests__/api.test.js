@@ -37,6 +37,22 @@ describe('autenticação', () => {
   });
 });
 
+describe('infra — 404 e erros', () => {
+  it('responde 404 em JSON para rota de API desconhecida', async () => {
+    const res = await request(app).get('/api/rota-que-nao-existe');
+    expect(res.status).toBe(404);
+    expect(res.body.message).toBeTruthy();
+  });
+
+  it('responde 400 para JSON malformado no corpo', async () => {
+    const res = await request(app)
+      .post('/api/login')
+      .set('Content-Type', 'application/json')
+      .send('{ "username": ');
+    expect(res.status).toBe(400);
+  });
+});
+
 describe('validação de entrada', () => {
   it('rejeita criação sem título (400)', async () => {
     const res = await auth(request(app).post('/api/news')).send({ excerpt: 'sem titulo' });

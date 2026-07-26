@@ -1,14 +1,34 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import adminRoutes from './routes/adminRoutes.js';
+import { apiLimiter } from './middleware/rateLimit.js';
 import { IS_PRODUCTION, CORS_ORIGINS } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const app = express();
+
+// Atrás de um proxy reverso (produção), confia no primeiro hop para que o
+// express-rate-limit enxergue o IP real do cliente (X-Forwarded-For).
+if (IS_PRODUCTION) app.set('trust proxy', 1);
+
+// Cabeçalhos de segurança (helmet). Este servidor expõe apenas a API (JSON) e
+// os arquivos estáticos em /uploads — o SPA é servido à parte. Por isso:
+//  - CSP desativada (não há HTML de app aqui; evita conflitar com o SPA externo);
+//  - CORP cross-origin para o SPA conseguir embutir imagens/PDFs de /uploads;
+//  - frameguard desativado para permitir o preview de PDFs do /uploads em iframe.
+// O essencial — X-Content-Type-Options: nosniff — permanece e reforça a defesa
+// do /uploads contra interpretação de arquivos como HTML/script.
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  crossOriginEmbedderPolicy: false,
+  frameguard: false,
+}));
 
 // CORS: em produção, libera apenas as origens da allowlist (CORS_ORIGINS).
 // Em desenvolvimento, libera qualquer origem para facilitar o trabalho local.
@@ -25,13 +45,38 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '2mb' }));
 
-// Servir a pasta de uploads de forma estática
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Servir a pasta de uploads de forma estática. O nosniff reforça contra a
+// interpretação de um arquivo enviado como HTML/script pelo navegador.
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'),
+}));
 
 // Rota base de teste
 app.get('/api/status', (req, res) => {
   res.json({ status: 'online', service: 'PRPG UFRPE API', version: '1.0.0' });
 });
 
-// Rotas da API e Painel Admin
-app.use('/api', adminRoutes);
+// Rotas da API e Painel Admin (com limite de taxa geral por IP).
+app.use('/api', apiLimiter, adminRoutes);
+
+// 404 para rotas de API desconhecidas: resposta JSON em vez do HTML padrão.
+app.use('/api', (req, res) => {
+  res.status(404).json({ message: 'Recurso não encontrado.' });
+});
+
+// Tratador de erros global: registra o detalhe no servidor e devolve uma
+// mensagem genérica, sem vazar internals em produção. Cobre JSON malformado,
+// erros do multer e quaisquer exceções não tratadas nas rotas.
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  // Corpo JSON inválido é erro do cliente (400), não do servidor (500).
+  if (err?.type === 'entity.parse.failed' || err instanceof SyntaxError) {
+    return res.status(400).json({ message: 'JSON inválido no corpo da requisição.' });
+  }
+  console.error('[Erro não tratado]', err);
+  const status = err?.status || err?.statusCode || 500;
+  res.status(status).json({
+    message: 'Erro interno do servidor.',
+    ...(IS_PRODUCTION ? {} : { error: err?.message }),
+  });
+});
