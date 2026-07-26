@@ -595,3 +595,160 @@ UPDATE users SET perfil_aluno = jsonb_set(perfil_aluno, '{situacao}', '"Desisten
   WHERE perfil_aluno ? 'situacao' AND perfil_aluno->>'situacao' = 'Desligado';
 UPDATE users SET perfil_aluno = jsonb_set(perfil_aluno, '{situacao}', '"Egresso"')
   WHERE perfil_aluno ? 'situacao' AND perfil_aluno->>'situacao' = 'Concluído';
+
+-- ===================== Câmara de Pós-Graduação (Fase 0) ====================
+-- Substitui a planilha de controle de processos da secretaria da Câmara.
+-- Ver requisitos-camara.md (raiz do projeto) para o levantamento completo.
+-- Modelo: o processo é o registro permanente (chave = NUP); a reunião é um
+-- evento; "estar na pauta" é uma relação N:N (camara_pauta_itens); a
+-- tramitação é um histórico append-only (camara_eventos) — nada é sobrescrito.
+
+-- Setores/unidades da UFRPE por onde os processos tramitam.
+CREATE TABLE IF NOT EXISTS camara_unidades (
+  id            TEXT PRIMARY KEY,
+  sigla         TEXT NOT NULL,
+  nome          TEXT NOT NULL,
+  aliases       TEXT[] DEFAULT '{}',   -- grafias históricas da planilha
+  interna_prpg  BOOLEAN DEFAULT FALSE, -- TRUE para Secretaria, Lato Sensu, Internacionalização, DADM
+  ativo         BOOLEAN DEFAULT TRUE
+);
+
+-- Processo: o registro permanente. Chave de negócio = numero (NUP).
+CREATE TABLE IF NOT EXISTS camara_processos (
+  id                     TEXT PRIMARY KEY,
+  numero                 TEXT NOT NULL UNIQUE,     -- 23082.XXXXXX/AAAA-DD
+  numero_valido          BOOLEAN DEFAULT TRUE,     -- FALSE = fora do padrão (não bloqueia)
+  link_sipac             TEXT,
+  assunto                TEXT NOT NULL,
+  tipo_materia           TEXT,                     -- vocabulário controlado
+  interessado            TEXT,                     -- pessoa/unidade requerente
+  programa_id            TEXT REFERENCES programas(id) ON DELETE SET NULL,
+  unidade_responsavel_id TEXT REFERENCES camara_unidades(id), -- setor da PRPG que instrui
+  status                 TEXT NOT NULL DEFAULT 'RECEBIDO',
+  status_motivo          TEXT,                     -- motivo de retirada/diligência/etc.
+  localizacao_id         TEXT REFERENCES camara_unidades(id),    -- derivado do último evento
+  localizacao_em         TEXT,                     -- data do último evento
+  data_entrada           TEXT,                     -- chegada à secretaria da Câmara
+  data_encerramento      TEXT,
+  processo_pai_id        TEXT REFERENCES camara_processos(id) ON DELETE SET NULL, -- apensamento
+  sigiloso               BOOLEAN DEFAULT FALSE,    -- restringe visualização (dado sensível)
+  observacoes            TEXT,                     -- campo livre que continua existindo
+  obs_original           TEXT,                     -- coluna "Obs." da planilha, preservada na íntegra
+  criado_em              TIMESTAMPTZ DEFAULT now(),
+  atualizado_em          TIMESTAMPTZ DEFAULT now(),
+  criado_por             TEXT,
+  atualizado_por         TEXT
+);
+CREATE INDEX IF NOT EXISTS camara_proc_status_idx  ON camara_processos(status);
+CREATE INDEX IF NOT EXISTS camara_proc_prog_idx    ON camara_processos(programa_id);
+
+-- Histórico append-only. NADA aqui é atualizado ou apagado.
+CREATE TABLE IF NOT EXISTS camara_eventos (
+  id            TEXT PRIMARY KEY,
+  processo_id   TEXT NOT NULL REFERENCES camara_processos(id) ON DELETE CASCADE,
+  tipo          TEXT NOT NULL,  -- TRAMITACAO|STATUS|RELATORIA|PAUTA|PARECER|DELIBERACAO|ATO|NOTA|COBRANCA
+  data          TEXT NOT NULL,  -- data do fato (não do registro)
+  unidade_id    TEXT REFERENCES camara_unidades(id),
+  descricao     TEXT,
+  reuniao_id    TEXT,
+  relatoria_id  TEXT,
+  anexo_url     TEXT,
+  criado_em     TIMESTAMPTZ DEFAULT now(),
+  criado_por    TEXT
+);
+CREATE INDEX IF NOT EXISTS camara_ev_proc_idx ON camara_eventos(processo_id, data);
+
+-- Reuniões da Câmara.
+CREATE TABLE IF NOT EXISTS camara_reunioes (
+  id            TEXT PRIMARY KEY,
+  data          TEXT NOT NULL,       -- 'YYYY-MM-DD'
+  numero        TEXT,                -- "VIII Reunião Ordinária"
+  tipo          TEXT DEFAULT 'ORDINARIA', -- ORDINARIA|EXTRAORDINARIA
+  local         TEXT,
+  hora          TEXT,
+  status        TEXT NOT NULL DEFAULT 'RASCUNHO', -- RASCUNHO|CONVOCADA|REALIZADA|CANCELADA
+  pauta_pdf_url TEXT,
+  ata_url       TEXT,
+  observacoes   TEXT,
+  criado_em     TIMESTAMPTZ DEFAULT now(),
+  atualizado_em TIMESTAMPTZ DEFAULT now(),
+  criado_por    TEXT,
+  atualizado_por TEXT
+);
+
+-- Relação N:N processo ↔ reunião. Substitui a cópia entre abas.
+CREATE TABLE IF NOT EXISTS camara_pauta_itens (
+  id             TEXT PRIMARY KEY,
+  reuniao_id     TEXT NOT NULL REFERENCES camara_reunioes(id) ON DELETE CASCADE,
+  processo_id    TEXT NOT NULL REFERENCES camara_processos(id) ON DELETE CASCADE,
+  ordem          INTEGER DEFAULT 0,
+  bloco          TEXT,               -- agrupamento na pauta (ex.: por setor responsável)
+  deliberacao    TEXT,               -- APROVADO|APROVADO_RESSALVAS|INDEFERIDO|DILIGENCIA|RETIRADO|SOBRESTADO|ENCAMINHADO|HOMOLOGADO
+  motivo_saida   TEXT,               -- vocabulário controlado, quando retirado/adiado
+  registro       TEXT,               -- síntese da discussão para a ata
+  criado_em      TIMESTAMPTZ DEFAULT now(),
+  criado_por     TEXT,
+  UNIQUE (reuniao_id, processo_id)
+);
+
+-- Designação de relatoria, com prazo e devolução. Histórico: um processo pode
+-- ter várias relatorias (troca de relator ocorre nos dados reais).
+CREATE TABLE IF NOT EXISTS camara_relatorias (
+  id                  TEXT PRIMARY KEY,
+  processo_id         TEXT NOT NULL REFERENCES camara_processos(id) ON DELETE CASCADE,
+  -- relator_id é polimórfico (users.id ou pessoas.id), como em vinculos.pessoa_id
+  relator_id          TEXT,
+  relator_nome        TEXT NOT NULL,   -- desnormalizado: nomes históricos sem cadastro
+  programa_id         TEXT REFERENCES programas(id) ON DELETE SET NULL,
+  data_designacao     TEXT,
+  prazo_devolucao     TEXT,
+  data_devolucao      TEXT,
+  resultado_parecer   TEXT,            -- FAVORAVEL|FAVORAVEL_RESSALVAS|DESFAVORAVEL|DILIGENCIA|ENCAMINHAMENTO
+  parecer_url         TEXT,
+  ativa               BOOLEAN DEFAULT TRUE,
+  motivo_substituicao TEXT,
+  criado_em           TIMESTAMPTZ DEFAULT now(),
+  criado_por          TEXT
+);
+CREATE INDEX IF NOT EXISTS camara_rel_proc_idx ON camara_relatorias(processo_id);
+
+-- Atos resultantes (resolução, decisão, portaria).
+CREATE TABLE IF NOT EXISTS camara_atos (
+  id            TEXT PRIMARY KEY,
+  processo_id   TEXT NOT NULL REFERENCES camara_processos(id) ON DELETE CASCADE,
+  tipo          TEXT,               -- RESOLUCAO_CEPE|RESOLUCAO_CONSU|DECISAO_SEG|PORTARIA|DESPACHO
+  numero        TEXT,
+  ano           INTEGER,
+  data          TEXT,
+  ementa        TEXT,
+  link          TEXT,
+  resolucao_id  TEXT REFERENCES resolucoes(id) ON DELETE SET NULL, -- publicação no site
+  criado_em     TIMESTAMPTZ DEFAULT now(),
+  criado_por    TEXT,
+  atualizado_por TEXT
+);
+
+-- Seed do vocabulário de unidades/setores (não depende das decisões pendentes
+-- em requisitos-camara.md §16 — cores e prazo de relatoria seguem em aberto).
+-- Idempotente: ON CONFLICT (id) DO NOTHING.
+INSERT INTO camara_unidades (id, sigla, nome, aliases, interna_prpg) VALUES
+  ('prpg-secretaria-camara', 'Secretaria da Câmara', 'PRPG - Secretaria da Câmara de Pós-Graduação', '{}', TRUE),
+  ('prpg-lato-sensu', 'Lato Sensu', 'PRPG - Lato Sensu', '{}', TRUE),
+  ('prpg-internacionalizacao', 'Internacionalização', 'PRPG - Internacionalização', '{}', TRUE),
+  ('prpg-dadm', 'DADM', 'PRPG - DADM', '{}', TRUE),
+  ('coord-stricto-excelencia', 'CPSE', 'Coordenadoria de Programas Stricto Sensu de Excelência', '{}', TRUE),
+  ('seg', 'SEG', 'Secretaria Geral dos Conselhos da Administração Superior', '{"Secretaria Geral dos Conselhos","SECRETARIA GERAL DOS CONSELHOS DA ADMINISTRAÇÃO SUPERIOR-SEG"}', FALSE),
+  ('cepe', 'CEPE', 'Conselho de Ensino, Pesquisa e Extensão', '{}', FALSE),
+  ('consu', 'CONSU', 'Conselho Universitário', '{}', FALSE),
+  ('reitoria', 'Reitoria', 'Reitoria da UFRPE', '{}', FALSE),
+  ('progepe', 'PROGEPE', 'Pró-Reitoria de Gestão de Pessoas e Educação', '{}', FALSE),
+  ('preg', 'PREG', 'Pró-Reitoria de Ensino de Graduação', '{}', FALSE),
+  ('procuradoria-federal', 'Procuradoria Federal', 'Procuradoria Federal junto à UFRPE', '{}', FALSE),
+  ('drca', 'DRCA', 'Divisão de Registro e Controle Acadêmico', '{}', FALSE),
+  ('arquivo', 'Arquivo', 'Arquivo Geral da UFRPE', '{}', FALSE),
+  ('sede', 'Sede', 'Unidades Acadêmicas da Sede (Recife/Dois Irmãos)', '{}', FALSE),
+  ('uag', 'UAG', 'Unidade Acadêmica de Garanhuns', '{}', FALSE),
+  ('uacsa', 'UACSA', 'Unidade Acadêmica de Cabo de Santo Agostinho', '{}', FALSE),
+  ('uast', 'UAST', 'Unidade Acadêmica de Serra Talhada', '{}', FALSE),
+  ('uaeadtec', 'UAEADTec', 'Unidade Acadêmica de Educação a Distância e Tecnologia', '{}', FALSE)
+ON CONFLICT (id) DO NOTHING;

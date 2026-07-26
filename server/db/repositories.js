@@ -660,3 +660,73 @@ export const taxonomiaRefsRepo = {
     return rows[0]?.valor ?? null;
   },
 };
+
+// =================== Câmara de Pós-Graduação (Fase 0) =============
+// Entidades de tabela única (CRUD simples). As relações N:N e o histórico
+// append-only (eventos, pauta_itens, relatorias) ficam em camaraRepo.js.
+export const camaraUnidadesRepo = createRepository({
+  table: 'camara_unidades',
+  orderBy: 'sigla ASC',
+  fromRow: (r) => ({
+    id: r.id, sigla: r.sigla, nome: r.nome, aliases: r.aliases ?? [],
+    internaPrpg: r.interna_prpg, ativo: r.ativo,
+  }),
+  toRow: (o) => ({
+    id: o.id, sigla: o.sigla, nome: o.nome, aliases: toArr(o.aliases),
+    interna_prpg: !!o.internaPrpg, ativo: o.ativo != null ? !!o.ativo : true,
+  }),
+});
+
+export const camaraProcessosRepo = createRepository({
+  table: 'camara_processos',
+  orderBy: 'criado_em DESC',
+  fromRow: (r) => ({
+    id: r.id, numero: r.numero, numeroValido: r.numero_valido, linkSipac: r.link_sipac,
+    assunto: r.assunto, tipoMateria: r.tipo_materia, interessado: r.interessado,
+    programaId: r.programa_id, unidadeResponsavelId: r.unidade_responsavel_id,
+    status: r.status, statusMotivo: r.status_motivo,
+    localizacaoId: r.localizacao_id, localizacaoEm: r.localizacao_em,
+    dataEntrada: r.data_entrada, dataEncerramento: r.data_encerramento,
+    processoPaiId: r.processo_pai_id, sigiloso: r.sigiloso,
+    observacoes: r.observacoes, obsOriginal: r.obs_original,
+  }),
+  toRow: (o) => ({
+    id: o.id, numero: o.numero, numero_valido: o.numeroValido != null ? !!o.numeroValido : true,
+    link_sipac: o.linkSipac || null, assunto: o.assunto, tipo_materia: o.tipoMateria || null,
+    interessado: o.interessado || null, programa_id: o.programaId || null,
+    unidade_responsavel_id: o.unidadeResponsavelId || null,
+    status: o.status || 'RECEBIDO', status_motivo: o.statusMotivo || null,
+    localizacao_id: o.localizacaoId || null, localizacao_em: o.localizacaoEm || null,
+    data_entrada: o.dataEntrada || null, data_encerramento: o.dataEncerramento || null,
+    processo_pai_id: o.processoPaiId || null, sigiloso: !!o.sigiloso,
+    observacoes: o.observacoes || null, obs_original: o.obsOriginal || null,
+  }),
+});
+
+export const camaraReunioesRepo = createRepository({
+  table: 'camara_reunioes',
+  orderBy: 'data DESC',
+  fromRow: (r) => ({
+    id: r.id, data: r.data, numero: r.numero, tipo: r.tipo, local: r.local, hora: r.hora,
+    status: r.status, pautaPdfUrl: r.pauta_pdf_url, ataUrl: r.ata_url, observacoes: r.observacoes,
+  }),
+  toRow: (o) => ({
+    id: o.id, data: o.data, numero: o.numero || null, tipo: o.tipo || 'ORDINARIA',
+    local: o.local || null, hora: o.hora || null, status: o.status || 'RASCUNHO',
+    pauta_pdf_url: o.pautaPdfUrl || null, ata_url: o.ataUrl || null, observacoes: o.observacoes || null,
+  }),
+});
+
+export const camaraAtosRepo = createRepository({
+  table: 'camara_atos',
+  orderBy: 'data DESC NULLS LAST, criado_em DESC',
+  fromRow: (r) => ({
+    id: r.id, processoId: r.processo_id, tipo: r.tipo, numero: r.numero, ano: r.ano,
+    data: r.data, ementa: r.ementa, link: r.link, resolucaoId: r.resolucao_id,
+  }),
+  toRow: (o) => ({
+    id: o.id, processo_id: o.processoId, tipo: o.tipo || null, numero: o.numero || null,
+    ano: intOrNull(o.ano), data: o.data || null, ementa: o.ementa || null,
+    link: o.link || null, resolucao_id: o.resolucaoId || null,
+  }),
+});
