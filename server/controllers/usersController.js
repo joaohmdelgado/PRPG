@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { isPlainObject } from '../utils/sanitize.js';
+import { serverError } from '../utils/httpError.js';
 import { usersRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { PAPEIS_DISCENTE, PAPEIS_DOCENTE } from './programasController.js';
@@ -62,7 +63,7 @@ export const getUsers = async (req, res) => {
     const users = await usersRepo.getAll();
     res.json(await anexarProgramasVinculo(users.map(stripHash)));
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar usuários', error: error.message });
+    serverError(res, 'Erro ao buscar usuários', error);
   }
 };
 
@@ -87,7 +88,7 @@ export const getUserById = async (req, res) => {
     const linhas_pesquisa = await linhasPesquisaRepo.getByUser(user.id);
     res.json({ ...stripHash(user), linhas_pesquisa });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar usuário', error: error.message });
+    serverError(res, 'Erro ao buscar usuário', error);
   }
 };
 
@@ -173,6 +174,9 @@ export const createUser = async (req, res) => {
       id: crypto.randomUUID(),
       email: data.email,
       password_hash,
+      // Sem senha explícita usamos o padrão 'Mudar123' → provisória: obriga a
+      // troca no primeiro acesso. Senha informada pelo admin já vale como final.
+      senhaTemporaria: !data.password,
       roles,
       programaId: ownerProgramaId,
       privacidade: data.privacidade || { mostrar_email: false, mostrar_telefone: false },
@@ -198,7 +202,7 @@ export const createUser = async (req, res) => {
 
     res.status(201).json(stripHash(created));
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao criar usuário', error: error.message });
+    serverError(res, 'Erro ao criar usuário', error);
   }
 };
 
@@ -223,8 +227,12 @@ export const updateUser = async (req, res) => {
     }
 
     const data = req.body || {};
-    // Gestor não pode trocar papéis nem o programa-dono (evita escalonamento).
-    const updatedRoles = scoped ? existing.roles : (data.roles || existing.roles);
+    // Papéis e programa-dono só podem ser alterados por Admin/Gestor da PRPG.
+    // Nem o Gestor de Programa nem a auto-edição (o próprio usuário) podem mexer
+    // nisso: caso contrário um Aluno faria PUT no próprio id com
+    // roles:['Administrator'] (ou um programaId) e escalaria privilégios.
+    const canManageRoles = isAdmin;
+    const updatedRoles = canManageRoles ? (data.roles || existing.roles) : existing.roles;
     const updatedPerfilProfessor =
       data.perfil_professor !== undefined ? data.perfil_professor : existing.perfil_professor;
 
@@ -235,26 +243,30 @@ export const updateUser = async (req, res) => {
       }
     }
 
-    const updatedProgramaId =
-      data.programaId !== undefined ? data.programaId : existing.programaId;
+    const updatedProgramaId = canManageRoles
+      ? (data.programaId !== undefined ? data.programaId : existing.programaId)
+      : existing.programaId;
     if (updatedRoles.includes('GestorPrograma') && !updatedProgramaId) {
       return res.status(400).json({ message: 'O gestor de programa deve estar vinculado a um programa.' });
     }
 
+    // Troca de senha pelo próprio usuário zera a flag provisória; um reset feito
+    // por admin/gestor marca como provisória (força nova troca). Sem troca de
+    // senha, o estado anterior é preservado.
+    let senhaTemporaria = existing.senhaTemporaria ?? false;
     let password_hash = existing.password_hash;
     if (data.password) {
       password_hash = await bcrypt.hash(data.password, await bcrypt.genSalt(10));
+      senhaTemporaria = isSelf ? false : true;
     }
 
     const merged = {
       ...existing,
       email: data.email || existing.email,
       password_hash,
+      senhaTemporaria,
       roles: updatedRoles,
-      programaId: scoped
-        ? existing.programaId
-        : (updatedRoles.includes('GestorPrograma') ? updatedProgramaId
-            : (data.programaId !== undefined ? data.programaId : existing.programaId)),
+      programaId: updatedProgramaId,
       privacidade: data.privacidade || existing.privacidade,
       perfil_geral: data.perfil_geral || existing.perfil_geral,
       dados_academicos: data.dados_academicos || existing.dados_academicos,
@@ -273,7 +285,7 @@ export const updateUser = async (req, res) => {
 
     res.json(stripHash(updated));
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao atualizar usuário', error: error.message });
+    serverError(res, 'Erro ao atualizar usuário', error);
   }
 };
 
@@ -285,6 +297,6 @@ export const deleteUser = async (req, res) => {
     if (ok) res.json({ message: 'Usuário removido com sucesso' });
     else res.status(404).json({ message: 'Usuário não encontrado' });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao remover usuário', error: error.message });
+    serverError(res, 'Erro ao remover usuário', error);
   }
 };

@@ -92,6 +92,63 @@ describe('users — controle de acesso', () => {
     const ok = await request(app).post('/api/login').send({ username: 'aluno3@test.com', password: 'novaSenha456' });
     expect(ok.status).toBe(200);
   });
+
+  it('não permite que o próprio usuário (não-admin) escale seus papéis nem o programa', async () => {
+    await seedUser({ id: 'aluno-esc', email: 'aluno-esc@test.com', roles: ['Aluno'] });
+    const t = await login('aluno-esc@test.com');
+
+    const upd = await request(app).put('/api/users/aluno-esc')
+      .set('Authorization', `Bearer ${t}`)
+      .send({ roles: ['Administrator'], programaId: 'ppg-1' });
+    // A atualização do próprio perfil é aceita, mas papéis/programa são ignorados.
+    expect(upd.status).toBe(200);
+    expect(upd.body.roles).toEqual(['Aluno']);
+    expect(upd.body.programaId ?? null).toBeNull();
+
+    // Confirma relendo como admin: nada de escalonamento persistido.
+    const reread = await asAdmin(request(app).get('/api/users/aluno-esc'));
+    expect(reread.body.roles).toEqual(['Aluno']);
+    expect(reread.body.programaId ?? null).toBeNull();
+  });
+
+  it('permite ao Admin alterar papéis de um usuário', async () => {
+    await seedUser({ id: 'aluno-prom', email: 'aluno-prom@test.com', roles: ['Aluno'] });
+    const upd = await asAdmin(request(app).put('/api/users/aluno-prom')).send({ roles: ['Gestor'] });
+    expect(upd.status).toBe(200);
+    expect(upd.body.roles).toEqual(['Gestor']);
+  });
+});
+
+describe('users — senha provisória', () => {
+  it('marca como provisória quando criado sem senha (login sinaliza a troca)', async () => {
+    const create = await asAdmin(request(app).post('/api/users')).send({ email: 'prov@test.com', roles: ['Aluno'] });
+    expect(create.status).toBe(201);
+
+    const res = await request(app).post('/api/login').send({ username: 'prov@test.com', password: 'Mudar123' });
+    expect(res.status).toBe(200);
+    expect(res.body.senhaTemporaria).toBe(true);
+  });
+
+  it('limpa a flag quando o próprio usuário troca a senha', async () => {
+    const create = await asAdmin(request(app).post('/api/users')).send({ email: 'prov2@test.com', roles: ['Aluno'] });
+    const id = create.body.id;
+    const t = await login('prov2@test.com', 'Mudar123');
+
+    const upd = await request(app).put(`/api/users/${id}`)
+      .set('Authorization', `Bearer ${t}`)
+      .send({ password: 'minhaNovaSenha8' });
+    expect(upd.status).toBe(200);
+
+    const res = await request(app).post('/api/login').send({ username: 'prov2@test.com', password: 'minhaNovaSenha8' });
+    expect(res.body.senhaTemporaria).toBe(false);
+  });
+
+  it('senha informada explicitamente na criação não é provisória', async () => {
+    await asAdmin(request(app).post('/api/users'))
+      .send({ email: 'prov3@test.com', roles: ['Aluno'], password: 'senhaForte9' });
+    const res = await request(app).post('/api/login').send({ username: 'prov3@test.com', password: 'senhaForte9' });
+    expect(res.body.senhaTemporaria).toBe(false);
+  });
 });
 
 describe('users — exclusão', () => {

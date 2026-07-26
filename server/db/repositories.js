@@ -167,6 +167,7 @@ export const gruposRepo = createRepository({
 // ============================ Usuarios ============================
 const userFromRow = (r) => ({
   id: r.id, email: r.email, password_hash: r.password_hash, roles: r.roles ?? [],
+  senhaTemporaria: r.senha_temporaria ?? false,
   privacidade: { mostrar_email: r.priv_mostrar_email, mostrar_telefone: r.priv_mostrar_telefone },
   perfil_geral: {
     nome: r.perfil_nome, cpf: r.perfil_cpf, siape: r.perfil_siape,
@@ -183,6 +184,7 @@ const userFromRow = (r) => ({
 });
 const userToRow = (o) => ({
   id: o.id, email: o.email, password_hash: o.password_hash, roles: toArr(o.roles),
+  senha_temporaria: o.senhaTemporaria != null ? !!o.senhaTemporaria : false,
   priv_mostrar_email: o.privacidade?.mostrar_email ?? false,
   priv_mostrar_telefone: o.privacidade?.mostrar_telefone ?? false,
   perfil_nome: o.perfil_geral?.nome ?? null, perfil_cpf: o.perfil_geral?.cpf ?? null,

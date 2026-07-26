@@ -6,6 +6,9 @@ CREATE TABLE IF NOT EXISTS users (
   id                    TEXT PRIMARY KEY,
   email                 TEXT UNIQUE NOT NULL,
   password_hash         TEXT NOT NULL,
+  -- TRUE quando a senha é provisória (padrão 'Mudar123' ou reset pelo admin):
+  -- o usuário é obrigado a trocá-la no primeiro acesso antes de usar o painel.
+  senha_temporaria      BOOLEAN DEFAULT FALSE,
   roles                 TEXT[] NOT NULL DEFAULT '{}',
   priv_mostrar_email    BOOLEAN DEFAULT FALSE,
   priv_mostrar_telefone BOOLEAN DEFAULT FALSE,
@@ -415,6 +418,9 @@ CREATE INDEX IF NOT EXISTS pages_programa_id_idx ON pages(programa_id);
 -- NULL = usuario sem programa (Administrator/Gestor da PRPG, professor, aluno, etc.).
 ALTER TABLE users ADD COLUMN IF NOT EXISTS programa_id TEXT REFERENCES programas(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS users_programa_id_idx ON users(programa_id);
+
+-- Senha provisória: obriga a troca no primeiro acesso (idempotente p/ bancos existentes).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS senha_temporaria BOOLEAN DEFAULT FALSE;
 
 -- ======= Linhas de pesquisa por programa: TEXT[] → JSONB [{label,target_id}] =======
 -- Idempotente: só executa se a coluna ainda for TEXT[].

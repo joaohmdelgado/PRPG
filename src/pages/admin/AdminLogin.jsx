@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
@@ -15,10 +15,10 @@ const AdminLogin = () => {
     setError('');
 
     try {
-      const response = await fetch(`${API_URL}/api/login`, {
+      const response = await apiFetch('/api/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        auth: false,
+        json: { username, password },
       });
 
       const data = await response.json();
@@ -32,7 +32,14 @@ const AdminLogin = () => {
         } else {
           localStorage.removeItem('gestorPrograma');
         }
-        navigate('/admin');
+        // Senha provisória (padrão/reset): obriga a troca antes de liberar o painel.
+        if (data.senhaTemporaria) {
+          localStorage.setItem('senhaTemporaria', 'true');
+          navigate('/admin/trocar-senha');
+        } else {
+          localStorage.removeItem('senhaTemporaria');
+          navigate('/admin');
+        }
       } else {
         setError(data.message || 'Erro ao fazer login');
       }

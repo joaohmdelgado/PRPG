@@ -1,80 +1,86 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { isProgramaGestor } from './auth';
-import PublicLayout from './components/PublicLayout';
-import Home from './pages/Home';
-import Sobre from './pages/Sobre';
-import MissaoVisaoValores from './pages/MissaoVisaoValores';
-import Historico from './pages/Historico';
-import EstruturaOrganizacional from './pages/EstruturaOrganizacional';
-import Equipe from './pages/Equipe';
-import Financeiro from './pages/Financeiro';
-import ProextPg from './pages/ProextPg';
-import ProgramasStrictoSensu from './pages/ProgramasStrictoSensu';
-import CalendarioAcademico from './pages/CalendarioAcademico';
-import Editais from './pages/Editais';
-import Resolucoes from './pages/Resolucoes';
-import Formularios from './pages/Formularios';
-import RelatoriosAutoavaliacao from './pages/RelatoriosAutoavaliacao';
-import Especializacao from './pages/Especializacao';
-import ResidenciaProfissional from './pages/ResidenciaProfissional';
-import SobreInternacionalizacao from './pages/SobreInternacionalizacao';
-import AlunosEstrangeiros from './pages/AlunosEstrangeiros';
-import CapesPrint from './pages/CapesPrint';
-import MobilidadeEstudantil from './pages/MobilidadeEstudantil';
-import Reconhecimento from './pages/Reconhecimento';
-import Noticias from './pages/Noticias';
-import Noticia from './pages/Noticia';
-import Edital from './pages/Edital';
-import DeclaracaoProficiencia from './pages/DeclaracaoProficiencia';
-import ProgramaSite from './pages/programa/ProgramaSite';
 
-// Admin Components
+// Layouts e guardas ficam eager (envolvem todas as rotas e são pequenos).
+import PublicLayout from './components/PublicLayout';
 import AdminLayout from './components/AdminLayout';
 import RequireAuth from './components/RequireAuth';
-import AdminLogin from './pages/admin/AdminLogin';
-import AdminNoticias from './pages/admin/AdminNoticias';
-import AdminNoticiaForm from './pages/admin/AdminNoticiaForm';
-import AdminEditais from './pages/admin/AdminEditais';
-import AdminEditalForm from './pages/admin/AdminEditalForm';
-import AdminResolucoes from './pages/admin/AdminResolucoes';
-import AdminResolucaoForm from './pages/admin/AdminResolucaoForm';
-import AdminFormularios from './pages/admin/AdminFormularios';
-import AdminFormularioForm from './pages/admin/AdminFormularioForm';
-import AdminProgramas from './pages/admin/AdminProgramas';
-import AdminProgramaForm from './pages/admin/AdminProgramaForm';
-import AdminProgramaComissoes from './pages/admin/AdminProgramaComissoes';
-import AdminProgramaMetricas from './pages/admin/AdminProgramaMetricas';
-import AdminProgramaLinhas from './pages/admin/AdminProgramaLinhas';
-import AdminProgramaGestorLinhas from './pages/admin/AdminProgramaGestorLinhas';
-import AdminLinhasPesquisa from './pages/admin/AdminLinhasPesquisa';
-import AdminProgramaDiscentes from './pages/admin/AdminProgramaDiscentes';
-import AdminProgramaDocentes from './pages/admin/AdminProgramaDocentes';
-import AdminCalendarios from './pages/admin/AdminCalendarios';
-import AdminCalendarioForm from './pages/admin/AdminCalendarioForm';
-import AdminTaxonomias from './pages/admin/AdminTaxonomias';
-import AdminUsersList from './pages/admin/AdminUsersList';
-import AdminUserForm from './pages/admin/AdminUserForm';
-import AdminPortarias from './pages/admin/AdminPortarias';
-import AdminPortariaForm from './pages/admin/AdminPortariaForm';
-import AdminGruposPesquisa from './pages/admin/AdminGruposPesquisa';
-import AdminGrupoPesquisaForm from './pages/admin/AdminGrupoPesquisaForm';
-import AdminTesesList from './pages/admin/AdminTesesList';
-import AdminTeseForm from './pages/admin/AdminTeseForm';
-import AdminFaqList from './pages/admin/AdminFaqList';
-import AdminFaqForm from './pages/admin/AdminFaqForm';
-import AdminDisciplinasList from './pages/admin/AdminDisciplinasList';
-import AdminDisciplinaForm from './pages/admin/AdminDisciplinaForm';
-import AdminBolsasList from './pages/admin/AdminBolsasList';
-import AdminBolsaForm from './pages/admin/AdminBolsaForm';
-import AdminPagesList from './pages/admin/AdminPagesList';
-import AdminPageForm from './pages/admin/AdminPageForm';
-import AdminMetricas from './pages/admin/AdminMetricas';
-import AdminImportacao from './pages/admin/AdminImportacao';
-import AdminProficiencia from './pages/admin/AdminProficiencia';
-import ProficienciaInscricao from './pages/ProficienciaInscricao';
-import ProficienciaInscricaoSucesso from './pages/ProficienciaInscricaoSucesso';
-import PageView from './pages/PageView';
+
+// Páginas carregadas sob demanda (code-splitting): o visitante público não
+// baixa o código do painel admin, e cada rota vira um chunk separado.
+const Home = lazy(() => import('./pages/Home'));
+const Sobre = lazy(() => import('./pages/Sobre'));
+const MissaoVisaoValores = lazy(() => import('./pages/MissaoVisaoValores'));
+const Historico = lazy(() => import('./pages/Historico'));
+const EstruturaOrganizacional = lazy(() => import('./pages/EstruturaOrganizacional'));
+const Equipe = lazy(() => import('./pages/Equipe'));
+const Financeiro = lazy(() => import('./pages/Financeiro'));
+const ProextPg = lazy(() => import('./pages/ProextPg'));
+const ProgramasStrictoSensu = lazy(() => import('./pages/ProgramasStrictoSensu'));
+const CalendarioAcademico = lazy(() => import('./pages/CalendarioAcademico'));
+const Editais = lazy(() => import('./pages/Editais'));
+const Resolucoes = lazy(() => import('./pages/Resolucoes'));
+const Formularios = lazy(() => import('./pages/Formularios'));
+const RelatoriosAutoavaliacao = lazy(() => import('./pages/RelatoriosAutoavaliacao'));
+const Especializacao = lazy(() => import('./pages/Especializacao'));
+const ResidenciaProfissional = lazy(() => import('./pages/ResidenciaProfissional'));
+const SobreInternacionalizacao = lazy(() => import('./pages/SobreInternacionalizacao'));
+const AlunosEstrangeiros = lazy(() => import('./pages/AlunosEstrangeiros'));
+const CapesPrint = lazy(() => import('./pages/CapesPrint'));
+const MobilidadeEstudantil = lazy(() => import('./pages/MobilidadeEstudantil'));
+const Reconhecimento = lazy(() => import('./pages/Reconhecimento'));
+const Noticias = lazy(() => import('./pages/Noticias'));
+const Noticia = lazy(() => import('./pages/Noticia'));
+const Edital = lazy(() => import('./pages/Edital'));
+const DeclaracaoProficiencia = lazy(() => import('./pages/DeclaracaoProficiencia'));
+const ProgramaSite = lazy(() => import('./pages/programa/ProgramaSite'));
+
+// Admin
+const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
+const AdminTrocarSenha = lazy(() => import('./pages/admin/AdminTrocarSenha'));
+const AdminNoticias = lazy(() => import('./pages/admin/AdminNoticias'));
+const AdminNoticiaForm = lazy(() => import('./pages/admin/AdminNoticiaForm'));
+const AdminEditais = lazy(() => import('./pages/admin/AdminEditais'));
+const AdminEditalForm = lazy(() => import('./pages/admin/AdminEditalForm'));
+const AdminResolucoes = lazy(() => import('./pages/admin/AdminResolucoes'));
+const AdminResolucaoForm = lazy(() => import('./pages/admin/AdminResolucaoForm'));
+const AdminFormularios = lazy(() => import('./pages/admin/AdminFormularios'));
+const AdminFormularioForm = lazy(() => import('./pages/admin/AdminFormularioForm'));
+const AdminProgramas = lazy(() => import('./pages/admin/AdminProgramas'));
+const AdminProgramaForm = lazy(() => import('./pages/admin/AdminProgramaForm'));
+const AdminProgramaComissoes = lazy(() => import('./pages/admin/AdminProgramaComissoes'));
+const AdminProgramaMetricas = lazy(() => import('./pages/admin/AdminProgramaMetricas'));
+const AdminProgramaLinhas = lazy(() => import('./pages/admin/AdminProgramaLinhas'));
+const AdminProgramaGestorLinhas = lazy(() => import('./pages/admin/AdminProgramaGestorLinhas'));
+const AdminLinhasPesquisa = lazy(() => import('./pages/admin/AdminLinhasPesquisa'));
+const AdminProgramaDiscentes = lazy(() => import('./pages/admin/AdminProgramaDiscentes'));
+const AdminProgramaDocentes = lazy(() => import('./pages/admin/AdminProgramaDocentes'));
+const AdminCalendarios = lazy(() => import('./pages/admin/AdminCalendarios'));
+const AdminCalendarioForm = lazy(() => import('./pages/admin/AdminCalendarioForm'));
+const AdminTaxonomias = lazy(() => import('./pages/admin/AdminTaxonomias'));
+const AdminUsersList = lazy(() => import('./pages/admin/AdminUsersList'));
+const AdminUserForm = lazy(() => import('./pages/admin/AdminUserForm'));
+const AdminPortarias = lazy(() => import('./pages/admin/AdminPortarias'));
+const AdminPortariaForm = lazy(() => import('./pages/admin/AdminPortariaForm'));
+const AdminGruposPesquisa = lazy(() => import('./pages/admin/AdminGruposPesquisa'));
+const AdminGrupoPesquisaForm = lazy(() => import('./pages/admin/AdminGrupoPesquisaForm'));
+const AdminTesesList = lazy(() => import('./pages/admin/AdminTesesList'));
+const AdminTeseForm = lazy(() => import('./pages/admin/AdminTeseForm'));
+const AdminFaqList = lazy(() => import('./pages/admin/AdminFaqList'));
+const AdminFaqForm = lazy(() => import('./pages/admin/AdminFaqForm'));
+const AdminDisciplinasList = lazy(() => import('./pages/admin/AdminDisciplinasList'));
+const AdminDisciplinaForm = lazy(() => import('./pages/admin/AdminDisciplinaForm'));
+const AdminBolsasList = lazy(() => import('./pages/admin/AdminBolsasList'));
+const AdminBolsaForm = lazy(() => import('./pages/admin/AdminBolsaForm'));
+const AdminPagesList = lazy(() => import('./pages/admin/AdminPagesList'));
+const AdminPageForm = lazy(() => import('./pages/admin/AdminPageForm'));
+const AdminMetricas = lazy(() => import('./pages/admin/AdminMetricas'));
+const AdminImportacao = lazy(() => import('./pages/admin/AdminImportacao'));
+const AdminProficiencia = lazy(() => import('./pages/admin/AdminProficiencia'));
+const ProficienciaInscricao = lazy(() => import('./pages/ProficienciaInscricao'));
+const ProficienciaInscricaoSucesso = lazy(() => import('./pages/ProficienciaInscricaoSucesso'));
+const PageView = lazy(() => import('./pages/PageView'));
 
 function NotFoundPublic() {
   return (
@@ -89,6 +95,16 @@ function NotFoundPublic() {
   );
 }
 
+// Fallback enquanto o chunk da rota carrega.
+function RouteFallback() {
+  return (
+    <div className="min-h-[40vh] flex items-center justify-center text-gray-400">
+      <i className="fa-solid fa-circle-notch fa-spin text-2xl" aria-hidden="true"></i>
+      <span className="sr-only">Carregando…</span>
+    </div>
+  );
+}
+
 function ProgramaLinhasRouter() {
   const isGestor = isProgramaGestor();
   return isGestor ? <AdminProgramaGestorLinhas /> : <AdminProgramaLinhas />;
@@ -96,124 +112,131 @@ function ProgramaLinhasRouter() {
 
 function App() {
   return (
-    <Routes>
-      {/* Rotas Administrativas */}
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin" element={<RequireAuth />}>
-        <Route element={<AdminLayout />}>
-          <Route index element={<AdminNoticias />} />
-          <Route path="noticias" element={<AdminNoticias />} />
-          <Route path="noticias/nova" element={<AdminNoticiaForm />} />
-          <Route path="noticias/editar/:id" element={<AdminNoticiaForm />} />
-          <Route path="editais" element={<AdminEditais />} />
-          <Route path="editais/novo" element={<AdminEditalForm />} />
-          <Route path="editais/editar/:id" element={<AdminEditalForm />} />
-          <Route path="resolucoes" element={<AdminResolucoes />} />
-          <Route path="resolucoes/nova" element={<AdminResolucaoForm />} />
-          <Route path="resolucoes/editar/:id" element={<AdminResolucaoForm />} />
-          <Route path="formularios" element={<AdminFormularios />} />
-          <Route path="formularios/novo" element={<AdminFormularioForm />} />
-          <Route path="formularios/editar/:id" element={<AdminFormularioForm />} />
-          <Route path="programas" element={<AdminProgramas />} />
-          <Route path="programas/novo" element={<AdminProgramaForm />} />
-          <Route path="programas/editar/:id" element={<AdminProgramaForm />} />
-          <Route path="programas/:id/discentes" element={<AdminProgramaDiscentes />} />
-          <Route path="programas/:id/docentes" element={<AdminProgramaDocentes />} />
-          <Route path="programas/:id/comissoes" element={<AdminProgramaComissoes />} />
-          <Route path="programas/:id/metricas" element={<AdminProgramaMetricas />} />
-          <Route path="programas/:id/linhas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
-            <Route index element={<ProgramaLinhasRouter />} />
-          </Route>
-          <Route path="calendarios" element={<AdminCalendarios />} />
-          <Route path="calendarios/novo" element={<AdminCalendarioForm />} />
-          <Route path="calendarios/editar/:id" element={<AdminCalendarioForm />} />
-          <Route path="teses-dissertacoes" element={<AdminTesesList />} />
-          <Route path="teses-dissertacoes/nova" element={<AdminTeseForm />} />
-          <Route path="teses-dissertacoes/editar/:id" element={<AdminTeseForm />} />
-          <Route path="faq" element={<AdminFaqList />} />
-          <Route path="faq/novo" element={<AdminFaqForm />} />
-          <Route path="faq/editar/:id" element={<AdminFaqForm />} />
-          <Route path="disciplinas" element={<AdminDisciplinasList />} />
-          <Route path="disciplinas/nova" element={<AdminDisciplinaForm />} />
-          <Route path="disciplinas/editar/:id" element={<AdminDisciplinaForm />} />
-          <Route path="bolsas" element={<AdminBolsasList />} />
-          <Route path="bolsas/nova" element={<AdminBolsaForm />} />
-          <Route path="bolsas/editar/:id" element={<AdminBolsaForm />} />
-          <Route path="paginas" element={<AdminPagesList />} />
-          <Route path="paginas/nova" element={<AdminPageForm />} />
-          <Route path="paginas/editar/:id" element={<AdminPageForm />} />
-          <Route path="taxonomias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
-            <Route index element={<AdminTaxonomias />} />
-          </Route>
-          <Route path="portarias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
-            <Route index element={<AdminPortarias />} />
-            <Route path="nova" element={<AdminPortariaForm />} />
-            <Route path="editar/:id" element={<AdminPortariaForm />} />
-          </Route>
-          <Route path="grupos-pesquisa" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
-            <Route index element={<AdminGruposPesquisa />} />
-            <Route path="novo" element={<AdminGrupoPesquisaForm />} />
-            <Route path="editar/:id" element={<AdminGrupoPesquisaForm />} />
-          </Route>
-          <Route path="users" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
-            <Route index element={<AdminUsersList />} />
-            <Route path="novo" element={<AdminUserForm />} />
-            <Route path="editar/:id" element={<AdminUserForm />} />
-          </Route>
-          <Route path="linhas-pesquisa" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
-            <Route index element={<AdminLinhasPesquisa />} />
-          </Route>
-          <Route path="metricas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
-            <Route index element={<AdminMetricas />} />
-          </Route>
-          <Route path="importacao" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
-            <Route index element={<AdminImportacao />} />
-          </Route>
-          {/* Gestão/avaliação: Admin/Gestor. */}
-          <Route path="proficiencia" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
-            <Route index element={<AdminProficiencia />} />
+    <Suspense fallback={<RouteFallback />}>
+      <Routes>
+        {/* Rotas Administrativas */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        {/* Troca obrigatória de senha provisória (fora do AdminLayout para não
+            entrar em laço com o guard de senha do RequireAuth). */}
+        <Route path="/admin/trocar-senha" element={<RequireAuth skipPasswordCheck />}>
+          <Route index element={<AdminTrocarSenha />} />
+        </Route>
+        <Route path="/admin" element={<RequireAuth />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<AdminNoticias />} />
+            <Route path="noticias" element={<AdminNoticias />} />
+            <Route path="noticias/nova" element={<AdminNoticiaForm />} />
+            <Route path="noticias/editar/:id" element={<AdminNoticiaForm />} />
+            <Route path="editais" element={<AdminEditais />} />
+            <Route path="editais/novo" element={<AdminEditalForm />} />
+            <Route path="editais/editar/:id" element={<AdminEditalForm />} />
+            <Route path="resolucoes" element={<AdminResolucoes />} />
+            <Route path="resolucoes/nova" element={<AdminResolucaoForm />} />
+            <Route path="resolucoes/editar/:id" element={<AdminResolucaoForm />} />
+            <Route path="formularios" element={<AdminFormularios />} />
+            <Route path="formularios/novo" element={<AdminFormularioForm />} />
+            <Route path="formularios/editar/:id" element={<AdminFormularioForm />} />
+            <Route path="programas" element={<AdminProgramas />} />
+            <Route path="programas/novo" element={<AdminProgramaForm />} />
+            <Route path="programas/editar/:id" element={<AdminProgramaForm />} />
+            <Route path="programas/:id/discentes" element={<AdminProgramaDiscentes />} />
+            <Route path="programas/:id/docentes" element={<AdminProgramaDocentes />} />
+            <Route path="programas/:id/comissoes" element={<AdminProgramaComissoes />} />
+            <Route path="programas/:id/metricas" element={<AdminProgramaMetricas />} />
+            <Route path="programas/:id/linhas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
+              <Route index element={<ProgramaLinhasRouter />} />
+            </Route>
+            <Route path="calendarios" element={<AdminCalendarios />} />
+            <Route path="calendarios/novo" element={<AdminCalendarioForm />} />
+            <Route path="calendarios/editar/:id" element={<AdminCalendarioForm />} />
+            <Route path="teses-dissertacoes" element={<AdminTesesList />} />
+            <Route path="teses-dissertacoes/nova" element={<AdminTeseForm />} />
+            <Route path="teses-dissertacoes/editar/:id" element={<AdminTeseForm />} />
+            <Route path="faq" element={<AdminFaqList />} />
+            <Route path="faq/novo" element={<AdminFaqForm />} />
+            <Route path="faq/editar/:id" element={<AdminFaqForm />} />
+            <Route path="disciplinas" element={<AdminDisciplinasList />} />
+            <Route path="disciplinas/nova" element={<AdminDisciplinaForm />} />
+            <Route path="disciplinas/editar/:id" element={<AdminDisciplinaForm />} />
+            <Route path="bolsas" element={<AdminBolsasList />} />
+            <Route path="bolsas/nova" element={<AdminBolsaForm />} />
+            <Route path="bolsas/editar/:id" element={<AdminBolsaForm />} />
+            <Route path="paginas" element={<AdminPagesList />} />
+            <Route path="paginas/nova" element={<AdminPageForm />} />
+            <Route path="paginas/editar/:id" element={<AdminPageForm />} />
+            <Route path="taxonomias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+              <Route index element={<AdminTaxonomias />} />
+            </Route>
+            <Route path="portarias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+              <Route index element={<AdminPortarias />} />
+              <Route path="nova" element={<AdminPortariaForm />} />
+              <Route path="editar/:id" element={<AdminPortariaForm />} />
+            </Route>
+            <Route path="grupos-pesquisa" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
+              <Route index element={<AdminGruposPesquisa />} />
+              <Route path="novo" element={<AdminGrupoPesquisaForm />} />
+              <Route path="editar/:id" element={<AdminGrupoPesquisaForm />} />
+            </Route>
+            <Route path="users" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
+              <Route index element={<AdminUsersList />} />
+              <Route path="novo" element={<AdminUserForm />} />
+              <Route path="editar/:id" element={<AdminUserForm />} />
+            </Route>
+            <Route path="linhas-pesquisa" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
+              <Route index element={<AdminLinhasPesquisa />} />
+            </Route>
+            <Route path="metricas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+              <Route index element={<AdminMetricas />} />
+            </Route>
+            <Route path="importacao" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+              <Route index element={<AdminImportacao />} />
+            </Route>
+            {/* Gestão/avaliação: Admin/Gestor. */}
+            <Route path="proficiencia" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+              <Route index element={<AdminProficiencia />} />
+            </Route>
           </Route>
         </Route>
-      </Route>
 
-      {/* Microsite dedicado do programa — header/menu/footer próprios, sem a casca da PRPG.
-          Segmento dinâmico: o React Router prioriza as rotas estáticas públicas abaixo,
-          então /sobre, /editais, /noticias etc. continuam sendo páginas da PRPG. */}
-      <Route path=":programaSlug/*" element={<ProgramaSite />} />
+        {/* Microsite dedicado do programa — header/menu/footer próprios, sem a casca da PRPG.
+            Segmento dinâmico: o React Router prioriza as rotas estáticas públicas abaixo,
+            então /sobre, /editais, /noticias etc. continuam sendo páginas da PRPG. */}
+        <Route path=":programaSlug/*" element={<ProgramaSite />} />
 
-      {/* Site público da PRPG (Navbar + Footer) */}
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/sobre" element={<Sobre />} />
-        <Route path="/missao-visao-valores" element={<MissaoVisaoValores />} />
-        <Route path="/historico" element={<Historico />} />
-        <Route path="/estrutura-organizacional" element={<EstruturaOrganizacional />} />
-        <Route path="/equipe" element={<Equipe />} />
-        <Route path="/financeiro" element={<Financeiro />} />
-        <Route path="/proext-pg" element={<ProextPg />} />
-        <Route path="/programas" element={<ProgramasStrictoSensu />} />
-        <Route path="/calendario-academico" element={<CalendarioAcademico />} />
-        <Route path="/editais" element={<Editais />} />
-        <Route path="/editais/:id" element={<Edital />} />
-        <Route path="/resolucoes" element={<Resolucoes />} />
-        <Route path="/formularios" element={<Formularios />} />
-        <Route path="/proficiencia/inscricao" element={<ProficienciaInscricao />} />
-        <Route path="/proficiencia/inscricao/sucesso" element={<ProficienciaInscricaoSucesso />} />
-        <Route path="/declaracoes/proficiencia/:codigo" element={<DeclaracaoProficiencia />} />
-        <Route path="/relatorios-autoavaliacao" element={<RelatoriosAutoavaliacao />} />
-        <Route path="/especializacao" element={<Especializacao />} />
-        <Route path="/residencia-profissional" element={<ResidenciaProfissional />} />
-        <Route path="/sobre-internacionalizacao" element={<SobreInternacionalizacao />} />
-        <Route path="/alunos-estrangeiros" element={<AlunosEstrangeiros />} />
-        <Route path="/capes-print" element={<CapesPrint />} />
-        <Route path="/mobilidade-estudantil" element={<MobilidadeEstudantil />} />
-        <Route path="/reconhecimento" element={<Reconhecimento />} />
-        <Route path="/noticias" element={<Noticias />} />
-        <Route path="/noticia/:id" element={<Noticia />} />
-        <Route path="/p/:slug" element={<PageView />} />
-        <Route path="*" element={<NotFoundPublic />} />
-      </Route>
-    </Routes>
+        {/* Site público da PRPG (Navbar + Footer) */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/sobre" element={<Sobre />} />
+          <Route path="/missao-visao-valores" element={<MissaoVisaoValores />} />
+          <Route path="/historico" element={<Historico />} />
+          <Route path="/estrutura-organizacional" element={<EstruturaOrganizacional />} />
+          <Route path="/equipe" element={<Equipe />} />
+          <Route path="/financeiro" element={<Financeiro />} />
+          <Route path="/proext-pg" element={<ProextPg />} />
+          <Route path="/programas" element={<ProgramasStrictoSensu />} />
+          <Route path="/calendario-academico" element={<CalendarioAcademico />} />
+          <Route path="/editais" element={<Editais />} />
+          <Route path="/editais/:id" element={<Edital />} />
+          <Route path="/resolucoes" element={<Resolucoes />} />
+          <Route path="/formularios" element={<Formularios />} />
+          <Route path="/proficiencia/inscricao" element={<ProficienciaInscricao />} />
+          <Route path="/proficiencia/inscricao/sucesso" element={<ProficienciaInscricaoSucesso />} />
+          <Route path="/declaracoes/proficiencia/:codigo" element={<DeclaracaoProficiencia />} />
+          <Route path="/relatorios-autoavaliacao" element={<RelatoriosAutoavaliacao />} />
+          <Route path="/especializacao" element={<Especializacao />} />
+          <Route path="/residencia-profissional" element={<ResidenciaProfissional />} />
+          <Route path="/sobre-internacionalizacao" element={<SobreInternacionalizacao />} />
+          <Route path="/alunos-estrangeiros" element={<AlunosEstrangeiros />} />
+          <Route path="/capes-print" element={<CapesPrint />} />
+          <Route path="/mobilidade-estudantil" element={<MobilidadeEstudantil />} />
+          <Route path="/reconhecimento" element={<Reconhecimento />} />
+          <Route path="/noticias" element={<Noticias />} />
+          <Route path="/noticia/:id" element={<Noticia />} />
+          <Route path="/p/:slug" element={<PageView />} />
+          <Route path="*" element={<NotFoundPublic />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 

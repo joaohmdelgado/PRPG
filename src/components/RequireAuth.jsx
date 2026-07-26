@@ -18,14 +18,22 @@ const clearSession = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('username');
   localStorage.removeItem('roles');
+  localStorage.removeItem('senhaTemporaria');
 };
 
-const RequireAuth = ({ allowedRoles }) => {
+// `skipPasswordCheck` é usado pela própria rota de troca de senha, para não
+// entrar em laço de redirecionamento enquanto a flag provisória ainda existe.
+const RequireAuth = ({ allowedRoles, skipPasswordCheck }) => {
   const token = localStorage.getItem('token');
 
   if (!token || isTokenExpired(token)) {
     clearSession();
     return <Navigate to="/admin/login" replace />;
+  }
+
+  // Senha provisória pendente: tranca o painel na troca de senha.
+  if (!skipPasswordCheck && localStorage.getItem('senhaTemporaria') === 'true') {
+    return <Navigate to="/admin/trocar-senha" replace />;
   }
 
   if (allowedRoles) {

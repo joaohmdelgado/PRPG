@@ -35,6 +35,8 @@ export const login = async (req, res) => {
         nome: user.perfil_geral?.nome || user.email,
         programaId: user.programaId || null,
         gestorPrograma,
+        // Quando TRUE, o painel força a troca de senha antes de liberar o acesso.
+        senhaTemporaria: user.senhaTemporaria ?? false,
       });
     } else {
       res.status(401).json({ message: 'E-mail ou senha inválidos' });
