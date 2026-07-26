@@ -23,6 +23,16 @@ import {
   getInscricaoById, lancarNota, deleteInscricao, gerarDeclaracao, verificarAluno,
   verificarDeclaracao,
 } from '../controllers/proficienciaController.js';
+import {
+  getVocabularios, getUnidades, createUnidade, updateUnidade, deleteUnidade,
+  getProcessos, getMeusProcessos, getProcessoById, createProcesso, updateProcesso,
+  patchStatus, patchLocalizacao, deleteProcesso, addEvento, addRelatoria,
+  registrarDevolucaoRelatoria, addAto, exportXlsx,
+} from '../controllers/camaraController.js';
+import {
+  getReunioes, getReuniaoById, createReuniao, updateReuniao, deleteReuniao,
+  getPauta, addToPauta, removeFromPauta, lancarResultados, pautaPdf,
+} from '../controllers/camaraReunioesController.js';
 
 
 import { getLinhas, getLinhaById, createLinha, updateLinha, deleteLinha } from '../controllers/linhasPesquisaController.js';
@@ -281,5 +291,46 @@ router.get('/proficiencia/inscricoes/:id', protect, requireRole(['Administrator'
 router.put('/proficiencia/inscricoes/:id/nota', protect, requireRole(['Administrator', 'Gestor']), lancarNota);
 router.delete('/proficiencia/inscricoes/:id', protect, requireRole(['Administrator']), deleteInscricao);
 router.get('/proficiencia/inscricoes/:id/declaracao', protect, requireRole(['Administrator', 'Gestor']), gerarDeclaracao);
+
+// ===================== Câmara de Pós-Graduação =====================
+// Ver requisitos-camara.md §8. Leitura de processos/unidades também para
+// GestorPrograma (escopado ao seu programa, sem sigiloso); escrita é
+// exclusiva de Administrator/Gestor. Exclusão de processo é só Administrator.
+const CAMARA_LEITURA = ['Administrator', 'Gestor', 'GestorPrograma'];
+const CAMARA_ESCRITA = ['Administrator', 'Gestor'];
+
+router.get('/camara/vocabularios', protect, requireRole(CAMARA_LEITURA), getVocabularios);
+router.get('/camara/unidades', protect, requireRole(CAMARA_LEITURA), getUnidades);
+router.post('/camara/unidades', protect, requireRole(CAMARA_ESCRITA), createUnidade);
+router.put('/camara/unidades/:id', protect, requireRole(CAMARA_ESCRITA), updateUnidade);
+router.delete('/camara/unidades/:id', protect, requireRole(CAMARA_ESCRITA), deleteUnidade);
+
+router.get('/camara/meus-processos', protect, getMeusProcessos);
+
+// Rotas específicas de reuniões ANTES da rota genérica /camara/processos/:id.
+router.get('/camara/reunioes', protect, requireRole(CAMARA_ESCRITA), getReunioes);
+router.post('/camara/reunioes', protect, requireRole(CAMARA_ESCRITA), createReuniao);
+router.get('/camara/reunioes/:id', protect, requireRole(CAMARA_ESCRITA), getReuniaoById);
+router.put('/camara/reunioes/:id', protect, requireRole(CAMARA_ESCRITA), updateReuniao);
+router.delete('/camara/reunioes/:id', protect, requireRole(CAMARA_ESCRITA), deleteReuniao);
+router.get('/camara/reunioes/:id/pauta', protect, requireRole(CAMARA_ESCRITA), getPauta);
+router.post('/camara/reunioes/:id/pauta', protect, requireRole(CAMARA_ESCRITA), addToPauta);
+router.delete('/camara/reunioes/:id/pauta/:itemId', protect, requireRole(CAMARA_ESCRITA), removeFromPauta);
+router.put('/camara/reunioes/:id/resultados', protect, requireRole(CAMARA_ESCRITA), lancarResultados);
+router.get('/camara/reunioes/:id/pauta.pdf', protect, requireRole(CAMARA_ESCRITA), pautaPdf);
+
+router.get('/camara/exportar.xlsx', protect, requireRole(CAMARA_ESCRITA), exportXlsx);
+router.put('/camara/relatorias/:relatoriaId', protect, requireRole(CAMARA_ESCRITA), registrarDevolucaoRelatoria);
+
+router.get('/camara/processos', protect, requireRole(CAMARA_LEITURA), getProcessos);
+router.post('/camara/processos', protect, requireRole(CAMARA_ESCRITA), createProcesso);
+router.get('/camara/processos/:id', protect, requireRole(CAMARA_LEITURA), getProcessoById);
+router.put('/camara/processos/:id', protect, requireRole(CAMARA_ESCRITA), updateProcesso);
+router.patch('/camara/processos/:id/status', protect, requireRole(CAMARA_ESCRITA), patchStatus);
+router.patch('/camara/processos/:id/localizacao', protect, requireRole(CAMARA_ESCRITA), patchLocalizacao);
+router.delete('/camara/processos/:id', protect, requireRole(['Administrator']), deleteProcesso);
+router.post('/camara/processos/:id/eventos', protect, requireRole(CAMARA_ESCRITA), addEvento);
+router.post('/camara/processos/:id/relatorias', protect, requireRole(CAMARA_ESCRITA), addRelatoria);
+router.post('/camara/processos/:id/atos', protect, requireRole(CAMARA_ESCRITA), addAto);
 
 export default router;

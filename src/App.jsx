@@ -78,6 +78,12 @@ const AdminPageForm = lazy(() => import('./pages/admin/AdminPageForm'));
 const AdminMetricas = lazy(() => import('./pages/admin/AdminMetricas'));
 const AdminImportacao = lazy(() => import('./pages/admin/AdminImportacao'));
 const AdminProficiencia = lazy(() => import('./pages/admin/AdminProficiencia'));
+const AdminCamara = lazy(() => import('./pages/admin/AdminCamara'));
+const AdminCamaraForm = lazy(() => import('./pages/admin/AdminCamaraForm'));
+const AdminCamaraProcesso = lazy(() => import('./pages/admin/AdminCamaraProcesso'));
+const AdminCamaraReunioes = lazy(() => import('./pages/admin/AdminCamaraReunioes'));
+const AdminCamaraReuniao = lazy(() => import('./pages/admin/AdminCamaraReuniao'));
+const AdminCamaraUnidades = lazy(() => import('./pages/admin/AdminCamaraUnidades'));
 const ProficienciaInscricao = lazy(() => import('./pages/ProficienciaInscricao'));
 const ProficienciaInscricaoSucesso = lazy(() => import('./pages/ProficienciaInscricaoSucesso'));
 const PageView = lazy(() => import('./pages/PageView'));
@@ -194,6 +200,20 @@ function App() {
             {/* Gestão/avaliação: Admin/Gestor. */}
             <Route path="proficiencia" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
               <Route index element={<AdminProficiencia />} />
+            </Route>
+            {/* Câmara de Pós-Graduação: leitura também para o Gestor de Programa
+                (escopado ao seu programa, ver requisitos-camara.md §8); a escrita
+                é bloqueada no backend (rotas /api/camara exigem Admin/Gestor). */}
+            <Route path="camara" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
+              <Route index element={<AdminCamara />} />
+              <Route path=":id" element={<AdminCamaraProcesso />} />
+            </Route>
+            <Route path="camara" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+              <Route path="novo" element={<AdminCamaraForm />} />
+              <Route path="editar/:id" element={<AdminCamaraForm />} />
+              <Route path="unidades" element={<AdminCamaraUnidades />} />
+              <Route path="reunioes" element={<AdminCamaraReunioes />} />
+              <Route path="reunioes/:id" element={<AdminCamaraReuniao />} />
             </Route>
           </Route>
         </Route>
