@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { Languages, FileText, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trash2 } from 'lucide-react';
 import { useConfirm } from '../../components/admin/ConfirmModal';
-
-const token = () => localStorage.getItem('token');
-const authHeaders = () => ({ Authorization: `Bearer ${token()}` });
 
 const RESULTADO_LABEL = {
   PROFICIENCIA: { txt: 'Proficiência', cls: 'bg-green-100 text-green-700' },
@@ -32,8 +29,8 @@ const AdminProficiencia = () => {
   const carregar = async () => {
     try {
       const [iRes, pRes] = await Promise.all([
-        fetch(`${API_URL}/api/proficiencia/inscricoes`, { headers: authHeaders() }),
-        fetch(`${API_URL}/api/proficiencia/periodo-aberto`, { headers: authHeaders() }),
+        apiFetch('/api/proficiencia/inscricoes'),
+        apiFetch('/api/proficiencia/periodo-aberto'),
       ]);
       setInscricoes(iRes.ok ? await iRes.json() : []);
       setPeriodoAberto(pRes.ok ? await pRes.json() : null);
@@ -52,10 +49,9 @@ const AdminProficiencia = () => {
     setSalvandoId(id);
     setErro('');
     try {
-      const res = await fetch(`${API_URL}/api/proficiencia/inscricoes/${id}/nota`, {
+      const res = await apiFetch(`/api/proficiencia/inscricoes/${id}/nota`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...authHeaders() },
-        body: JSON.stringify({ nota: Number(nota) }),
+        json: { nota: Number(nota) },
       });
       const d = await res.json();
       if (res.ok) setInscricoes((prev) => prev.map((i) => (i.id === id ? d : i)));
@@ -70,10 +66,7 @@ const AdminProficiencia = () => {
     setExcluindoId(id);
     setErro('');
     try {
-      const res = await fetch(`${API_URL}/api/proficiencia/inscricoes/${id}`, {
-        method: 'DELETE',
-        headers: authHeaders(),
-      });
+      const res = await apiFetch(`/api/proficiencia/inscricoes/${id}`, { method: 'DELETE' });
       if (res.ok) setInscricoes((prev) => prev.filter((i) => i.id !== id));
       else { const d = await res.json().catch(() => ({})); setErro(d.message || 'Erro ao excluir inscrição.'); }
     } catch { setErro('Erro de conexão.'); }
@@ -83,7 +76,7 @@ const AdminProficiencia = () => {
   const abrirDeclaracao = async (id) => {
     setErro('');
     try {
-      const res = await fetch(`${API_URL}/api/proficiencia/inscricoes/${id}/declaracao`, { headers: authHeaders() });
+      const res = await apiFetch(`/api/proficiencia/inscricoes/${id}/declaracao`);
       if (!res.ok) { const d = await res.json().catch(() => ({})); setErro(d.message || 'Erro ao gerar declaração.'); return; }
       const blob = await res.blob();
       window.open(URL.createObjectURL(blob), '_blank');

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import { Spinner, EmptyState, formatDate } from '../../components/programa/ProgramaUI';
 import SafeHtml from '../../components/SafeHtml';
@@ -14,7 +14,7 @@ export default function ProgramaNoticia() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    fetch(`${API_URL}/api/news/${encodeURIComponent(id)}`)
+    apiFetch(`/api/news/${encodeURIComponent(id)}`, { auth: false })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (active) setNoticia(d); })
       .catch(() => {})

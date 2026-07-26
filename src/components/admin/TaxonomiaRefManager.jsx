@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Pencil, Check, X, Loader2, Search } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { isProgramaGestor, getGestorPrograma } from '../../auth';
 import { useConfirm } from './ConfirmModal';
 import { useToast } from './Toast';
-
-const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
 
 // CRUD completo de um único campo de taxonomia de referência (entrada,
 // situacao_aluno, ...). Cada valor pode ser global (padrão) ou específico de um
@@ -44,7 +42,7 @@ export default function TaxonomiaRefManager({ campo, valorPlaceholder = 'Valor' 
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch(`${API_URL}/api/taxonomia-refs?campo=${encodeURIComponent(campo)}`, { headers: auth() });
+      const r = await apiFetch(`/api/taxonomia-refs?campo=${encodeURIComponent(campo)}`);
       if (r.ok) setRefs(await r.json());
     } catch (e) { console.error(e); }
     setLoading(false);
@@ -52,7 +50,7 @@ export default function TaxonomiaRefManager({ campo, valorPlaceholder = 'Valor' 
 
   const fetchProgramas = async () => {
     try {
-      const r = await fetch(`${API_URL}/api/programas`);
+      const r = await apiFetch('/api/programas');
       if (r.ok) setProgramas(await r.json());
     } catch (e) { console.error(e); }
   };
@@ -65,9 +63,9 @@ export default function TaxonomiaRefManager({ campo, valorPlaceholder = 'Valor' 
     setSaving(true); setError('');
     try {
       const programaId = isGestor ? meuProgramaId : (form.programa_id || null);
-      const r = await fetch(`${API_URL}/api/taxonomia-refs`, {
-        method: 'POST', headers: auth(),
-        body: JSON.stringify({ campo, valor: form.valor, programa_id: programaId, target_id: form.target_id || null }),
+      const r = await apiFetch('/api/taxonomia-refs', {
+        method: 'POST',
+        json: { campo, valor: form.valor, programa_id: programaId, target_id: form.target_id || null },
       });
       const d = await r.json();
       if (r.ok) {
@@ -89,9 +87,9 @@ export default function TaxonomiaRefManager({ campo, valorPlaceholder = 'Valor' 
     setSaving(true); setError('');
     try {
       const programaId = isGestor ? meuProgramaId : (editForm.programa_id || null);
-      const r = await fetch(`${API_URL}/api/taxonomia-refs/${id}`, {
-        method: 'PUT', headers: auth(),
-        body: JSON.stringify({ campo, valor: editForm.valor, programa_id: programaId, target_id: editForm.target_id || null }),
+      const r = await apiFetch(`/api/taxonomia-refs/${id}`, {
+        method: 'PUT',
+        json: { campo, valor: editForm.valor, programa_id: programaId, target_id: editForm.target_id || null },
       });
       const d = await r.json();
       if (r.ok) {
@@ -107,7 +105,7 @@ export default function TaxonomiaRefManager({ campo, valorPlaceholder = 'Valor' 
     if (!await confirm('Remover este item?')) return;
     setSaving(true); setError('');
     try {
-      const r = await fetch(`${API_URL}/api/taxonomia-refs/${id}`, { method: 'DELETE', headers: auth() });
+      const r = await apiFetch(`/api/taxonomia-refs/${id}`, { method: 'DELETE' });
       if (r.ok) {
         setRefs((prev) => prev.filter((l) => l.id !== id));
         toast.success('Removido.');

@@ -2,7 +2,7 @@ import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, HelpCircle } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
@@ -25,7 +25,7 @@ const AdminFaqForm = () => {
   const users = useUsers();
 
   useEffect(() => {
-    fetch(`${API_URL}/api/programas`)
+    apiFetch('/api/programas')
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setProgramas(Array.isArray(d) ? d : []))
       .catch(() => {});
@@ -94,7 +94,7 @@ const AdminFaqForm = () => {
     if (isEditing) {
       const fetchFaq = async () => {
         try {
-          const response = await fetch(`${API_URL}/api/faq/${id}`);
+          const response = await apiFetch(`/api/faq/${id}`);
           if (response.ok) {
             const data = await response.json();
             setAudit(data);
@@ -144,18 +144,9 @@ const AdminFaqForm = () => {
     setError('');
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/faq/${id}` 
-        : `${API_URL}/api/faq`;
-      
-      const response = await fetch(url, {
-        method: isEditing ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
+      const path = isEditing ? `/api/faq/${id}` : '/api/faq';
+
+      const response = await apiFetch(path, { method: isEditing ? 'PUT' : 'POST', json: formData });
 
       if (response.ok) {
         navigate('/admin/faq');

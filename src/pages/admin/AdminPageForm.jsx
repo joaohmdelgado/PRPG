@@ -2,7 +2,7 @@ import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, File } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 
 const AdminPageForm = () => {
@@ -21,7 +21,7 @@ const AdminPageForm = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch(`${API_URL}/api/programas`)
+    apiFetch('/api/programas')
       .then((r) => r.ok ? r.json() : [])
       .then((d) => setProgramas(Array.isArray(d) ? d : []));
   }, []);
@@ -95,7 +95,7 @@ const AdminPageForm = () => {
     if (isEditing) {
       const fetchPage = async () => {
         try {
-          const response = await fetch(`${API_URL}/api/pages/${id}`);
+          const response = await apiFetch(`/api/pages/${id}`);
           if (response.ok) {
             const data = await response.json();
             const bodyVal = data.body?.value || '';
@@ -155,18 +155,9 @@ const AdminPageForm = () => {
     setError('');
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/pages/${id}` 
-        : `${API_URL}/api/pages`;
-      
-      const response = await fetch(url, {
-        method: isEditing ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
+      const path = isEditing ? `/api/pages/${id}` : '/api/pages';
+
+      const response = await apiFetch(path, { method: isEditing ? 'PUT' : 'POST', json: formData });
 
       if (response.ok) {
         navigate('/admin/paginas');

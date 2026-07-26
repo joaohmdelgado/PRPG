@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
 
@@ -36,7 +36,7 @@ export default function ProgramaFaq() {
   const [busca, setBusca] = useState('');
 
   useEffect(() => {
-    fetch(`${API_URL}/api/faq?programa=${encodeURIComponent(slug)}`)
+    apiFetch(`/api/faq?programa=${encodeURIComponent(slug)}`, { auth: false })
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setFaqs(Array.isArray(d) ? d : []))
       .catch(() => setFaqs([]))

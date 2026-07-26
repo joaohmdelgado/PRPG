@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState } from '../../components/programa/ProgramaUI';
 import SafeHtml from '../../components/SafeHtml';
@@ -12,7 +12,7 @@ export default function ProgramaSobre() {
   const [paginas, setPaginas] = useState([]);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/pages?programa=${encodeURIComponent(slug)}`)
+    apiFetch(`/api/pages?programa=${encodeURIComponent(slug)}`, { auth: false })
       .then((r) => r.ok ? r.json() : [])
       .then((d) => setPaginas(Array.isArray(d) ? d : []));
   }, [slug]);

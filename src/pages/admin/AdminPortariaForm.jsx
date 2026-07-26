@@ -2,7 +2,7 @@ import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, FileText, Trash2, Upload } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
 
@@ -28,11 +28,7 @@ const AdminPortariaForm = () => {
     if (isEditing) {
       const fetchPortaria = async () => {
         try {
-          const response = await fetch(`${API_URL}/api/portarias/${id}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          });
+          const response = await apiFetch(`/api/portarias/${id}`);
           if (response.ok) {
             const data = await response.json();
             setAudit(data);
@@ -68,13 +64,7 @@ const AdminPortariaForm = () => {
     fileData.append('file', file);
 
     try {
-      const response = await fetch(`${API_URL}/api/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: fileData
-      });
+      const response = await apiFetch('/api/upload', { method: 'POST', body: fileData });
 
       if (response.ok) {
         const data = await response.json();
@@ -100,20 +90,10 @@ const AdminPortariaForm = () => {
     setError('');
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/portarias/${id}` 
-        : `${API_URL}/api/portarias`;
-      
+      const path = isEditing ? `/api/portarias/${id}` : '/api/portarias';
       const method = isEditing ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
+      const response = await apiFetch(path, { method, json: formData });
 
       if (response.ok) {
         navigate('/admin/portarias');

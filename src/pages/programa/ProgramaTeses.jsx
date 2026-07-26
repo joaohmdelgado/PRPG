@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
 
@@ -13,7 +13,7 @@ export default function ProgramaTeses() {
   const [tipo, setTipo] = useState('');
 
   useEffect(() => {
-    fetch(`${API_URL}/api/teses-dissertacoes?programa=${encodeURIComponent(slug)}`)
+    apiFetch(`/api/teses-dissertacoes?programa=${encodeURIComponent(slug)}`, { auth: false })
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setTeses(Array.isArray(d) ? d : []))
       .catch(() => setTeses([]))

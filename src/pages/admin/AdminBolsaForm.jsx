@@ -2,7 +2,7 @@ import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Search, X, Award, Calendar } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { AuditHeader } from '../../components/AuditInfo';
 
 const AdminBolsaForm = () => {
@@ -34,9 +34,7 @@ const AdminBolsaForm = () => {
     const fetchData = async () => {
       try {
         // Carrega todos os usuários para vinculação
-        const usersResponse = await fetch(`${API_URL}/api/users`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
+        const usersResponse = await apiFetch('/api/users');
         
         let loadedUsers = [];
         if (usersResponse.ok) {
@@ -48,7 +46,7 @@ const AdminBolsaForm = () => {
         }
 
         // Carrega taxonomias para buscar tipo_bolsa
-        const taxResponse = await fetch(`${API_URL}/api/taxonomias`);
+        const taxResponse = await apiFetch('/api/taxonomias');
         if (taxResponse.ok) {
           const taxData = await taxResponse.json();
           setTiposBolsa(taxData.tipo_bolsa || []);
@@ -56,7 +54,7 @@ const AdminBolsaForm = () => {
 
         // Se estiver editando, busca os dados da bolsa
         if (isEditing) {
-          const response = await fetch(`${API_URL}/api/bolsas/${id}`);
+          const response = await apiFetch(`/api/bolsas/${id}`);
           if (response.ok) {
             const data = await response.json();
             setAudit(data);
@@ -163,18 +161,9 @@ const AdminBolsaForm = () => {
     setError('');
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/bolsas/${id}` 
-        : `${API_URL}/api/bolsas`;
-      
-      const response = await fetch(url, {
-        method: isEditing ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
+      const path = isEditing ? `/api/bolsas/${id}` : '/api/bolsas';
+
+      const response = await apiFetch(path, { method: isEditing ? 'PUT' : 'POST', json: formData });
 
       if (response.ok) {
         navigate('/admin/bolsas');

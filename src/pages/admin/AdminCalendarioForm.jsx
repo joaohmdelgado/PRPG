@@ -2,7 +2,7 @@ import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
 
@@ -89,7 +89,7 @@ const AdminCalendarioForm = () => {
     if (isEditing) {
       const fetchCalendario = async () => {
         try {
-          const response = await fetch(`${API_URL}/api/calendarios/${id}`);
+          const response = await apiFetch(`/api/calendarios/${id}`);
           if (response.ok) {
             const data = await response.json();
             setAudit(data);
@@ -159,20 +159,10 @@ const AdminCalendarioForm = () => {
     };
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/calendarios/${id}` 
-        : `${API_URL}/api/calendarios`;
-      
+      const path = isEditing ? `/api/calendarios/${id}` : '/api/calendarios';
       const method = isEditing ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await apiFetch(path, { method, json: payload });
 
       if (response.ok) {
         navigate('/admin/calendarios');

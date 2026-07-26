@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { API_URL } from '../api';
+import { API_URL, apiFetch } from '../api';
 import { Languages, Upload, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 const LINGUAS = ['Português', 'Inglês', 'Espanhol'];
@@ -36,7 +36,7 @@ export default function ProficienciaInscricao() {
   useEffect(() => {
     const carregar = async () => {
       try {
-        const pRes = await fetch(`${API_URL}/api/proficiencia/periodo-aberto`);
+        const pRes = await apiFetch('/api/proficiencia/periodo-aberto', { auth: false });
         setPeriodo(pRes.ok ? await pRes.json() : null);
       } catch {
         setErro('Erro ao carregar os dados. Tente novamente.');
@@ -59,10 +59,10 @@ export default function ProficienciaInscricao() {
     setVerificacao('checking');
     setErro('');
     try {
-      const res = await fetch(`${API_URL}/api/proficiencia/verificar-aluno`, {
+      const res = await apiFetch('/api/proficiencia/verificar-aluno', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome }),
+        auth: false,
+        json: { nome },
       });
       const data = await res.json();
       if (res.ok && data.encontrado) {
@@ -115,10 +115,7 @@ export default function ProficienciaInscricao() {
     const fd = new FormData();
     fd.append('file', file);
     try {
-      const res = await fetch(`${API_URL}/api/proficiencia/upload`, {
-        method: 'POST',
-        body: fd,
-      });
+      const res = await apiFetch('/api/proficiencia/upload', { method: 'POST', auth: false, body: fd });
       const data = await res.json();
       if (res.ok) setForm((prev) => ({ ...prev, [campo]: data.url }));
       else setErro(data.message || 'Erro ao enviar arquivo.');
@@ -134,11 +131,7 @@ export default function ProficienciaInscricao() {
     setErro('');
     setEnviando(true);
     try {
-      const res = await fetch(`${API_URL}/api/proficiencia/inscricoes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
+      const res = await apiFetch('/api/proficiencia/inscricoes', { method: 'POST', json: form });
       const data = await res.json();
       if (res.ok) {
         // Redireciona para a página de confirmação (com SEO próprio), passando

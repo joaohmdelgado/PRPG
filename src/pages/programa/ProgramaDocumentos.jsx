@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
 
@@ -41,8 +41,8 @@ export default function ProgramaDocumentos() {
   useEffect(() => {
     const enc = encodeURIComponent(slug);
     Promise.all([
-      fetch(`${API_URL}/api/resolucoes?programa=${enc}`).then((r) => (r.ok ? r.json() : [])),
-      fetch(`${API_URL}/api/formularios?programa=${enc}`).then((r) => (r.ok ? r.json() : [])),
+      apiFetch(`/api/resolucoes?programa=${enc}`, { auth: false }).then((r) => (r.ok ? r.json() : [])),
+      apiFetch(`/api/formularios?programa=${enc}`, { auth: false }).then((r) => (r.ok ? r.json() : [])),
     ])
       .then(([res, form]) => {
         setResolucoes(Array.isArray(res) ? res : []);

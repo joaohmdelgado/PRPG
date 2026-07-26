@@ -2,7 +2,7 @@ import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, Trash2, Image as ImageIcon } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
@@ -35,7 +35,7 @@ const AdminNoticiaForm = () => {
 
   // Lista de programas para vincular a notícia a um microsite (opcional).
   useEffect(() => {
-    fetch(`${API_URL}/api/programas`)
+    apiFetch('/api/programas')
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setProgramas(Array.isArray(d) ? d : []))
       .catch(() => {});
@@ -134,7 +134,7 @@ const AdminNoticiaForm = () => {
     if (isEditing) {
       const fetchNoticia = async () => {
         try {
-          const response = await fetch(`${API_URL}/api/news/${id}`);
+          const response = await apiFetch(`/api/news/${id}`);
           if (response.ok) {
             const data = await response.json();
             setAudit(data);
@@ -185,13 +185,7 @@ const AdminNoticiaForm = () => {
     fileData.append('file', file);
 
     try {
-      const response = await fetch(`${API_URL}/api/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: fileData
-      });
+      const response = await apiFetch('/api/upload', { method: 'POST', body: fileData });
 
       if (response.ok) {
         const data = await response.json();
@@ -241,20 +235,10 @@ const AdminNoticiaForm = () => {
     };
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/news/${id}` 
-        : `${API_URL}/api/news`;
-      
+      const path = isEditing ? `/api/news/${id}` : '/api/news';
       const method = isEditing ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await apiFetch(path, { method, json: payload });
 
       if (response.ok) {
         navigate('/admin/noticias');

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import { formatDate } from '../../components/programa/ProgramaUI';
 
@@ -12,7 +12,7 @@ export default function ProgramaHome() {
 
   useEffect(() => {
     let active = true;
-    fetch(`${API_URL}/api/news?programa=${encodeURIComponent(slug)}`)
+    apiFetch(`/api/news?programa=${encodeURIComponent(slug)}`, { auth: false })
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => { if (active) setNoticias(Array.isArray(d) ? d.slice(0, 3) : []); })
       .catch(() => {});

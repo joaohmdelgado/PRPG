@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 
 const TIPO_META = {
@@ -47,7 +47,7 @@ export default function ProgramaBusca() {
     setLoading(true);
     setSearched(false);
     const ctrl = new AbortController();
-    fetch(`${API_URL}/api/programas/slug/${encodeURIComponent(slug)}/busca?q=${encodeURIComponent(q)}`, { signal: ctrl.signal })
+    apiFetch(`/api/programas/slug/${encodeURIComponent(slug)}/busca?q=${encodeURIComponent(q)}`, { auth: false, signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => { setResults(Array.isArray(d) ? d : []); setSearched(true); })
       .catch(() => {})

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Trash2 } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 
 const TIPOS = {
   COMISSAO_CPG: 'Câmara/CPG',
@@ -10,8 +10,6 @@ const TIPOS = {
   COMISSAO_PESQUISA: 'Pesquisa',
   COMISSAO_ORIENTACAO: 'Orientação',
 };
-
-const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
 
 export default function AdminProgramaComissoes() {
   const { id } = useParams();
@@ -26,9 +24,9 @@ export default function AdminProgramaComissoes() {
   const load = async () => {
     setLoading(true);
     const [r1, r2, r3] = await Promise.all([
-      fetch(`${API_URL}/api/programas/${id}/comissoes`, { headers }),
-      fetch(`${API_URL}/api/users`, { headers }),
-      fetch(`${API_URL}/api/programas/${id}`),
+      apiFetch(`/api/programas/${id}/comissoes`),
+      apiFetch('/api/users'),
+      apiFetch(`/api/programas/${id}`),
     ]);
     if (r1.ok) setMembros(await r1.json());
     if (r2.ok) setUsers(await r2.json());
@@ -46,17 +44,16 @@ export default function AdminProgramaComissoes() {
 
   const handleAdd = async (user) => {
     setError('');
-    const r = await fetch(`${API_URL}/api/programas/${id}/comissoes`, {
+    const r = await apiFetch(`/api/programas/${id}/comissoes`, {
       method: 'POST',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pessoa_id: user.id, papel }),
+      json: { pessoa_id: user.id, papel },
     });
     if (r.ok) { setBusca(''); load(); }
     else { const d = await r.json(); setError(d.message || 'Erro'); }
   };
 
   const handleRemove = async (vinculoId) => {
-    const r = await fetch(`${API_URL}/api/programas/${id}/comissoes/${vinculoId}`, { method: 'DELETE', headers });
+    const r = await apiFetch(`/api/programas/${id}/comissoes/${vinculoId}`, { method: 'DELETE' });
     if (r.ok) load();
   };
 

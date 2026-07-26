@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, FileUp, Eye, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 
 // Painel de importação de dados do site antigo. Fluxo:
 //   1. escolher o tipo de conteúdo (professores, ...);
@@ -25,14 +25,12 @@ export default function AdminImportacao() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const token = localStorage.getItem('token');
-
   useEffect(() => {
-    fetch(`${API_URL}/api/import/tipos`, { headers: { Authorization: `Bearer ${token}` } })
+    apiFetch('/api/import/tipos')
       .then((r) => (r.ok ? r.json() : []))
       .then(setTipos)
       .catch(() => setError('Erro ao carregar tipos de importação.'));
-    fetch(`${API_URL}/api/programas`)
+    apiFetch('/api/programas')
       .then((r) => r.json())
       .then(setProgramas)
       .catch(() => {});
@@ -54,11 +52,7 @@ export default function AdminImportacao() {
 
     setBusy(true);
     try {
-      const res = await fetch(`${API_URL}/api/import/${tipo}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: fd,
-      });
+      const res = await apiFetch(`/api/import/${tipo}`, { method: 'POST', body: fd });
       const data = await res.json();
       if (!res.ok) {
         setError(data.message || 'Falha na importação.');

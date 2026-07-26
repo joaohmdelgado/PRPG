@@ -2,7 +2,7 @@ import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, FileText, Trash2 } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
@@ -38,7 +38,7 @@ const AdminResolucaoForm = () => {
   const users = useUsers();
 
   useEffect(() => {
-    fetch(`${API_URL}/api/programas`)
+    apiFetch('/api/programas')
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setProgramas(Array.isArray(d) ? d : []))
       .catch(() => {});
@@ -52,7 +52,7 @@ const AdminResolucaoForm = () => {
   useEffect(() => {
     const fetchSubcategories = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/taxonomias`);
+        const response = await apiFetch('/api/taxonomias');
         if (response.ok) {
           const data = await response.json();
           setExistingCategories(data.subcategorias_resolucao || []);
@@ -123,7 +123,7 @@ const AdminResolucaoForm = () => {
     if (isEditing) {
       const fetchResolucao = async () => {
         try {
-          const response = await fetch(`${API_URL}/api/resolucoes/${id}`);
+          const response = await apiFetch(`/api/resolucoes/${id}`);
           if (response.ok) {
             const data = await response.json();
             setAudit(data);
@@ -168,13 +168,7 @@ const AdminResolucaoForm = () => {
     fileData.append('file', file);
 
     try {
-      const response = await fetch(`${API_URL}/api/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: fileData
-      });
+      const response = await apiFetch('/api/upload', { method: 'POST', body: fileData });
 
       if (response.ok) {
         const data = await response.json();
@@ -205,20 +199,10 @@ const AdminResolucaoForm = () => {
     };
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/resolucoes/${id}` 
-        : `${API_URL}/api/resolucoes`;
-      
+      const path = isEditing ? `/api/resolucoes/${id}` : '/api/resolucoes';
       const method = isEditing ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await apiFetch(path, { method, json: payload });
 
       if (response.ok) {
         navigate('/admin/resolucoes');

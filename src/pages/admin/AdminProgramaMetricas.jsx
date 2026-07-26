@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 
 const CAMPOS = [
   { key: 'docentes_permanentes', label: 'Docentes Permanentes' },
@@ -17,8 +17,6 @@ const EMPTY = { ano: new Date().getFullYear(), docentes_permanentes: '', discent
   discentes_doutorado: '', discentes_profissional: '', producao_artigos: '',
   teses_defendidas: '', bolsistas_capes: '', observacao: '' };
 
-const h = { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' };
-
 export default function AdminProgramaMetricas() {
   const { id } = useParams();
   const [metricas, setMetricas] = useState([]);
@@ -32,8 +30,8 @@ export default function AdminProgramaMetricas() {
   const load = async () => {
     setLoading(true);
     const [r1, r2] = await Promise.all([
-      fetch(`${API_URL}/api/metricas?programa=${id}`, { headers: { Authorization: h.Authorization } }),
-      fetch(`${API_URL}/api/programas/${id}`),
+      apiFetch(`/api/metricas?programa=${id}`),
+      apiFetch(`/api/programas/${id}`),
     ]);
     if (r1.ok) setMetricas(await r1.json());
     if (r2.ok) setPrograma(await r2.json());
@@ -55,10 +53,10 @@ export default function AdminProgramaMetricas() {
     if (!form.ano) return setError('Ano é obrigatório');
     setSaving(true); setError('');
     const isNew = editando === 'new';
-    const url = isNew ? `${API_URL}/api/metricas` : `${API_URL}/api/metricas/${editando}`;
+    const path = isNew ? '/api/metricas' : `/api/metricas/${editando}`;
     const method = isNew ? 'POST' : 'PUT';
     const payload = { ...form, programa_id: id };
-    const r = await fetch(url, { method, headers: h, body: JSON.stringify(payload) });
+    const r = await apiFetch(path, { method, json: payload });
     if (r.ok) { setEditando(null); load(); }
     else { const d = await r.json(); setError(d.message || 'Erro ao salvar'); }
     setSaving(false);
@@ -66,7 +64,7 @@ export default function AdminProgramaMetricas() {
 
   const handleDelete = async (metricaId) => {
     if (!confirm('Remover esta métrica?')) return;
-    await fetch(`${API_URL}/api/metricas/${metricaId}`, { method: 'DELETE', headers: { Authorization: h.Authorization } });
+    await apiFetch(`/api/metricas/${metricaId}`, { method: 'DELETE' });
     load();
   };
 

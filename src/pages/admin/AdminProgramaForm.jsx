@@ -2,7 +2,7 @@ import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Check, ChevronRight, ChevronLeft, Globe } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import AuditInfo, { AuditHeader } from '../../components/AuditInfo';
 import { Link as LinkIcon } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../../auth';
@@ -170,11 +170,7 @@ const AdminProgramaForm = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/users`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
+        const response = await apiFetch('/api/users');
         if (response.ok) {
           const data = await response.json();
           setUsers(data);
@@ -222,7 +218,7 @@ const AdminProgramaForm = () => {
     if (isEditing) {
       const fetchPrograma = async () => {
         try {
-          const response = await fetch(`${API_URL}/api/programas/${id}`);
+          const response = await apiFetch(`/api/programas/${id}`);
           if (response.ok) {
             const data = await response.json();
             setFormData({
@@ -350,9 +346,7 @@ const AdminProgramaForm = () => {
     setError('');
 
     try {
-      const url = isEditing
-        ? `${API_URL}/api/programas/${id}`
-        : `${API_URL}/api/programas`;
+      const path = isEditing ? `/api/programas/${id}` : '/api/programas';
       const method = isEditing ? 'PUT' : 'POST';
 
       const payload = {
@@ -360,14 +354,7 @@ const AdminProgramaForm = () => {
         palavras_chave: formData.palavras_chave ? formData.palavras_chave.split(/[\n,]/).map(p => p.trim()).filter(p => p) : [],
       };
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await apiFetch(path, { method, json: payload });
 
       if (response.ok) {
         if (!isEditing) localStorage.removeItem(DRAFT_KEY);
@@ -402,9 +389,7 @@ const AdminProgramaForm = () => {
     if (!isEditing) return;
     setDocentesLoading(true);
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/docentes`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const r = await apiFetch(`/api/programas/${id}/docentes`);
       if (r.ok) {
         setDocentesList(await r.json());
       } else {
@@ -423,9 +408,7 @@ const AdminProgramaForm = () => {
     if (!isEditing) return;
     setDiscentesLoading(true);
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/discentes`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const r = await apiFetch(`/api/programas/${id}/discentes`);
       if (r.ok) setDiscentesList(await r.json());
     } catch (err) { console.error('Erro ao carregar discentes:', err); }
     finally { setDiscentesLoading(false); }
@@ -435,10 +418,9 @@ const AdminProgramaForm = () => {
 
   const handleAddDiscente = async (user) => {
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/discentes`, {
+      const r = await apiFetch(`/api/programas/${id}/discentes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify({ pessoa_id: user.id, papel: discentesPapel })
+        json: { pessoa_id: user.id, papel: discentesPapel },
       });
       if (r.ok) { setDiscentesBusca(''); loadDiscentes(); }
       else { const d = await r.json(); setError(d.message || 'Erro ao adicionar discente'); }
@@ -447,10 +429,7 @@ const AdminProgramaForm = () => {
 
   const handleRemoveDiscente = async (vinculoId) => {
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/discentes/${vinculoId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const r = await apiFetch(`/api/programas/${id}/discentes/${vinculoId}`, { method: 'DELETE' });
       if (r.ok) loadDiscentes();
       else setError('Erro ao remover discente');
     } catch { setError('Erro de conexão ao remover discente'); }
@@ -460,9 +439,7 @@ const AdminProgramaForm = () => {
     if (!isEditing) return;
     setComissoesLoading(true);
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/comissoes`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const r = await apiFetch(`/api/programas/${id}/comissoes`);
       if (r.ok) setComissoesList(await r.json());
     } catch (err) { console.error('Erro ao carregar comissões:', err); }
     finally { setComissoesLoading(false); }
@@ -472,10 +449,9 @@ const AdminProgramaForm = () => {
 
   const handleAddComissao = async (user) => {
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/comissoes`, {
+      const r = await apiFetch(`/api/programas/${id}/comissoes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify({ pessoa_id: user.id, papel: comissoesPapel })
+        json: { pessoa_id: user.id, papel: comissoesPapel },
       });
       if (r.ok) { setComissoesBusca(''); loadComissoes(); }
       else { const d = await r.json(); setError(d.message || 'Erro ao adicionar membro'); }
@@ -484,10 +460,7 @@ const AdminProgramaForm = () => {
 
   const handleRemoveComissao = async (vinculoId) => {
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/comissoes/${vinculoId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const r = await apiFetch(`/api/programas/${id}/comissoes/${vinculoId}`, { method: 'DELETE' });
       if (r.ok) loadComissoes();
       else setError('Erro ao remover membro');
     } catch { setError('Erro de conexão ao remover membro'); }
@@ -495,10 +468,9 @@ const AdminProgramaForm = () => {
 
   const handleAddDocente = async (user) => {
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/docentes`, {
+      const r = await apiFetch(`/api/programas/${id}/docentes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-        body: JSON.stringify({ pessoa_id: user.id, papel: docentesPapel })
+        json: { pessoa_id: user.id, papel: docentesPapel },
       });
       if (r.ok) {
         setDocentesBusca('');
@@ -515,10 +487,7 @@ const AdminProgramaForm = () => {
 
   const handleRemoveDocente = async (vinculoId) => {
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/docentes/${vinculoId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const r = await apiFetch(`/api/programas/${id}/docentes/${vinculoId}`, { method: 'DELETE' });
       if (r.ok) {
         loadDocentes();
       } else {

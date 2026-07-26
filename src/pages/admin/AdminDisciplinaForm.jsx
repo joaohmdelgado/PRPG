@@ -3,7 +3,7 @@ import { useToast } from '../../components/admin/Toast';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Upload, FileText, Trash2, Search, X, Book } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
@@ -31,7 +31,7 @@ const AdminDisciplinaForm = () => {
   const auditUsers = useUsers();
 
   useEffect(() => {
-    fetch(`${API_URL}/api/programas`)
+    apiFetch('/api/programas')
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setProgramas(Array.isArray(d) ? d : []))
       .catch(() => {});
@@ -46,9 +46,7 @@ const AdminDisciplinaForm = () => {
     const fetchData = async () => {
       try {
         // Carrega usuários/professores do sistema
-        const usersResponse = await fetch(`${API_URL}/api/users`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
+        const usersResponse = await apiFetch('/api/users');
         
         let filteredProfessores = [];
         if (usersResponse.ok) {
@@ -62,7 +60,7 @@ const AdminDisciplinaForm = () => {
 
         // Se estiver editando, busca os dados da disciplina
         if (isEditing) {
-          const response = await fetch(`${API_URL}/api/disciplinas/${id}`);
+          const response = await apiFetch(`/api/disciplinas/${id}`);
           if (response.ok) {
             const data = await response.json();
             setAudit(data);
@@ -116,13 +114,7 @@ const AdminDisciplinaForm = () => {
     fileData.append('file', file);
 
     try {
-      const response = await fetch(`${API_URL}/api/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: fileData
-      });
+      const response = await apiFetch('/api/upload', { method: 'POST', body: fileData });
 
       if (response.ok) {
         const data = await response.json();
@@ -190,18 +182,9 @@ const AdminDisciplinaForm = () => {
     setError('');
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/disciplinas/${id}` 
-        : `${API_URL}/api/disciplinas`;
-      
-      const response = await fetch(url, {
-        method: isEditing ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
+      const path = isEditing ? `/api/disciplinas/${id}` : '/api/disciplinas';
+
+      const response = await apiFetch(path, { method: isEditing ? 'PUT' : 'POST', json: formData });
 
       if (response.ok) {
         navigate('/admin/disciplinas');

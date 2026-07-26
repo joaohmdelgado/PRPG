@@ -2,7 +2,7 @@ import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save, Shield, Plus, Trash2, X, Search } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
 import NACIONALIDADES from '../../data/nacionalidades';
@@ -60,32 +60,28 @@ const AdminUserForm = () => {
 
   const fetchProgramas = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/programas`);
+      const res = await apiFetch('/api/programas');
       if (res.ok) setProgramasList(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchTaxonomias = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/taxonomias`);
+      const res = await apiFetch('/api/taxonomias');
       if (res.ok) setTaxonomias(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchLinhas = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/linhas-pesquisa`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-      });
+      const res = await apiFetch('/api/linhas-pesquisa');
       if (res.ok) setTodasLinhas(await res.json());
     } catch (e) { console.error(e); }
   };
 
   const fetchUser = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/users/${id}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
+      const response = await apiFetch(`/api/users/${id}`);
       if (response.ok) {
         const data = await response.json();
         
@@ -286,18 +282,9 @@ const AdminUserForm = () => {
     if (!payload.password) delete payload.password; // Não enviar senha vazia na edição
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/users/${id}` 
-        : `${API_URL}/api/users`;
-      
-      const response = await fetch(url, {
-        method: isEditing ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      });
+      const path = isEditing ? `/api/users/${id}` : '/api/users';
+
+      const response = await apiFetch(path, { method: isEditing ? 'PUT' : 'POST', json: payload });
 
       if (response.ok) {
         // Se veio de uma página de programa (discentes/docentes), volta lá.

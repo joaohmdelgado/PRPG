@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Trash2, UserPlus, Search, Pencil } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
-
-const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
 
 // Gerenciador de pessoas vinculadas a um programa (discentes ou docentes).
 // Além de vincular usuários já cadastrados, permite CADASTRAR um novo aluno/
@@ -33,9 +31,9 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
     setLoading(true);
     try {
       const [mRes, uRes, pRes] = await Promise.all([
-        fetch(`${API_URL}/api/programas/${id}/${recurso}`, { headers }),
-        fetch(`${API_URL}/api/users`, { headers }),
-        fetch(`${API_URL}/api/programas/${id}`),
+        apiFetch(`/api/programas/${id}/${recurso}`),
+        apiFetch('/api/users'),
+        apiFetch(`/api/programas/${id}`),
       ]);
       if (mRes.ok) setMembros(await mRes.json());
       if (uRes.ok) setUsers(await uRes.json());
@@ -56,10 +54,9 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
   const handleAdd = async (user) => {
     setError('');
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/${recurso}`, {
+      const r = await apiFetch(`/api/programas/${id}/${recurso}`, {
         method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pessoa_id: user.id, papel }),
+        json: { pessoa_id: user.id, papel },
       });
       if (r.ok) { setBusca(''); load(); }
       else { const d = await r.json(); setError(d.message || 'Erro ao adicionar'); }
@@ -76,10 +73,9 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
     }
     setCreating(true);
     try {
-      const r = await fetch(`${API_URL}/api/users`, {
+      const r = await apiFetch('/api/users', {
         method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        json: {
           email: novo.email.trim(),
           roles: [createRole],
           programaId: id,
@@ -88,7 +84,7 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
             nome: novo.nome.trim(), cpf: novo.cpf.trim(), siape: novo.siape.trim(),
             foto_url: '', telefones: [],
           },
-        }),
+        },
       });
       if (r.ok) {
         setNovo({ nome: '', email: '', cpf: '', siape: '' });
@@ -114,10 +110,9 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
     if (!conflito?.id) return;
     setError('');
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/${recurso}`, {
+      const r = await apiFetch(`/api/programas/${id}/${recurso}`, {
         method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pessoa_id: conflito.id, papel }),
+        json: { pessoa_id: conflito.id, papel },
       });
       if (r.ok) {
         setConflito(null);
@@ -134,9 +129,7 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
   const handleRemove = async (vinculoId) => {
     setError('');
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/${recurso}/${vinculoId}`, {
-        method: 'DELETE', headers,
-      });
+      const r = await apiFetch(`/api/programas/${id}/${recurso}/${vinculoId}`, { method: 'DELETE' });
       if (r.ok) load();
       else setError('Erro ao remover');
     } catch { setError('Erro de conexão'); }

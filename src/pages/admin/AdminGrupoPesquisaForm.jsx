@@ -2,7 +2,7 @@ import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, X, Search } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
@@ -27,7 +27,7 @@ const AdminGrupoPesquisaForm = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/programas`)
+    apiFetch('/api/programas')
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setProgramas(Array.isArray(d) ? d : []))
       .catch(() => {});
@@ -105,9 +105,7 @@ const AdminGrupoPesquisaForm = () => {
     const fetchData = async () => {
       try {
         // Obter professores
-        const usersResponse = await fetch(`${API_URL}/api/users`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
+        const usersResponse = await apiFetch('/api/users');
         if (usersResponse.ok) {
           const users = await usersResponse.json();
           const filtered = users.filter(u => u.roles && u.roles.includes('Professor'));
@@ -119,9 +117,7 @@ const AdminGrupoPesquisaForm = () => {
 
         // Se edição, obter grupo de pesquisa
         if (isEditing) {
-          const grupoResponse = await fetch(`${API_URL}/api/grupos-pesquisa/${id}`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-          });
+          const grupoResponse = await apiFetch(`/api/grupos-pesquisa/${id}`);
           if (grupoResponse.ok) {
             const data = await grupoResponse.json();
             setAudit(data);
@@ -228,18 +224,9 @@ const AdminGrupoPesquisaForm = () => {
     setError('');
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/grupos-pesquisa/${id}` 
-        : `${API_URL}/api/grupos-pesquisa`;
-      
-      const response = await fetch(url, {
-        method: isEditing ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
+      const path = isEditing ? `/api/grupos-pesquisa/${id}` : '/api/grupos-pesquisa';
+
+      const response = await apiFetch(path, { method: isEditing ? 'PUT' : 'POST', json: formData });
 
       if (response.ok) {
         navigate('/admin/grupos-pesquisa');

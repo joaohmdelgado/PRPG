@@ -3,7 +3,7 @@ import { useToast } from '../../components/admin/Toast';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Upload, FileText, Trash2, Calendar } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
@@ -51,7 +51,7 @@ const AdminEditalForm = () => {
 
   // Lista de programas para vincular o edital a um microsite (opcional).
   useEffect(() => {
-    fetch(`${API_URL}/api/programas`)
+    apiFetch('/api/programas')
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setProgramas(Array.isArray(d) ? d : []))
       .catch(() => {});
@@ -118,7 +118,7 @@ const AdminEditalForm = () => {
     if (isEditing) {
       const fetchEdital = async () => {
         try {
-          const response = await fetch(`${API_URL}/api/editais/${id}`);
+          const response = await apiFetch(`/api/editais/${id}`);
           if (response.ok) {
             const data = await response.json();
             setAudit(data);
@@ -186,13 +186,7 @@ const AdminEditalForm = () => {
     fileData.append('file', file);
 
     try {
-      const response = await fetch(`${API_URL}/api/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: fileData
-      });
+      const response = await apiFetch('/api/upload', { method: 'POST', body: fileData });
 
       if (response.ok) {
         const data = await response.json();
@@ -274,20 +268,10 @@ const AdminEditalForm = () => {
     };
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/editais/${id}` 
-        : `${API_URL}/api/editais`;
-      
+      const path = isEditing ? `/api/editais/${id}` : '/api/editais';
       const method = isEditing ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await apiFetch(path, { method, json: payload });
 
       if (response.ok) {
         navigate('/admin/editais');

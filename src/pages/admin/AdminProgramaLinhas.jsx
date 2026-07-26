@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, FlaskConical, Loader2, Save } from 'lucide-react';
-import { API_URL } from '../../api';
-
-const auth = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' });
+import { apiFetch } from '../../api';
 
 export default function AdminProgramaLinhas() {
   const { id } = useParams();
@@ -20,9 +18,9 @@ export default function AdminProgramaLinhas() {
     const load = async () => {
       setLoading(true);
       const [rp, rl, rt] = await Promise.all([
-        fetch(`${API_URL}/api/programas/${id}`),
-        fetch(`${API_URL}/api/programas/${id}/linhas`, { headers: auth() }),
-        fetch(`${API_URL}/api/linhas-pesquisa`, { headers: auth() }),
+        apiFetch(`/api/programas/${id}`),
+        apiFetch(`/api/programas/${id}/linhas`),
+        apiFetch('/api/linhas-pesquisa'),
       ]);
       if (rp.ok) setPrograma(await rp.json());
       if (rt.ok) setTodasLinhas(await rt.json());
@@ -47,9 +45,9 @@ export default function AdminProgramaLinhas() {
   const salvar = async () => {
     setSaving(true); setError('');
     try {
-      const r = await fetch(`${API_URL}/api/programas/${id}/linhas`, {
-        method: 'PUT', headers: auth(),
-        body: JSON.stringify({ linha_ids: [...selecionados] }),
+      const r = await apiFetch(`/api/programas/${id}/linhas`, {
+        method: 'PUT',
+        json: { linha_ids: [...selecionados] },
       });
       if (r.ok) {
         const data = await r.json();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
 
@@ -9,7 +9,7 @@ export default function ProgramaGrupos() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/grupos-pesquisa?programa=${encodeURIComponent(slug)}`)
+    apiFetch(`/api/grupos-pesquisa?programa=${encodeURIComponent(slug)}`, { auth: false })
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setGrupos(Array.isArray(d) ? d : []))
       .catch(() => setGrupos([]))

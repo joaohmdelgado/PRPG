@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 
 const PAPEL_LABEL = {
@@ -78,7 +78,7 @@ export default function ProgramaDiscentes() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${API_URL}/api/programas/slug/${encodeURIComponent(slug)}/discentes`)
+    apiFetch(`/api/programas/slug/${encodeURIComponent(slug)}/discentes`, { auth: false })
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => { setDiscentes(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));

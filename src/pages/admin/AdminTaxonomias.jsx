@@ -2,13 +2,8 @@ import { TableSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Search } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import TaxonomiaRefManager from '../../components/admin/TaxonomiaRefManager';
-
-const auth = () => ({
-  'Content-Type': 'application/json',
-  Authorization: `Bearer ${localStorage.getItem('token')}`,
-});
 
 // Abas baseadas em taxonomia_refs (CRUD completo, com programa + ID legado).
 const REF_TABS = [
@@ -33,7 +28,7 @@ const AdminTaxonomias = () => {
 
   const fetchTaxonomias = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/taxonomias`);
+      const response = await apiFetch('/api/taxonomias');
       if (response.ok) {
         const data = await response.json();
         setTaxonomias({
@@ -51,11 +46,7 @@ const AdminTaxonomias = () => {
   // As listas simples ainda são salvas em bloco via POST /api/taxonomias.
   const handleSave = async (updatedData) => {
     try {
-      const response = await fetch(`${API_URL}/api/taxonomias`, {
-        method: 'POST',
-        headers: auth(),
-        body: JSON.stringify(updatedData),
-      });
+      const response = await apiFetch('/api/taxonomias', { method: 'POST', json: updatedData });
       if (response.ok) {
         const data = await response.json();
         setTaxonomias({

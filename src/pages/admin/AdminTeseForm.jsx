@@ -3,7 +3,7 @@ import { useToast } from '../../components/admin/Toast';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Upload, FileText, Trash2, Search, X, BookOpen } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
@@ -28,7 +28,7 @@ const AdminTeseForm = () => {
   const [loading, setLoading] = useState(isEditing);
 
   useEffect(() => {
-    fetch(`${API_URL}/api/programas`)
+    apiFetch('/api/programas')
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setProgramas(Array.isArray(d) ? d : []))
       .catch(() => {});
@@ -46,9 +46,7 @@ const AdminTeseForm = () => {
     const fetchData = async () => {
       try {
         // Carrega usuários/alunos do sistema
-        const usersResponse = await fetch(`${API_URL}/api/users`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        });
+        const usersResponse = await apiFetch('/api/users');
         
         let filteredAlunos = [];
         if (usersResponse.ok) {
@@ -62,7 +60,7 @@ const AdminTeseForm = () => {
 
         // Se estiver editando, busca os dados da tese/dissertação
         if (isEditing) {
-          const response = await fetch(`${API_URL}/api/teses-dissertacoes/${id}`);
+          const response = await apiFetch(`/api/teses-dissertacoes/${id}`);
           if (response.ok) {
             const data = await response.json();
             setAudit(data);
@@ -116,13 +114,7 @@ const AdminTeseForm = () => {
     fileData.append('file', file);
 
     try {
-      const response = await fetch(`${API_URL}/api/upload`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: fileData
-      });
+      const response = await apiFetch('/api/upload', { method: 'POST', body: fileData });
 
       if (response.ok) {
         const data = await response.json();
@@ -190,18 +182,9 @@ const AdminTeseForm = () => {
     setError('');
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/teses-dissertacoes/${id}` 
-        : `${API_URL}/api/teses-dissertacoes`;
-      
-      const response = await fetch(url, {
-        method: isEditing ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
+      const path = isEditing ? `/api/teses-dissertacoes/${id}` : '/api/teses-dissertacoes';
+
+      const response = await apiFetch(path, { method: isEditing ? 'PUT' : 'POST', json: formData });
 
       if (response.ok) {
         navigate('/admin/teses-dissertacoes');

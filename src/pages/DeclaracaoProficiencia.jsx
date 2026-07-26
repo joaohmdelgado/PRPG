@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ShieldCheck, ShieldX, Loader2, Languages, Home } from 'lucide-react';
-import { API_URL } from '../api';
+import { apiFetch } from '../api';
 
 const MESES = [
   'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
@@ -48,7 +48,7 @@ export default function DeclaracaoProficiencia() {
   useEffect(() => {
     let ativo = true;
     setEstado('carregando');
-    fetch(`${API_URL}/api/proficiencia/declaracoes/${encodeURIComponent(codigo)}`)
+    apiFetch(`/api/proficiencia/declaracoes/${encodeURIComponent(codigo)}`, { auth: false })
       .then(async (r) => {
         if (!ativo) return;
         if (r.ok) {

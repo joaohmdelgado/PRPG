@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useParams, Link } from 'react-router-dom';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { ProgramaContext } from '../../components/programa/ProgramaContext';
 import ProgramaLayout from '../../components/programa/ProgramaLayout';
 import ProgramaHome from './ProgramaHome';
@@ -35,7 +35,7 @@ export default function ProgramaSite() {
   useEffect(() => {
     let active = true;
     setStatus('loading');
-    fetch(`${API_URL}/api/programas/slug/${encodeURIComponent(programaSlug)}`)
+    apiFetch(`/api/programas/slug/${encodeURIComponent(programaSlug)}`, { auth: false })
       .then((r) => {
         if (!r.ok) throw new Error(String(r.status));
         return r.json();

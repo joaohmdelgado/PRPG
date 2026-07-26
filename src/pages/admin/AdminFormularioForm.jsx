@@ -2,7 +2,7 @@ import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { API_URL } from '../../api';
+import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
@@ -35,7 +35,7 @@ const AdminFormularioForm = () => {
   const users = useUsers();
 
   useEffect(() => {
-    fetch(`${API_URL}/api/programas`)
+    apiFetch('/api/programas')
       .then((r) => (r.ok ? r.json() : []))
       .then((d) => setProgramas(Array.isArray(d) ? d : []))
       .catch(() => {});
@@ -49,7 +49,7 @@ const AdminFormularioForm = () => {
   useEffect(() => {
     const fetchExisting = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/formularios`);
+        const response = await apiFetch('/api/formularios');
         if (response.ok) {
           const data = await response.json();
           const cats = Array.from(new Set(data.map(item => item.categoryTitle).filter(Boolean)));
@@ -121,7 +121,7 @@ const AdminFormularioForm = () => {
     if (isEditing) {
       const fetchFormulario = async () => {
         try {
-          const response = await fetch(`${API_URL}/api/formularios/${id}`);
+          const response = await apiFetch(`/api/formularios/${id}`);
           if (response.ok) {
             const data = await response.json();
             setAudit(data);
@@ -169,20 +169,10 @@ const AdminFormularioForm = () => {
     };
 
     try {
-      const url = isEditing 
-        ? `${API_URL}/api/formularios/${id}` 
-        : `${API_URL}/api/formularios`;
-      
+      const path = isEditing ? `/api/formularios/${id}` : '/api/formularios';
       const method = isEditing ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(payload)
-      });
+      const response = await apiFetch(path, { method, json: payload });
 
       if (response.ok) {
         navigate('/admin/formularios');
