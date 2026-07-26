@@ -3,7 +3,7 @@ import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
@@ -20,7 +20,7 @@ const AdminFormularios = () => {
 
   const fetchFormularios = async () => {
     try {
-      const response = await fetch(withProgramaScope(`${API_URL}/api/formularios`));
+      const response = await apiFetch(withProgramaScope('/api/formularios'));
       const data = await response.json();
       setFormularios(data);
     } catch (error) {
@@ -37,13 +37,8 @@ const AdminFormularios = () => {
   const handleDelete = async (id) => {
     if (await confirm('Tem certeza que deseja excluir este formulário?')) {
       try {
-        const response = await fetch(`${API_URL}/api/formularios/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
+        const response = await apiFetch(`/api/formularios/${id}`, { method: 'DELETE' });
+
         if (response.ok) {
           fetchFormularios();
         } else if (response.status === 401) {
