@@ -6,3 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Arquivos enviados por usuários (comprovantes/imagens) — contêm dados pessoais
+# (LGPD) e não devem ir para o versionamento. A pasta é recriada em runtime.
+server/uploads/*
+!server/uploads/.gitkeep
