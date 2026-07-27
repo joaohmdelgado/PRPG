@@ -176,6 +176,35 @@ CREATE TABLE IF NOT EXISTS anexos (
 );
 CREATE INDEX IF NOT EXISTS anexos_entidade_idx ON anexos(entidade, entidade_id);
 
+-- ==================== Contatos (Fase A.5b, PLANO.md) ================
+-- Meio de contato de qualquer entidade. Vai absorver, na Fase G, os 8 campos
+-- hoje espalhados (pessoas.email_institucional/telefones, programas.email_
+-- programa/telefone_secretaria/whatsapp, vinculos.email_funcao, etc.) — essa
+-- migracao de dado e remocao das colunas antigas ainda nao foi aplicada
+-- aqui, para nao mudar comportamento nesta fase.
+CREATE TABLE IF NOT EXISTS contatos (
+  id             TEXT PRIMARY KEY,
+  entidade       TEXT NOT NULL,   -- 'pessoa'|'programa'|'unidade'
+  entidade_id    TEXT NOT NULL,
+  tipo           TEXT NOT NULL,   -- EMAIL|TELEFONE|CELULAR|WHATSAPP|RAMAL|SITE|INSTAGRAM|...
+  valor          TEXT NOT NULL,   -- normalizado (e-mail minusculo; telefone so digitos com DDD)
+  valor_exibicao TEXT,            -- '(81) 99611-6668'
+  rotulo         TEXT,            -- 'institucional'|'pessoal'|'coordenacao'|'secretaria'
+  -- FK para vinculos(id) adicionada mais abaixo, depois que a tabela existe.
+  vinculo_id     TEXT,
+  principal      BOOLEAN DEFAULT FALSE,
+  publico        BOOLEAN DEFAULT FALSE,  -- controla o que vai ao site (LGPD)
+  observacao     TEXT,
+  ordem          INTEGER DEFAULT 0,
+  criado_em      TIMESTAMPTZ DEFAULT now(),
+  atualizado_em  TIMESTAMPTZ DEFAULT now(),
+  criado_por     TEXT,
+  atualizado_por TEXT
+);
+CREATE INDEX IF NOT EXISTS contatos_entidade_idx ON contatos(entidade, entidade_id);
+CREATE INDEX IF NOT EXISTS contatos_valor_idx    ON contatos(tipo, valor);
+CREATE INDEX IF NOT EXISTS contatos_vinculo_idx  ON contatos(vinculo_id);
+
 -- ===================== Programas e relacionados ===================
 CREATE TABLE IF NOT EXISTS programas (
   id                TEXT PRIMARY KEY,
@@ -317,6 +346,15 @@ CREATE TABLE IF NOT EXISTS vinculos (
   ativo           BOOLEAN DEFAULT TRUE,
   criado_em       TIMESTAMPTZ DEFAULT now()
 );
+
+-- contatos.vinculo_id so pode ganhar FK depois que `vinculos` existe.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'contatos_vinculo_id_fkey') THEN
+    ALTER TABLE contatos ADD CONSTRAINT contatos_vinculo_id_fkey
+      FOREIGN KEY (vinculo_id) REFERENCES vinculos(id) ON DELETE CASCADE;
+  END IF;
+END$$;
 
 -- Snapshot anual de indicadores por programa (Fase 4 / dashboard).
 -- Um registro por (programa, ano) — dado de "foto do ano", não verdade corrente.
