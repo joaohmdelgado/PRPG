@@ -76,21 +76,21 @@ CREATE TABLE IF NOT EXISTS editais (
   category_id         TEXT,
   category_title      TEXT,
   title               TEXT NOT NULL,
-  published_at        TEXT,
-  deadline            TEXT,
+  published_at        DATE,
+  deadline            DATE,
   year                INTEGER,
   description         TEXT,
   download_link       TEXT,
   details_link        TEXT,
-  periodo_data_inicio TEXT,
-  periodo_data_fim    TEXT,
+  periodo_data_inicio DATE,
+  periodo_data_fim    DATE,
   numero              TEXT,
   erratas             JSONB DEFAULT '[]',
   resultado_parcial   TEXT,
   resultado_final     TEXT,
   programa_id         TEXT, -- Fase 5: vincula o edital a um programa (NULL = edital global da PRPG)
   proficiencia        BOOLEAN DEFAULT FALSE, -- quando TRUE, o edital define o período de inscrição da proficiência
-  proficiencia_data_prova TEXT, -- data da prova de proficiência (usada na declaração)
+  proficiencia_data_prova DATE, -- data da prova de proficiência (usada na declaração)
   criado_por          TEXT,
   atualizado_por      TEXT
 );
@@ -161,8 +161,8 @@ CREATE TABLE IF NOT EXISTS programas (
   -- Fase 1: situacao, contato/localizacao e documentos do programa.
   status                 TEXT NOT NULL DEFAULT 'ATIVO', -- ATIVO|SUSPENSO|DESATIVADO|EM_AVALIACAO
   status_descricao       TEXT,
-  data_credenciamento    TEXT, -- datas como TEXT 'YYYY-MM-DD' (padrao do projeto)
-  data_descredenciamento TEXT,
+  data_credenciamento    DATE, -- Fase A.3 (G7): DATE nativo; fromRow formata 'YYYY-MM-DD'
+  data_descredenciamento DATE,
   bloco                  TEXT,
   sala                   TEXT,
   cep                    TEXT,
@@ -277,12 +277,12 @@ CREATE TABLE IF NOT EXISTS vinculos (
   papel           TEXT,
   portaria        TEXT,
   portaria_id     TEXT,
-  data_vencimento TEXT,
+  data_vencimento DATE,
   email_funcao    TEXT,
   endereco        TEXT,
-  -- Fase 2: período do mandato e motivo de encerramento (datas como TEXT 'YYYY-MM-DD').
-  data_inicio_mandato TEXT,
-  data_fim_mandato    TEXT,
+  -- Fase 2: período do mandato e motivo de encerramento. Fase A.3 (G7): DATE nativo.
+  data_inicio_mandato DATE,
+  data_fim_mandato    DATE,
   motivo_encerramento TEXT, -- FIM_MANDATO|RENUNCIA|AFASTADO|APOSENTADO|EXONERADO
   ativo           BOOLEAN DEFAULT TRUE,
   criado_em       TIMESTAMPTZ DEFAULT now()
@@ -315,8 +315,8 @@ CREATE TABLE IF NOT EXISTS metricas_anuais (
 CREATE TABLE IF NOT EXISTS portarias (
   id              TEXT PRIMARY KEY,
   title           TEXT NOT NULL,
-  data_portaria   TEXT,
-  data_vencimento TEXT,
+  data_portaria   DATE,
+  data_vencimento DATE,
   download_link   TEXT,
   criado_por      TEXT,
   atualizado_por  TEXT
@@ -579,9 +579,9 @@ CREATE TABLE IF NOT EXISTS camara_processos (
   status                 TEXT NOT NULL DEFAULT 'RECEBIDO',
   status_motivo          TEXT,                     -- motivo de retirada/diligência/etc.
   localizacao_id         TEXT REFERENCES camara_unidades(id),    -- derivado do último evento
-  localizacao_em         TEXT,                     -- data do último evento
-  data_entrada           TEXT,                     -- chegada à secretaria da Câmara
-  data_encerramento      TEXT,
+  localizacao_em         DATE,                     -- data do último evento
+  data_entrada           DATE,                     -- chegada à secretaria da Câmara
+  data_encerramento      DATE,
   processo_pai_id        TEXT REFERENCES camara_processos(id) ON DELETE SET NULL, -- apensamento
   sigiloso               BOOLEAN DEFAULT FALSE,    -- restringe visualização (dado sensível)
   observacoes            TEXT,                     -- campo livre que continua existindo
@@ -599,7 +599,7 @@ CREATE TABLE IF NOT EXISTS camara_eventos (
   id            TEXT PRIMARY KEY,
   processo_id   TEXT NOT NULL REFERENCES camara_processos(id) ON DELETE CASCADE,
   tipo          TEXT NOT NULL,  -- TRAMITACAO|STATUS|RELATORIA|PAUTA|PARECER|DELIBERACAO|ATO|NOTA|COBRANCA
-  data          TEXT NOT NULL,  -- data do fato (não do registro)
+  data          DATE NOT NULL,  -- data do fato (não do registro)
   unidade_id    TEXT REFERENCES camara_unidades(id),
   descricao     TEXT,
   reuniao_id    TEXT,
@@ -613,7 +613,7 @@ CREATE INDEX IF NOT EXISTS camara_ev_proc_idx ON camara_eventos(processo_id, dat
 -- Reuniões da Câmara.
 CREATE TABLE IF NOT EXISTS camara_reunioes (
   id            TEXT PRIMARY KEY,
-  data          TEXT NOT NULL,       -- 'YYYY-MM-DD'
+  data          DATE NOT NULL,       -- 'YYYY-MM-DD'
   numero        TEXT,                -- "VIII Reunião Ordinária"
   tipo          TEXT DEFAULT 'ORDINARIA', -- ORDINARIA|EXTRAORDINARIA
   local         TEXT,
@@ -652,9 +652,9 @@ CREATE TABLE IF NOT EXISTS camara_relatorias (
   relator_id          TEXT,
   relator_nome        TEXT NOT NULL,   -- desnormalizado: nomes históricos sem cadastro
   programa_id         TEXT REFERENCES programas(id) ON DELETE SET NULL,
-  data_designacao     TEXT,
-  prazo_devolucao     TEXT,
-  data_devolucao      TEXT,
+  data_designacao     DATE,
+  prazo_devolucao     DATE,
+  data_devolucao      DATE,
   resultado_parecer   TEXT,            -- FAVORAVEL|FAVORAVEL_RESSALVAS|DESFAVORAVEL|DILIGENCIA|ENCAMINHAMENTO
   parecer_url         TEXT,
   ativa               BOOLEAN DEFAULT TRUE,
@@ -671,7 +671,7 @@ CREATE TABLE IF NOT EXISTS camara_atos (
   tipo          TEXT,               -- RESOLUCAO_CEPE|RESOLUCAO_CONSU|DECISAO_SEG|PORTARIA|DESPACHO
   numero        TEXT,
   ano           INTEGER,
-  data          TEXT,
+  data          DATE,
   ementa        TEXT,
   link          TEXT,
   resolucao_id  TEXT REFERENCES resolucoes(id) ON DELETE SET NULL, -- publicação no site

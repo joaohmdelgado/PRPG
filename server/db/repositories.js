@@ -43,10 +43,10 @@ export const editaisRepo = createRepository({
   }),
   toRow: (o) => ({
     id: o.id, category_id: o.categoryId, category_title: o.categoryTitle, title: o.title,
-    published_at: o.publishedAt, deadline: o.deadline, year: intOrNull(o.year),
+    published_at: o.publishedAt || null, deadline: o.deadline || null, year: intOrNull(o.year),
     description: o.description, download_link: o.downloadLink, details_link: o.detailsLink,
-    periodo_data_inicio: o.field_periodo?.data_inicio ?? null,
-    periodo_data_fim: o.field_periodo?.data_fim ?? null,
+    periodo_data_inicio: o.field_periodo?.data_inicio || null,
+    periodo_data_fim: o.field_periodo?.data_fim || null,
     numero: o.numero, erratas: JSON.stringify(o.erratas ?? []),
     resultado_parcial: o.resultadoParcial ?? null, resultado_final: o.resultadoFinal ?? null,
     programa_id: o.programaId || null,
