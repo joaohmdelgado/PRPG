@@ -13,14 +13,20 @@
 >
 > **Status**: planejamento. Data: 26/07/2026.
 > Documentos irmãos: [`requisitos-camara.md`](requisitos-camara.md), [`requisitos-pnpd.md`](requisitos-pnpd.md),
-> [`requisitos-expedientes.md`](requisitos-expedientes.md).
+> [`requisitos-expedientes.md`](requisitos-expedientes.md), [`requisitos-contatos.md`](requisitos-contatos.md).
 >
-> ⚠️ **ATUALIZAÇÃO (26/07/2026)** — a análise da planilha `OFÍCIOS_EDITAIS_PORTARIAS_PRPG.xlsx`
+> ⚠️ **ATUALIZAÇÃO 1 (26/07/2026)** — a análise da planilha `OFÍCIOS_EDITAIS_PORTARIAS_PRPG.xlsx`
 > (ver [`requisitos-expedientes.md`](requisitos-expedientes.md)) **confirmou** as onze
 > generalizações abaixo e **alterou uma**: a tabela `atos` do §5.6 ganha série, numeração
 > sequencial e situação, e a coluna `revogado_por_id` dá lugar à tabela `ato_referencias`.
-> O §5.6 e o §7 já incorporam a mudança. Nenhuma outra decisão precisou ser revista — a
-> arquitetura absorveu um módulo inteiro ao custo de duas tabelas pequenas e uma coluna.
+>
+> ⚠️ **ATUALIZAÇÃO 2 (26/07/2026)** — a análise de `Contatos - Coordenações de PG.xlsx`
+> (ver [`requisitos-contatos.md`](requisitos-contatos.md)) acrescenta **uma tabela ao núcleo**,
+> `contatos` (§5.9), que absorve 8 campos de contato hoje espalhados por 4 tabelas; e dois
+> campos em `vinculos` (`carater`, `ordem`). Quinta confirmação de G1.
+>
+> Em ambos os casos a arquitetura absorveu um módulo inteiro **sem redesenho** — ao custo de
+> três tabelas pequenas e duas colunas. Os §5 e §7 já incorporam as duas atualizações.
 
 ---
 
@@ -335,14 +341,14 @@ Convenções: IDs `TEXT` (mantém slugs existentes); datas simples `DATE`; *time
 
 ```sql
 -- Pessoa: UMA tabela para todo ser humano do sistema, com ou sem login.
+-- E-mails e telefones NÃO ficam aqui: vão para `contatos` (§5.9), porque uma
+-- pessoa tem vários, com tipo e visibilidade própria.
 CREATE TABLE pessoas (
   id                  TEXT PRIMARY KEY,
   nome                TEXT NOT NULL,
   cpf                 TEXT UNIQUE,            -- SEMPRE 11 dígitos, sem máscara
   cpf_valido          BOOLEAN DEFAULT TRUE,   -- FALSE = DV não confere (aviso, não bloqueio)
   siape               TEXT,
-  email               TEXT,                   -- contato (≠ login)
-  telefones           TEXT[] DEFAULT '{}',
   endereco            TEXT,
   foto_url            TEXT,
   nacionalidade       TEXT,
@@ -351,8 +357,6 @@ CREATE TABLE pessoas (
   orcid               TEXT,
   google_scholar      TEXT,
   publons             TEXT,
-  priv_mostrar_email    BOOLEAN DEFAULT FALSE,
-  priv_mostrar_telefone BOOLEAN DEFAULT FALSE,
   criado_em           TIMESTAMPTZ DEFAULT now(),
   atualizado_em       TIMESTAMPTZ DEFAULT now(),
   criado_por          TEXT,
@@ -420,7 +424,7 @@ CREATE TABLE arquivos (
 CREATE INDEX arquivos_sha_idx ON arquivos(sha256);
 
 -- Vínculo N:N entre um arquivo e qualquer entidade. Substitui as ~19 colunas
--- *_url espalhadas. entidade/entidade_id são polimórficos (ver §5.9).
+-- *_url espalhadas. entidade/entidade_id são polimórficos (ver §5.10).
 CREATE TABLE anexos (
   id           TEXT PRIMARY KEY,
   entidade     TEXT NOT NULL,   -- 'processo'|'pos_doutorado'|'inscricao_proficiencia'|'programa'|...
@@ -487,7 +491,7 @@ CREATE TABLE processos (
   programa_id            TEXT REFERENCES programas(id) ON DELETE SET NULL,
   unidade_responsavel_id TEXT REFERENCES unidades(id) ON DELETE SET NULL,
   -- Situação: vocabulário definido pelo domínio dono do tipo (a Câmara mantém
-  -- o seu: RECEBIDO|APTO_PAUTA|RELATOR_DESIGNADO|PAUTADO|…). Ver §5.10.
+  -- o seu: RECEBIDO|APTO_PAUTA|RELATOR_DESIGNADO|PAUTADO|…). Ver §5.11.
   situacao               TEXT NOT NULL DEFAULT 'RECEBIDO',
   situacao_motivo        TEXT,
   -- Cache de leitura do último evento tipo='TRAMITACAO' (§7.2 requisitos-camara).
@@ -662,15 +666,18 @@ CREATE TABLE vinculos (
   pessoa_id           TEXT NOT NULL REFERENCES pessoas(id) ON DELETE CASCADE, -- FK REAL
   programa_id         TEXT REFERENCES programas(id) ON DELETE CASCADE,
   unidade_id          TEXT REFERENCES unidades(id)  ON DELETE SET NULL,
-  papel               TEXT NOT NULL,  -- DOCENTE_PERMANENTE|DOCENTE_COLABORADOR|DISCENTE_MESTRADO|
-                                      -- DISCENTE_DOUTORADO|DISCENTE_PROFISSIONAL|EGRESSO|
-                                      -- POS_DOUTORANDO|COORDENADOR|VICE_COORDENADOR|COMISSAO_*
+  papel               TEXT NOT NULL,  -- COORDENADOR|VICE_COORDENADOR|SUBSTITUTO_EVENTUAL|SECRETARIO|
+                                      -- DOCENTE_PERMANENTE|DOCENTE_COLABORADOR|DOCENTE_VISITANTE|
+                                      -- DISCENTE_MESTRADO|DISCENTE_DOUTORADO|DISCENTE_PROFISSIONAL|
+                                      -- EGRESSO|POS_DOUTORANDO|COMISSAO_* (ver requisitos-contatos §5.3)
+  carater             TEXT DEFAULT 'EFETIVO', -- EFETIVO|PRO_TEMPORE|SUBSTITUTO_EVENTUAL|INTERINO
   data_inicio         DATE,
   data_fim            DATE,
   situacao_manual     TEXT,           -- só o que as datas não dizem: RENUNCIA|AFASTADO|...
   motivo_encerramento TEXT,
   ato_id              TEXT REFERENCES atos(id) ON DELETE SET NULL,  -- portaria de designação
-  email_funcao        TEXT,
+  ordem               INTEGER DEFAULT 0,   -- ordenação da equipe na exibição
+  -- e-mail da função vai para `contatos` com vinculo_id preenchido (§5.9)
   dados               JSONB DEFAULT '{}',  -- atributos do papel (entrada, nível, orientador…)
   criado_em           TIMESTAMPTZ DEFAULT now(),
   atualizado_em       TIMESTAMPTZ DEFAULT now(),
@@ -687,9 +694,46 @@ CREATE INDEX vinculos_fim_idx     ON vinculos(data_fim);
 > `data_fim`, com `situacao_manual` como única exceção. A regra é uma só, escrita uma vez
 > (`server/utils/vigencia.js`), e vale para vínculo, pós-doutorado, ato e programa.
 
-### 5.9 Sobre o polimorfismo de `eventos`, `anexos` e `declaracoes`
+### 5.9 Núcleo — contatos
 
-As três tabelas do núcleo usam `(entidade, entidade_id)` sem FK. É uma concessão consciente,
+```sql
+-- Meio de contato de qualquer entidade. Absorve 8 campos hoje espalhados por
+-- 4 tabelas (ver requisitos-contatos.md §4.3): pessoas.email_institucional,
+-- pessoas.telefones, users.priv_mostrar_email, users.priv_mostrar_telefone,
+-- programas.email_programa, programas.telefone_secretaria, programas.whatsapp
+-- e vinculos.email_funcao. users.email PERMANECE — é credencial, não contato.
+CREATE TABLE contatos (
+  id             TEXT PRIMARY KEY,
+  entidade       TEXT NOT NULL,   -- 'pessoa'|'programa'|'unidade'
+  entidade_id    TEXT NOT NULL,
+  tipo           TEXT NOT NULL,   -- EMAIL|TELEFONE|CELULAR|WHATSAPP|RAMAL|SITE|INSTAGRAM|...
+  valor          TEXT NOT NULL,   -- normalizado (e-mail minúsculo; telefone só dígitos com DDD)
+  valor_exibicao TEXT,            -- '(81) 99611-6668'
+  rotulo         TEXT,            -- 'institucional'|'pessoal'|'coordenação'|'secretaria'
+  vinculo_id     TEXT REFERENCES vinculos(id) ON DELETE CASCADE, -- contato DA FUNÇÃO, não da pessoa
+  principal      BOOLEAN DEFAULT FALSE,
+  publico        BOOLEAN DEFAULT FALSE,  -- controla o que vai ao site (LGPD)
+  observacao     TEXT,
+  ordem          INTEGER DEFAULT 0,
+  criado_em      TIMESTAMPTZ DEFAULT now(),
+  atualizado_em  TIMESTAMPTZ DEFAULT now(),
+  criado_por     TEXT,
+  atualizado_por TEXT
+);
+CREATE INDEX contatos_entidade_idx ON contatos(entidade, entidade_id);
+CREATE INDEX contatos_valor_idx    ON contatos(tipo, valor);
+CREATE INDEX contatos_vinculo_idx  ON contatos(vinculo_id);
+```
+
+> **`publico` é por contato, não por pessoa.** Os dois interruptores atuais
+> (`users.priv_mostrar_email`/`priv_mostrar_telefone`) são tudo-ou-nada; um coordenador quer
+> publicar o e-mail institucional e não o celular pessoal. Com isso, o `filterSensitivePessoa`
+> de `programasController.js` — controle de privacidade escrito numa função, que pode ser
+> esquecido no próximo endpoint — é aposentado: **a regra passa a morar no dado.**
+
+### 5.10 Sobre o polimorfismo de `eventos`, `anexos`, `declaracoes` e `contatos`
+
+As quatro tabelas do núcleo usam `(entidade, entidade_id)` sem FK. É uma concessão consciente,
 e a alternativa foi avaliada:
 
 | Alternativa | Por que não |
@@ -710,6 +754,7 @@ e a alternativa foi avaliada:
      DELETE FROM eventos     WHERE entidade = TG_ARGV[0] AND entidade_id = OLD.id;
      DELETE FROM anexos      WHERE entidade = TG_ARGV[0] AND entidade_id = OLD.id;
      DELETE FROM declaracoes WHERE entidade = TG_ARGV[0] AND entidade_id = OLD.id;
+     DELETE FROM contatos    WHERE entidade = TG_ARGV[0] AND entidade_id = OLD.id;
      RETURN OLD;
    END; $$ LANGUAGE plpgsql;
 
@@ -723,7 +768,7 @@ O projeto **já convive** com polimorfismo em `vinculos.pessoa_id` e `camara_rel
 — a diferença é que lá ele era acidental e não documentado, e aqui é deliberado, restrito a
 três tabelas de anexação e coberto por *trigger* e teste.
 
-### 5.10 Vocabulários (G10)
+### 5.11 Vocabulários (G10)
 
 ```sql
 CREATE TABLE vocabularios (
@@ -746,7 +791,7 @@ Os `const` de hoje (`STATUS_PROCESSO`, `PAPEIS_DISCENTE`, `TIPOS_COMISSAO`,
 (com cache em memória). `taxonomia_refs` **continua existindo** — resolve ID legado do Drupal
 na importação, propósito diferente. `taxonomias` (chave → `TEXT[]`) é absorvida e removida.
 
-### 5.11 Módulo PNPD, reescrito sobre o núcleo
+### 5.12 Módulo PNPD, reescrito sobre o núcleo
 
 Comparado ao §8 de `requisitos-pnpd.md`, a tabela **encolhe de 45 para 20 colunas**. Tudo o que
 saiu não foi perdido: foi para onde já pertencia.
@@ -866,11 +911,12 @@ qualquer funcionalidade nova.
 | A.3 | **G7**: todas as datas simples viram `DATE`; `fromRow` formata para `'YYYY-MM-DD'` na saída | `repositories.js`, `utils/datas.js` |
 | A.4 | **G8**: `camara_unidades` → `unidades` (+ `tipo`, `unidade_pai_id`) | `schema.sql` |
 | A.5 | **G5**: `arquivos` + `anexos`; `/api/upload` passa a registrar | `adminRoutes.js`, `db/anexosRepo.js` |
+| A.5b | **`contatos`** (§5.9) + `utils/contato.js` (normaliza e-mail e telefone); remove os 8 campos de contato espalhados | `schema.sql`, `db/contatosRepo.js` |
 | A.6 | **G2**: `eventos` polimórfica + `eventosRepo` + *trigger* de limpeza + lista `ENTIDADES` | `db/eventosRepo.js`, `db/core.js` |
 | A.7 | **G3**: `camara_processos` → `processos` (+ `interessado_pessoa_id`) | `schema.sql` |
 | A.8 | **G4**: `atos` + `ato_series` + `ato_referencias` + a função `proximo_sequencial()` (de `portarias` + `camara_atos` + `resolucoes` + o livro de numeração); `documentos` (de `formularios`) | `schema.sql`, `db/atosRepo.js` |
 | A.9 | **G6**: `declaracoes` + serviço de emissão + rota pública única | `services/declaracoes.js` |
-| A.10 | **G9**: `vinculos` com FK real, `data_inicio`/`data_fim` e situação derivada | `schema.sql`, `utils/vigencia.js` |
+| A.10 | **G9**: `vinculos` com FK real, `data_inicio`/`data_fim`, `carater`, `ordem` e situação derivada | `schema.sql`, `utils/vigencia.js` |
 | A.11 | FKs faltantes: os 8 `programa_id`, `vinculos.ato_id`, `eventos.*` | `schema.sql` |
 | A.12 | Remover `proficiencia_periodos` (tabela morta) | `schema.sql`, `repositories.js:421` |
 | A.13 | Atualizar `migrate.mjs` e `__tests__/helpers.js` com a lista completa de tabelas | ambos |
@@ -888,8 +934,16 @@ funcionalidade nova**. Esse é o critério: a Fase A é invisível para o usuár
 | B.2 | Proficiência: emissão via `declaracoes`; **redirect da URL antiga** de verificação |
 | B.3 | Programas: `buildCombined` deletado; listagem de pessoas vira `JOIN` |
 | B.4 | Portarias/Resoluções/Formulários: telas apontam para `atos` e `documentos` |
-| B.5 | **G10**: `vocabularios` + endpoint + seed a partir dos `const` atuais |
-| B.6 | `camara.test.js` (previsto no §14 de `requisitos-camara.md`, ainda não escrito) |
+| B.5 | **G10**: `vocabularios` + endpoint + seed a partir dos `const` atuais, com o vocabulário de `vinculo.papel` consolidado (`requisitos-contatos.md` §5.3) e o de-para de `COORDENADOR_ATUAL`/`ANTERIOR`/`SUBSTITUTO`/`TAE` |
+| B.6 | `filterSensitivePessoa` aposentada em favor de `contatos.publico` |
+| B.7 | `camara.test.js` (previsto no §14 de `requisitos-camara.md`, ainda não escrito) |
+
+### Fase G — Agenda de contatos e cadastro de programas (≈ 1 semana) — **primeiro módulo**
+
+Detalhada em [`requisitos-contatos.md`](requisitos-contatos.md) §9. É a menor das fases de
+módulo e vem primeiro porque **preenche o cadastro do qual as outras três dependem**: dá 31
+siglas ao registro de programas, 113 pessoas reais aos supervisores do PNPD e aos relatores da
+Câmara, e as unidades destinatárias dos Expedientes.
 
 ### Fase E — Módulo Expedientes (≈ 2 semanas) — **vem antes da Fase C**
 
@@ -935,18 +989,27 @@ frontend, é puramente cosmética/higiênica, e pode ser adiada sem bloquear nad
 
 ### Comparação de esforço
 
-| Cenário | Esforço |
-|---|---|
-| PNPD sozinho, sobre o schema atual (plano anterior) | ~5 semanas |
-| **A + B + E + C** (fundação + refit + Expedientes + PNPD) | **~7 semanas** |
-| Fase D (opcional) | +1 semana |
+**Ordem final: A → B → G → E → C → D.**
+
+| Fase | Conteúdo | Duração |
+|---|---|---|
+| A | Núcleo | ~2 sem |
+| B | Refit dos módulos atuais | ~1 sem |
+| G | Agenda de contatos + cadastro de programas | ~1 sem |
+| E | Expedientes (ofícios, editais, portarias) | ~2 sem |
+| C | PNPD | ~2 sem |
+| D | Legado Drupal — adiável | ~1 sem |
+| | **Total A+B+G+E+C** | **~8 semanas** |
+
+Comparação: **o PNPD sozinho, sobre o schema atual, custaria ~5 semanas.** Por ~8 saem os
+**quatro** mini-sistemas mais a fundação.
 
 A fundação **não custa tempo adicional líquido** — ela realoca trabalho que seria feito de
 qualquer forma dentro de cada módulo, e o deixa disponível para os próximos. A prova apareceu
-sozinha: o módulo de Expedientes chegou **depois** deste documento e coube na arquitetura ao
-custo de duas tabelas pequenas e uma coluna, sem redesenho. O próximo mini-sistema
-(credenciamento docente, lato sensu, revalidação de diploma) passa a custar ~2 semanas em vez
-de ~5.
+sozinha, duas vezes: os módulos de Expedientes e de Contatos chegaram **depois** deste
+documento e couberam na arquitetura ao custo de três tabelas pequenas e duas colunas, sem
+redesenho. O próximo mini-sistema (credenciamento docente, lato sensu, revalidação de diploma)
+passa a custar ~2 semanas em vez de ~5.
 
 ---
 
@@ -985,7 +1048,7 @@ pós-doutorado não apaga a pessoa.
 | **QR codes já impressos** apontam para `/declaracoes/proficiencia/:codigo` | a rota antiga **permanece**, redirecionando para `/verificar/:codigo`; os códigos são migrados preservando `codigo_verificacao` e `emitida_em` |
 | Fase A "invisível" ser difícil de justificar a quem espera o PNPD | o critério de pronto é a suíte de testes passar sem regressão; e a Fase C fica mais curta por causa dela |
 | Refatoração de identidade (G1) quebrar login | `authController` e `authMiddleware` têm teste; a migração de `users` preserva `id`, então tokens JWT em circulação continuam válidos |
-| Polimorfismo de `eventos` degenerar | lista fechada + `CHECK` + *trigger* + teste de órfãos (§5.9) |
+| Polimorfismo de `eventos` degenerar | lista fechada + `CHECK` + *trigger* + teste de órfãos (§5.10) |
 | Escopo crescer durante a Fase A | as fases B, C e D são **entregas separadas**; A não inclui nenhuma funcionalidade nova |
 | Perda de dado vivo na reconstrução | §6.1: dump nominal antes de tocar em qualquer coisa |
 

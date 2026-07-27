@@ -430,7 +430,7 @@ tudo volta para o campo livre.**
 
 ## 8. Modelo de dados proposto
 
-> ⚠️ **SUPERADO por [`arquitetura-dados.md`](arquitetura-dados.md) §5.11.** O modelo abaixo
+> ⚠️ **SUPERADO por [`arquitetura-dados.md`](arquitetura-dados.md) §5.12.** O modelo abaixo
 > assume o schema anterior à harmonização (com `camara_processos`, `users`/`pessoas` separados
 > e sem núcleo compartilhado). Está mantido como registro do raciocínio — em especial o §5.1,
 > que explica por que o pós-doutorado **não** pode ser modelado como um processo (cardinalidade
