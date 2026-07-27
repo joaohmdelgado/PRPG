@@ -235,7 +235,7 @@ Referência: [`arquitetura-dados.md`](arquitetura-dados.md) §5 e §7.
 | `[x]` | A.4 | **G8**: `camara_unidades` → `unidades` (+ `tipo`, `unidade_pai_id`) | `schema.sql` | |
 | `[x]` | A.5 | **G5**: `arquivos` + `anexos`; `/api/upload` registra o arquivo e devolve `{id, url}` | `adminRoutes.js`, `db/anexosRepo.js` | |
 | `[x]` | A.5b | `contatos` (§5.9) + `utils/contato.js`; remove os 8 campos de contato espalhados | `schema.sql`, `db/contatosRepo.js` | (tabela criada; remoção dos 8 campos fica para a Fase G, quando a agenda existir) |
-| `[ ]` | A.6 | **G2**: `eventos` polimórfica + `eventosRepo` + *trigger* de limpeza + lista `ENTIDADES` | `db/eventosRepo.js`, `db/core.js` | |
+| `[x]` | A.6 | **G2**: `eventos` polimórfica + `eventosRepo` + *trigger* de limpeza + lista `ENTIDADES` | `db/eventosRepo.js`, `db/core.js` | |
 | `[ ]` | A.7 | **G3**: `camara_processos` → `processos` (+ `interessado_pessoa_id`) | `schema.sql` | |
 | `[ ]` | A.8 | **G4**: `atos` + `ato_series` + `ato_referencias` + `proximo_sequencial()`; `documentos` (de `formularios`) | `schema.sql`, `db/atosRepo.js` | ⛔ D-A3, D-A4, D-E1 |
 | `[ ]` | A.9 | **G6**: `declaracoes` + serviço de emissão + rota pública única de verificação | `services/declaracoes.js` | |

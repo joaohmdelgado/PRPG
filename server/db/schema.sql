@@ -205,6 +205,52 @@ CREATE INDEX IF NOT EXISTS contatos_entidade_idx ON contatos(entidade, entidade_
 CREATE INDEX IF NOT EXISTS contatos_valor_idx    ON contatos(tipo, valor);
 CREATE INDEX IF NOT EXISTS contatos_vinculo_idx  ON contatos(vinculo_id);
 
+-- ==================== Eventos (Fase A.6, G2) =======================
+-- Linha do tempo append-only de qualquer entidade. NADA aqui e atualizado
+-- ou apagado: cada linha e um fato datado e imutavel. Lista fechada de
+-- entidades em server/db/core.js (ENTIDADES) - mesma lista do CHECK abaixo.
+-- ato_id ganha FK real na Fase A.8, quando `atos` existir.
+CREATE TABLE IF NOT EXISTS eventos (
+  id          TEXT PRIMARY KEY,
+  entidade    TEXT NOT NULL CHECK (entidade IN (
+                'processo','pos_doutorado','inscricao_proficiencia','edital',
+                'programa','pessoa','unidade','vinculo','ato'
+              )),
+  entidade_id TEXT NOT NULL,
+  tipo        TEXT NOT NULL,
+  data        DATE NOT NULL,
+  descricao   TEXT,
+  -- pessoa_id/unidade_id ganham FK mais abaixo, depois que essas tabelas existem.
+  pessoa_id   TEXT,
+  unidade_id  TEXT,
+  arquivo_id  TEXT REFERENCES arquivos(id) ON DELETE SET NULL,
+  ato_id      TEXT, -- FK para atos(id) adicionada na Fase A.8
+  origem_tipo TEXT,
+  origem_id   TEXT,
+  dados       JSONB DEFAULT '{}',
+  criado_em   TIMESTAMPTZ DEFAULT now(),
+  criado_por  TEXT REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS eventos_entidade_idx ON eventos(entidade, entidade_id, data DESC);
+CREATE INDEX IF NOT EXISTS eventos_tipo_idx     ON eventos(entidade, tipo);
+
+-- Trigger generico de limpeza em cascata para as tabelas polimorficas
+-- (eventos/anexos/declaracoes/contatos), aplicado tabela a tabela quando a
+-- tabela dona existir (ver arquitetura-dados.md §5.10). `declaracoes` ainda
+-- nao existe (Fase A.9); a funcao ja cobre a chamada para nao precisar
+-- recriar depois.
+CREATE OR REPLACE FUNCTION limpar_dependentes() RETURNS TRIGGER AS $$
+BEGIN
+  DELETE FROM eventos  WHERE entidade = TG_ARGV[0] AND entidade_id = OLD.id;
+  DELETE FROM anexos   WHERE entidade = TG_ARGV[0] AND entidade_id = OLD.id;
+  DELETE FROM contatos WHERE entidade = TG_ARGV[0] AND entidade_id = OLD.id;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'declaracoes') THEN
+    EXECUTE 'DELETE FROM declaracoes WHERE entidade = $1 AND entidade_id = $2'
+      USING TG_ARGV[0], OLD.id;
+  END IF;
+  RETURN OLD;
+END; $$ LANGUAGE plpgsql;
+
 -- ===================== Programas e relacionados ===================
 CREATE TABLE IF NOT EXISTS programas (
   id                TEXT PRIMARY KEY,
@@ -316,6 +362,15 @@ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_pessoa_id_key') THEN
     ALTER TABLE users ADD CONSTRAINT users_pessoa_id_key UNIQUE (pessoa_id);
+  END IF;
+END$$;
+
+-- eventos.pessoa_id (Fase A.6) so pode ganhar FK depois que `pessoas` existe.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'eventos_pessoa_id_fkey') THEN
+    ALTER TABLE eventos ADD CONSTRAINT eventos_pessoa_id_fkey
+      FOREIGN KEY (pessoa_id) REFERENCES pessoas(id) ON DELETE SET NULL;
   END IF;
 END$$;
 
@@ -636,6 +691,15 @@ CREATE TABLE IF NOT EXISTS unidades (
   interna_prpg   BOOLEAN DEFAULT FALSE, -- TRUE para Secretaria, Lato Sensu, Internacionalização, DADM
   ativo          BOOLEAN DEFAULT TRUE
 );
+
+-- eventos.unidade_id (Fase A.6) so pode ganhar FK depois que `unidades` existe.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'eventos_unidade_id_fkey') THEN
+    ALTER TABLE eventos ADD CONSTRAINT eventos_unidade_id_fkey
+      FOREIGN KEY (unidade_id) REFERENCES unidades(id) ON DELETE SET NULL;
+  END IF;
+END$$;
 
 -- Processo: o registro permanente. Chave de negócio = numero (NUP).
 CREATE TABLE IF NOT EXISTS camara_processos (
