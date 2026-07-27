@@ -386,7 +386,11 @@ CREATE TABLE IF NOT EXISTS vinculos (
   id              TEXT PRIMARY KEY,
   programa_id     TEXT REFERENCES programas(id) ON DELETE CASCADE,
   -- pessoa_id é polimórfico: aponta para users.id OU pessoas.id (legado),
-  -- resolvido na aplicação. Por isso não há FK aqui. (Fase A.10 substitui por FK real.)
+  -- resolvido na aplicação. FK real fica para a Fase B.3, quando buildCombined
+  -- vira JOIN — apertar a FK agora exigiria mudar simultaneamente a criação
+  -- de usuário, a listagem por pessoa e a limpeza de vínculos ao excluir
+  -- usuário (todas hoje comparam pessoa_id a users.id), risco desproporcional
+  -- para o ganho nesta fase.
   pessoa_id       TEXT,
   papel           TEXT,
   portaria        TEXT,
@@ -398,6 +402,12 @@ CREATE TABLE IF NOT EXISTS vinculos (
   data_inicio_mandato DATE,
   data_fim_mandato    DATE,
   motivo_encerramento TEXT, -- FIM_MANDATO|RENUNCIA|AFASTADO|APOSENTADO|EXONERADO
+  -- Fase A.10 (G9): carater/ordem/situacao_manual do modelo harmonizado.
+  -- `situacao` NAO e coluna: e derivada de data_inicio/data_fim_mandato por
+  -- server/utils/vigencia.js, com situacao_manual como unica excecao.
+  carater             TEXT DEFAULT 'EFETIVO', -- EFETIVO|PRO_TEMPORE|SUBSTITUTO_EVENTUAL|INTERINO
+  ordem               INTEGER DEFAULT 0,       -- ordenacao da equipe na exibicao
+  situacao_manual     TEXT,                    -- so o que as datas nao dizem: RENUNCIA|AFASTADO|...
   ativo           BOOLEAN DEFAULT TRUE,
   criado_em       TIMESTAMPTZ DEFAULT now()
 );
