@@ -130,7 +130,7 @@ export const getProcessos = async (req, res) => {
         (SELECT COUNT(*)::int FROM camara_pauta_itens pi WHERE pi.processo_id = p.id) AS pautas_count,
         (r.prazo_devolucao IS NOT NULL AND r.data_devolucao IS NULL
           AND r.prazo_devolucao < to_char(CURRENT_DATE, 'YYYY-MM-DD')) AS atrasado
-      FROM camara_processos p
+      FROM processos p
       LEFT JOIN unidades u ON u.id = p.unidade_responsavel_id
       LEFT JOIN unidades l ON l.id = p.localizacao_id
       LEFT JOIN programas pr ON pr.id = p.programa_id
@@ -153,7 +153,7 @@ export const getMeusProcessos = async (req, res) => {
   const { rows } = await query(
     `SELECT p.*, r.prazo_devolucao AS relator_prazo_devolucao, r.relator_nome
        FROM camara_relatorias r
-       JOIN camara_processos p ON p.id = r.processo_id
+       JOIN processos p ON p.id = r.processo_id
       WHERE r.relator_id = $1 AND r.ativa = TRUE
       ORDER BY r.prazo_devolucao ASC NULLS LAST`,
     [req.user.id]
@@ -244,7 +244,7 @@ export const patchStatus = async (req, res) => {
 };
 
 // Troca de localização — inline na lista/ficha. Gera evento de tramitação e
-// atualiza o cache localizacao_id/localizacao_em em camara_processos.
+// atualiza o cache localizacao_id/localizacao_em em processos.
 export const patchLocalizacao = async (req, res) => {
   if (!isPlainObject(req.body) || !req.body.unidadeId) return res.status(400).json({ message: 'Informe a unidade de destino.' });
   const existing = await camaraProcessosRepo.getById(req.params.id);
@@ -348,7 +348,7 @@ export const exportXlsx = async (req, res) => {
       u.sigla AS unidade_responsavel, l.sigla AS localizacao, p.localizacao_em,
       pr.sigla AS programa, r.relator_nome, r.prazo_devolucao, p.data_entrada, p.data_encerramento,
       p.observacoes
-    FROM camara_processos p
+    FROM processos p
     LEFT JOIN unidades u ON u.id = p.unidade_responsavel_id
     LEFT JOIN unidades l ON l.id = p.localizacao_id
     LEFT JOIN programas pr ON pr.id = p.programa_id

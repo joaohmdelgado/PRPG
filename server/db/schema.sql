@@ -675,9 +675,6 @@ WHERE NOT EXISTS (
 -- Modelo: o processo é o registro permanente (chave = NUP); a reunião é um
 -- evento; "estar na pauta" é uma relação N:N (camara_pauta_itens); a
 -- tramitação é um histórico append-only (camara_eventos) — nada é sobrescrito.
--- NOTA: `camara_processos` migra para `processos` na Fase A.7 do PLANO.md —
--- ainda não aplicado aqui.
-
 -- Setores/unidades da UFRPE por onde os processos tramitam. Fase A.4 (G8):
 -- era `camara_unidades`; nada nela é específico da Câmara (serve também a
 -- Expedientes/Contatos). O binding JS (camaraUnidadesRepo) só muda na Fase B.
@@ -701,15 +698,18 @@ BEGIN
   END IF;
 END$$;
 
--- Processo: o registro permanente. Chave de negócio = numero (NUP).
-CREATE TABLE IF NOT EXISTS camara_processos (
+-- Processo: o registro permanente. Chave de negócio = numero (NUP). Fase A.7
+-- (G3): era `camara_processos`; o NUP é conceito da universidade, não do
+-- colegiado. O binding JS (camaraProcessosRepo) só muda na Fase B.
+CREATE TABLE IF NOT EXISTS processos (
   id                     TEXT PRIMARY KEY,
   numero                 TEXT NOT NULL UNIQUE,     -- 23082.XXXXXX/AAAA-DD
   numero_valido          BOOLEAN DEFAULT TRUE,     -- FALSE = fora do padrão (não bloqueia)
   link_sipac             TEXT,
   assunto                TEXT NOT NULL,
   tipo_materia           TEXT,                     -- vocabulário controlado
-  interessado            TEXT,                     -- pessoa/unidade requerente
+  interessado            TEXT,                     -- pessoa/unidade requerente (texto historico)
+  interessado_pessoa_id  TEXT REFERENCES pessoas(id) ON DELETE SET NULL, -- Fase A.7: quando a pessoa é cadastrada
   programa_id            TEXT REFERENCES programas(id) ON DELETE SET NULL,
   unidade_responsavel_id TEXT REFERENCES unidades(id), -- setor da PRPG que instrui
   status                 TEXT NOT NULL DEFAULT 'RECEBIDO',
@@ -718,7 +718,7 @@ CREATE TABLE IF NOT EXISTS camara_processos (
   localizacao_em         DATE,                     -- data do último evento
   data_entrada           DATE,                     -- chegada à secretaria da Câmara
   data_encerramento      DATE,
-  processo_pai_id        TEXT REFERENCES camara_processos(id) ON DELETE SET NULL, -- apensamento
+  processo_pai_id        TEXT REFERENCES processos(id) ON DELETE SET NULL, -- apensamento
   sigiloso               BOOLEAN DEFAULT FALSE,    -- restringe visualização (dado sensível)
   observacoes            TEXT,                     -- campo livre que continua existindo
   obs_original           TEXT,                     -- coluna "Obs." da planilha, preservada na íntegra
@@ -727,13 +727,13 @@ CREATE TABLE IF NOT EXISTS camara_processos (
   criado_por             TEXT,
   atualizado_por         TEXT
 );
-CREATE INDEX IF NOT EXISTS camara_proc_status_idx  ON camara_processos(status);
-CREATE INDEX IF NOT EXISTS camara_proc_prog_idx    ON camara_processos(programa_id);
+CREATE INDEX IF NOT EXISTS camara_proc_status_idx  ON processos(status);
+CREATE INDEX IF NOT EXISTS camara_proc_prog_idx    ON processos(programa_id);
 
 -- Histórico append-only. NADA aqui é atualizado ou apagado.
 CREATE TABLE IF NOT EXISTS camara_eventos (
   id            TEXT PRIMARY KEY,
-  processo_id   TEXT NOT NULL REFERENCES camara_processos(id) ON DELETE CASCADE,
+  processo_id   TEXT NOT NULL REFERENCES processos(id) ON DELETE CASCADE,
   tipo          TEXT NOT NULL,  -- TRAMITACAO|STATUS|RELATORIA|PAUTA|PARECER|DELIBERACAO|ATO|NOTA|COBRANCA
   data          DATE NOT NULL,  -- data do fato (não do registro)
   unidade_id    TEXT REFERENCES unidades(id),
@@ -768,7 +768,7 @@ CREATE TABLE IF NOT EXISTS camara_reunioes (
 CREATE TABLE IF NOT EXISTS camara_pauta_itens (
   id             TEXT PRIMARY KEY,
   reuniao_id     TEXT NOT NULL REFERENCES camara_reunioes(id) ON DELETE CASCADE,
-  processo_id    TEXT NOT NULL REFERENCES camara_processos(id) ON DELETE CASCADE,
+  processo_id    TEXT NOT NULL REFERENCES processos(id) ON DELETE CASCADE,
   ordem          INTEGER DEFAULT 0,
   bloco          TEXT,               -- agrupamento na pauta (ex.: por setor responsável)
   deliberacao    TEXT,               -- APROVADO|APROVADO_RESSALVAS|INDEFERIDO|DILIGENCIA|RETIRADO|SOBRESTADO|ENCAMINHADO|HOMOLOGADO
@@ -783,7 +783,7 @@ CREATE TABLE IF NOT EXISTS camara_pauta_itens (
 -- ter várias relatorias (troca de relator ocorre nos dados reais).
 CREATE TABLE IF NOT EXISTS camara_relatorias (
   id                  TEXT PRIMARY KEY,
-  processo_id         TEXT NOT NULL REFERENCES camara_processos(id) ON DELETE CASCADE,
+  processo_id         TEXT NOT NULL REFERENCES processos(id) ON DELETE CASCADE,
   -- relator_id é polimórfico (users.id ou pessoas.id), como em vinculos.pessoa_id
   relator_id          TEXT,
   relator_nome        TEXT NOT NULL,   -- desnormalizado: nomes históricos sem cadastro
@@ -803,7 +803,7 @@ CREATE INDEX IF NOT EXISTS camara_rel_proc_idx ON camara_relatorias(processo_id)
 -- Atos resultantes (resolução, decisão, portaria).
 CREATE TABLE IF NOT EXISTS camara_atos (
   id            TEXT PRIMARY KEY,
-  processo_id   TEXT NOT NULL REFERENCES camara_processos(id) ON DELETE CASCADE,
+  processo_id   TEXT NOT NULL REFERENCES processos(id) ON DELETE CASCADE,
   tipo          TEXT,               -- RESOLUCAO_CEPE|RESOLUCAO_CONSU|DECISAO_SEG|PORTARIA|DESPACHO
   numero        TEXT,
   ano           INTEGER,

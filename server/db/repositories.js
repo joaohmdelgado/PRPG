@@ -680,11 +680,12 @@ export const camaraUnidadesRepo = createRepository({
 });
 
 export const camaraProcessosRepo = createRepository({
-  table: 'camara_processos',
+  table: 'processos', // Fase A.7 (G3): era camara_processos; o binding JS so muda na Fase B
   orderBy: 'criado_em DESC',
   fromRow: (r) => ({
     id: r.id, numero: r.numero, numeroValido: r.numero_valido, linkSipac: r.link_sipac,
     assunto: r.assunto, tipoMateria: r.tipo_materia, interessado: r.interessado,
+    interessadoPessoaId: r.interessado_pessoa_id,
     programaId: r.programa_id, unidadeResponsavelId: r.unidade_responsavel_id,
     status: r.status, statusMotivo: r.status_motivo,
     localizacaoId: r.localizacao_id, localizacaoEm: r.localizacao_em,
@@ -695,7 +696,8 @@ export const camaraProcessosRepo = createRepository({
   toRow: (o) => ({
     id: o.id, numero: o.numero, numero_valido: o.numeroValido != null ? !!o.numeroValido : true,
     link_sipac: o.linkSipac || null, assunto: o.assunto, tipo_materia: o.tipoMateria || null,
-    interessado: o.interessado || null, programa_id: o.programaId || null,
+    interessado: o.interessado || null, interessado_pessoa_id: o.interessadoPessoaId || null,
+    programa_id: o.programaId || null,
     unidade_responsavel_id: o.unidadeResponsavelId || null,
     status: o.status || 'RECEBIDO', status_motivo: o.statusMotivo || null,
     localizacao_id: o.localizacaoId || null, localizacao_em: o.localizacaoEm || null,

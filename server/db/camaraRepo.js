@@ -37,7 +37,7 @@ export const camaraPautaItensRepo = {
     const { rows } = await query(
       `SELECT pi.*, p.numero, p.assunto, p.status
          FROM camara_pauta_itens pi
-         JOIN camara_processos p ON p.id = pi.processo_id
+         JOIN processos p ON p.id = pi.processo_id
         WHERE pi.reuniao_id = $1
         ORDER BY pi.ordem ASC, pi.criado_em ASC`,
       [reuniaoId]
