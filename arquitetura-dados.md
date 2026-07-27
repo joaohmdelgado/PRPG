@@ -12,7 +12,15 @@
 > duplicação; sem eles, corrigir a fundação agora custa **uma vez** e barato.
 >
 > **Status**: planejamento. Data: 26/07/2026.
-> Documentos irmãos: [`requisitos-camara.md`](requisitos-camara.md), [`requisitos-pnpd.md`](requisitos-pnpd.md).
+> Documentos irmãos: [`requisitos-camara.md`](requisitos-camara.md), [`requisitos-pnpd.md`](requisitos-pnpd.md),
+> [`requisitos-expedientes.md`](requisitos-expedientes.md).
+>
+> ⚠️ **ATUALIZAÇÃO (26/07/2026)** — a análise da planilha `OFÍCIOS_EDITAIS_PORTARIAS_PRPG.xlsx`
+> (ver [`requisitos-expedientes.md`](requisitos-expedientes.md)) **confirmou** as onze
+> generalizações abaixo e **alterou uma**: a tabela `atos` do §5.6 ganha série, numeração
+> sequencial e situação, e a coluna `revogado_por_id` dá lugar à tabela `ato_referencias`.
+> O §5.6 e o §7 já incorporam a mudança. Nenhuma outra decisão precisou ser revista — a
+> arquitetura absorveu um módulo inteiro ao custo de duas tabelas pequenas e uma coluna.
 
 ---
 
@@ -466,7 +474,9 @@ CREATE INDEX eventos_tipo_idx     ON eventos(entidade, tipo);
 -- Era camara_processos; o NUP é conceito da universidade, não do colegiado.
 CREATE TABLE processos (
   id                     TEXT PRIMARY KEY,
-  numero                 TEXT NOT NULL UNIQUE,   -- 23082.XXXXXX/AAAA-DD
+  -- NNNNN.NNNNNN/AAAA-DD. O prefixo NÃO é sempre 23082 (UFRPE): o acervo real
+  -- tem 88881 (CAPES) e 23546 — a validação confere o formato, não o órgão.
+  numero                 TEXT NOT NULL UNIQUE,
   numero_valido          BOOLEAN DEFAULT TRUE,   -- FALSE = fora do padrão (aviso, nunca bloqueio)
   link_sipac             TEXT,
   assunto                TEXT NOT NULL,
@@ -510,37 +520,84 @@ camara_relatorias    -- designação de relator   (processo_id → processos.id,
 
 ### 5.6 Núcleo — atos (G4)
 
+> ⚠️ **Revisado em 26/07/2026** pela análise da planilha de ofícios/editais/portarias. A
+> tabela precisa não só *registrar* atos existentes, mas **emitir o número** — o que exige
+> série, sequencial e situação. A definição completa e comentada está em
+> [`requisitos-expedientes.md`](requisitos-expedientes.md) §5.2; abaixo, a forma resumida.
+
 ```sql
--- Ato normativo/administrativo com identidade jurídica: resolução, portaria,
--- decisão, despacho, instrução normativa. Unifica portarias + camara_atos +
--- resolucoes. Referenciado por vinculos, processos e pos_doutorados.
+-- Série de numeração: um "livro" (Ofício, Portaria PRPG, Edital PRPG, Edital
+-- PRINT, Edital Lato Sensu, Edital Proficiência...). Ver requisitos-expedientes §5.1.
+CREATE TABLE ato_series (
+  id                TEXT PRIMARY KEY,
+  nome              TEXT NOT NULL,
+  especie           TEXT NOT NULL,   -- OFICIO|PORTARIA|EDITAL|RESOLUCAO|DESPACHO|MEMORANDO|CIRCULAR
+  sigla             TEXT,
+  formato           TEXT DEFAULT '{sigla} Nº {sequencial}/{ano} - PRPG/UFRPE',
+  unidade_id        TEXT REFERENCES unidades(id) ON DELETE SET NULL,
+  reinicia_por_ano  BOOLEAN DEFAULT TRUE,
+  exige_destinatario BOOLEAN DEFAULT FALSE,
+  publica_no_site   BOOLEAN DEFAULT FALSE,
+  ativo             BOOLEAN DEFAULT TRUE,
+  ordem             INTEGER DEFAULT 0
+);
+
+-- Ato administrativo expedido pela PRPG: ofício, portaria, edital, resolução,
+-- decisão, despacho. Unifica portarias + camara_atos + resolucoes + o livro de
+-- numeração da planilha. Referenciado por vinculos, processos, pos_doutorados
+-- e editais. (Ofício e edital SÃO atos administrativos — ver §4.3 de
+-- requisitos-expedientes.md.)
 CREATE TABLE atos (
   id             TEXT PRIMARY KEY,
-  tipo           TEXT NOT NULL,  -- RESOLUCAO_CEPE|RESOLUCAO_CONSU|PORTARIA_PRPG|PORTARIA_REITORIA|DECISAO_SEG|DESPACHO|INSTRUCAO_NORMATIVA
-  numero         TEXT,
-  ano            INTEGER,
-  data           DATE,
-  data_vigencia_inicio TEXT,
-  data_vigencia_fim    DATE,     -- era portarias.data_vencimento
-  titulo         TEXT NOT NULL,
+  serie_id       TEXT NOT NULL REFERENCES ato_series(id),
+  ano            INTEGER NOT NULL,
+  sequencial     INTEGER NOT NULL,
+  numero_exibicao TEXT,          -- cache: 'OFÍCIO Nº 49/2026 - PRPG/UFRPE'
+  situacao       TEXT NOT NULL DEFAULT 'RESERVADO', -- RESERVADO|EMITIDO|PUBLICADO|CANCELADO|SEM_EFEITO|RETIFICADO
+  situacao_motivo TEXT,
+  data           DATE,           -- expedição (NULL enquanto RESERVADO)
+  titulo         TEXT,
+  assunto        TEXT NOT NULL,
   ementa         TEXT,
-  orgao_id       TEXT REFERENCES unidades(id) ON DELETE SET NULL,
-  processo_id    TEXT REFERENCES processos(id) ON DELETE SET NULL, -- processo que o originou
+  solicitante_pessoa_id   TEXT REFERENCES pessoas(id)  ON DELETE SET NULL,
+  unidade_origem_id       TEXT REFERENCES unidades(id) ON DELETE SET NULL,
+  destinatario_unidade_id TEXT REFERENCES unidades(id) ON DELETE SET NULL,
+  destinatario_texto      TEXT,
+  interessado_pessoa_id   TEXT REFERENCES pessoas(id)  ON DELETE SET NULL,
+  processo_id    TEXT REFERENCES processos(id) ON DELETE SET NULL,
+  programa_id    TEXT REFERENCES programas(id) ON DELETE SET NULL,
   arquivo_id     TEXT REFERENCES arquivos(id) ON DELETE SET NULL,
   link_externo   TEXT,
-  -- Publicação no site (o que resolucoes fazia):
+  vigencia_inicio DATE,
+  vigencia_fim    DATE,          -- era portarias.data_vencimento
   publicado      BOOLEAN DEFAULT FALSE,
-  secao          TEXT,           -- era section_title
-  categoria      TEXT,           -- era category_title
-  programa_id    TEXT REFERENCES programas(id) ON DELETE SET NULL,
-  revogado_por_id TEXT REFERENCES atos(id) ON DELETE SET NULL,
+  secao          TEXT,           -- era resolucoes.section_title
+  categoria      TEXT,           -- era resolucoes.category_title
+  observacoes    TEXT,
+  obs_original   TEXT,
   criado_em      TIMESTAMPTZ DEFAULT now(),
   atualizado_em  TIMESTAMPTZ DEFAULT now(),
   criado_por     TEXT,
-  atualizado_por TEXT
+  atualizado_por TEXT,
+  UNIQUE (serie_id, ano, sequencial)   -- impede número duplicado por construção
 );
-CREATE INDEX atos_tipo_idx      ON atos(tipo, ano DESC);
+CREATE INDEX atos_serie_ano_idx ON atos(serie_id, ano, sequencial DESC);
 CREATE INDEX atos_publicado_idx ON atos(publicado) WHERE publicado;
+
+-- Referência entre atos: substitui a coluna revogado_por_id por algo que
+-- cobre também retificação, publicação e encaminhamento (16 casos reais).
+CREATE TABLE ato_referencias (
+  id            TEXT PRIMARY KEY,
+  ato_id        TEXT NOT NULL REFERENCES atos(id) ON DELETE CASCADE,
+  ato_ref_id    TEXT REFERENCES atos(id) ON DELETE SET NULL,
+  ato_ref_texto TEXT,            -- quando o referenciado não está cadastrado
+  tipo          TEXT NOT NULL,   -- REVOGA|TORNA_SEM_EFEITO|RETIFICA|PUBLICA|ENCAMINHA|COMPLEMENTA|FUNDAMENTA
+  criado_em     TIMESTAMPTZ DEFAULT now(),
+  criado_por    TEXT
+);
+
+-- O edital publicado no site aponta para o ato que lhe deu número.
+ALTER TABLE editais ADD COLUMN ato_id TEXT REFERENCES atos(id) ON DELETE SET NULL;
 
 -- Documentos para download que NÃO são atos (não têm número, ano nem órgão
 -- emissor): formulários, manuais, modelos, cartilhas. Era `formularios`.
@@ -811,7 +868,7 @@ qualquer funcionalidade nova.
 | A.5 | **G5**: `arquivos` + `anexos`; `/api/upload` passa a registrar | `adminRoutes.js`, `db/anexosRepo.js` |
 | A.6 | **G2**: `eventos` polimórfica + `eventosRepo` + *trigger* de limpeza + lista `ENTIDADES` | `db/eventosRepo.js`, `db/core.js` |
 | A.7 | **G3**: `camara_processos` → `processos` (+ `interessado_pessoa_id`) | `schema.sql` |
-| A.8 | **G4**: `atos` (de `portarias` + `camara_atos` + `resolucoes`) e `documentos` (de `formularios`) | `schema.sql` |
+| A.8 | **G4**: `atos` + `ato_series` + `ato_referencias` + a função `proximo_sequencial()` (de `portarias` + `camara_atos` + `resolucoes` + o livro de numeração); `documentos` (de `formularios`) | `schema.sql`, `db/atosRepo.js` |
 | A.9 | **G6**: `declaracoes` + serviço de emissão + rota pública única | `services/declaracoes.js` |
 | A.10 | **G9**: `vinculos` com FK real, `data_inicio`/`data_fim` e situação derivada | `schema.sql`, `utils/vigencia.js` |
 | A.11 | FKs faltantes: os 8 `programa_id`, `vinculos.ato_id`, `eventos.*` | `schema.sql` |
@@ -833,6 +890,13 @@ funcionalidade nova**. Esse é o critério: a Fase A é invisível para o usuár
 | B.4 | Portarias/Resoluções/Formulários: telas apontam para `atos` e `documentos` |
 | B.5 | **G10**: `vocabularios` + endpoint + seed a partir dos `const` atuais |
 | B.6 | `camara.test.js` (previsto no §14 de `requisitos-camara.md`, ainda não escrito) |
+
+### Fase E — Módulo Expedientes (≈ 2 semanas) — **vem antes da Fase C**
+
+Detalhada em [`requisitos-expedientes.md`](requisitos-expedientes.md) §12. Passa à frente do
+PNPD por três motivos: volume (275 documentos/ano contra 15), risco (colisão de número em
+livro oficial de expedição) e dependência — as portarias que ele registra são o
+`vinculos.ato_id` que o PNPD usa.
 
 ### Fase C — Módulo PNPD (≈ 2 semanas)
 
@@ -874,13 +938,15 @@ frontend, é puramente cosmética/higiênica, e pode ser adiada sem bloquear nad
 | Cenário | Esforço |
 |---|---|
 | PNPD sozinho, sobre o schema atual (plano anterior) | ~5 semanas |
-| **Fase A + B + C** (fundação + refit + PNPD) | **~5 semanas** |
+| **A + B + E + C** (fundação + refit + Expedientes + PNPD) | **~7 semanas** |
 | Fase D (opcional) | +1 semana |
 
 A fundação **não custa tempo adicional líquido** — ela realoca trabalho que seria feito de
-qualquer forma dentro do módulo do PNPD, e o deixa disponível para os próximos módulos. O
-próximo mini-sistema (credenciamento docente, lato sensu, revalidação de diploma) passa a
-custar ~2 semanas em vez de ~5.
+qualquer forma dentro de cada módulo, e o deixa disponível para os próximos. A prova apareceu
+sozinha: o módulo de Expedientes chegou **depois** deste documento e coube na arquitetura ao
+custo de duas tabelas pequenas e uma coluna, sem redesenho. O próximo mini-sistema
+(credenciamento docente, lato sensu, revalidação de diploma) passa a custar ~2 semanas em vez
+de ~5.
 
 ---
 
