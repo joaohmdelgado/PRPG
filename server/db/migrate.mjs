@@ -43,35 +43,23 @@ const migrateRepo = async (label, file, repo) => {
 
 async function main() {
   console.log('Limpando tabelas...');
+  // unidades NAO entra aqui: seed proprio (schema.sql, ON CONFLICT DO NOTHING),
+  // sem JSON equivalente - truncar apagaria os 19 registros sem reseed.
   await query(`TRUNCATE
     news, editais, resolucoes, formularios, portarias, teses_dissertacoes,
     faq, disciplinas, bolsas, pages, users, taxonomias, grupos_pesquisa,
     calendarios, calendario_milestones,
-    programas, programa_paginas, pessoas, modalidades, vinculos, metricas_anuais
+    programas, programa_paginas, pessoas, modalidades, vinculos, metricas_anuais,
+    processos, camara_eventos, camara_reunioes, camara_pauta_itens,
+    camara_relatorias, camara_atos,
+    arquivos, anexos, contatos, eventos,
+    ato_series, atos, ato_referencias, documentos, declaracoes
     RESTART IDENTITY CASCADE`);
 
-  console.log('Migrando entidades simples...');
-  await migrateRepo('news', 'news.json', newsRepo);
-  await migrateRepo('editais', 'editais.json', editaisRepo);
-  await migrateRepo('resolucoes', 'resolucoes.json', resolucoesRepo);
-  await migrateRepo('formularios', 'formularios.json', formulariosRepo);
-  await migrateRepo('portarias', 'portarias.json', portariasRepo);
-  await migrateRepo('teses', 'teses_dissertacoes.json', tesesRepo);
-  await migrateRepo('faq', 'faq.json', faqRepo);
-  await migrateRepo('disciplinas', 'disciplinas.json', disciplinasRepo);
-  await migrateRepo('bolsas', 'bolsas.json', bolsasRepo);
-  await migrateRepo('pages', 'pages.json', pagesRepo);
-  await migrateRepo('grupos_pesquisa', 'grupos_pesquisa.json', gruposRepo);
-  await migrateRepo('users', 'users.json', usersRepo);
-  await migrateRepo('calendarios', 'calendarios.json', calendariosRepo);
-
-  console.log('Migrando taxonomias...');
-  const tax = read('taxonomias.json');
-  if (tax && typeof tax === 'object') {
-    await taxonomiasRepo.replaceAll(tax);
-    console.log(`  taxonomias: ${Object.keys(tax).length} chaves`);
-  }
-
+  // Programas primeiro: da Fase A.11 em diante, news/editais/resolucoes/
+  // formularios/disciplinas/teses/faq/grupos_pesquisa.programa_id tem FK
+  // real para programas(id) - a insercao deles abaixo falharia se programas
+  // ainda nao existisse.
   console.log('Migrando programas e relacionados...');
   const programas = read('programas.json') || [];
   for (const p of programas) {
@@ -140,6 +128,28 @@ async function main() {
     );
   }
   console.log(`  vinculos: ${vinculos.length}`);
+
+  console.log('Migrando entidades simples...');
+  await migrateRepo('news', 'news.json', newsRepo);
+  await migrateRepo('editais', 'editais.json', editaisRepo);
+  await migrateRepo('resolucoes', 'resolucoes.json', resolucoesRepo);
+  await migrateRepo('formularios', 'formularios.json', formulariosRepo);
+  await migrateRepo('portarias', 'portarias.json', portariasRepo);
+  await migrateRepo('teses', 'teses_dissertacoes.json', tesesRepo);
+  await migrateRepo('faq', 'faq.json', faqRepo);
+  await migrateRepo('disciplinas', 'disciplinas.json', disciplinasRepo);
+  await migrateRepo('bolsas', 'bolsas.json', bolsasRepo);
+  await migrateRepo('pages', 'pages.json', pagesRepo);
+  await migrateRepo('grupos_pesquisa', 'grupos_pesquisa.json', gruposRepo);
+  await migrateRepo('users', 'users.json', usersRepo);
+  await migrateRepo('calendarios', 'calendarios.json', calendariosRepo);
+
+  console.log('Migrando taxonomias...');
+  const tax = read('taxonomias.json');
+  if (tax && typeof tax === 'object') {
+    await taxonomiasRepo.replaceAll(tax);
+    console.log(`  taxonomias: ${Object.keys(tax).length} chaves`);
+  }
 
   console.log('Vinculando pessoas aos usuarios (Fase A.2, G1)...');
   const { criadas, total } = await backfillPessoas();
