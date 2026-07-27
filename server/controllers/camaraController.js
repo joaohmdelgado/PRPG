@@ -6,6 +6,7 @@ import { camaraProcessosRepo, camaraUnidadesRepo, camaraAtosRepo } from '../db/r
 import { camaraEventosRepo, camaraPautaItensRepo, camaraRelatoriasRepo } from '../db/camaraRepo.js';
 import { query } from '../db/pool.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
+import { NUP_REGEX, validarNumeroProcesso } from '../utils/nup.js';
 
 // ============================ Vocabulários ============================
 // Listas sugeridas ao frontend (selects). Não bloqueiam o servidor: o campo
@@ -59,13 +60,10 @@ export const deleteUnidade = async (req, res) => {
   else res.status(404).json({ message: 'Unidade não encontrada.' });
 };
 
-// ============================ Validação do NUP =========================
-// Formato do NUP (SIPAC/processo eletrônico): NNNNN.NNNNNN/AAAA-DD. É um
-// AVISO, nunca um bloqueio — o acervo real já tem processos fora do padrão
-// (ver requisitos-camara.md §1.3, §9.5). numero_valido=false não impede o
-// cadastro nem a importação.
-export const NUP_REGEX = /^\d{5}\.\d{6}\/\d{4}-\d{2}$/;
-export const validarNumeroProcesso = (numero) => NUP_REGEX.test(String(numero || '').trim());
+// Validação do NUP: movida para server/utils/nup.js (Fase A.14); reexportada
+// aqui para não quebrar quem já importa NUP_REGEX/validarNumeroProcesso
+// deste módulo.
+export { NUP_REGEX, validarNumeroProcesso };
 
 // ============================ Processos =================================
 

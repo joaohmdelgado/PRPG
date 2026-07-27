@@ -243,7 +243,7 @@ Referência: [`arquitetura-dados.md`](arquitetura-dados.md) §5 e §7.
 | `[x]` | A.11 | FKs faltantes: os 8 `programa_id`, `vinculos.ato_id`, `eventos.*` | `schema.sql` | |
 | `[x]` | A.12 | Remover `proficiencia_periodos` (tabela morta) | `schema.sql`, `repositories.js:421` | |
 | `[x]` | A.13 | Atualizar `migrate.mjs` e `__tests__/helpers.js` com a **lista completa** de tabelas (hoje faltam as `camara_*`) | ambos | |
-| `[ ]` | A.14 | Utilitários: `cpf.js`, `vigencia.js`, `datas.js`, `nup.js` (movido de `camaraController`), `contato.js` | `server/utils/` | |
+| `[x]` | A.14 | Utilitários: `cpf.js`, `vigencia.js`, `datas.js`, `nup.js` (movido de `camaraController`), `contato.js` | `server/utils/` | |
 | `[ ]` | A.15 | Atualizar `CLAUDE.md` (§2.3 deste plano) | `CLAUDE.md` | |
 
 **Critério de pronto**: `npm test` passa inteiro (103 casos), `npm run db:migrate` reconstrói do
