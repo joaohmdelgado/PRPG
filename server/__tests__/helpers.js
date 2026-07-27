@@ -7,7 +7,7 @@ import { usersRepo } from '../db/repositories.js';
 const TABLES = `news, editais, resolucoes, formularios, portarias, teses_dissertacoes,
   faq, disciplinas, bolsas, pages, users, taxonomias, grupos_pesquisa,
   calendarios, calendario_milestones, programas, programa_paginas, pessoas,
-  modalidades, vinculos, metricas_anuais, proficiencia_periodos,
+  modalidades, vinculos, metricas_anuais,
   inscricoes_proficiencia`;
 
 export async function resetDb() {

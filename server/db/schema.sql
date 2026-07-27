@@ -740,21 +740,9 @@ CREATE TABLE IF NOT EXISTS taxonomias (
 );
 
 -- ===================== Proficiência em Línguas ====================
--- Períodos (editais) de exame de proficiência. As inscrições só são aceitas
--- enquanto houver um período aberto (data_inicio <= hoje <= data_fim).
--- NOTA: tabela morta (sem controller/rota) — removida na Fase A.12 do PLANO.md.
-CREATE TABLE IF NOT EXISTS proficiencia_periodos (
-  id            TEXT PRIMARY KEY,
-  titulo        TEXT NOT NULL,
-  descricao     TEXT,
-  data_inicio   TEXT, -- 'YYYY-MM-DD' (padrão do projeto)
-  data_fim      TEXT,
-  ativo         BOOLEAN DEFAULT TRUE,
-  criado_em     TIMESTAMPTZ DEFAULT now(),
-  atualizado_em TIMESTAMPTZ DEFAULT now(),
-  criado_por    TEXT,
-  atualizado_por TEXT
-);
+-- O período de inscrição é o próprio edital (editais.proficiencia = TRUE),
+-- não uma tabela própria. `proficiencia_periodos` era tabela morta (sem
+-- controller/rota) — removida na Fase A.12 do PLANO.md.
 
 -- Inscrições de alunos no exame de proficiência.
 CREATE TABLE IF NOT EXISTS inscricoes_proficiencia (

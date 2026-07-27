@@ -419,20 +419,6 @@ export const programaPaginasRepo = {
 };
 
 // ===================== Proficiência em Línguas ====================
-export const periodosProficienciaRepo = createRepository({
-  table: 'proficiencia_periodos',
-  orderBy: 'data_inicio DESC NULLS LAST, criado_em DESC',
-  fromRow: (r) => ({
-    id: r.id, titulo: r.titulo, descricao: r.descricao,
-    dataInicio: r.data_inicio, dataFim: r.data_fim, ativo: r.ativo,
-  }),
-  toRow: (o) => ({
-    id: o.id, titulo: o.titulo, descricao: o.descricao ?? null,
-    data_inicio: o.dataInicio || null, data_fim: o.dataFim || null,
-    ativo: o.ativo != null ? !!o.ativo : true,
-  }),
-});
-
 const inscricaoProfFromRow = (r) => ({
   id: r.id, periodoId: r.periodo_id, alunoId: r.aluno_id,
   nome: r.nome, cpf: r.cpf, nivel: r.nivel, estrangeiro: r.estrangeiro,
