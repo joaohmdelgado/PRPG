@@ -230,7 +230,7 @@ Referência: [`arquitetura-dados.md`](arquitetura-dados.md) §5 e §7.
 | `[x]` | A.0 | Backup dos dados não reproduzíveis pelo seed (§6.1 da arquitetura) | `backup-dados-vivos.sql` | |
 | `[x]` | A.1 | Reescrever `schema.sql` como *baseline* consolidado; arquivar migrações históricas | `server/db/schema.sql`, `server/db/migrations/arquivo/` | |
 | `[x]` | A.2a | **Inspecionar** o conteúdo real de `perfil_aluno`/`perfil_professor` e decidir o destino de cada chave | — | ⛔ D-A2 |
-| `[ ]` | A.2 | **G1**: `pessoas` como identidade; `users` vira credencial com `pessoa_id UNIQUE` | `schema.sql`, `repositories.js` | ⛔ D-A1, D-A2 |
+| `[x]` | A.2 | **G1**: `pessoas` como identidade; `users` vira credencial com `pessoa_id UNIQUE` | `schema.sql`, `repositories.js` | ⛔ D-A1, D-A2 |
 | `[ ]` | A.3 | **G7**: datas simples viram `DATE`; `fromRow` formata `'YYYY-MM-DD'` na saída | `repositories.js`, `utils/datas.js` | |
 | `[ ]` | A.4 | **G8**: `camara_unidades` → `unidades` (+ `tipo`, `unidade_pai_id`) | `schema.sql` | |
 | `[ ]` | A.5 | **G5**: `arquivos` + `anexos`; `/api/upload` registra o arquivo e devolve `{id, url}` | `adminRoutes.js`, `db/anexosRepo.js` | |

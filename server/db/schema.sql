@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS users (
   -- NULL = usuario sem programa (Administrator/Gestor da PRPG, professor, aluno, etc.).
   -- FK para programas(id) e adicionada mais abaixo, depois que a tabela existe.
   programa_id           TEXT,
+  -- Fase A.2 (G1): identidade real da pessoa. FK+UNIQUE adicionadas mais abaixo,
+  -- depois que `pessoas` existe. NULL ate o backfill (script de migracao).
+  pessoa_id             TEXT,
   criado_em             TIMESTAMPTZ DEFAULT now(),
   atualizado_em         TIMESTAMPTZ DEFAULT now(),
   criado_por            TEXT,
@@ -218,17 +221,44 @@ CREATE TABLE IF NOT EXISTS programa_paginas (
   UNIQUE (programa_id, secao)
 );
 
+-- Fase A.2 (G1, PLANO.md): pessoas passa a ser a identidade de quem tem login
+-- (users.pessoa_id abaixo) e de quem nao tem (vinculos.pessoa_id legado,
+-- camara_relatorias.relator_id). email_institucional/telefones ainda vivem
+-- aqui (a extracao para `contatos` e a Fase A.5b, ainda nao aplicada).
 CREATE TABLE IF NOT EXISTS pessoas (
   id                  TEXT PRIMARY KEY,
   nome                TEXT,
   cpf                 TEXT,
+  cpf_valido          BOOLEAN DEFAULT TRUE,   -- FALSE = DV nao confere (aviso, nao bloqueio)
   siape               TEXT,
+  sexo                TEXT,                   -- migrado de perfil_aluno/perfil_professor (A.2a)
   email_institucional TEXT,
   telefones           TEXT,
   endereco            TEXT,
+  foto_url            TEXT,
+  nacionalidade       TEXT,
+  estrangeiro         BOOLEAN DEFAULT FALSE,
+  lattes              TEXT,
+  orcid               TEXT,
+  google_scholar      TEXT,
+  publons             TEXT,
   criado_em           TIMESTAMPTZ DEFAULT now(),
-  atualizado_em       TIMESTAMPTZ DEFAULT now()
+  atualizado_em       TIMESTAMPTZ DEFAULT now(),
+  criado_por          TEXT,
+  atualizado_por      TEXT
 );
+
+-- users.pessoa_id so pode ganhar FK/UNIQUE depois que `pessoas` existe.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_pessoa_id_fkey') THEN
+    ALTER TABLE users ADD CONSTRAINT users_pessoa_id_fkey
+      FOREIGN KEY (pessoa_id) REFERENCES pessoas(id) ON DELETE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_pessoa_id_key') THEN
+    ALTER TABLE users ADD CONSTRAINT users_pessoa_id_key UNIQUE (pessoa_id);
+  END IF;
+END$$;
 
 CREATE TABLE IF NOT EXISTS modalidades (
   id          TEXT PRIMARY KEY,

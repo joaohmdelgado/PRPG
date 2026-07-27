@@ -7,6 +7,7 @@ import {
   tesesRepo, faqRepo, disciplinasRepo, bolsasRepo, pagesRepo, usersRepo,
   calendariosRepo, taxonomiasRepo, gruposRepo,
 } from './repositories.js';
+import { backfillPessoas } from './backfill-pessoas.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, '../data');
@@ -139,6 +140,10 @@ async function main() {
     );
   }
   console.log(`  vinculos: ${vinculos.length}`);
+
+  console.log('Vinculando pessoas aos usuarios (Fase A.2, G1)...');
+  const { criadas, total } = await backfillPessoas();
+  console.log(`  pessoas: ${criadas}/${total}`);
 
   console.log('\nMigração concluída.');
   await pool.end();

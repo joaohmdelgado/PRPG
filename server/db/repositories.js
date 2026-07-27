@@ -180,6 +180,7 @@ const userFromRow = (r) => ({
   perfil_aluno: r.perfil_aluno ?? null,
   perfil_professor: r.perfil_professor ?? null,
   programaId: r.programa_id ?? null,
+  pessoaId: r.pessoa_id ?? null,
   criado_em: r.criado_em, atualizado_em: r.atualizado_em,
 });
 const userToRow = (o) => ({
@@ -196,6 +197,7 @@ const userToRow = (o) => ({
   perfil_aluno: o.perfil_aluno != null ? JSON.stringify(o.perfil_aluno) : null,
   perfil_professor: o.perfil_professor != null ? JSON.stringify(o.perfil_professor) : null,
   programa_id: o.programaId || null,
+  pessoa_id: o.pessoaId || null,
   criado_em: o.criado_em || new Date().toISOString(),
   atualizado_em: o.atualizado_em || new Date().toISOString(),
 });
