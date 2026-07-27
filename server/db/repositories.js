@@ -667,7 +667,7 @@ export const taxonomiaRefsRepo = {
 // Entidades de tabela única (CRUD simples). As relações N:N e o histórico
 // append-only (eventos, pauta_itens, relatorias) ficam em camaraRepo.js.
 export const camaraUnidadesRepo = createRepository({
-  table: 'camara_unidades',
+  table: 'unidades', // Fase A.4 (G8): era camara_unidades; o binding JS so muda na Fase B
   orderBy: 'sigla ASC',
   fromRow: (r) => ({
     id: r.id, sigla: r.sigla, nome: r.nome, aliases: r.aliases ?? [],

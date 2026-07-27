@@ -131,8 +131,8 @@ export const getProcessos = async (req, res) => {
         (r.prazo_devolucao IS NOT NULL AND r.data_devolucao IS NULL
           AND r.prazo_devolucao < to_char(CURRENT_DATE, 'YYYY-MM-DD')) AS atrasado
       FROM camara_processos p
-      LEFT JOIN camara_unidades u ON u.id = p.unidade_responsavel_id
-      LEFT JOIN camara_unidades l ON l.id = p.localizacao_id
+      LEFT JOIN unidades u ON u.id = p.unidade_responsavel_id
+      LEFT JOIN unidades l ON l.id = p.localizacao_id
       LEFT JOIN programas pr ON pr.id = p.programa_id
       LEFT JOIN LATERAL (
         SELECT relator_nome, prazo_devolucao, data_devolucao FROM camara_relatorias
@@ -349,8 +349,8 @@ export const exportXlsx = async (req, res) => {
       pr.sigla AS programa, r.relator_nome, r.prazo_devolucao, p.data_entrada, p.data_encerramento,
       p.observacoes
     FROM camara_processos p
-    LEFT JOIN camara_unidades u ON u.id = p.unidade_responsavel_id
-    LEFT JOIN camara_unidades l ON l.id = p.localizacao_id
+    LEFT JOIN unidades u ON u.id = p.unidade_responsavel_id
+    LEFT JOIN unidades l ON l.id = p.localizacao_id
     LEFT JOIN programas pr ON pr.id = p.programa_id
     LEFT JOIN LATERAL (
       SELECT relator_nome, prazo_devolucao FROM camara_relatorias

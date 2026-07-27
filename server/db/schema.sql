@@ -552,17 +552,21 @@ WHERE NOT EXISTS (
 -- Modelo: o processo é o registro permanente (chave = NUP); a reunião é um
 -- evento; "estar na pauta" é uma relação N:N (camara_pauta_itens); a
 -- tramitação é um histórico append-only (camara_eventos) — nada é sobrescrito.
--- NOTA: `camara_unidades` e `camara_processos` migram para `unidades` e
--- `processos` na Fase A.4/A.7 do PLANO.md — ainda não aplicado aqui.
+-- NOTA: `camara_processos` migra para `processos` na Fase A.7 do PLANO.md —
+-- ainda não aplicado aqui.
 
--- Setores/unidades da UFRPE por onde os processos tramitam.
-CREATE TABLE IF NOT EXISTS camara_unidades (
-  id            TEXT PRIMARY KEY,
-  sigla         TEXT NOT NULL,
-  nome          TEXT NOT NULL,
-  aliases       TEXT[] DEFAULT '{}',   -- grafias históricas da planilha
-  interna_prpg  BOOLEAN DEFAULT FALSE, -- TRUE para Secretaria, Lato Sensu, Internacionalização, DADM
-  ativo         BOOLEAN DEFAULT TRUE
+-- Setores/unidades da UFRPE por onde os processos tramitam. Fase A.4 (G8):
+-- era `camara_unidades`; nada nela é específico da Câmara (serve também a
+-- Expedientes/Contatos). O binding JS (camaraUnidadesRepo) só muda na Fase B.
+CREATE TABLE IF NOT EXISTS unidades (
+  id             TEXT PRIMARY KEY,
+  sigla          TEXT NOT NULL,
+  nome           TEXT NOT NULL,
+  tipo           TEXT,                  -- PROREITORIA|SETOR|CONSELHO|UNIDADE_ACADEMICA|DEPARTAMENTO|EXTERNO
+  unidade_pai_id TEXT REFERENCES unidades(id) ON DELETE SET NULL,
+  aliases        TEXT[] DEFAULT '{}',   -- grafias históricas da planilha
+  interna_prpg   BOOLEAN DEFAULT FALSE, -- TRUE para Secretaria, Lato Sensu, Internacionalização, DADM
+  ativo          BOOLEAN DEFAULT TRUE
 );
 
 -- Processo: o registro permanente. Chave de negócio = numero (NUP).
@@ -575,10 +579,10 @@ CREATE TABLE IF NOT EXISTS camara_processos (
   tipo_materia           TEXT,                     -- vocabulário controlado
   interessado            TEXT,                     -- pessoa/unidade requerente
   programa_id            TEXT REFERENCES programas(id) ON DELETE SET NULL,
-  unidade_responsavel_id TEXT REFERENCES camara_unidades(id), -- setor da PRPG que instrui
+  unidade_responsavel_id TEXT REFERENCES unidades(id), -- setor da PRPG que instrui
   status                 TEXT NOT NULL DEFAULT 'RECEBIDO',
   status_motivo          TEXT,                     -- motivo de retirada/diligência/etc.
-  localizacao_id         TEXT REFERENCES camara_unidades(id),    -- derivado do último evento
+  localizacao_id         TEXT REFERENCES unidades(id),    -- derivado do último evento
   localizacao_em         DATE,                     -- data do último evento
   data_entrada           DATE,                     -- chegada à secretaria da Câmara
   data_encerramento      DATE,
@@ -600,7 +604,7 @@ CREATE TABLE IF NOT EXISTS camara_eventos (
   processo_id   TEXT NOT NULL REFERENCES camara_processos(id) ON DELETE CASCADE,
   tipo          TEXT NOT NULL,  -- TRAMITACAO|STATUS|RELATORIA|PAUTA|PARECER|DELIBERACAO|ATO|NOTA|COBRANCA
   data          DATE NOT NULL,  -- data do fato (não do registro)
-  unidade_id    TEXT REFERENCES camara_unidades(id),
+  unidade_id    TEXT REFERENCES unidades(id),
   descricao     TEXT,
   reuniao_id    TEXT,
   relatoria_id  TEXT,
@@ -683,7 +687,7 @@ CREATE TABLE IF NOT EXISTS camara_atos (
 -- Seed do vocabulário de unidades/setores (não depende das decisões pendentes
 -- em requisitos-camara.md §16 — cores e prazo de relatoria seguem em aberto).
 -- Idempotente: ON CONFLICT (id) DO NOTHING.
-INSERT INTO camara_unidades (id, sigla, nome, aliases, interna_prpg) VALUES
+INSERT INTO unidades (id, sigla, nome, aliases, interna_prpg) VALUES
   ('prpg-secretaria-camara', 'Secretaria da Câmara', 'PRPG - Secretaria da Câmara de Pós-Graduação', '{}', TRUE),
   ('prpg-lato-sensu', 'Lato Sensu', 'PRPG - Lato Sensu', '{}', TRUE),
   ('prpg-internacionalizacao', 'Internacionalização', 'PRPG - Internacionalização', '{}', TRUE),
