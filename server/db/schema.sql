@@ -434,6 +434,119 @@ CREATE TABLE IF NOT EXISTS metricas_anuais (
   UNIQUE (programa_id, ano)
 );
 
+-- ==================== Atos e documentos (Fase A.8, G4) ==============
+-- Unifica, no futuro (Fase B, ainda nao aplicada), portarias + camara_atos +
+-- resolucoes + o livro de numeracao de oficios/editais em uma unica tabela
+-- que emite numero (nao so registra). Ver requisitos-expedientes.md §5.1-5.2.
+-- Nenhuma tela consome isto ainda nesta fase.
+
+-- Serie de numeracao: um "livro" (Oficio, Portaria PRPG, Edital PRPG, ...).
+CREATE TABLE IF NOT EXISTS ato_series (
+  id                 TEXT PRIMARY KEY,
+  nome               TEXT NOT NULL,
+  especie            TEXT NOT NULL,   -- OFICIO|PORTARIA|EDITAL|RESOLUCAO|DESPACHO|MEMORANDO|CIRCULAR
+  sigla              TEXT,
+  formato            TEXT DEFAULT '{sigla} Nº {sequencial}/{ano} - PRPG/UFRPE',
+  -- FK para unidades(id) adicionada mais abaixo, depois que a tabela existe.
+  unidade_id         TEXT,
+  reinicia_por_ano   BOOLEAN DEFAULT TRUE,
+  exige_destinatario BOOLEAN DEFAULT FALSE,
+  publica_no_site    BOOLEAN DEFAULT FALSE,
+  ativo              BOOLEAN DEFAULT TRUE,
+  ordem              INTEGER DEFAULT 0
+);
+
+-- Ato administrativo expedido pela PRPG: oficio, portaria, edital, resolucao,
+-- decisao, despacho. Referenciado por vinculos, processos, pos_doutorados e
+-- editais (ato_id abaixo).
+CREATE TABLE IF NOT EXISTS atos (
+  id                      TEXT PRIMARY KEY,
+  serie_id                TEXT NOT NULL REFERENCES ato_series(id),
+  ano                     INTEGER NOT NULL,
+  sequencial              INTEGER NOT NULL,
+  numero_exibicao         TEXT,          -- cache: 'OFÍCIO Nº 49/2026 - PRPG/UFRPE'
+  situacao                TEXT NOT NULL DEFAULT 'RESERVADO', -- RESERVADO|EMITIDO|PUBLICADO|CANCELADO|SEM_EFEITO|RETIFICADO
+  situacao_motivo         TEXT,
+  data                    DATE,          -- expedicao (NULL enquanto RESERVADO)
+  titulo                  TEXT,
+  assunto                 TEXT NOT NULL,
+  ementa                  TEXT,
+  solicitante_pessoa_id   TEXT REFERENCES pessoas(id)  ON DELETE SET NULL,
+  -- unidade_origem_id/destinatario_unidade_id/processo_id ganham FK mais
+  -- abaixo, depois que `unidades`/`processos` existem (criadas mais adiante).
+  unidade_origem_id       TEXT,
+  destinatario_unidade_id TEXT,
+  destinatario_texto      TEXT,
+  interessado_pessoa_id   TEXT REFERENCES pessoas(id)  ON DELETE SET NULL,
+  processo_id             TEXT,
+  programa_id             TEXT REFERENCES programas(id) ON DELETE SET NULL,
+  arquivo_id              TEXT REFERENCES arquivos(id) ON DELETE SET NULL,
+  link_externo            TEXT,
+  vigencia_inicio         DATE,
+  vigencia_fim            DATE,          -- era portarias.data_vencimento
+  publicado               BOOLEAN DEFAULT FALSE,
+  secao                   TEXT,          -- era resolucoes.section_title
+  categoria               TEXT,          -- era resolucoes.category_title
+  observacoes             TEXT,
+  obs_original            TEXT,
+  criado_em               TIMESTAMPTZ DEFAULT now(),
+  atualizado_em           TIMESTAMPTZ DEFAULT now(),
+  criado_por              TEXT,
+  atualizado_por          TEXT,
+  UNIQUE (serie_id, ano, sequencial)   -- impede numero duplicado por construcao
+);
+CREATE INDEX IF NOT EXISTS atos_serie_ano_idx ON atos(serie_id, ano, sequencial DESC);
+CREATE INDEX IF NOT EXISTS atos_publicado_idx ON atos(publicado) WHERE publicado;
+
+-- Aloca o proximo sequencial de uma serie/ano de forma atomica (lock
+-- transacional por serie+ano - concorrentes serializam, sem numero repetido
+-- ou buraco). Uso pleno (reserva formal) e da Fase E; a funcao ja existe aqui
+-- porque faz parte do modelo de `atos`.
+CREATE OR REPLACE FUNCTION proximo_sequencial(p_serie_id TEXT, p_ano INTEGER) RETURNS INTEGER AS $$
+DECLARE
+  v_next INTEGER;
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext(p_serie_id || ':' || p_ano::text));
+  SELECT COALESCE(MAX(sequencial), 0) + 1 INTO v_next FROM atos WHERE serie_id = p_serie_id AND ano = p_ano;
+  RETURN v_next;
+END; $$ LANGUAGE plpgsql;
+
+-- Referencia entre atos: revoga, torna sem efeito, retifica, publica, encaminha...
+CREATE TABLE IF NOT EXISTS ato_referencias (
+  id            TEXT PRIMARY KEY,
+  ato_id        TEXT NOT NULL REFERENCES atos(id) ON DELETE CASCADE,
+  ato_ref_id    TEXT REFERENCES atos(id) ON DELETE SET NULL,
+  ato_ref_texto TEXT,            -- quando o referenciado nao esta cadastrado
+  tipo          TEXT NOT NULL,   -- REVOGA|TORNA_SEM_EFEITO|RETIFICA|PUBLICA|ENCAMINHA|COMPLEMENTA|FUNDAMENTA
+  criado_em     TIMESTAMPTZ DEFAULT now(),
+  criado_por    TEXT
+);
+
+-- O edital publicado no site aponta para o ato que lhe deu numero.
+ALTER TABLE editais ADD COLUMN IF NOT EXISTS ato_id TEXT REFERENCES atos(id) ON DELETE SET NULL;
+
+-- Documentos para download que NAO sao atos (sem numero/ano/orgao emissor):
+-- formularios, manuais, modelos, cartilhas. Sera o destino de `formularios`
+-- na Fase B (D-A3: conferido o conteudo real de formularios.json - nenhum
+-- item e ato normativo disfarcado; a tabela formularios continua em uso
+-- ate a Fase B migrar as telas).
+CREATE TABLE IF NOT EXISTS documentos (
+  id             TEXT PRIMARY KEY,
+  tipo           TEXT NOT NULL DEFAULT 'FORMULARIO', -- FORMULARIO|MANUAL|MODELO|CARTILHA
+  titulo         TEXT NOT NULL,
+  descricao      TEXT,
+  secao          TEXT,
+  categoria      TEXT,
+  arquivo_id     TEXT REFERENCES arquivos(id) ON DELETE SET NULL,
+  link_externo   TEXT,
+  programa_id    TEXT REFERENCES programas(id) ON DELETE SET NULL,
+  ordem          INTEGER DEFAULT 0,
+  criado_em      TIMESTAMPTZ DEFAULT now(),
+  atualizado_em  TIMESTAMPTZ DEFAULT now(),
+  criado_por     TEXT,
+  atualizado_por TEXT
+);
+
 -- =========================== Portarias ============================
 CREATE TABLE IF NOT EXISTS portarias (
   id              TEXT PRIMARY KEY,
@@ -698,6 +811,24 @@ BEGIN
   END IF;
 END$$;
 
+-- ato_series.unidade_id / atos.unidade_origem_id / atos.destinatario_unidade_id
+-- (Fase A.8) so podem ganhar FK depois que `unidades` existe.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ato_series_unidade_id_fkey') THEN
+    ALTER TABLE ato_series ADD CONSTRAINT ato_series_unidade_id_fkey
+      FOREIGN KEY (unidade_id) REFERENCES unidades(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'atos_unidade_origem_id_fkey') THEN
+    ALTER TABLE atos ADD CONSTRAINT atos_unidade_origem_id_fkey
+      FOREIGN KEY (unidade_origem_id) REFERENCES unidades(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'atos_destinatario_unidade_id_fkey') THEN
+    ALTER TABLE atos ADD CONSTRAINT atos_destinatario_unidade_id_fkey
+      FOREIGN KEY (destinatario_unidade_id) REFERENCES unidades(id) ON DELETE SET NULL;
+  END IF;
+END$$;
+
 -- Processo: o registro permanente. Chave de negócio = numero (NUP). Fase A.7
 -- (G3): era `camara_processos`; o NUP é conceito da universidade, não do
 -- colegiado. O binding JS (camaraProcessosRepo) só muda na Fase B.
@@ -729,6 +860,15 @@ CREATE TABLE IF NOT EXISTS processos (
 );
 CREATE INDEX IF NOT EXISTS camara_proc_status_idx  ON processos(status);
 CREATE INDEX IF NOT EXISTS camara_proc_prog_idx    ON processos(programa_id);
+
+-- atos.processo_id (Fase A.8) so pode ganhar FK depois que `processos` existe.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'atos_processo_id_fkey') THEN
+    ALTER TABLE atos ADD CONSTRAINT atos_processo_id_fkey
+      FOREIGN KEY (processo_id) REFERENCES processos(id) ON DELETE SET NULL;
+  END IF;
+END$$;
 
 -- Histórico append-only. NADA aqui é atualizado ou apagado.
 CREATE TABLE IF NOT EXISTS camara_eventos (
