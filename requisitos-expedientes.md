@@ -35,6 +35,9 @@
 
 ---
 
+> 📋 **O índice de execução consolidado — ordem das fases, checklist de itens e as 38 decisões
+> pendentes mapeadas por fase — está em [`PLANO.md`](PLANO.md).**
+
 ## 1. Diagnóstico da planilha atual
 
 Arquivo: `OFÍCIOS_EDITAIS_PORTARIAS_PRPG.xlsx` (11 abas, **593 documentos registrados** e

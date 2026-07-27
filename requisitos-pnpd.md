@@ -55,6 +55,9 @@
 
 ---
 
+> 📋 **O índice de execução consolidado — ordem das fases, checklist de itens e as 38 decisões
+> pendentes mapeadas por fase — está em [`PLANO.md`](PLANO.md).**
+
 ## 1. Diagnóstico da planilha atual
 
 Arquivo analisado: `PNPD Voluntário.xlsx` (29 KB, **1 aba** `Plan1`, 292 linhas de grade,

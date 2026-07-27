@@ -17,6 +17,9 @@
 
 ---
 
+> 📋 **O índice de execução consolidado — ordem das fases, checklist de itens e as 38 decisões
+> pendentes mapeadas por fase — está em [`PLANO.md`](PLANO.md).**
+
 ## 1. Diagnóstico
 
 Arquivo: uma aba (`Base`), **47 programas** nas linhas 2 a 48, 12 colunas, filtro automático

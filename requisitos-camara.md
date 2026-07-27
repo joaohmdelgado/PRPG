@@ -33,6 +33,9 @@
 
 ---
 
+> 📋 **O índice de execução consolidado — ordem das fases, checklist de itens e as 38 decisões
+> pendentes mapeadas por fase — está em [`PLANO.md`](PLANO.md).**
+
 ## 1. Diagnóstico da planilha atual
 
 Arquivo analisado: `Processos - Câmara de Pós Graduação.xlsx` (94 KB, 11 abas).

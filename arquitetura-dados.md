@@ -44,6 +44,9 @@
 
 ---
 
+> 📋 **O índice de execução consolidado — ordem das fases, checklist de itens e as 38 decisões
+> pendentes mapeadas por fase — está em [`PLANO.md`](PLANO.md).**
+
 ## 1. Resposta curta
 
 **Sim para `processos`. Sim, com mais convicção ainda, para `eventos`.** E a investigação
