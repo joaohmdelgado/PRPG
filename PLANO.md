@@ -485,7 +485,7 @@ em lote, que **muda o procedimento administrativo**.
 
 | Fase | Itens | Decisões a responder antes | Início | Fim | Estado |
 |---|---|---|---|---|---|
-| A — Núcleo | 18 | D-A1, D-A2, D-A3, D-A4, D-E1 | 27/07/2026 | | 🟨 em andamento (A.0, A.1, A.2a concluídos) |
+| A — Núcleo | 18 | D-A1, D-A2, D-A3, D-A4, D-E1 | 27/07/2026 | 27/07/2026 | ✅ concluída (D-A1/D-A4 conforme recomendação; FK real de `vinculos.pessoa_id` adiada para B.3 — ver A.10) |
 | B — Refit + Câmara | 10 | D-B1, D-G8, D-A4 | | | ⬜ |
 | G — Contatos | 9 | D-G1..D-G8 | | | ⬜ |
 | E — Expedientes | 14 | D-E1..D-E3, D-E5..D-E8 | | | ⬜ |
