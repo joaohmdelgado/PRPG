@@ -238,7 +238,7 @@ Referência: [`arquitetura-dados.md`](arquitetura-dados.md) §5 e §7.
 | `[x]` | A.6 | **G2**: `eventos` polimórfica + `eventosRepo` + *trigger* de limpeza + lista `ENTIDADES` | `db/eventosRepo.js`, `db/core.js` | |
 | `[x]` | A.7 | **G3**: `camara_processos` → `processos` (+ `interessado_pessoa_id`) | `schema.sql` | |
 | `[x]` | A.8 | **G4**: `atos` + `ato_series` + `ato_referencias` + `proximo_sequencial()`; `documentos` (de `formularios`) | `schema.sql`, `db/atosRepo.js` | ⛔ D-A3, D-A4, D-E1 |
-| `[ ]` | A.9 | **G6**: `declaracoes` + serviço de emissão + rota pública única de verificação | `services/declaracoes.js` | |
+| `[x]` | A.9 | **G6**: `declaracoes` + serviço de emissão + rota pública única de verificação | `services/declaracoes.js` | (rota pública fica para a Fase B.2, junto com a migração da proficiência) |
 | `[ ]` | A.10 | **G9**: `vinculos` com FK real, `data_inicio`/`data_fim`, `carater`, `ordem`, situação derivada | `schema.sql`, `utils/vigencia.js` | ⛔ D-A2 |
 | `[ ]` | A.11 | FKs faltantes: os 8 `programa_id`, `vinculos.ato_id`, `eventos.*` | `schema.sql` | |
 | `[ ]` | A.12 | Remover `proficiencia_periodos` (tabela morta) | `schema.sql`, `repositories.js:421` | |

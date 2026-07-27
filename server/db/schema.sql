@@ -547,6 +547,27 @@ CREATE TABLE IF NOT EXISTS documentos (
   atualizado_por TEXT
 );
 
+-- ================ Declarações verificáveis (Fase A.9, G6) ===========
+-- Documento emitido com codigo de verificacao publica (padrao hoje existente
+-- so na proficiencia - inscricoes_proficiencia.codigo_verificacao/emitida_em).
+-- O snapshot congela o que era verdade na emissao. A migracao da proficiencia
+-- para usar esta tabela e a Fase B.2, ainda nao aplicada.
+CREATE TABLE IF NOT EXISTS declaracoes (
+  id              TEXT PRIMARY KEY,
+  codigo          TEXT NOT NULL UNIQUE,   -- UUID (crypto.randomUUID()) no QR e no link
+  tipo            TEXT NOT NULL,          -- PROFICIENCIA|VINCULO_POSDOC|CONCLUSAO_POSDOC|VINCULO_DISCENTE|ESPELHO_PROCESSO
+  entidade        TEXT NOT NULL,
+  entidade_id     TEXT NOT NULL,
+  pessoa_id       TEXT REFERENCES pessoas(id) ON DELETE SET NULL,
+  dados           JSONB NOT NULL,         -- snapshot: nome, CPF, periodo, resultado...
+  emitida_em      TIMESTAMPTZ NOT NULL DEFAULT now(),  -- congelada na 1a emissao
+  emitida_por     TEXT REFERENCES users(id) ON DELETE SET NULL,
+  valida_ate      DATE,                   -- ex.: proficiencia vale 4 anos
+  revogada_em     TIMESTAMPTZ,
+  revogada_motivo TEXT
+);
+CREATE INDEX IF NOT EXISTS declaracoes_entidade_idx ON declaracoes(entidade, entidade_id);
+
 -- =========================== Portarias ============================
 CREATE TABLE IF NOT EXISTS portarias (
   id              TEXT PRIMARY KEY,
