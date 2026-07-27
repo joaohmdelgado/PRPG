@@ -1,5 +1,14 @@
 -- Schema relacional do site da PRPG/UFRPE.
 -- IDs sao TEXT pois os dados existentes usam slugs/timestamps como identificadores.
+--
+-- Baseline consolidado (Fase A.1 do PLANO.md, 27/07/2026): este arquivo reflete o
+-- estado final do banco depois de aplicadas as 11 migracoes historicas de
+-- server/db/migrations/arquivo/. As migracoes ficam arquivadas para o registro;
+-- este arquivo e a fonte unica para `npm run db:migrate` reconstruir do zero.
+--
+-- Os 8 `programa_id` sem FK e as FKs polimorficas ainda pendentes
+-- (`vinculos.pessoa_id`, `camara_relatorias.relator_id`) sao dividia intencional
+-- desta etapa: entram nas Fases A.2/A.10/A.11 do PLANO.md, ainda nao aplicadas.
 
 -- ============================ Usuarios ============================
 CREATE TABLE IF NOT EXISTS users (
@@ -21,13 +30,19 @@ CREATE TABLE IF NOT EXISTS users (
   acad_orcid            TEXT,
   acad_google_scholar   TEXT,
   acad_publons          TEXT,
-  acad_linhas_pesquisa  TEXT[] DEFAULT '{}',
   -- Perfis variaveis (estrutura livre conforme o papel) ficam como JSONB.
   perfil_aluno          JSONB,
   perfil_professor      JSONB,
+  -- Gestor de Programa: vincula o usuario a um unico programa que ele administra.
+  -- NULL = usuario sem programa (Administrator/Gestor da PRPG, professor, aluno, etc.).
+  -- FK para programas(id) e adicionada mais abaixo, depois que a tabela existe.
+  programa_id           TEXT,
   criado_em             TIMESTAMPTZ DEFAULT now(),
-  atualizado_em         TIMESTAMPTZ DEFAULT now()
+  atualizado_em         TIMESTAMPTZ DEFAULT now(),
+  criado_por            TEXT,
+  atualizado_por        TEXT
 );
+CREATE INDEX IF NOT EXISTS users_programa_id_idx ON users(programa_id);
 
 -- ============================ Noticias ============================
 CREATE TABLE IF NOT EXISTS news (
@@ -46,8 +61,11 @@ CREATE TABLE IF NOT EXISTS news (
   tags          TEXT[] DEFAULT '{}',
   quote_text    TEXT,
   quote_author  TEXT,
-  programa_id   TEXT -- Fase 5: vincula a noticia a um programa (NULL = noticia global da PRPG)
+  programa_id   TEXT, -- Fase 5: vincula a noticia a um programa (NULL = noticia global da PRPG)
+  criado_por    TEXT,
+  atualizado_por TEXT
 );
+CREATE INDEX IF NOT EXISTS news_programa_id_idx ON news(programa_id);
 
 -- ============================ Editais =============================
 CREATE TABLE IF NOT EXISTS editais (
@@ -69,8 +87,11 @@ CREATE TABLE IF NOT EXISTS editais (
   resultado_final     TEXT,
   programa_id         TEXT, -- Fase 5: vincula o edital a um programa (NULL = edital global da PRPG)
   proficiencia        BOOLEAN DEFAULT FALSE, -- quando TRUE, o edital define o período de inscrição da proficiência
-  proficiencia_data_prova TEXT -- data da prova de proficiência (usada na declaração)
+  proficiencia_data_prova TEXT, -- data da prova de proficiência (usada na declaração)
+  criado_por          TEXT,
+  atualizado_por      TEXT
 );
+CREATE INDEX IF NOT EXISTS editais_programa_id_idx ON editais(programa_id);
 
 -- ===================== Resolucoes / Formularios ===================
 -- Mesma estrutura (lista de documentos com link).
@@ -81,8 +102,12 @@ CREATE TABLE IF NOT EXISTS resolucoes (
   category_title TEXT,
   title          TEXT NOT NULL,
   descricao      TEXT,
-  link           TEXT
+  link           TEXT,
+  programa_id    TEXT,
+  criado_por     TEXT,
+  atualizado_por TEXT
 );
+CREATE INDEX IF NOT EXISTS resolucoes_prog_idx ON resolucoes(programa_id);
 
 CREATE TABLE IF NOT EXISTS formularios (
   id             TEXT PRIMARY KEY,
@@ -91,8 +116,12 @@ CREATE TABLE IF NOT EXISTS formularios (
   category_title TEXT,
   title          TEXT NOT NULL,
   descricao      TEXT,
-  link           TEXT
+  link           TEXT,
+  programa_id    TEXT,
+  criado_por     TEXT,
+  atualizado_por TEXT
 );
+CREATE INDEX IF NOT EXISTS formularios_prog_idx ON formularios(programa_id);
 
 -- ========================== Calendarios ===========================
 CREATE TABLE IF NOT EXISTS calendarios (
@@ -101,7 +130,9 @@ CREATE TABLE IF NOT EXISTS calendarios (
   is_current  BOOLEAN DEFAULT FALSE,
   title       TEXT,
   pdf_link    TEXT,
-  description TEXT
+  description TEXT,
+  criado_por     TEXT,
+  atualizado_por TEXT
 );
 
 CREATE TABLE IF NOT EXISTS calendario_milestones (
@@ -124,7 +155,6 @@ CREATE TABLE IF NOT EXISTS programas (
   grande_area       TEXT,
   area_conhecimento TEXT,
   area_avaliacao    TEXT,
-  linhas            TEXT[] DEFAULT '{}',
   -- Fase 1: situacao, contato/localizacao e documentos do programa.
   status                 TEXT NOT NULL DEFAULT 'ATIVO', -- ATIVO|SUSPENSO|DESATIVADO|EM_AVALIACAO
   status_descricao       TEXT,
@@ -155,8 +185,20 @@ CREATE TABLE IF NOT EXISTS programas (
   youtube_url            TEXT,
   mapa_embed             TEXT, -- src do iframe do Google Maps
   criado_em         TIMESTAMPTZ DEFAULT now(),
-  atualizado_em     TIMESTAMPTZ DEFAULT now()
+  atualizado_em     TIMESTAMPTZ DEFAULT now(),
+  criado_por        TEXT,
+  atualizado_por    TEXT
 );
+CREATE UNIQUE INDEX IF NOT EXISTS programas_slug_uidx ON programas(slug) WHERE slug IS NOT NULL;
+
+-- users.programa_id so pode ganhar a FK depois que `programas` existe.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_programa_id_fkey') THEN
+    ALTER TABLE users ADD CONSTRAINT users_programa_id_fkey
+      FOREIGN KEY (programa_id) REFERENCES programas(id) ON DELETE SET NULL;
+  END IF;
+END$$;
 
 -- Paginas de texto livre (rich-text) por secao do microsite de cada programa.
 -- Uma linha por (programa, secao): 'sobre', 'historico', 'objetivos', 'linhas', etc.
@@ -200,7 +242,7 @@ CREATE TABLE IF NOT EXISTS vinculos (
   id              TEXT PRIMARY KEY,
   programa_id     TEXT REFERENCES programas(id) ON DELETE CASCADE,
   -- pessoa_id é polimórfico: aponta para users.id OU pessoas.id (legado),
-  -- resolvido na aplicação. Por isso não há FK aqui.
+  -- resolvido na aplicação. Por isso não há FK aqui. (Fase A.10 substitui por FK real.)
   pessoa_id       TEXT,
   papel           TEXT,
   portaria        TEXT,
@@ -245,7 +287,9 @@ CREATE TABLE IF NOT EXISTS portarias (
   title           TEXT NOT NULL,
   data_portaria   TEXT,
   data_vencimento TEXT,
-  download_link   TEXT
+  download_link   TEXT,
+  criado_por      TEXT,
+  atualizado_por  TEXT
 );
 
 -- ======================= Grupos de Pesquisa =======================
@@ -254,8 +298,12 @@ CREATE TABLE IF NOT EXISTS grupos_pesquisa (
   title         TEXT NOT NULL,
   body_value    TEXT,
   body_summary  TEXT,
-  field_lideres JSONB DEFAULT '[]'
+  field_lideres JSONB DEFAULT '[]',
+  programa_id   TEXT,
+  criado_por    TEXT,
+  atualizado_por TEXT
 );
+CREATE INDEX IF NOT EXISTS grupos_prog_idx ON grupos_pesquisa(programa_id);
 
 -- ====================== Teses e Dissertacoes ======================
 CREATE TABLE IF NOT EXISTS teses_dissertacoes (
@@ -264,15 +312,23 @@ CREATE TABLE IF NOT EXISTS teses_dissertacoes (
   field_ano     TEXT,
   field_arquivo TEXT,
   field_autor   TEXT,
-  field_tipo_td TEXT
+  field_tipo_td TEXT,
+  programa_id   TEXT,
+  criado_por    TEXT,
+  atualizado_por TEXT
 );
+CREATE INDEX IF NOT EXISTS teses_prog_idx ON teses_dissertacoes(programa_id);
 
 -- ============================== FAQ ===============================
 CREATE TABLE IF NOT EXISTS faq (
   id             TEXT PRIMARY KEY,
   title          TEXT NOT NULL,
-  field_resposta TEXT
+  field_resposta TEXT,
+  programa_id    TEXT,
+  criado_por     TEXT,
+  atualizado_por TEXT
 );
+CREATE INDEX IF NOT EXISTS faq_prog_idx ON faq(programa_id);
 
 -- =========================== Disciplinas ==========================
 CREATE TABLE IF NOT EXISTS disciplinas (
@@ -281,8 +337,12 @@ CREATE TABLE IF NOT EXISTS disciplinas (
   field_carga_horaria    TEXT,
   field_docente          TEXT,
   field_ementa           TEXT,
-  field_tipo_disciplina  TEXT
+  field_tipo_disciplina  TEXT,
+  programa_id            TEXT,
+  criado_por             TEXT,
+  atualizado_por         TEXT
 );
+CREATE INDEX IF NOT EXISTS disciplinas_prog_idx ON disciplinas(programa_id);
 
 -- ============================= Bolsas =============================
 CREATE TABLE IF NOT EXISTS bolsas (
@@ -291,17 +351,23 @@ CREATE TABLE IF NOT EXISTS bolsas (
   field_aluno           TEXT,
   field_periodo_inicio  TEXT,
   field_periodo_fim     TEXT,
-  field_tipo_bolsa      TEXT
+  field_tipo_bolsa      TEXT,
+  criado_por            TEXT,
+  atualizado_por        TEXT
 );
 
 -- ============================= Paginas ============================
 CREATE TABLE IF NOT EXISTS pages (
-  id           TEXT PRIMARY KEY,
-  title        TEXT NOT NULL,
-  slug         TEXT UNIQUE,
-  body_value   TEXT,
-  body_summary TEXT
+  id             TEXT PRIMARY KEY,
+  title          TEXT NOT NULL,
+  slug           TEXT UNIQUE,
+  body_value     TEXT,
+  body_summary   TEXT,
+  programa_id    TEXT REFERENCES programas(id) ON DELETE SET NULL,
+  criado_por     TEXT,
+  atualizado_por TEXT
 );
+CREATE INDEX IF NOT EXISTS pages_programa_id_idx ON pages(programa_id);
 
 -- =========================== Taxonomias ===========================
 -- Configuracao chave -> lista de valores (entradas, linhas_pesquisa, etc.).
@@ -314,6 +380,7 @@ CREATE TABLE IF NOT EXISTS taxonomias (
 -- ===================== Proficiência em Línguas ====================
 -- Períodos (editais) de exame de proficiência. As inscrições só são aceitas
 -- enquanto houver um período aberto (data_inicio <= hoje <= data_fim).
+-- NOTA: tabela morta (sem controller/rota) — removida na Fase A.12 do PLANO.md.
 CREATE TABLE IF NOT EXISTS proficiencia_periodos (
   id            TEXT PRIMARY KEY,
   titulo        TEXT NOT NULL,
@@ -355,93 +422,6 @@ CREATE INDEX IF NOT EXISTS inscricoes_prof_aluno_idx   ON inscricoes_proficienci
 CREATE INDEX IF NOT EXISTS inscricoes_prof_periodo_idx ON inscricoes_proficiencia(periodo_id);
 CREATE UNIQUE INDEX IF NOT EXISTS inscricoes_prof_codigo_idx ON inscricoes_proficiencia(codigo_verificacao);
 
--- ===================== Auditoria (Fase 3) =========================
--- criado_por / atualizado_por (id do usuário) em todas as entidades de
--- conteúdo. Bloco idempotente: vale para instalações novas, testes e
--- bancos já existentes (espelhado em server/db/migrations).
-ALTER TABLE news               ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE editais            ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE resolucoes         ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE formularios        ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE calendarios        ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE portarias          ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE grupos_pesquisa    ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE teses_dissertacoes ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE faq                ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE disciplinas        ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE bolsas             ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE pages              ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE programas          ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-ALTER TABLE users              ADD COLUMN IF NOT EXISTS criado_por TEXT, ADD COLUMN IF NOT EXISTS atualizado_por TEXT;
-
--- ===================== Microsites por programa (Fase 5) ===========
--- Bloco idempotente: aplica as colunas/indices do microsite em bancos ja
--- existentes (instalacoes novas ja recebem tudo via CREATE TABLE acima).
-ALTER TABLE programas
-  ADD COLUMN IF NOT EXISTS slug            TEXT,
-  ADD COLUMN IF NOT EXISTS microsite_ativo BOOLEAN DEFAULT FALSE,
-  ADD COLUMN IF NOT EXISTS logo_url        TEXT,
-  ADD COLUMN IF NOT EXISTS cor_primaria    TEXT,
-  ADD COLUMN IF NOT EXISTS cor_secundaria  TEXT,
-  ADD COLUMN IF NOT EXISTS descricao_curta TEXT,
-  ADD COLUMN IF NOT EXISTS hero_imagem_url TEXT,
-  ADD COLUMN IF NOT EXISTS endereco        TEXT,
-  ADD COLUMN IF NOT EXISTS whatsapp        TEXT,
-  ADD COLUMN IF NOT EXISTS instagram_url   TEXT,
-  ADD COLUMN IF NOT EXISTS facebook_url    TEXT,
-  ADD COLUMN IF NOT EXISTS youtube_url     TEXT,
-  ADD COLUMN IF NOT EXISTS mapa_embed      TEXT;
-CREATE UNIQUE INDEX IF NOT EXISTS programas_slug_uidx ON programas(slug) WHERE slug IS NOT NULL;
-
-ALTER TABLE news             ADD COLUMN IF NOT EXISTS programa_id TEXT;
-ALTER TABLE editais          ADD COLUMN IF NOT EXISTS programa_id TEXT;
-ALTER TABLE disciplinas      ADD COLUMN IF NOT EXISTS programa_id TEXT;
-ALTER TABLE resolucoes       ADD COLUMN IF NOT EXISTS programa_id TEXT;
-ALTER TABLE formularios      ADD COLUMN IF NOT EXISTS programa_id TEXT;
-ALTER TABLE teses_dissertacoes ADD COLUMN IF NOT EXISTS programa_id TEXT;
-ALTER TABLE faq              ADD COLUMN IF NOT EXISTS programa_id TEXT;
-ALTER TABLE grupos_pesquisa  ADD COLUMN IF NOT EXISTS programa_id TEXT;
-
-CREATE INDEX IF NOT EXISTS news_programa_id_idx       ON news(programa_id);
-CREATE INDEX IF NOT EXISTS editais_programa_id_idx    ON editais(programa_id);
-CREATE INDEX IF NOT EXISTS disciplinas_prog_idx       ON disciplinas(programa_id);
-CREATE INDEX IF NOT EXISTS resolucoes_prog_idx        ON resolucoes(programa_id);
-CREATE INDEX IF NOT EXISTS formularios_prog_idx       ON formularios(programa_id);
-CREATE INDEX IF NOT EXISTS teses_prog_idx             ON teses_dissertacoes(programa_id);
-CREATE INDEX IF NOT EXISTS faq_prog_idx               ON faq(programa_id);
-CREATE INDEX IF NOT EXISTS grupos_prog_idx            ON grupos_pesquisa(programa_id);
-
-ALTER TABLE pages ADD COLUMN IF NOT EXISTS programa_id TEXT REFERENCES programas(id) ON DELETE SET NULL;
-CREATE INDEX IF NOT EXISTS pages_programa_id_idx ON pages(programa_id);
-
--- Gestor de Programa: vincula um usuario a um unico programa que ele administra.
--- NULL = usuario sem programa (Administrator/Gestor da PRPG, professor, aluno, etc.).
-ALTER TABLE users ADD COLUMN IF NOT EXISTS programa_id TEXT REFERENCES programas(id) ON DELETE SET NULL;
-CREATE INDEX IF NOT EXISTS users_programa_id_idx ON users(programa_id);
-
--- Senha provisória: obriga a troca no primeiro acesso (idempotente p/ bancos existentes).
-ALTER TABLE users ADD COLUMN IF NOT EXISTS senha_temporaria BOOLEAN DEFAULT FALSE;
-
--- ======= Linhas de pesquisa por programa: TEXT[] → JSONB [{label,target_id}] =======
--- Idempotente: só executa se a coluna ainda for TEXT[].
-DO $$
-BEGIN
-  IF (SELECT data_type FROM information_schema.columns
-      WHERE table_name='programas' AND column_name='linhas') = 'ARRAY' THEN
-    ALTER TABLE programas ADD COLUMN IF NOT EXISTS linhas_jsonb JSONB DEFAULT '[]';
-    UPDATE programas SET linhas_jsonb = (
-      SELECT COALESCE(jsonb_agg(jsonb_build_object('label', x, 'target_id', null)), '[]'::jsonb)
-      FROM unnest(linhas) x
-    ) WHERE linhas IS NOT NULL;
-    ALTER TABLE programas DROP COLUMN linhas;
-    ALTER TABLE programas RENAME COLUMN linhas_jsonb TO linhas;
-    RAISE NOTICE 'Coluna linhas migrada para JSONB.';
-  END IF;
-END$$;
-
--- ======= Taxonomias: adiciona coluna meta JSONB (idempotente) =======
-ALTER TABLE taxonomias ADD COLUMN IF NOT EXISTS meta JSONB DEFAULT '{}';
-
 -- =================== Linhas de Pesquisa (tabela própria) ==========
 -- Substitui programas.linhas JSONB e a entrada linhas_pesquisa em taxonomias.
 -- programa_id = programa ao qual a linha está primariamente associada (opcional).
@@ -466,44 +446,6 @@ CREATE TABLE IF NOT EXISTS user_linhas_pesquisa (
   linha_id INTEGER REFERENCES linhas_pesquisa(id)    ON DELETE CASCADE,
   PRIMARY KEY (user_id, linha_id)
 );
-
--- Migração: programas.linhas JSONB → tabela linhas_pesquisa + programa_linhas_pesquisa
--- Idempotente: só executa se a coluna ainda existir em programas.
-DO $$
-DECLARE
-  r        RECORD;
-  elem     JSONB;
-  lnome    TEXT;
-  ltid     TEXT;
-  new_id   INTEGER;
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'programas' AND column_name = 'linhas'
-  ) THEN
-    FOR r IN SELECT id, linhas FROM programas WHERE linhas IS NOT NULL LOOP
-      FOR elem IN SELECT * FROM jsonb_array_elements(COALESCE(r.linhas, '[]'::jsonb)) LOOP
-        lnome := trim(elem->>'label');
-        ltid  := NULLIF(trim(COALESCE(elem->>'target_id', '')), '');
-        IF lnome IS NOT NULL AND lnome <> '' THEN
-          INSERT INTO linhas_pesquisa (nome, programa_id, target_id)
-          VALUES (lnome, r.id, ltid)
-          RETURNING id INTO new_id;
-          INSERT INTO programa_linhas_pesquisa (programa_id, linha_id)
-          VALUES (r.id, new_id);
-        END IF;
-      END LOOP;
-    END LOOP;
-    ALTER TABLE programas DROP COLUMN linhas;
-    RAISE NOTICE 'Coluna programas.linhas migrada para tabela linhas_pesquisa.';
-  END IF;
-END$$;
-
--- Remove entrada linhas_pesquisa de taxonomias (agora tem tabela própria).
-DELETE FROM taxonomias WHERE chave = 'linhas_pesquisa';
-
--- Remove acad_linhas_pesquisa de users (substituída por user_linhas_pesquisa).
-ALTER TABLE users DROP COLUMN IF EXISTS acad_linhas_pesquisa;
 
 -- ============== Referências de Taxonomia (importação legada) ==============
 -- Mapeia o target_id legado do Drupal para um valor canônico, por campo.
@@ -574,34 +516,14 @@ WHERE NOT EXISTS (
   WHERE campo='situacao_aluno' AND valor='Trancado' AND programa_id IS NULL
 );
 
--- Unificação: 'Períodos de Entrada' antes vivia em taxonomias.entradas (lista
--- simples) e agora tem fonte única em taxonomia_refs. Migra quaisquer períodos
--- que existiam só na lista antiga (sem target_id), preservando-os. Idempotente.
-INSERT INTO taxonomia_refs (campo, valor, target_id)
-SELECT 'entrada', t.v, NULL
-FROM (SELECT unnest(valores) AS v FROM taxonomias WHERE chave='entradas') t
-WHERE NOT EXISTS (
-  SELECT 1 FROM taxonomia_refs r
-  WHERE r.campo='entrada' AND r.valor = t.v AND r.programa_id IS NULL
-);
--- A chave 'entradas' deixa de ser usada (derivada de taxonomia_refs em getAll).
-DELETE FROM taxonomias WHERE chave='entradas';
-
--- Renomeia as situações antigas dos alunos para o vocabulário unificado.
--- Ativo→Matriculado, Desligado→Desistente, Concluído→Egresso (Trancado mantém).
-UPDATE users SET perfil_aluno = jsonb_set(perfil_aluno, '{situacao}', '"Matriculado"')
-  WHERE perfil_aluno ? 'situacao' AND perfil_aluno->>'situacao' = 'Ativo';
-UPDATE users SET perfil_aluno = jsonb_set(perfil_aluno, '{situacao}', '"Desistente"')
-  WHERE perfil_aluno ? 'situacao' AND perfil_aluno->>'situacao' = 'Desligado';
-UPDATE users SET perfil_aluno = jsonb_set(perfil_aluno, '{situacao}', '"Egresso"')
-  WHERE perfil_aluno ? 'situacao' AND perfil_aluno->>'situacao' = 'Concluído';
-
 -- ===================== Câmara de Pós-Graduação (Fase 0) ====================
 -- Substitui a planilha de controle de processos da secretaria da Câmara.
 -- Ver requisitos-camara.md (raiz do projeto) para o levantamento completo.
 -- Modelo: o processo é o registro permanente (chave = NUP); a reunião é um
 -- evento; "estar na pauta" é uma relação N:N (camara_pauta_itens); a
 -- tramitação é um histórico append-only (camara_eventos) — nada é sobrescrito.
+-- NOTA: `camara_unidades` e `camara_processos` migram para `unidades` e
+-- `processos` na Fase A.4/A.7 do PLANO.md — ainda não aplicado aqui.
 
 -- Setores/unidades da UFRPE por onde os processos tramitam.
 CREATE TABLE IF NOT EXISTS camara_unidades (

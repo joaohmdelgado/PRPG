@@ -352,6 +352,7 @@ CREATE TABLE pessoas (
   cpf                 TEXT UNIQUE,            -- SEMPRE 11 dígitos, sem máscara
   cpf_valido          BOOLEAN DEFAULT TRUE,   -- FALSE = DV não confere (aviso, não bloqueio)
   siape               TEXT,
+  sexo                TEXT,                   -- migrado de perfil_aluno/perfil_professor (A.2a)
   endereco            TEXT,
   foto_url            TEXT,
   nacionalidade       TEXT,
@@ -386,6 +387,19 @@ Some `perfil_aluno`/`perfil_professor` JSONB? **Não.** O que ali é estruturado
 (`situacao`, `entrada`, `nivel`) já é, na prática, atributo de **vínculo**, não de pessoa —
 e migra para `vinculos.dados`. O que sobrar de genuinamente livre continua em
 `vinculos.dados JSONB`.
+
+> **A.2a — inspeção real (27/07/2026)**: 73 registros de `perfil_aluno` (13 chaves) e 16 de
+> `perfil_professor` (5 chaves) em produção. Mapeamento decidido chave a chave:
+>
+> | Chave | Destino | Motivo |
+> |---|---|---|
+> | `nacionalidade`, `estrangeiro` | coluna de `pessoas` | já previstas no schema (§5.1), não variam por vínculo |
+> | `sexo` (89/89 registros) | **nova coluna `pessoas.sexo TEXT`** | atributo de pessoa, não de vínculo; duplicá-lo em `vinculos.dados` a cada novo vínculo da mesma pessoa criaria inconsistência |
+> | `nivel` (aluno: Mestrando/Doutorando) | vira o próprio `vinculo.papel` (`DISCENTE_MESTRADO`/`DISCENTE_DOUTORADO`) | já existe no vocabulário de papel; não duplicar em JSONB |
+> | `tipo` (professor: Permanente/Colaborador) | vira `vinculo.papel` (`DOCENTE_PERMANENTE`/`DOCENTE_COLABORADOR`) | idem |
+> | `programas` (array no professor) | **um `vinculo` por programa**, não array em JSONB | vínculo já é escopado por `programa_id`; múltiplos programas = múltiplas linhas |
+> | `entrada`, `situacao`, `defesa`, `egresso`, `qualificacao`, `orientador_id` | `vinculos.dados` | genuinamente do vínculo (semestre, defesa, orientador daquela matrícula), sem coluna própria no schema atual |
+> | `uid_legado`, `origem_import` | `vinculos.dados` | proveniência da importação, não atributo de negócio |
 
 > **Ganho imediato**: `buildCombined` (`programasController.js`) deixa de existir; vira um
 > `JOIN`. `vinculos.pessoa_id`, `camara_relatorias.relator_id` e
