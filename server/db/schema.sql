@@ -6,9 +6,12 @@
 -- server/db/migrations/arquivo/. As migracoes ficam arquivadas para o registro;
 -- este arquivo e a fonte unica para `npm run db:migrate` reconstruir do zero.
 --
--- Os 8 `programa_id` sem FK e as FKs polimorficas ainda pendentes
--- (`vinculos.pessoa_id`, `camara_relatorias.relator_id`) sao dividia intencional
--- desta etapa: entram nas Fases A.2/A.10/A.11 do PLANO.md, ainda nao aplicadas.
+-- As FKs dos 8 `programa_id` (Fase A.11) ja foram aplicadas. As FKs
+-- polimorficas de `vinculos.pessoa_id` e `camara_relatorias.relator_id`
+-- continuam pendentes de proposito: apertar `vinculos.pessoa_id` exige
+-- reescrever simultaneamente a criacao de usuario, a listagem por pessoa e
+-- a limpeza ao excluir usuario (ver nota em `vinculos` mais abaixo) - fica
+-- para a Fase B.3.
 
 -- ============================ Usuarios ============================
 CREATE TABLE IF NOT EXISTS users (
@@ -308,6 +311,29 @@ BEGIN
   END IF;
 END$$;
 
+-- Fase A.11 (PLANO.md): os 8 programa_id que ate aqui eram TEXT solto ganham
+-- FK real, uma vez confirmado (antes de aplicar em producao) que nao ha
+-- valor orfao em nenhuma das 8 tabelas.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'news_programa_id_fkey') THEN
+    ALTER TABLE news ADD CONSTRAINT news_programa_id_fkey
+      FOREIGN KEY (programa_id) REFERENCES programas(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'editais_programa_id_fkey') THEN
+    ALTER TABLE editais ADD CONSTRAINT editais_programa_id_fkey
+      FOREIGN KEY (programa_id) REFERENCES programas(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'resolucoes_programa_id_fkey') THEN
+    ALTER TABLE resolucoes ADD CONSTRAINT resolucoes_programa_id_fkey
+      FOREIGN KEY (programa_id) REFERENCES programas(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'formularios_programa_id_fkey') THEN
+    ALTER TABLE formularios ADD CONSTRAINT formularios_programa_id_fkey
+      FOREIGN KEY (programa_id) REFERENCES programas(id) ON DELETE SET NULL;
+  END IF;
+END$$;
+
 -- Paginas de texto livre (rich-text) por secao do microsite de cada programa.
 -- Uma linha por (programa, secao): 'sobre', 'historico', 'objetivos', 'linhas', etc.
 CREATE TABLE IF NOT EXISTS programa_paginas (
@@ -508,6 +534,23 @@ CREATE TABLE IF NOT EXISTS atos (
 CREATE INDEX IF NOT EXISTS atos_serie_ano_idx ON atos(serie_id, ano, sequencial DESC);
 CREATE INDEX IF NOT EXISTS atos_publicado_idx ON atos(publicado) WHERE publicado;
 
+-- Fase A.11: eventos.ato_id (criada em A.6, antes de `atos` existir) e
+-- vinculos.ato_id (nova - portaria de designacao, ainda sem populador; a
+-- Fase E.14 preenche retroativamente a partir das portarias importadas)
+-- so podem ganhar FK agora que `atos` existe.
+ALTER TABLE vinculos ADD COLUMN IF NOT EXISTS ato_id TEXT;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'eventos_ato_id_fkey') THEN
+    ALTER TABLE eventos ADD CONSTRAINT eventos_ato_id_fkey
+      FOREIGN KEY (ato_id) REFERENCES atos(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vinculos_ato_id_fkey') THEN
+    ALTER TABLE vinculos ADD CONSTRAINT vinculos_ato_id_fkey
+      FOREIGN KEY (ato_id) REFERENCES atos(id) ON DELETE SET NULL;
+  END IF;
+END$$;
+
 -- Aloca o proximo sequencial de uma serie/ano de forma atomica (lock
 -- transacional por serie+ano - concorrentes serializam, sem numero repetido
 -- ou buraco). Uso pleno (reserva formal) e da Fase E; a funcao ja existe aqui
@@ -640,6 +683,28 @@ CREATE TABLE IF NOT EXISTS disciplinas (
   atualizado_por         TEXT
 );
 CREATE INDEX IF NOT EXISTS disciplinas_prog_idx ON disciplinas(programa_id);
+
+-- Fase A.11: as 4 tabelas acima sao criadas depois de `programas` no arquivo,
+-- mas antes do bloco de FKs la de cima - por isso ganham a FK aqui.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'teses_dissertacoes_programa_id_fkey') THEN
+    ALTER TABLE teses_dissertacoes ADD CONSTRAINT teses_dissertacoes_programa_id_fkey
+      FOREIGN KEY (programa_id) REFERENCES programas(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'faq_programa_id_fkey') THEN
+    ALTER TABLE faq ADD CONSTRAINT faq_programa_id_fkey
+      FOREIGN KEY (programa_id) REFERENCES programas(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'disciplinas_programa_id_fkey') THEN
+    ALTER TABLE disciplinas ADD CONSTRAINT disciplinas_programa_id_fkey
+      FOREIGN KEY (programa_id) REFERENCES programas(id) ON DELETE SET NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'grupos_pesquisa_programa_id_fkey') THEN
+    ALTER TABLE grupos_pesquisa ADD CONSTRAINT grupos_pesquisa_programa_id_fkey
+      FOREIGN KEY (programa_id) REFERENCES programas(id) ON DELETE SET NULL;
+  END IF;
+END$$;
 
 -- ============================= Bolsas =============================
 CREATE TABLE IF NOT EXISTS bolsas (
