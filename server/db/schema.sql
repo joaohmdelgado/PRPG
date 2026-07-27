@@ -146,6 +146,36 @@ CREATE TABLE IF NOT EXISTS calendario_milestones (
   date          TEXT
 );
 
+-- ==================== Arquivos e anexos (Fase A.5, G5) =============
+-- Registro de todo arquivo enviado por /api/upload. Uma linha por upload.
+CREATE TABLE IF NOT EXISTS arquivos (
+  id            TEXT PRIMARY KEY,
+  url           TEXT NOT NULL,          -- '/uploads/xxx.pdf'
+  nome_original TEXT,
+  mime          TEXT,
+  tamanho_bytes BIGINT,
+  sha256        TEXT,                   -- dedupe e verificacao de integridade (nao preenchido ainda)
+  sigiloso      BOOLEAN DEFAULT FALSE,  -- documento pessoal (LGPD)
+  enviado_em    TIMESTAMPTZ DEFAULT now(),
+  enviado_por   TEXT REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE INDEX IF NOT EXISTS arquivos_sha_idx ON arquivos(sha256);
+
+-- Vinculo N:N entre um arquivo e qualquer entidade. Substitui as ~19 colunas
+-- *_url espalhadas (a migracao dessas colunas e a Fase B, ainda nao aplicada).
+CREATE TABLE IF NOT EXISTS anexos (
+  id          TEXT PRIMARY KEY,
+  entidade    TEXT NOT NULL,   -- 'processo'|'pos_doutorado'|'inscricao_proficiencia'|'programa'|...
+  entidade_id TEXT NOT NULL,
+  arquivo_id  TEXT NOT NULL REFERENCES arquivos(id) ON DELETE CASCADE,
+  tipo        TEXT,            -- PLANO_TRABALHO|RELATORIO_FINAL|PARECER|ATA|COMPROVANTE_RESIDENCIA|...
+  descricao   TEXT,
+  ordem       INTEGER DEFAULT 0,
+  criado_em   TIMESTAMPTZ DEFAULT now(),
+  criado_por  TEXT
+);
+CREATE INDEX IF NOT EXISTS anexos_entidade_idx ON anexos(entidade, entidade_id);
+
 -- ===================== Programas e relacionados ===================
 CREATE TABLE IF NOT EXISTS programas (
   id                TEXT PRIMARY KEY,

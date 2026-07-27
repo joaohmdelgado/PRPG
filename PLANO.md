@@ -233,7 +233,7 @@ Referência: [`arquitetura-dados.md`](arquitetura-dados.md) §5 e §7.
 | `[x]` | A.2 | **G1**: `pessoas` como identidade; `users` vira credencial com `pessoa_id UNIQUE` | `schema.sql`, `repositories.js` | ⛔ D-A1, D-A2 |
 | `[x]` | A.3 | **G7**: datas simples viram `DATE`; `fromRow` formata `'YYYY-MM-DD'` na saída | `repositories.js`, `utils/datas.js` | |
 | `[x]` | A.4 | **G8**: `camara_unidades` → `unidades` (+ `tipo`, `unidade_pai_id`) | `schema.sql` | |
-| `[ ]` | A.5 | **G5**: `arquivos` + `anexos`; `/api/upload` registra o arquivo e devolve `{id, url}` | `adminRoutes.js`, `db/anexosRepo.js` | |
+| `[x]` | A.5 | **G5**: `arquivos` + `anexos`; `/api/upload` registra o arquivo e devolve `{id, url}` | `adminRoutes.js`, `db/anexosRepo.js` | |
 | `[ ]` | A.5b | `contatos` (§5.9) + `utils/contato.js`; remove os 8 campos de contato espalhados | `schema.sql`, `db/contatosRepo.js` | |
 | `[ ]` | A.6 | **G2**: `eventos` polimórfica + `eventosRepo` + *trigger* de limpeza + lista `ENTIDADES` | `db/eventosRepo.js`, `db/core.js` | |
 | `[ ]` | A.7 | **G3**: `camara_processos` → `processos` (+ `interessado_pessoa_id`) | `schema.sql` | |

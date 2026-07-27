@@ -52,6 +52,7 @@ import {
   newsRepo, editaisRepo, resolucoesRepo, formulariosRepo, disciplinasRepo,
   tesesRepo, faqRepo, gruposRepo, pagesRepo, usersRepo,
 } from '../db/repositories.js';
+import { arquivosRepo } from '../db/anexosRepo.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -166,11 +167,17 @@ router.post('/login', loginLimiter, login);
 
 // Uploads (qualquer usuário logado)
 router.post('/upload', uploadLimiter, protect, (req, res) => {
-  upload.single('file')(req, res, (err) => {
+  upload.single('file')(req, res, async (err) => {
     if (err) return res.status(400).json({ message: err.message });
     if (!req.file) return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
     const fileUrl = `/uploads/${req.file.filename}`;
-    res.json({ url: fileUrl, originalName: req.file.originalname });
+    // Fase A.5 (G5): registra o upload em `arquivos`; a resposta ganha `id`
+    // sem remover url/originalName (contrato existente preservado).
+    const arquivo = await arquivosRepo.create({
+      url: fileUrl, nomeOriginal: req.file.originalname, mime: req.file.mimetype,
+      tamanhoBytes: req.file.size, enviadoPor: req.user?.id,
+    });
+    res.json({ id: arquivo.id, url: fileUrl, originalName: req.file.originalname });
   });
 });
 
@@ -279,10 +286,15 @@ router.post('/proficiencia/inscricoes', optionalProtect, createInscricao);
 // Upload público dos comprovantes da inscrição (mesmas regras do /upload, com
 // limite de taxa por IP — é uma rota anônima, alvo fácil de abuso de storage).
 router.post('/proficiencia/upload', uploadLimiter, (req, res) => {
-  upload.single('file')(req, res, (err) => {
+  upload.single('file')(req, res, async (err) => {
     if (err) return res.status(400).json({ message: err.message });
     if (!req.file) return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
-    res.json({ url: `/uploads/${req.file.filename}`, originalName: req.file.originalname });
+    const fileUrl = `/uploads/${req.file.filename}`;
+    const arquivo = await arquivosRepo.create({
+      url: fileUrl, nomeOriginal: req.file.originalname, mime: req.file.mimetype,
+      tamanhoBytes: req.file.size,
+    });
+    res.json({ id: arquivo.id, url: fileUrl, originalName: req.file.originalname });
   });
 });
 router.get('/proficiencia/inscricoes/minhas', protect, getMinhasInscricoes);
