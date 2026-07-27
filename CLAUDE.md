@@ -52,7 +52,9 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 ### Backend Structure (`/server`)
 - **controllers/**: Business logic for each content type
   - Each controller exports standard CRUD operations: `get*`, `get*ById`, `create*`, `update*`, `delete*`
-  - Controllers read/write directly from JSON files in `/server/data`
+  - Controllers call a repository (`server/db/repositories.js`) backed by PostgreSQL —
+    they do **not** read/write JSON directly (see Database layer below). The JSON files
+    in `server/data/` are only the one-time migration seed for `npm run db:migrate`.
 - **routes/adminRoutes.js**: All API route definitions
   - Public routes (GET): news, editais, resolucoes, formularios, programas, disciplinas, bolsas, faq, etc.
   - Protected routes: authenticated users with `protect` middleware
@@ -80,7 +82,8 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 | Users | usersController.js | users.json | `/api/users` |
 | Portarias | portariasController.js | portarias.json | `/api/portarias` (admin only) |
 | Research Groups | gruposPesquisaController.js | grupos_pesquisa.json | `/api/grupos-pesquisa` (admin only) |
-| Proficiência (línguas) | proficienciaController.js | tabelas `proficiencia_periodos` / `inscricoes_proficiencia` (sem JSON seed) | `/api/proficiencia/*` |
+| Proficiência (línguas) | proficienciaController.js | tabela `inscricoes_proficiencia` (sem JSON seed) | `/api/proficiencia/*` |
+| Câmara de Pós-Graduação | camaraController.js, camaraReunioesController.js | tabelas `processos`, `unidades`, `camara_atos`, `camara_eventos`, `camara_reunioes`, `camara_pauta_itens`, `camara_relatorias` (sem JSON seed) | `/api/camara/*` (admin only) |
 
 **Proficiência em Línguas**: mini-sistema de inscrição e emissão de declaração.
 O aluno logado se inscreve (`POST /api/proficiencia/inscricoes`) em um período
@@ -102,6 +105,23 @@ mesmos valores, tornando o PDF reproduzível. O PDF imprime um **QR code**
 `GET /api/proficiencia/declaracoes/:codigo` (`verificarDeclaracao`), que reexibe
 os dados canônicos (nome, **CPF mascarado**, língua, resultado, nota, validade
 de 4 anos) para conferência contra o papel.
+
+**Câmara de Pós-Graduação**: controle de processos administrativos do colegiado
+(`processos`, chave = NUP), com histórico append-only (`camara_eventos`),
+reuniões/pauta (`camara_reunioes`/`camara_pauta_itens`), relatorias
+(`camara_relatorias`) e atos resultantes (`camara_atos`). Ver `requisitos-camara.md`
+na raiz do repositório para o levantamento completo (Fases 0-1 implementadas;
+o importador da planilha histórica ainda não existe — ver `PLANO.md` §2.2).
+
+## Roadmap e arquitetura de dados
+
+O trabalho de reconstrução do schema e os próximos mini-sistemas (agenda de
+contatos, expedientes/numeração de atos, PNPD) estão planejados em `PLANO.md`
+(índice único de execução) e detalhados em `arquitetura-dados.md` (schema
+alvo) e `requisitos-camara.md`/`requisitos-contatos.md`/`requisitos-expedientes.md`/
+`requisitos-pnpd.md` (um por assunto). Consulte `PLANO.md` §17 (Registro de
+execução) para o estado atual de cada fase antes de assumir que algo já foi
+feito ou ainda não.
 
 ## Authentication & Authorization
 
@@ -129,29 +149,25 @@ de 4 anos) para conferência contra o papel.
 ## Key Patterns & Conventions
 
 ### Controller Pattern
-Each controller follows this standard structure:
+Most controllers are thin wrappers around a repository from `server/db/repositories.js`
+(built with the generic `createRepository` factory in `server/db/repository.js`):
 ```javascript
-const getDataPath = () => path.join(__dirname, '../data/contentType.json');
+// server/db/repositories.js
+export const newsRepo = createRepository({
+  table: 'news',
+  fromRow: (r) => ({ /* snake_case row -> camelCase API shape */ }),
+  toRow: (o) => ({ /* camelCase API shape -> snake_case row */ }),
+});
 
-const getData = async () => {
-  try {
-    const data = await fs.readFile(getDataPath(), 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    return [];
-  }
-};
-
-const saveData = async (data) => {
-  await fs.writeFile(getDataPath(), JSON.stringify(data, null, 2));
-};
-
-export const getAll = async (req, res) => { /* ... */ };
-export const getById = async (req, res) => { /* ... */ };
-export const create = async (req, res) => { /* ... */ };
-export const update = async (req, res) => { /* ... */ };
-export const delete = async (req, res) => { /* ... */ };
+// server/controllers/newsController.js
+export const getAll = async (req, res) => res.json(await newsRepo.getAll());
+export const getById = async (req, res) => { /* newsRepo.getById(req.params.id) */ };
+export const create = async (req, res) => { /* validate/sanitize, then newsRepo.create(data, req.user?.id) */ };
+export const update = async (req, res) => { /* newsRepo.update(id, data, req.user?.id) */ };
+export const delete = async (req, res) => { /* newsRepo.remove(id) */ };
 ```
+Controllers that don't fit the single-table CRUD shape (Câmara, Programas' vínculos)
+issue raw SQL via `server/db/pool.js`'s `query()` helper instead.
 
 ### Common Data Fields
 Most content items use:
@@ -167,7 +183,9 @@ Most content items use:
 - Endpoint: `POST /api/upload` (requires authentication)
 - Accepts: PDF files, images (PNG, JPG, etc.)
 - File size limit: 15MB
-- Returns: `{ url: "/uploads/filename", originalName: "..." }`
+- Returns: `{ id, url: "/uploads/filename", originalName: "..." }` — `id` references
+  the new `arquivos` row (registered on every upload since Fase A.5); nothing
+  consumes it yet, `url`/`originalName` are unchanged.
 
 ## Environment Configuration
 
@@ -217,22 +235,40 @@ Access at `/admin/login`. Main sections in sidebar:
   programas (coordinator resolution, sensitive-field filtering, coordinator
   history, cascade delete), users (uniqueness, default password, role rules,
   access control), role-based authorization, calendarios (single-current rule +
-  milestones child table), grupos/teses reference resolution. ~41 tests.
+  milestones child table), grupos/teses reference resolution. 103 tests in 9 files.
 - Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes
 
 1. **Database layer**: Data lives in PostgreSQL. The data-access layer is in `server/db/`:
-   - `pool.js`: shared `pg` connection pool (`query()` helper).
-   - `schema.sql`: full relational schema (one table per content type; child tables
-     `calendario_milestones`; relational set `programas`/`pessoas`/`modalidades`/`vinculos`).
+   - `pool.js`: shared `pg` connection pool (`query()` helper). Also installs a type
+     parser so `DATE` columns come back as plain `'YYYY-MM-DD'` strings, not `Date`
+     objects (avoids timezone-shift bugs — see `utils/datas.js`).
+   - `schema.sql`: full relational schema, written as a consolidated baseline (not
+     incremental migrations — see `migrations/arquivo/` for the historical ones).
+     Core/shared tables (reused across modules, not owned by one feature):
+     `pessoas` (identity — `users.pessoa_id` links a login to one), `unidades`
+     (org units), `arquivos`/`anexos` (uploads + polymorphic attachment),
+     `contatos` (polymorphic contact info), `eventos` (polymorphic append-only
+     timeline), `ato_series`/`atos`/`ato_referencias`/`documentos` (numbered
+     administrative acts vs. plain downloadable documents), `declaracoes`
+     (verifiable documents with a public code). Most of these exist as
+     infrastructure with no consumer yet — see `PLANO.md` for which phase wires
+     each one up.
    - `repository.js`: generic CRUD factory (`createRepository`) for single-table entities.
    - `repositories.js`: per-entity repos with `fromRow`/`toRow` mappers that convert
      between DB snake_case columns and the camelCase JSON the frontend expects.
-   - `migrate.mjs`: seeds the DB from the JSON files.
+   - `migrate.mjs`: seeds the DB from the JSON files (TRUNCATEs first — seeds
+     `programas` before the content tables that now have a real FK to it).
+   - `core.js`, `anexosRepo.js`, `eventosRepo.js`, `atosRepo.js`, `contatosRepo.js`,
+     `backfill-pessoas.mjs`: repositories/helpers for the tables above.
    Controllers are thin: they call a repo and keep validation/sanitization/slug/status logic.
    A few genuinely free-form nested objects are stored as JSONB (`editais.erratas`,
    `grupos_pesquisa.field_lideres`, `users.perfil_aluno`/`perfil_professor`).
+   Shared utilities live in `server/utils/`: `cpf.js`, `nup.js`, `datas.js`,
+   `vigencia.js`, `contato.js` — validation/normalization is a warning
+   (`*_valido = false`), never a hard block, since real historical data doesn't
+   always fit the format.
 
 2. **ID Generation**: IDs are typically slug-based (derived from title) rather than UUIDs. Look at individual controllers for their specific ID generation strategy.
 

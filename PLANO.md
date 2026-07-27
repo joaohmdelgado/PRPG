@@ -244,7 +244,7 @@ Referência: [`arquitetura-dados.md`](arquitetura-dados.md) §5 e §7.
 | `[x]` | A.12 | Remover `proficiencia_periodos` (tabela morta) | `schema.sql`, `repositories.js:421` | |
 | `[x]` | A.13 | Atualizar `migrate.mjs` e `__tests__/helpers.js` com a **lista completa** de tabelas (hoje faltam as `camara_*`) | ambos | |
 | `[x]` | A.14 | Utilitários: `cpf.js`, `vigencia.js`, `datas.js`, `nup.js` (movido de `camaraController`), `contato.js` | `server/utils/` | |
-| `[ ]` | A.15 | Atualizar `CLAUDE.md` (§2.3 deste plano) | `CLAUDE.md` | |
+| `[x]` | A.15 | Atualizar `CLAUDE.md` (§2.3 deste plano) | `CLAUDE.md` | |
 
 **Critério de pronto**: `npm test` passa inteiro (103 casos), `npm run db:migrate` reconstrói do
 zero, e o painel opera Câmara, Proficiência e Programas **exatamente como antes**. Toda asserção
