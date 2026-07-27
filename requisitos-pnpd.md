@@ -14,6 +14,22 @@
 >
 > Documento irmão: [`requisitos-camara.md`](requisitos-camara.md). As convenções, o vocabulário
 > e as decisões de arquitetura daquele documento valem aqui, e são citadas quando aplicáveis.
+>
+> ---
+>
+> ⚠️ **ATUALIZAÇÃO (26/07/2026) — o §8 (modelo de dados) e o §14 (plano de fases) deste
+> documento foram substituídos por [`arquitetura-dados.md`](arquitetura-dados.md).**
+>
+> Uma revisão de arquitetura posterior generalizou `camara_processos` → `processos`,
+> `camara_eventos` → `eventos`, unificou `users`/`pessoas` numa identidade única e criou o
+> núcleo compartilhado (`arquivos`/`anexos`, `atos`, `declaracoes`, `unidades`). Sobre essa
+> fundação, a tabela `pos_doutorados` cai de 45 para 20 colunas e a tabela `posdoc_eventos`
+> deixa de existir.
+>
+> **Continuam válidos e são a especificação vigente**: o diagnóstico (§1), os problemas (§2),
+> os riscos (§3), o ciclo de vida (§6), os vocabulários (§7), a API (§9), as telas (§10), os
+> artefatos (§11), os indicadores (§12), as regras de migração (§13), os testes (§15), a
+> gestão da mudança (§16) e as decisões pendentes (§17).
 
 ---
 
@@ -414,6 +430,12 @@ tudo volta para o campo livre.**
 
 ## 8. Modelo de dados proposto
 
+> ⚠️ **SUPERADO por [`arquitetura-dados.md`](arquitetura-dados.md) §5.11.** O modelo abaixo
+> assume o schema anterior à harmonização (com `camara_processos`, `users`/`pessoas` separados
+> e sem núcleo compartilhado). Está mantido como registro do raciocínio — em especial o §5.1,
+> que explica por que o pós-doutorado **não** pode ser modelado como um processo (cardinalidade
+> N:1 comprovada nos dados). O modelo vigente é o do documento de arquitetura.
+
 Segue as convenções do projeto (`server/db/schema.sql`): IDs `TEXT`, datas simples como
 `TEXT 'YYYY-MM-DD'`, *timestamps* `TIMESTAMPTZ`, auditoria `criado_por`/`atualizado_por`,
 objetos aninhados genuinamente livres em `JSONB`.
@@ -795,6 +817,11 @@ suficiente** — não há informação codificada em cor de célula neste arquiv
 ---
 
 ## 14. Plano de implementação em fases
+
+> ⚠️ **SUPERADO por [`arquitetura-dados.md`](arquitetura-dados.md) §7.** O plano vigente tem
+> quatro fases (A: núcleo · B: refit dos módulos atuais · C: PNPD · D: legado Drupal), e o
+> PNPD sai na Fase C — menor, porque a fundação já entrega eventos, anexos, declarações com QR,
+> validação de CPF/NUP e cálculo de vigência. O escopo funcional (§10) não mudou.
 
 ### Fase 0 — Modelo de dados e migração (≈ 1 semana)
 
