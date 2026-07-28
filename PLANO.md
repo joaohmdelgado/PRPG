@@ -261,13 +261,21 @@ de teste alterada precisa de justificativa escrita no commit.
 | `[x]` | B.1 | Câmara: `camaraEventosRepo` → `eventosRepo`; `camaraProcessosRepo`/`camaraUnidadesRepo` → `processosRepo`/`unidadesRepo` | `camaraController.js`, `camaraReunioesController.js`, `camaraRepo.js` | ⛔ `camara_atos`→`atos` e `*_url`→`anexos` **adiados para a Fase E** (ver nota abaixo) |
 | `[x]` | B.2 | Proficiência: emissão via `declaracoes`; **redirect da URL antiga** de verificação | `proficienciaController.js`, `declaracoesController.js` | |
 | `[x]` | B.3 | Programas: `buildCombined` deletado; listagem de pessoas vira `JOIN` | `programasController.js` | ⛔ FK real de `vinculos.pessoa_id` segue adiada (mesma sprawl da A.10 — ver nota no schema) |
-| `[ ]` | B.4 | Portarias/Resoluções/Formulários: telas apontam para `atos` e `documentos` | várias | ⛔ D-A4 |
+| `[ ]` | B.4 | Portarias/Resoluções/Formulários: telas apontam para `atos` e `documentos` | várias | ⛔ **adiado para a Fase E** (ver nota abaixo) |
 | `[ ]` | B.5 | **G10**: `vocabularios` + endpoint + seed; vocabulário de `vinculo.papel` consolidado com o de-para de `COORDENADOR_ATUAL`/`ANTERIOR`/`SUBSTITUTO`/`TAE` | `db/`, `controllers/` | |
 | `[ ]` | B.6 | `filterSensitivePessoa` aposentada em favor de `contatos.publico` | `programasController.js` | |
 | `[ ]` | B.7 | `camara.test.js` — cobertura do §14 de `requisitos-camara.md` | `server/__tests__/camara.test.js` | |
 | `[ ]` | B.8 | **Importador da Câmara** (dívida do §2.2): 102 linhas → 80 processos, 8 reuniões, histórico reconstruído | `services/importers/camaraImporter.js` | ⛔ **D-B1**, D-G8 |
 | `[ ]` | B.9 | Tela de importação da Câmara em 4 passos | `src/pages/admin/AdminCamaraImportar.jsx` | ⛔ D-B1 |
 | `[ ]` | B.10 | Rodar a importação e validar 10 processos com a secretaria | — | |
+
+> **Nota B.4** — investigada, não aplicada: migrar `portarias`/`resolucoes` para `atos` esbarra
+> no mesmo problema do `camara_atos` (B.1) — exige série/sequencial reais, bloqueados por D-E1.
+> Além disso `resolucoes` **e** `formularios` têm uma coluna `section_id` (chave de agrupamento
+> estável, distinta do rótulo `section_title`) que **não existe** em `atos`/`documentos` — migrar
+> agora perderia esse dado silenciosamente. Faltando decidir: `section_id` vira coluna nova em
+> `atos`/`documentos`, ou o agrupamento muda de modelo? Escopo incorporado à Fase E (junto de
+> E.4/E.11), com essa pergunta registrada como decisão a mais a levantar antes de lá.
 
 **Critério de pronto**: nenhuma referência a `camara_processos`, `camara_eventos`, `portarias`
 ou `camara_atos` no código; suíte verde; **e a Câmara deixa de estar vazia** — os 80 processos
@@ -325,7 +333,7 @@ pessoal aparece em endpoint público (teste explícito).
 | `[ ]` | E.8 | Ficha com referências bidirecionais e linha do tempo | `src/pages/admin/AdminAto.jsx` | |
 | `[ ]` | E.9 | Administração de séries | `src/pages/admin/AdminAtoSeries.jsx` | |
 | `[ ]` | E.10 | Importação em 5 passos, com conciliação de editais | `src/pages/admin/AdminAtosImportar.jsx` | |
-| `[ ]` | E.11 | Migração de `portarias` → `atos` **e de `camara_atos`** (adiada da B.1 — ver nota); `AdminPortarias` aposentada | várias | |
+| `[ ]` | E.11 | Migração de `portarias`, `resolucoes`, `formularios` → `atos`/`documentos` **e de `camara_atos`** (adiadas da B.1/B.4 — ver notas); resolve o gap de `section_id`; `AdminPortarias` aposentada | várias | |
 | `[ ]` | E.12 | `editais.ato_id` no formulário de edital | `AdminEditalForm.jsx` | ⛔ D-E5 |
 | `[ ]` | E.13 | Exportação XLSX, menu, constantes | — | |
 | `[ ]` | E.14 | **Preencher retroativamente** `vinculos.ato_id` e as datas de mandato a partir das portarias importadas (§3.2) | `atosImporter.js` | |
