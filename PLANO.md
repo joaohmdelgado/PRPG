@@ -260,7 +260,7 @@ de teste alterada precisa de justificativa escrita no commit.
 |---|---|---|---|---|
 | `[x]` | B.1 | Câmara: `camaraEventosRepo` → `eventosRepo`; `camaraProcessosRepo`/`camaraUnidadesRepo` → `processosRepo`/`unidadesRepo` | `camaraController.js`, `camaraReunioesController.js`, `camaraRepo.js` | ⛔ `camara_atos`→`atos` e `*_url`→`anexos` **adiados para a Fase E** (ver nota abaixo) |
 | `[x]` | B.2 | Proficiência: emissão via `declaracoes`; **redirect da URL antiga** de verificação | `proficienciaController.js`, `declaracoesController.js` | |
-| `[ ]` | B.3 | Programas: `buildCombined` deletado; listagem de pessoas vira `JOIN` | `programasController.js` | |
+| `[x]` | B.3 | Programas: `buildCombined` deletado; listagem de pessoas vira `JOIN` | `programasController.js` | ⛔ FK real de `vinculos.pessoa_id` segue adiada (mesma sprawl da A.10 — ver nota no schema) |
 | `[ ]` | B.4 | Portarias/Resoluções/Formulários: telas apontam para `atos` e `documentos` | várias | ⛔ D-A4 |
 | `[ ]` | B.5 | **G10**: `vocabularios` + endpoint + seed; vocabulário de `vinculo.papel` consolidado com o de-para de `COORDENADOR_ATUAL`/`ANTERIOR`/`SUBSTITUTO`/`TAE` | `db/`, `controllers/` | |
 | `[ ]` | B.6 | `filterSensitivePessoa` aposentada em favor de `contatos.publico` | `programasController.js` | |

@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
-import { usersRepo, portariasRepo, programaPaginasRepo, linhasPesquisaRepo } from '../db/repositories.js';
+import { usersRepo, programaPaginasRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { sanitizeHtml } from '../utils/sanitize.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
@@ -72,45 +72,61 @@ const filterSensitivePessoa = (pessoa, isAdmin) => {
   return rest;
 };
 
-// Carrega os dados relacionados a programas (todos como arrays simples).
-const loadRelated = async () => {
-  const [modalidades, vinculos, pessoas, users, portarias] = await Promise.all([
-    query('SELECT * FROM modalidades').then((r) => r.rows),
-    query('SELECT * FROM vinculos').then((r) => r.rows),
-    query('SELECT * FROM pessoas').then((r) => r.rows),
-    usersRepo.getAll(),
-    portariasRepo.getAll(),
-  ]);
-  return { modalidades, vinculos, pessoas, users, portarias };
-};
+// Carrega as modalidades (usadas junto com o JOIN de vínculos abaixo).
+const loadModalidades = async () => (await query('SELECT * FROM modalidades')).rows;
 
-// Resolve um vínculo numa pessoa "combinada" (dados + portaria), reaproveitada
-// tanto na listagem quanto no detalhe.
-const buildCombined = (v, { users, pessoas, portarias }) => {
-  const user = users.find((u) => u.id === v.pessoa_id);
-  const portariaObj = portarias.find((p) => p.id === v.portaria_id);
-  const resolvedPortaria = portariaObj
-    ? { portaria_id: v.portaria_id, portaria: portariaObj.title, portaria_download_link: portariaObj.downloadLink }
-    : { portaria_id: '', portaria: v.portaria || '', portaria_download_link: '' };
+// Fase B.3 (PLANO.md): substitui buildCombined (JS: users.find + pessoas.find
+// em arrays carregados por inteiro a cada request) por um JOIN de fato — uma
+// única query resolve pessoa (users OU pessoas, legado) e portaria por
+// vínculo. vinculos.pessoa_id continua polimórfico (TEXT sem FK): apertar a
+// FK para pessoas(id) exigiria migrar simultaneamente a criação de usuário,
+// `handlePessoaVinculo`/`insertVinculo` (escrevem users.id), a limpeza de
+// vínculos ao excluir usuário e o `JOIN vinculos ON pessoa_id = users.id` de
+// proficienciaController.verificarAluno — mesma sprawl já registrada na A.10,
+// segue adiada (ver nota lá).
+const VINCULOS_JOIN_SELECT = `
+  SELECT v.*,
+    u.id AS u_id, u.email AS u_email, u.perfil_nome AS u_perfil_nome,
+    u.perfil_cpf AS u_perfil_cpf, u.perfil_siape AS u_perfil_siape,
+    u.perfil_telefones AS u_perfil_telefones,
+    row_to_json(p.*) AS p_json,
+    po.title AS portaria_titulo, po.download_link AS portaria_download_link
+  FROM vinculos v
+  LEFT JOIN users u ON u.id = v.pessoa_id
+  LEFT JOIN pessoas p ON p.id = v.pessoa_id
+  LEFT JOIN portarias po ON po.id = v.portaria_id
+`;
 
-  if (user) {
+const VINCULO_ROW_KEYS = [
+  'u_id', 'u_email', 'u_perfil_nome', 'u_perfil_cpf', 'u_perfil_siape', 'u_perfil_telefones',
+  'p_json', 'portaria_titulo', 'portaria_download_link',
+];
+
+// Monta o objeto "combinado" (pessoa + vínculo + portaria) a partir de uma
+// linha do JOIN acima — mesma prioridade da antiga buildCombined: usuário do
+// sistema primeiro, pessoa legada (sem login) como fallback.
+const combinedFromRow = (row) => {
+  const resolvedPortaria = row.portaria_titulo != null
+    ? { portaria_id: row.portaria_id, portaria: row.portaria_titulo, portaria_download_link: row.portaria_download_link }
+    : { portaria_id: '', portaria: row.portaria || '', portaria_download_link: '' };
+  const vFields = { ...row };
+  for (const k of VINCULO_ROW_KEYS) delete vFields[k];
+
+  if (row.u_id) {
     return {
-      pessoa_id: user.id,
-      nome: user.perfil_geral?.nome || user.email,
-      cpf: user.perfil_geral?.cpf || '',
-      siape: user.perfil_geral?.siape || '',
-      email_institucional: user.email,
-      telefones: Array.isArray(user.perfil_geral?.telefones)
-        ? user.perfil_geral.telefones.join(', ')
-        : (user.perfil_geral?.telefones || ''),
-      endereco: v.endereco || user.perfil_geral?.endereco || '',
-      ...v,
+      pessoa_id: row.u_id,
+      nome: row.u_perfil_nome || row.u_email,
+      cpf: row.u_perfil_cpf || '',
+      siape: row.u_perfil_siape || '',
+      email_institucional: row.u_email,
+      telefones: Array.isArray(row.u_perfil_telefones) ? row.u_perfil_telefones.join(', ') : (row.u_perfil_telefones || ''),
+      endereco: vFields.endereco || '',
+      ...vFields,
       ...resolvedPortaria,
     };
   }
-  const pessoa = pessoas.find((p) => p.id === v.pessoa_id);
-  if (pessoa) {
-    return { ...pessoa, pessoa_id: pessoa.id, ...v, ...resolvedPortaria };
+  if (row.p_json) {
+    return { ...row.p_json, pessoa_id: row.p_json.id, ...vFields, ...resolvedPortaria };
   }
   return null;
 };
@@ -118,17 +134,18 @@ const buildCombined = (v, { users, pessoas, portarias }) => {
 export const getProgramas = async (req, res) => {
   try {
     const programas = (await query('SELECT * FROM programas ORDER BY nome')).rows;
-    const related = await loadRelated();
+    const modalidades = await loadModalidades();
+    const { rows: vinculoRows } = await query(`${VINCULOS_JOIN_SELECT} WHERE v.ativo = TRUE`);
     const isAdmin = checkAdmin(req);
     const linhasPorPrograma = await linhasPesquisaRepo.getAllByPrograma();
 
     const result = programas.map((prog) => {
-      const progModalidades = related.modalidades.filter((m) => m.programa_id === prog.id);
-      const progVinculos = related.vinculos.filter((v) => v.programa_id === prog.id && v.ativo);
+      const progModalidades = modalidades.filter((m) => m.programa_id === prog.id);
+      const progVinculos = vinculoRows.filter((v) => v.programa_id === prog.id);
 
       let coordenador_atual = null, substituto = null, secretaria = null;
       progVinculos.forEach((v) => {
-        const combined = buildCombined(v, related);
+        const combined = combinedFromRow(v);
         if (!combined) return;
         if (v.papel === 'COORDENADOR_ATUAL') coordenador_atual = filterSensitivePessoa(combined, isAdmin);
         if (v.papel === 'SUBSTITUTO') substituto = filterSensitivePessoa(combined, isAdmin);
@@ -154,17 +171,15 @@ export const getProgramaById = async (req, res) => {
     const prog = (await query('SELECT * FROM programas WHERE id = $1', [req.params.id])).rows[0];
     if (!prog) return res.status(404).json({ message: 'Programa não encontrado' });
 
-    const related = await loadRelated();
+    const progModalidades = (await query('SELECT * FROM modalidades WHERE programa_id = $1', [prog.id])).rows;
+    const { rows: progVinculos } = await query(`${VINCULOS_JOIN_SELECT} WHERE v.programa_id = $1`, [prog.id]);
     const isAdmin = checkAdmin(req);
-
-    const progModalidades = related.modalidades.filter((m) => m.programa_id === prog.id);
-    const progVinculos = related.vinculos.filter((v) => v.programa_id === prog.id);
 
     let coordenador_atual = null, substituto = null, secretaria = null;
     const historico_coordenadores = [];
 
     progVinculos.forEach((v) => {
-      const combined = buildCombined(v, related);
+      const combined = combinedFromRow(v);
       if (!combined) return;
       if (v.ativo) {
         if (v.papel === 'COORDENADOR_ATUAL') coordenador_atual = filterSensitivePessoa(combined, isAdmin);
@@ -195,15 +210,14 @@ export const getProgramaBySlug = async (req, res) => {
     const prog = (await query('SELECT * FROM programas WHERE slug = $1', [req.params.slug])).rows[0];
     if (!prog) return res.status(404).json({ message: 'Programa não encontrado' });
 
-    const related = await loadRelated();
+    const progModalidades = (await query('SELECT * FROM modalidades WHERE programa_id = $1', [prog.id])).rows;
+    const { rows: todosVinculos } = await query(`${VINCULOS_JOIN_SELECT} WHERE v.programa_id = $1`, [prog.id]);
+    const progVinculos = todosVinculos.filter((v) => v.ativo);
     const isAdmin = checkAdmin(req);
-
-    const progModalidades = related.modalidades.filter((m) => m.programa_id === prog.id);
-    const progVinculos = related.vinculos.filter((v) => v.programa_id === prog.id && v.ativo);
 
     let coordenador_atual = null, substituto = null, secretaria = null;
     progVinculos.forEach((v) => {
-      const combined = buildCombined(v, related);
+      const combined = combinedFromRow(v);
       if (!combined) return;
       if (v.papel === 'COORDENADOR_ATUAL') coordenador_atual = filterSensitivePessoa(combined, isAdmin);
       if (v.papel === 'SUBSTITUTO') substituto = filterSensitivePessoa(combined, isAdmin);
@@ -227,18 +241,17 @@ export const getProgramaBySlug = async (req, res) => {
       const { rows } = await query(`SELECT count(*)::int AS n FROM ${tbl} WHERE programa_id = $1`, [prog.id]);
       modulos[key] = rows[0]?.n ?? 0;
     }));
-    modulos['pessoas'] = related.vinculos.filter(
-      (v) => v.programa_id === prog.id && v.ativo && ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR'].includes(v.papel)
+    modulos['pessoas'] = progVinculos.filter(
+      (v) => ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR'].includes(v.papel)
     ).length;
-    modulos['discentes'] = related.vinculos.filter(
-      (v) => v.programa_id === prog.id && v.ativo && ['DISCENTE_MESTRADO', 'DISCENTE_DOUTORADO', 'DISCENTE_PROFISSIONAL', 'EGRESSO'].includes(v.papel)
+    modulos['discentes'] = progVinculos.filter(
+      (v) => ['DISCENTE_MESTRADO', 'DISCENTE_DOUTORADO', 'DISCENTE_PROFISSIONAL', 'EGRESSO'].includes(v.papel)
     ).length;
 
     // Histórico de coordenadores (inativos, COORDENADOR_ANTERIOR).
-    const todosVinculos = related.vinculos.filter((v) => v.programa_id === prog.id);
     const historico_coordenadores = todosVinculos
       .filter((v) => v.papel === 'COORDENADOR_ANTERIOR')
-      .map((v) => filterSensitivePessoa(buildCombined(v, related), isAdmin))
+      .map((v) => filterSensitivePessoa(combinedFromRow(v), isAdmin))
       .filter(Boolean)
       .sort((a, b) => (b.data_fim_mandato || '').localeCompare(a.data_fim_mandato || ''));
 
@@ -246,7 +259,7 @@ export const getProgramaBySlug = async (req, res) => {
     const comissaoVinculos = progVinculos.filter((v) => v.papel?.startsWith('COMISSAO_'));
     const comissoes = {};
     comissaoVinculos.forEach((v) => {
-      const combined = buildCombined(v, related);
+      const combined = combinedFromRow(v);
       if (!combined) return;
       if (!comissoes[v.papel]) comissoes[v.papel] = [];
       comissoes[v.papel].push(filterSensitivePessoa(combined, isAdmin));
