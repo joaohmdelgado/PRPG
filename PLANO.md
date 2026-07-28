@@ -263,7 +263,7 @@ de teste alterada precisa de justificativa escrita no commit.
 | `[x]` | B.3 | Programas: `buildCombined` deletado; listagem de pessoas vira `JOIN` | `programasController.js` | ⛔ FK real de `vinculos.pessoa_id` segue adiada (mesma sprawl da A.10 — ver nota no schema) |
 | `[ ]` | B.4 | Portarias/Resoluções/Formulários: telas apontam para `atos` e `documentos` | várias | ⛔ **adiado para a Fase E** (ver nota abaixo) |
 | `[x]` | B.5 | **G10**: `vocabularios` + endpoint + seed; vocabulário-alvo de `vinculo.papel` seedado | `db/vocabulariosRepo.js`, `controllers/vocabulariosController.js` | ⛔ de-para real de `COORDENADOR_ATUAL`/`ANTERIOR`/`SUBSTITUTO`/`TAE` para os novos valores adiado para a Fase G (depende de D-G2) |
-| `[ ]` | B.6 | `filterSensitivePessoa` aposentada em favor de `contatos.publico` | `programasController.js` | |
+| `[ ]` | B.6 | `filterSensitivePessoa` aposentada em favor de `contatos.publico` | `programasController.js` | ⛔ **adiado para a Fase G** (ver nota abaixo) |
 | `[ ]` | B.7 | `camara.test.js` — cobertura do §14 de `requisitos-camara.md` | `server/__tests__/camara.test.js` | |
 | `[ ]` | B.8 | **Importador da Câmara** (dívida do §2.2): 102 linhas → 80 processos, 8 reuniões, histórico reconstruído | `services/importers/camaraImporter.js` | ⛔ **D-B1**, D-G8 |
 | `[ ]` | B.9 | Tela de importação da Câmara em 4 passos | `src/pages/admin/AdminCamaraImportar.jsx` | ⛔ D-B1 |
@@ -280,6 +280,16 @@ de teste alterada precisa de justificativa escrita no commit.
 **Critério de pronto**: nenhuma referência a `camara_processos`, `camara_eventos`, `portarias`
 ou `camara_atos` no código; suíte verde; **e a Câmara deixa de estar vazia** — os 80 processos
 importados e validados.
+
+> **Nota B.6** — investigada, não aplicada: `contatos` (criada na A.5b) tem **zero linhas** em
+> produção — nenhum dado foi migrado para lá ainda (`pessoas.email_institucional`/`telefones`,
+> `users.priv_mostrar_*`, `programas.email_programa`/`telefone_secretaria`/`whatsapp`,
+> `vinculos.email_funcao` continuam sendo a fonte real). Aposentar `filterSensitivePessoa` agora
+> — a única proteção de privacidade hoje em vigor no endpoint público de programas — sem uma
+> tabela `contatos` populada seria: ou parar de mostrar dado nenhum (regressão funcional), ou
+> remover o filtro sem substituto (regressão de privacidade, pior). A migração de dado para
+> `contatos` é G.1/G.4; `filterSensitivePessoa` só pode aposentar depois que a Fase G povoar a
+> tabela e `programasController.js` passar a ler de lá.
 
 > **Nota B.1** — `camara_eventos` foi removida (linha do tempo do processo passou a usar a
 > tabela genérica `eventos`, `entidade='processo'`); `reuniao_id`/`relatoria_id` viraram
