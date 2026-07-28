@@ -1054,3 +1054,92 @@ INSERT INTO unidades (id, sigla, nome, aliases, interna_prpg) VALUES
   ('uast', 'UAST', 'Unidade Acadêmica de Serra Talhada', '{}', FALSE),
   ('uaeadtec', 'UAEADTec', 'Unidade Acadêmica de Educação a Distância e Tecnologia', '{}', FALSE)
 ON CONFLICT (id) DO NOTHING;
+
+-- ============================= Vocabulários (Fase B.5, G10) =================
+-- Substitui gradualmente os `const` hoje espalhados pelo código (STATUS_
+-- PROCESSO, DELIBERACAO_LABELS, TIPO_EVENTO_LABELS em camaraController.js/
+-- src/constants/camara.js) por dados consultáveis via `GET /api/vocabularios
+-- ?dominio=...`. Aditivo: os controllers continuam validando com os `const`
+-- atuais nesta fase — a migração da validação em si fica para quando cada
+-- domínio precisar (ex.: import de contatos usa `vinculo.papel` na Fase G).
+CREATE TABLE IF NOT EXISTS vocabularios (
+  id          SERIAL PRIMARY KEY,
+  dominio     TEXT NOT NULL,   -- 'processo.situacao'|'processo.pauta.deliberacao'|'evento.tipo'|'vinculo.papel'
+  valor       TEXT NOT NULL,   -- chave estável (SCREAMING_SNAKE)
+  rotulo      TEXT NOT NULL,   -- exibição ('Apto para pauta')
+  cor         TEXT,            -- classe/badge Tailwind
+  ordem       INTEGER DEFAULT 0,
+  ativo       BOOLEAN DEFAULT TRUE,
+  programa_id TEXT REFERENCES programas(id) ON DELETE CASCADE, -- NULL = global
+  meta        JSONB DEFAULT '{}'
+);
+CREATE UNIQUE INDEX IF NOT EXISTS vocabularios_dominio_valor_prog_idx
+  ON vocabularios (dominio, valor, COALESCE(programa_id, ''));
+
+-- Seed a partir dos `const` atuais (camaraController.js/src/constants/camara.js)
+-- e do vocabulário consolidado de vinculo.papel (requisitos-contatos.md §5.3).
+-- vinculo.papel aqui é só o vocabulário-ALVO (rótulos para telas futuras) —
+-- os vinculos.papel gravados hoje (COORDENADOR_ATUAL/ANTERIOR/SUBSTITUTO/TAE)
+-- só migram para esses valores na Fase G, com a conferência da secretaria
+-- que o de-para de SUBSTITUTO exige (D-G2, requisitos-contatos.md §5.3).
+INSERT INTO vocabularios (dominio, valor, rotulo, cor, ordem) VALUES
+  ('processo.situacao', 'RECEBIDO', 'Recebido', 'bg-gray-100 text-gray-700', 0),
+  ('processo.situacao', 'EM_INSTRUCAO', 'Em instrução', 'bg-gray-100 text-gray-700', 1),
+  ('processo.situacao', 'APTO_PAUTA', 'Apto para pauta', 'bg-sky-100 text-sky-800', 2),
+  ('processo.situacao', 'RELATOR_DESIGNADO', 'Com o relator', 'bg-amber-100 text-amber-800', 3),
+  ('processo.situacao', 'PARECER_RECEBIDO', 'Parecer recebido', 'bg-amber-100 text-amber-800', 4),
+  ('processo.situacao', 'PAUTADO', 'Pautado', 'bg-sky-100 text-sky-800', 5),
+  ('processo.situacao', 'DELIBERADO', 'Deliberado', 'bg-indigo-100 text-indigo-800', 6),
+  ('processo.situacao', 'ATO_LAVRADO', 'Ato lavrado', 'bg-indigo-100 text-indigo-800', 7),
+  ('processo.situacao', 'PUBLICADO', 'Publicado', 'bg-green-100 text-green-800', 8),
+  ('processo.situacao', 'RESOLVIDO', 'Resolvido', 'bg-green-100 text-green-800', 9),
+  ('processo.situacao', 'ARQUIVADO', 'Arquivado', 'bg-slate-100 text-slate-700', 10),
+  ('processo.situacao', 'RETIRADO_DE_PAUTA', 'Retirado de pauta', 'bg-rose-100 text-rose-800', 11),
+  ('processo.situacao', 'EM_DILIGENCIA', 'Em diligência', 'bg-rose-100 text-rose-800', 12),
+  ('processo.situacao', 'PEDIDO_VISTA', 'Pedido de vista', 'bg-rose-100 text-rose-800', 13),
+  ('processo.situacao', 'SOBRESTADO', 'Sobrestado', 'bg-rose-100 text-rose-800', 14),
+  ('processo.situacao', 'ADIADO', 'Adiado', 'bg-rose-100 text-rose-800', 15),
+  ('processo.situacao', 'AD_REFERENDUM', 'Ad referendum', 'bg-violet-100 text-violet-800', 16),
+  ('processo.situacao', 'APENSADO', 'Apensado', 'bg-slate-100 text-slate-700', 17),
+  ('processo.situacao', 'ENCAMINHADO_INSTANCIA_SUPERIOR', 'Encaminhado (CEPE/CONSU)', 'bg-violet-100 text-violet-800', 18),
+  ('processo.situacao', 'EM_MANIFESTACAO_JURIDICA', 'Manifestação jurídica', 'bg-rose-100 text-rose-800', 19),
+  ('processo.situacao', 'EM_RECURSO', 'Em recurso', 'bg-rose-100 text-rose-800', 20),
+
+  ('processo.pauta.deliberacao', 'APROVADO', 'Aprovado', NULL, 0),
+  ('processo.pauta.deliberacao', 'APROVADO_RESSALVAS', 'Aprovado com ressalvas', NULL, 1),
+  ('processo.pauta.deliberacao', 'INDEFERIDO', 'Indeferido', NULL, 2),
+  ('processo.pauta.deliberacao', 'DILIGENCIA', 'Convertido em diligência', NULL, 3),
+  ('processo.pauta.deliberacao', 'RETIRADO', 'Retirado', NULL, 4),
+  ('processo.pauta.deliberacao', 'SOBRESTADO', 'Sobrestado', NULL, 5),
+  ('processo.pauta.deliberacao', 'ENCAMINHADO', 'Encaminhado', NULL, 6),
+  ('processo.pauta.deliberacao', 'HOMOLOGADO', 'Homologado', NULL, 7),
+
+  ('evento.tipo', 'TRAMITACAO', 'Tramitação', NULL, 0),
+  ('evento.tipo', 'STATUS', 'Status', NULL, 1),
+  ('evento.tipo', 'RELATORIA', 'Relatoria', NULL, 2),
+  ('evento.tipo', 'PAUTA', 'Pauta', NULL, 3),
+  ('evento.tipo', 'PARECER', 'Parecer', NULL, 4),
+  ('evento.tipo', 'DELIBERACAO', 'Deliberação', NULL, 5),
+  ('evento.tipo', 'ATO', 'Ato', NULL, 6),
+  ('evento.tipo', 'NOTA', 'Nota', NULL, 7),
+  ('evento.tipo', 'COBRANCA', 'Cobrança', NULL, 8),
+
+  ('vinculo.papel', 'COORDENADOR', 'Coordenador(a)', NULL, 0),
+  ('vinculo.papel', 'VICE_COORDENADOR', 'Vice-coordenador(a)', NULL, 1),
+  ('vinculo.papel', 'SUBSTITUTO_EVENTUAL', 'Substituto eventual', NULL, 2),
+  ('vinculo.papel', 'SECRETARIO', 'Secretário(a)', NULL, 3),
+  ('vinculo.papel', 'DOCENTE_PERMANENTE', 'Docente permanente', NULL, 4),
+  ('vinculo.papel', 'DOCENTE_COLABORADOR', 'Docente colaborador', NULL, 5),
+  ('vinculo.papel', 'DOCENTE_VISITANTE', 'Docente visitante', NULL, 6),
+  ('vinculo.papel', 'DISCENTE_MESTRADO', 'Discente de mestrado', NULL, 7),
+  ('vinculo.papel', 'DISCENTE_DOUTORADO', 'Discente de doutorado', NULL, 8),
+  ('vinculo.papel', 'DISCENTE_PROFISSIONAL', 'Discente profissional', NULL, 9),
+  ('vinculo.papel', 'EGRESSO', 'Egresso', NULL, 10),
+  ('vinculo.papel', 'POS_DOUTORANDO', 'Pós-doutorando(a)', NULL, 11),
+  ('vinculo.papel', 'COMISSAO_CPG', 'Comissão de Pós-Graduação', NULL, 12),
+  ('vinculo.papel', 'COMISSAO_BOLSAS', 'Comissão de Bolsas', NULL, 13),
+  ('vinculo.papel', 'COMISSAO_SELECAO', 'Comissão de Seleção', NULL, 14),
+  ('vinculo.papel', 'COMISSAO_PESQUISA', 'Comissão de Pesquisa', NULL, 15),
+  ('vinculo.papel', 'COMISSAO_ORIENTACAO', 'Comissão de Orientação', NULL, 16),
+  ('vinculo.papel', 'COMISSAO_AUTOAVALIACAO', 'Comissão de Autoavaliação', NULL, 17)
+ON CONFLICT (dominio, valor, COALESCE(programa_id, '')) DO NOTHING;

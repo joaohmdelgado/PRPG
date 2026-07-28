@@ -24,6 +24,7 @@ import {
   verificarDeclaracao,
 } from '../controllers/proficienciaController.js';
 import { verificarPublica } from '../controllers/declaracoesController.js';
+import { getVocabularios as getVocabulariosGenerico } from '../controllers/vocabulariosController.js';
 import {
   getVocabularios, getUnidades, createUnidade, updateUnidade, deleteUnidade,
   getProcessos, getMeusProcessos, getProcessoById, createProcesso, updateProcesso,
@@ -314,6 +315,7 @@ const CAMARA_LEITURA = ['Administrator', 'Gestor', 'GestorPrograma'];
 const CAMARA_ESCRITA = ['Administrator', 'Gestor'];
 
 router.get('/camara/vocabularios', protect, requireRole(CAMARA_LEITURA), getVocabularios);
+router.get('/vocabularios', getVocabulariosGenerico); // Fase B.5 (G10): leitura pública, só rótulos
 router.get('/camara/unidades', protect, requireRole(CAMARA_LEITURA), getUnidades);
 router.post('/camara/unidades', protect, requireRole(CAMARA_ESCRITA), createUnidade);
 router.put('/camara/unidades/:id', protect, requireRole(CAMARA_ESCRITA), updateUnidade);

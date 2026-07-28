@@ -16,6 +16,27 @@ const TABLES = `news, editais, resolucoes, formularios, portarias, teses_dissert
 
 export async function resetDb() {
   await pool.query(`TRUNCATE ${TABLES} RESTART IDENTITY CASCADE`);
+  // vocabularios nao entra em TABLES (seed proprio, como unidades), mas
+  // TRUNCATE ... CASCADE em `programas` arrasta junto por causa da FK
+  // vocabularios.programa_id -> programas(id) ON DELETE CASCADE. Reseeda
+  // o vocabulario global (programa_id IS NULL) se ficou vazio.
+  const { rows } = await pool.query('SELECT count(*)::int AS n FROM vocabularios');
+  if (rows[0].n === 0) await reseedVocabularios();
+}
+
+async function reseedVocabularios() {
+  await pool.query(`
+    INSERT INTO vocabularios (dominio, valor, rotulo, cor, ordem) VALUES
+      ('processo.situacao', 'RECEBIDO', 'Recebido', 'bg-gray-100 text-gray-700', 0),
+      ('processo.situacao', 'APTO_PAUTA', 'Apto para pauta', 'bg-sky-100 text-sky-800', 2),
+      ('processo.situacao', 'PUBLICADO', 'Publicado', 'bg-green-100 text-green-800', 8),
+      ('processo.pauta.deliberacao', 'APROVADO', 'Aprovado', NULL, 0),
+      ('evento.tipo', 'TRAMITACAO', 'Tramitação', NULL, 0),
+      ('evento.tipo', 'STATUS', 'Status', NULL, 1),
+      ('vinculo.papel', 'COORDENADOR', 'Coordenador(a)', NULL, 0),
+      ('vinculo.papel', 'SECRETARIO', 'Secretário(a)', NULL, 3)
+    ON CONFLICT (dominio, valor, COALESCE(programa_id, '')) DO NOTHING
+  `);
 }
 
 // Cria um usuário com papel/perfil arbitrários (senha padrão "senha123").

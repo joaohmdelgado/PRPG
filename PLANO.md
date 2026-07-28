@@ -262,7 +262,7 @@ de teste alterada precisa de justificativa escrita no commit.
 | `[x]` | B.2 | Proficiência: emissão via `declaracoes`; **redirect da URL antiga** de verificação | `proficienciaController.js`, `declaracoesController.js` | |
 | `[x]` | B.3 | Programas: `buildCombined` deletado; listagem de pessoas vira `JOIN` | `programasController.js` | ⛔ FK real de `vinculos.pessoa_id` segue adiada (mesma sprawl da A.10 — ver nota no schema) |
 | `[ ]` | B.4 | Portarias/Resoluções/Formulários: telas apontam para `atos` e `documentos` | várias | ⛔ **adiado para a Fase E** (ver nota abaixo) |
-| `[ ]` | B.5 | **G10**: `vocabularios` + endpoint + seed; vocabulário de `vinculo.papel` consolidado com o de-para de `COORDENADOR_ATUAL`/`ANTERIOR`/`SUBSTITUTO`/`TAE` | `db/`, `controllers/` | |
+| `[x]` | B.5 | **G10**: `vocabularios` + endpoint + seed; vocabulário-alvo de `vinculo.papel` seedado | `db/vocabulariosRepo.js`, `controllers/vocabulariosController.js` | ⛔ de-para real de `COORDENADOR_ATUAL`/`ANTERIOR`/`SUBSTITUTO`/`TAE` para os novos valores adiado para a Fase G (depende de D-G2) |
 | `[ ]` | B.6 | `filterSensitivePessoa` aposentada em favor de `contatos.publico` | `programasController.js` | |
 | `[ ]` | B.7 | `camara.test.js` — cobertura do §14 de `requisitos-camara.md` | `server/__tests__/camara.test.js` | |
 | `[ ]` | B.8 | **Importador da Câmara** (dívida do §2.2): 102 linhas → 80 processos, 8 reuniões, histórico reconstruído | `services/importers/camaraImporter.js` | ⛔ **D-B1**, D-G8 |
