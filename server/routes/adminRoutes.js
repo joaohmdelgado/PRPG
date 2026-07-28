@@ -23,6 +23,7 @@ import {
   getInscricaoById, lancarNota, deleteInscricao, gerarDeclaracao, verificarAluno,
   verificarDeclaracao,
 } from '../controllers/proficienciaController.js';
+import { verificarPublica } from '../controllers/declaracoesController.js';
 import {
   getVocabularios, getUnidades, createUnidade, updateUnidade, deleteUnidade,
   getProcessos, getMeusProcessos, getProcessoById, createProcesso, updateProcesso,
@@ -278,7 +279,8 @@ router.delete('/pages/:id', protect, requireProgramaOwnership((id) => pagesRepo.
 router.get('/proficiencia/periodo-aberto', getPeriodoAberto);
 router.post('/proficiencia/verificar-aluno', verificarAluno);
 // Verificação pública de autenticidade da declaração (acessada pelo QR code).
-router.get('/proficiencia/declaracoes/:codigo', verificarDeclaracao);
+router.get('/proficiencia/declaracoes/:codigo', verificarDeclaracao); // legado: QR codes já impressos
+router.get('/declaracoes/:codigo', verificarPublica); // Fase B.2: rota pública única
 // optionalProtect: quando o aluno está logado, o token popula req.user para
 // prefixar nome/CPF do cadastro e vincular a inscrição (alunoId); anônimos
 // ainda podem se inscrever informando os dados no corpo.

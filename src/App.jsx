@@ -34,6 +34,7 @@ const Noticias = lazy(() => import('./pages/Noticias'));
 const Noticia = lazy(() => import('./pages/Noticia'));
 const Edital = lazy(() => import('./pages/Edital'));
 const DeclaracaoProficiencia = lazy(() => import('./pages/DeclaracaoProficiencia'));
+const VerificarDeclaracao = lazy(() => import('./pages/VerificarDeclaracao'));
 const ProgramaSite = lazy(() => import('./pages/programa/ProgramaSite'));
 
 // Admin
@@ -242,6 +243,7 @@ function App() {
           <Route path="/proficiencia/inscricao" element={<ProficienciaInscricao />} />
           <Route path="/proficiencia/inscricao/sucesso" element={<ProficienciaInscricaoSucesso />} />
           <Route path="/declaracoes/proficiencia/:codigo" element={<DeclaracaoProficiencia />} />
+          <Route path="/verificar/:codigo" element={<VerificarDeclaracao />} />
           <Route path="/relatorios-autoavaliacao" element={<RelatoriosAutoavaliacao />} />
           <Route path="/especializacao" element={<Especializacao />} />
           <Route path="/residencia-profissional" element={<ResidenciaProfissional />} />

@@ -1,12 +1,12 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
-import { randomUUID } from 'crypto';
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import { isPlainObject } from '../utils/sanitize.js';
 import { inscricoesProficienciaRepo, editaisRepo, usersRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
+import { emitir, verificar } from '../services/declaracoes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS_DIR = path.join(__dirname, '../assets');
@@ -14,7 +14,12 @@ const ASSETS_DIR = path.join(__dirname, '../assets');
 // Origem pública do site (onde mora a página de verificação). Em produção,
 // definir PUBLIC_SITE_URL (ex.: https://prpg.ufrpe.br); em dev cai no Vite local.
 const PUBLIC_SITE_URL = (process.env.PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/+$/, '');
-const urlVerificacao = (codigo) => `${PUBLIC_SITE_URL}/declaracoes/proficiencia/${codigo}`;
+// Fase B.2: as declarações emitidas a partir daqui apontam para a página
+// pública única (`/verificar/:codigo`, ver services/declaracoes.js e
+// server/controllers/declaracoesController.js); a rota antiga
+// (`/declaracoes/proficiencia/:codigo`) permanece só como redirect, para os
+// QR codes já impressos com o link antigo.
+const urlVerificacao = (codigo) => `${PUBLIC_SITE_URL}/verificar/${codigo}`;
 
 // ============================ Regras de domínio ============================
 
@@ -249,20 +254,41 @@ export const gerarDeclaracao = async (req, res) => {
     return res.status(409).json({ message: 'Nota insuficiente: não há declaração a emitir.' });
   }
 
-  // Código de verificação (UUID público) e data de emissão são congelados na
-  // PRIMEIRA emissão: a partir daí o PDF é reproduzível e a página pública
-  // confere com o papel. Reemissões reaproveitam os mesmos valores.
-  let codigo = insc.codigoVerificacao;
-  let emitidaEm = insc.emitidaEm;
-  if (!codigo || !emitidaEm) {
-    codigo = codigo || randomUUID();
-    emitidaEm = emitidaEm || new Date().toISOString();
-    await inscricoesProficienciaRepo.update(insc.id, { codigoVerificacao: codigo, emitidaEm }, req.user?.id);
-  }
-
   // Data da prova vem do edital que abriu o período (proficienciaDataProva).
   const edital = insc.periodoId ? await editaisRepo.getById(insc.periodoId) : null;
-  const dataProva = dataPorExtenso(edital?.proficienciaDataProva);
+  const dataProvaIso = edital?.proficienciaDataProva || null;
+  const dataProva = dataPorExtenso(dataProvaIso);
+
+  // declaracoes.pessoa_id tem FK real para pessoas(id) — insc.alunoId é
+  // users.id (nem sempre igual), então precisa resolver via users.pessoa_id.
+  const alunoUser = insc.alunoId ? await usersRepo.getById(insc.alunoId) : null;
+
+  // Emissão via serviço genérico de declarações (Fase B.2, G6): código e data
+  // de emissão são congelados na PRIMEIRA emissão — reemissões reaproveitam
+  // os mesmos valores e apenas atualizam o snapshot em `dados`.
+  const declaracao = await emitir({
+    tipo: 'proficiencia',
+    entidade: 'inscricao_proficiencia',
+    entidadeId: insc.id,
+    pessoaId: alunoUser?.pessoaId || null,
+    dados: {
+      nome: insc.nome, cpf: insc.cpf, nivel: insc.nivel, linguas: insc.linguas,
+      nota: Number(insc.nota), resultado: insc.resultado,
+      resultadoLabel: RESULTADO_LABEL[insc.resultado], dataProva: dataProvaIso,
+    },
+  }, req.user?.id);
+  const codigo = declaracao.codigo;
+  const emitidaEm = declaracao.emitidaEm;
+  // Validade (4 anos) só pode ser calculada depois de saber a data de emissão
+  // congelada (é o `now()` do banco na 1ª emissão) — grava uma única vez.
+  if (!declaracao.validaAte) {
+    const emissaoIso = new Date(emitidaEm).toISOString().slice(0, 10);
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(emissaoIso);
+    if (m) {
+      const validaAte = `${Number(m[1]) + 4}-${m[2]}-${m[3]}`;
+      await query('UPDATE declaracoes SET valida_ate = $1 WHERE id = $2', [validaAte, declaracao.id]);
+    }
+  }
 
   const tipo = RESULTADO_LABEL[insc.resultado];
   const linguasAdj = linguasPorExtenso(insc.linguas);
@@ -298,9 +324,9 @@ export const gerarDeclaracao = async (req, res) => {
   // ----- Cabeçalho: brasão da República + identificação institucional -----
   const brasao = path.join(ASSETS_DIR, 'brasao-republica.png');
   if (existsSync(brasao)) {
-    doc.image(brasao, doc.page.width / 2 - 30, doc.y, { width: 60 });
+    doc.image(brasao, doc.page.width / 2 - 40, doc.y, { width: 80 });
     doc.moveDown(0.5);
-    doc.y += 38;
+    doc.y += 48;
   }
   doc.fontSize(11).font('Helvetica-Bold')
     .text('UNIVERSIDADE FEDERAL RURAL DE PERNAMBUCO', { align: 'center' })
@@ -309,18 +335,18 @@ export const gerarDeclaracao = async (req, res) => {
     .text('NÚCLEO DE INTERNACIONALIZAÇÃO - NINTER/INSTITUTO IPÊ', { align: 'center' });
 
   doc.moveDown(4);
-  doc.fontSize(16).font('Helvetica-Bold').text('DECLARAÇÃO', { align: 'center' });
-  doc.moveDown(4);
+  doc.fontSize(20).font('Helvetica-Bold').text('DECLARAÇÃO', { align: 'center' });
+  doc.moveDown(1.5);
 
   // ----- Corpo (justificado) -----
-  // Tamanhos: texto base 12, negritos 13, nome do inscrito 15
+  // Tamanhos: texto base 12, negritos 13, nome do inscrito 16
   const szBase = 12;
   const szBold = 13;
-  const szNome = 13;
+  const szNome = 16;
 
   doc.fontSize(szBase).font('Helvetica');
-  doc.text('Declaramos, para os devidos fins, que ', { align: 'justify', lineGap: 6, continued: true })
-    .fontSize(szNome).font('Helvetica-Bold').text(insc.nome, { lineGap: 6, continued: true })
+  doc.text('Declaramos, para os devidos fins, que ', { align: 'justify', lineGap: 8, continued: true })
+    .fontSize(szNome).font('Helvetica-Bold').text(insc.nome, { lineGap: 8, continued: true })
     .fontSize(szBase).font('Helvetica').text(', CPF nº ', { continued: true })
     .fontSize(szBold).font('Helvetica-Bold').text(insc.cpf, { continued: true })
     .fontSize(szBase).font('Helvetica').text(', realizou o ', { continued: true })
@@ -338,8 +364,8 @@ export const gerarDeclaracao = async (req, res) => {
     .fontSize(szBold).font('Helvetica-Bold').text('APROVADO(A)', { continued: true })
     .fontSize(szBase).font('Helvetica').text('.', { continued: false, align: 'justify' });
 
-  doc.moveDown(1.5);
-  doc.fontSize(szBase).font('Helvetica').text('Esta declaração terá ', { align: 'justify', lineGap: 6, continued: true })
+  doc.moveDown(1.0);
+  doc.fontSize(szBase).font('Helvetica').text('Esta declaração terá ', { align: 'justify', lineGap: 8, continued: true })
     .fontSize(szBold).font('Helvetica-Bold').text('validade de 4 (quatro) anos', { continued: true })
     .fontSize(szBase).font('Helvetica').text(', contados a partir da data de sua emissão.', { continued: false, align: 'justify' });
 
@@ -361,7 +387,7 @@ export const gerarDeclaracao = async (req, res) => {
   // ----- Rodapé institucional (fixo no fim da página) -----
   const footerLineHeight = 11;
   const footerTotalH = footerLineHeight * 3 + 4;
-  const footerY = doc.page.height - doc.page.margins.bottom - footerTotalH;
+  const footerY = doc.page.height - 65 - footerTotalH;
   const footerX = doc.page.margins.left;
   const footerW = doc.page.width - doc.page.margins.left - doc.page.margins.right;
 
@@ -370,7 +396,7 @@ export const gerarDeclaracao = async (req, res) => {
   // colidir com a assinatura (a imagem da assinatura não avança o doc.y).
   const qrSize = 64;
   const authBlockH = qrSize + 6;
-  const authY = footerY - authBlockH - 16;
+  const authY = footerY - authBlockH - 4;
   const authText =
     'Documento emitido eletronicamente. Verifique a autenticidade lendo o QR code ao lado, '
     + 'ou acesse o endereço e confira os dados desta declaração:';
@@ -397,55 +423,33 @@ export const gerarDeclaracao = async (req, res) => {
 
 // ===================== Verificação pública da declaração =====================
 
-// Mascara o CPF para exibição pública (LGPD): mantém só os blocos do meio.
-// '123.456.789-00' / '12345678900' -> '***.456.789-**'
-const mascararCpf = (cpf) => {
-  const d = String(cpf || '').replace(/\D/g, '');
-  if (d.length !== 11) return null;
-  return `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**`;
-};
-
-// Soma anos a uma data ISO e devolve 'YYYY-MM-DD'.
-const somarAnos = (iso, anos) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
-  if (!m) return null;
-  const [, ano, mes, dia] = m;
-  return `${Number(ano) + anos}-${mes}-${dia}`;
-};
-
-// Endpoint PÚBLICO: dado o código de verificação, devolve os dados canônicos da
-// declaração para conferência contra o documento impresso. Sem dados sensíveis
-// completos (CPF mascarado; sem comprovantes nem id interno).
+// Fase B.2: a verificação em si migrou para a rota genérica única
+// (`GET /api/declaracoes/:codigo`, ver declaracoesController.verificarPublica).
+// Esta rota específica de proficiência é mantida só para os QR codes já
+// impressos com o link antigo (`/api/proficiencia/declaracoes/:codigo`) —
+// delega para o mesmo serviço, filtrando por tipo.
 export const verificarDeclaracao = async (req, res) => {
   const codigo = String(req.params.codigo || '').trim();
   if (!codigo) return res.status(400).json({ message: 'Código não informado.' });
 
-  const { rows } = await query(
-    'SELECT * FROM inscricoes_proficiencia WHERE codigo_verificacao = $1 LIMIT 1',
-    [codigo]
-  );
-  const r = rows[0];
-  // Só é "autêntica" se existe, foi avaliada e teve resultado emissível.
-  if (!r || r.status !== 'AVALIADO' || !r.resultado || r.resultado === 'INSUFICIENTE' || !r.emitida_em) {
+  const declaracao = await verificar(codigo);
+  if (!declaracao || declaracao.tipo !== 'proficiencia') {
     return res.status(404).json({ valido: false, message: 'Declaração não encontrada ou inválida.' });
   }
 
-  const edital = r.periodo_id ? await editaisRepo.getById(r.periodo_id) : null;
-  const emissaoIso = new Date(r.emitida_em).toISOString().slice(0, 10);
-  const validadeIso = somarAnos(emissaoIso, 4);
-
   res.json({
     valido: true,
-    nome: r.nome,
-    cpf: mascararCpf(r.cpf),
-    nivel: r.nivel,
-    linguas: r.linguas ?? [],
-    nota: r.nota != null ? Number(r.nota) : null,
-    resultado: r.resultado,
-    resultadoLabel: RESULTADO_LABEL[r.resultado] || r.resultado,
-    dataProva: edital?.proficienciaDataProva || null,
-    dataEmissao: emissaoIso,
-    dataValidade: validadeIso,
-    codigoVerificacao: r.codigo_verificacao,
+    ...declaracao.dados,
+    cpf: mascararCpfCompat(declaracao.dados?.cpf),
+    dataEmissao: new Date(declaracao.emitidaEm).toISOString().slice(0, 10),
+    dataValidade: declaracao.validaAte,
+    codigoVerificacao: declaracao.codigo,
   });
+};
+
+// Mascara o CPF para exibição pública (LGPD): mantém só os blocos do meio.
+const mascararCpfCompat = (cpf) => {
+  const d = String(cpf || '').replace(/\D/g, '');
+  if (d.length !== 11) return null;
+  return `***.${d.slice(3, 6)}.${d.slice(6, 9)}-**`;
 };

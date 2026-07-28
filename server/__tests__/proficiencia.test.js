@@ -169,4 +169,33 @@ describe('avaliação e declaração', () => {
     const nota = await asAluno(request(app).put(`/api/proficiencia/inscricoes/${id}/nota`)).send({ nota: 8 });
     expect(nota.status).toBe(403);
   });
+
+  it('emite via declaracoes (B.2): verificável tanto pela rota genérica quanto pela legada', async () => {
+    const id = await inscrever();
+    await asAdmin(request(app).put(`/api/proficiencia/inscricoes/${id}/nota`)).send({ nota: 8 });
+    await asAdmin(request(app).get(`/api/proficiencia/inscricoes/${id}/declaracao`));
+
+    const { rows } = await pool.query(
+      "SELECT codigo FROM declaracoes WHERE entidade = 'inscricao_proficiencia' AND entidade_id = $1",
+      [id]
+    );
+    expect(rows).toHaveLength(1);
+    const codigo = rows[0].codigo;
+
+    const generica = await request(app).get(`/api/declaracoes/${codigo}`);
+    expect(generica.status).toBe(200);
+    expect(generica.body.valido).toBe(true);
+    expect(generica.body.resultadoLabel).toBe('PROFICIÊNCIA');
+    expect(generica.body.cpf).toMatch(/^\*\*\*\./);
+
+    const legada = await request(app).get(`/api/proficiencia/declaracoes/${codigo}`);
+    expect(legada.status).toBe(200);
+    expect(legada.body.valido).toBe(true);
+  });
+
+  it('rota genérica devolve 404 para código inexistente', async () => {
+    const res = await request(app).get('/api/declaracoes/codigo-que-nao-existe');
+    expect(res.status).toBe(404);
+    expect(res.body.valido).toBe(false);
+  });
 });

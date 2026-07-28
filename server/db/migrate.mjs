@@ -8,6 +8,7 @@ import {
   calendariosRepo, taxonomiasRepo, gruposRepo,
 } from './repositories.js';
 import { backfillPessoas } from './backfill-pessoas.mjs';
+import { backfillDeclaracoesProficiencia } from './backfill-declaracoes-proficiencia.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, '../data');
@@ -154,6 +155,10 @@ async function main() {
   console.log('Vinculando pessoas aos usuarios (Fase A.2, G1)...');
   const { criadas, total } = await backfillPessoas();
   console.log(`  pessoas: ${criadas}/${total}`);
+
+  console.log('Recriando declaracoes retroativas de proficiencia (Fase B.2)...');
+  const declProf = await backfillDeclaracoesProficiencia();
+  console.log(`  declaracoes: ${declProf.criadas}/${declProf.total}`);
 
   console.log('\nMigração concluída.');
   await pool.end();
