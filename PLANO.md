@@ -316,14 +316,22 @@ importados e validados.
 | `[x]` | G.3 | Rotas e permissões (Admin/Gestor por enquanto) | `routes/adminRoutes.js` | ⛔ escopo por `GestorPrograma` adiado — D-G7 não respondida |
 | `[ ]` | G.4 | Importador da planilha (47 programas, 113 pessoas, 157 e-mails, 72 telefones) | `services/importers/contatosImporter.js` | ⛔ D-G2..D-G6, D-G8 |
 | `[x]` | G.5 | Tela de agenda, indexada por cargo | `src/pages/admin/AdminContatos.jsx` | verificado no navegador com dado real de produção |
-| `[ ]` | G.6 | Ficha da pessoa (dados, contatos, todos os vínculos, expedientes) | `src/pages/admin/AdminPessoa.jsx` | |
-| `[ ]` | G.7 | Bloco de contatos no formulário de programa e de usuário | telas existentes | |
+| `[ ]` | G.6 | Ficha da pessoa (dados, contatos, todos os vínculos, expedientes) | `src/pages/admin/AdminPessoa.jsx` | ⛔ não é decisão pendente — deixado para depois por escopo/tempo desta sessão (ver nota) |
+| `[ ]` | G.7 | Bloco de contatos no formulário de programa e de usuário | telas existentes | ⛔ idem — a funcionalidade já existe via G.5 (ver nota) |
 | `[ ]` | G.8 | Importação em 5 passos | `src/pages/admin/AdminContatosImportar.jsx` | ⛔ depende de G.4 |
 | `[ ]` | G.9 | Microsite: seção de contato lendo `contatos.publico` | `src/components/programa/` | ⛔ D-G1 |
 
 **Critério de pronto**: os 31 programas sem sigla passam a ter sigla; a agenda responde "todos
 os coordenadores" em um clique, com o botão de copiar e-mails funcionando; nenhum celular
 pessoal aparece em endpoint público (teste explícito).
+
+> **Nota G.6/G.7** — a capacidade central (ler/criar/editar/remover contato por pessoa ou por
+> programa) já está entregue e verificada pela tela de agenda (G.5) e pela API
+> (`contatosController.js`). G.6 (uma página dedicada `/admin/pessoas/:id` reunindo dados,
+> contatos, vínculos, relatorias da Câmara e supervisões de pós-doc) e G.7 (embutir um bloco de
+> contatos dentro de `AdminProgramaForm.jsx`/`AdminUserForm.jsx`, formulários de 1200/700 linhas)
+> são conveniência de UX, não uma lacuna funcional bloqueando outra fase — deixados para depois
+> por escopo desta sessão, não por decisão pendente.
 
 ---
 
@@ -517,7 +525,7 @@ em lote, que **muda o procedimento administrativo**.
 |---|---|---|---|---|---|
 | A — Núcleo | 18 | D-A1, D-A2, D-A3, D-A4, D-E1 | 27/07/2026 | 27/07/2026 | ✅ concluída (D-A1/D-A4 conforme recomendação; FK real de `vinculos.pessoa_id` adiada para B.3 — ver A.10) |
 | B — Refit + Câmara | 10 | D-B1, D-G8, D-A4 | 28/07/2026 | 28/07/2026 | 🟡 7/10 feitos (B.1-B.3, B.5, B.7 aplicados; B.4/B.6 investigados e adiados p/ Fase E/G; B.8-B.10 bloqueados por D-B1) |
-| G — Contatos | 9 | D-G1..D-G8 | | | ⬜ |
+| G — Contatos | 9 | D-G1..D-G8 | 28/07/2026 | 28/07/2026 | 🟡 5/9 feitos (G.1-G.3, G.5 aplicados e verificados no navegador; G.6/G.7 deixados por escopo; G.4/G.8 bloqueados por D-G2..D-G8; G.9 bloqueado por D-G1) |
 | E — Expedientes | 14 | D-E1..D-E3, D-E5..D-E8 | | | ⬜ |
 | C — PNPD | 8 | D-C1..D-C4, D-C6..D-C9 | | | ⬜ |
 | I — Notificações | 6 | **D-C5** | | | ⬜ |
