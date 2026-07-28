@@ -128,7 +128,7 @@ export const getProcessos = async (req, res) => {
         r.relator_nome, r.prazo_devolucao AS relator_prazo_devolucao, r.data_devolucao AS relator_data_devolucao,
         (SELECT COUNT(*)::int FROM camara_pauta_itens pi WHERE pi.processo_id = p.id) AS pautas_count,
         (r.prazo_devolucao IS NOT NULL AND r.data_devolucao IS NULL
-          AND r.prazo_devolucao < to_char(CURRENT_DATE, 'YYYY-MM-DD')) AS atrasado
+          AND r.prazo_devolucao < CURRENT_DATE) AS atrasado
       FROM processos p
       LEFT JOIN unidades u ON u.id = p.unidade_responsavel_id
       LEFT JOIN unidades l ON l.id = p.localizacao_id

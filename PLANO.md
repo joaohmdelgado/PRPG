@@ -264,7 +264,7 @@ de teste alterada precisa de justificativa escrita no commit.
 | `[ ]` | B.4 | Portarias/Resoluções/Formulários: telas apontam para `atos` e `documentos` | várias | ⛔ **adiado para a Fase E** (ver nota abaixo) |
 | `[x]` | B.5 | **G10**: `vocabularios` + endpoint + seed; vocabulário-alvo de `vinculo.papel` seedado | `db/vocabulariosRepo.js`, `controllers/vocabulariosController.js` | ⛔ de-para real de `COORDENADOR_ATUAL`/`ANTERIOR`/`SUBSTITUTO`/`TAE` para os novos valores adiado para a Fase G (depende de D-G2) |
 | `[ ]` | B.6 | `filterSensitivePessoa` aposentada em favor de `contatos.publico` | `programasController.js` | ⛔ **adiado para a Fase G** (ver nota abaixo) |
-| `[ ]` | B.7 | `camara.test.js` — cobertura do §14 de `requisitos-camara.md` | `server/__tests__/camara.test.js` | |
+| `[x]` | B.7 | `camara.test.js` — cobertura do §14 de `requisitos-camara.md` | `server/__tests__/camara.test.js` | ⛔ item "importador" do §14 fora do escopo (⛔ D-B1) |
 | `[ ]` | B.8 | **Importador da Câmara** (dívida do §2.2): 102 linhas → 80 processos, 8 reuniões, histórico reconstruído | `services/importers/camaraImporter.js` | ⛔ **D-B1**, D-G8 |
 | `[ ]` | B.9 | Tela de importação da Câmara em 4 passos | `src/pages/admin/AdminCamaraImportar.jsx` | ⛔ D-B1 |
 | `[ ]` | B.10 | Rodar a importação e validar 10 processos com a secretaria | — | |
