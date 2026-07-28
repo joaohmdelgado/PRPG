@@ -311,9 +311,9 @@ importados e validados.
 
 | | # | Ação | Arquivo | Bloqueio |
 |---|---|---|---|---|
-| `[ ]` | G.1 | Repositório de contatos + normalização de e-mail e telefone (DDD) | `db/contatosRepo.js`, `utils/contato.js` | |
-| `[ ]` | G.2 | Controller: CRUD, agenda por cargo, "copiar e-mails do cargo", exportar XLSX | `controllers/contatosController.js` | |
-| `[ ]` | G.3 | Rotas e permissões (`GestorPrograma` edita os do seu programa) | `routes/adminRoutes.js` | ⛔ D-G7 |
+| `[x]` | G.1 | Repositório de contatos + normalização de e-mail e telefone (DDD) | `db/contatosRepo.js`, `utils/contato.js` | já existia (A.5b) |
+| `[x]` | G.2 | Controller: CRUD, agenda por cargo, "copiar e-mails do cargo" (front monta a partir da agenda), exportar XLSX | `controllers/contatosController.js` | |
+| `[x]` | G.3 | Rotas e permissões (Admin/Gestor por enquanto) | `routes/adminRoutes.js` | ⛔ escopo por `GestorPrograma` adiado — D-G7 não respondida |
 | `[ ]` | G.4 | Importador da planilha (47 programas, 113 pessoas, 157 e-mails, 72 telefones) | `services/importers/contatosImporter.js` | ⛔ D-G2..D-G6, D-G8 |
 | `[ ]` | G.5 | Tela de agenda, indexada por cargo | `src/pages/admin/AdminContatos.jsx` | |
 | `[ ]` | G.6 | Ficha da pessoa (dados, contatos, todos os vínculos, expedientes) | `src/pages/admin/AdminPessoa.jsx` | |

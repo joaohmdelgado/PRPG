@@ -26,6 +26,10 @@ import {
 import { verificarPublica } from '../controllers/declaracoesController.js';
 import { getVocabularios as getVocabulariosGenerico } from '../controllers/vocabulariosController.js';
 import {
+  getAgenda, getContadores, exportAgendaXlsx, getContatosByPessoa, createContatoPessoa,
+  getContatosByPrograma, createContatoPrograma, updateContato, deleteContato,
+} from '../controllers/contatosController.js';
+import {
   getVocabularios, getUnidades, createUnidade, updateUnidade, deleteUnidade,
   getProcessos, getMeusProcessos, getProcessoById, createProcesso, updateProcesso,
   patchStatus, patchLocalizacao, deleteProcesso, addEvento, addRelatoria,
@@ -348,5 +352,20 @@ router.delete('/camara/processos/:id', protect, requireRole(['Administrator']), 
 router.post('/camara/processos/:id/eventos', protect, requireRole(CAMARA_ESCRITA), addEvento);
 router.post('/camara/processos/:id/relatorias', protect, requireRole(CAMARA_ESCRITA), addRelatoria);
 router.post('/camara/processos/:id/atos', protect, requireRole(CAMARA_ESCRITA), addAto);
+
+// ===================== Agenda de contatos (Fase G) =====================
+// Ver requisitos-contatos.md §6. Escopo Admin/Gestor por enquanto: o próprio
+// programa manter seus contatos via GestorPrograma é D-G7, ainda em aberto.
+const CONTATOS_ESCRITA = ['Administrator', 'Gestor'];
+
+router.get('/contatos/agenda', protect, requireRole(CONTATOS_ESCRITA), getAgenda);
+router.get('/contatos/agenda/contadores', protect, requireRole(CONTATOS_ESCRITA), getContadores);
+router.get('/contatos/agenda/exportar.xlsx', protect, requireRole(CONTATOS_ESCRITA), exportAgendaXlsx);
+router.get('/contatos/pessoa/:pessoaId', protect, requireRole(CONTATOS_ESCRITA), getContatosByPessoa);
+router.post('/contatos/pessoa/:pessoaId', protect, requireRole(CONTATOS_ESCRITA), createContatoPessoa);
+router.get('/contatos/programa/:programaId', protect, requireRole(CONTATOS_ESCRITA), getContatosByPrograma);
+router.post('/contatos/programa/:programaId', protect, requireRole(CONTATOS_ESCRITA), createContatoPrograma);
+router.put('/contatos/:id', protect, requireRole(CONTATOS_ESCRITA), updateContato);
+router.delete('/contatos/:id', protect, requireRole(CONTATOS_ESCRITA), deleteContato);
 
 export default router;
