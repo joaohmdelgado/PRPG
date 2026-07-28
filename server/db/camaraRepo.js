@@ -2,33 +2,12 @@
 // não são CRUD de tabela única (agregações e joins próprios) — ver
 // requisitos-camara.md §7.1. As entidades de tabela única (processos,
 // reuniões, unidades, atos) usam a fábrica createRepository em repositories.js.
+// Fase B.1: a linha do tempo do processo (era camara_eventos) migrou para a
+// tabela genérica `eventos` — ver db/eventosRepo.js (entidade='processo').
 import crypto from 'crypto';
 import { query } from './pool.js';
 
 const genId = (prefix) => `${prefix}-${crypto.randomUUID()}`;
-
-// Histórico append-only de tramitação do processo (§4, §7). Nunca é
-// atualizado ou apagado — cada evento é um fato datado e imutável.
-export const camaraEventosRepo = {
-  async listByProcesso(processoId) {
-    const { rows } = await query(
-      'SELECT * FROM camara_eventos WHERE processo_id = $1 ORDER BY data ASC, criado_em ASC',
-      [processoId]
-    );
-    return rows;
-  },
-  async create(data, actor) {
-    const id = data.id || genId('cev');
-    const { rows } = await query(
-      `INSERT INTO camara_eventos
-         (id, processo_id, tipo, data, unidade_id, descricao, reuniao_id, relatoria_id, anexo_url, criado_por)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
-      [id, data.processoId, data.tipo, data.data, data.unidadeId || null, data.descricao || null,
-       data.reuniaoId || null, data.relatoriaId || null, data.anexoUrl || null, actor || null]
-    );
-    return rows[0];
-  },
-};
 
 // Relação N:N processo <-> reunião (pauta). Substitui a cópia manual entre
 // abas da planilha: repautar vira criar um vínculo, não recopiar o processo.

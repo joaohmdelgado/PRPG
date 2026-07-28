@@ -258,7 +258,7 @@ de teste alterada precisa de justificativa escrita no commit.
 
 | | # | Ação | Arquivo | Bloqueio |
 |---|---|---|---|---|
-| `[ ]` | B.1 | Câmara: `camaraEventosRepo` → `eventosRepo`; `camara_atos` → `atos`; `*_url` → `anexos` | `camaraController.js`, `camaraRepo.js` | |
+| `[x]` | B.1 | Câmara: `camaraEventosRepo` → `eventosRepo`; `camaraProcessosRepo`/`camaraUnidadesRepo` → `processosRepo`/`unidadesRepo` | `camaraController.js`, `camaraReunioesController.js`, `camaraRepo.js` | ⛔ `camara_atos`→`atos` e `*_url`→`anexos` **adiados para a Fase E** (ver nota abaixo) |
 | `[ ]` | B.2 | Proficiência: emissão via `declaracoes`; **redirect da URL antiga** de verificação | `proficienciaController.js` | |
 | `[ ]` | B.3 | Programas: `buildCombined` deletado; listagem de pessoas vira `JOIN` | `programasController.js` | |
 | `[ ]` | B.4 | Portarias/Resoluções/Formulários: telas apontam para `atos` e `documentos` | várias | ⛔ D-A4 |
@@ -272,6 +272,18 @@ de teste alterada precisa de justificativa escrita no commit.
 **Critério de pronto**: nenhuma referência a `camara_processos`, `camara_eventos`, `portarias`
 ou `camara_atos` no código; suíte verde; **e a Câmara deixa de estar vazia** — os 80 processos
 importados e validados.
+
+> **Nota B.1** — `camara_eventos` foi removida (linha do tempo do processo passou a usar a
+> tabela genérica `eventos`, `entidade='processo'`); `reuniao_id`/`relatoria_id` viraram
+> `eventos.origem_tipo`/`origem_id`, `anexo_url` crua guardada em `eventos.dados` (JSONB)
+> até a Fase E/G migrar o upload de anexos do processo para `arquivos`/`anexos`.
+> `camara_atos` **não** foi migrada para `atos`: a tabela `atos` é definida como "expedido
+> pela PRPG" com série/sequencial obrigatórios (ver `arquitetura-dados.md` §5.6), mas
+> `camara_atos` mistura atos próprios (PORTARIA, DESPACHO) com resoluções externas
+> (RESOLUCAO_CEPE, RESOLUCAO_CONSU, DECISAO_SEG) que não têm numeração PRPG — forçar um
+> `serie_id`/`sequencial` provisório agora colidiria com o seed real de séries que a E.4
+> faz (bloqueada por D-E1). Migração de `camara_atos` incorporada ao escopo de **E.11**
+> (que já migra `portarias` → `atos`).
 
 ---
 
@@ -313,7 +325,7 @@ pessoal aparece em endpoint público (teste explícito).
 | `[ ]` | E.8 | Ficha com referências bidirecionais e linha do tempo | `src/pages/admin/AdminAto.jsx` | |
 | `[ ]` | E.9 | Administração de séries | `src/pages/admin/AdminAtoSeries.jsx` | |
 | `[ ]` | E.10 | Importação em 5 passos, com conciliação de editais | `src/pages/admin/AdminAtosImportar.jsx` | |
-| `[ ]` | E.11 | Migração de `portarias` → `atos`; `AdminPortarias` aposentada | várias | |
+| `[ ]` | E.11 | Migração de `portarias` → `atos` **e de `camara_atos`** (adiada da B.1 — ver nota); `AdminPortarias` aposentada | várias | |
 | `[ ]` | E.12 | `editais.ato_id` no formulário de edital | `AdminEditalForm.jsx` | ⛔ D-E5 |
 | `[ ]` | E.13 | Exportação XLSX, menu, constantes | — | |
 | `[ ]` | E.14 | **Preencher retroativamente** `vinculos.ato_id` e as datas de mandato a partir das portarias importadas (§3.2) | `atosImporter.js` | |

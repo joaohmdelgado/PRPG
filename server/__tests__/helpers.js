@@ -9,7 +9,7 @@ const TABLES = `news, editais, resolucoes, formularios, portarias, teses_dissert
   calendarios, calendario_milestones, programas, programa_paginas, pessoas,
   modalidades, vinculos, metricas_anuais,
   inscricoes_proficiencia,
-  processos, camara_eventos, camara_reunioes, camara_pauta_itens,
+  processos, camara_reunioes, camara_pauta_itens,
   camara_relatorias, camara_atos,
   arquivos, anexos, contatos, eventos,
   ato_series, atos, ato_referencias, documentos, declaracoes`;

@@ -2,8 +2,9 @@
 // Ver requisitos-camara.md (raiz do projeto) para o levantamento completo.
 // Reuniões e pauta ficam em camaraReunioesController.js.
 import { isPlainObject } from '../utils/sanitize.js';
-import { camaraProcessosRepo, camaraUnidadesRepo, camaraAtosRepo } from '../db/repositories.js';
-import { camaraEventosRepo, camaraPautaItensRepo, camaraRelatoriasRepo } from '../db/camaraRepo.js';
+import { processosRepo, unidadesRepo, camaraAtosRepo } from '../db/repositories.js';
+import { camaraPautaItensRepo, camaraRelatoriasRepo } from '../db/camaraRepo.js';
+import { eventosRepo } from '../db/eventosRepo.js';
 import { query } from '../db/pool.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { NUP_REGEX, validarNumeroProcesso } from '../utils/nup.js';
@@ -27,7 +28,7 @@ export const getVocabularios = async (req, res) => {
 
 // ============================ Unidades/setores =========================
 export const getUnidades = async (req, res) => {
-  res.json(await camaraUnidadesRepo.getAll());
+  res.json(await unidadesRepo.getAll());
 };
 
 const slugify = (s) => String(s || '')
@@ -41,7 +42,7 @@ export const createUnidade = async (req, res) => {
   if (!data.nome || !String(data.nome).trim()) return res.status(400).json({ message: 'O nome é obrigatório.' });
   if (!data.id) data.id = slugify(data.sigla) + '-' + Date.now().toString(36);
   try {
-    res.status(201).json(await camaraUnidadesRepo.create(data));
+    res.status(201).json(await unidadesRepo.create(data));
   } catch (e) {
     res.status(500).json({ message: 'Erro ao criar unidade.', error: e.message });
   }
@@ -49,13 +50,13 @@ export const createUnidade = async (req, res) => {
 
 export const updateUnidade = async (req, res) => {
   if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
-  const updated = await camaraUnidadesRepo.update(req.params.id, req.body);
+  const updated = await unidadesRepo.update(req.params.id, req.body);
   if (updated) res.json(updated);
   else res.status(404).json({ message: 'Unidade não encontrada.' });
 };
 
 export const deleteUnidade = async (req, res) => {
-  const ok = await camaraUnidadesRepo.remove(req.params.id);
+  const ok = await unidadesRepo.remove(req.params.id);
   if (ok) res.json({ message: 'Unidade removida com sucesso.' });
   else res.status(404).json({ message: 'Unidade não encontrada.' });
 };
@@ -171,10 +172,10 @@ const assertAcessoProcesso = async (req, res, processo) => {
 };
 
 export const getProcessoById = async (req, res) => {
-  const processo = await camaraProcessosRepo.getById(req.params.id);
+  const processo = await processosRepo.getById(req.params.id);
   if (!(await assertAcessoProcesso(req, res, processo))) return;
   const [eventos, relatorias, pautas, atos] = await Promise.all([
-    camaraEventosRepo.listByProcesso(processo.id),
+    eventosRepo.listByEntidade('processo', processo.id),
     camaraRelatoriasRepo.listByProcesso(processo.id),
     camaraPautaItensRepo.listByProcesso(processo.id),
     camaraAtosRepo.getAll().then((all) => all.filter((a) => a.processoId === processo.id)),
@@ -194,10 +195,10 @@ export const createProcesso = async (req, res) => {
   if (isProgramaScoped(req.user)) data.programaId = req.user.programaId;
 
   try {
-    const created = await camaraProcessosRepo.create(data, req.user?.id);
+    const created = await processosRepo.create(data, req.user?.id);
     if (data.localizacaoId) {
-      await camaraEventosRepo.create({
-        processoId: created.id, tipo: 'TRAMITACAO', data: data.dataEntrada,
+      await eventosRepo.create({
+        entidade: 'processo', entidadeId: created.id, tipo: 'TRAMITACAO', data: data.dataEntrada,
         unidadeId: data.localizacaoId, descricao: 'Entrada na secretaria da Câmara.',
       }, req.user?.id);
     }
@@ -210,13 +211,13 @@ export const createProcesso = async (req, res) => {
 
 export const updateProcesso = async (req, res) => {
   if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
-  const existing = await camaraProcessosRepo.getById(req.params.id);
+  const existing = await processosRepo.getById(req.params.id);
   if (!(await assertAcessoProcesso(req, res, existing))) return;
   const data = { ...req.body };
   if (data.numero) data.numeroValido = validarNumeroProcesso(data.numero);
   if (isProgramaScoped(req.user)) delete data.programaId; // gestor não migra processo de programa
   try {
-    const updated = await camaraProcessosRepo.update(req.params.id, data, req.user?.id);
+    const updated = await processosRepo.update(req.params.id, data, req.user?.id);
     res.json(updated);
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ message: 'Já existe um processo cadastrado com este número.' });
@@ -227,15 +228,15 @@ export const updateProcesso = async (req, res) => {
 // Troca rápida de status (badge da lista) — gera evento na linha do tempo.
 export const patchStatus = async (req, res) => {
   if (!isPlainObject(req.body) || !req.body.status) return res.status(400).json({ message: 'Informe o novo status.' });
-  const existing = await camaraProcessosRepo.getById(req.params.id);
+  const existing = await processosRepo.getById(req.params.id);
   if (!existing) return res.status(404).json({ message: 'Processo não encontrado.' });
   const { status, motivo } = req.body;
-  const updated = await camaraProcessosRepo.update(req.params.id, {
+  const updated = await processosRepo.update(req.params.id, {
     status, statusMotivo: motivo || null,
     dataEncerramento: STATUS_RESOLVIDOS.includes(status) ? (existing.dataEncerramento || new Date().toISOString().slice(0, 10)) : existing.dataEncerramento,
   }, req.user?.id);
-  await camaraEventosRepo.create({
-    processoId: req.params.id, tipo: 'STATUS', data: new Date().toISOString().slice(0, 10),
+  await eventosRepo.create({
+    entidade: 'processo', entidadeId: req.params.id, tipo: 'STATUS', data: new Date().toISOString().slice(0, 10),
     descricao: motivo ? `Status alterado para ${status} — ${motivo}` : `Status alterado para ${status}`,
   }, req.user?.id);
   res.json(updated);
@@ -245,21 +246,21 @@ export const patchStatus = async (req, res) => {
 // atualiza o cache localizacao_id/localizacao_em em processos.
 export const patchLocalizacao = async (req, res) => {
   if (!isPlainObject(req.body) || !req.body.unidadeId) return res.status(400).json({ message: 'Informe a unidade de destino.' });
-  const existing = await camaraProcessosRepo.getById(req.params.id);
+  const existing = await processosRepo.getById(req.params.id);
   if (!existing) return res.status(404).json({ message: 'Processo não encontrado.' });
   const dataEvento = req.body.data || new Date().toISOString().slice(0, 10);
-  const updated = await camaraProcessosRepo.update(req.params.id, {
+  const updated = await processosRepo.update(req.params.id, {
     localizacaoId: req.body.unidadeId, localizacaoEm: dataEvento,
   }, req.user?.id);
-  await camaraEventosRepo.create({
-    processoId: req.params.id, tipo: 'TRAMITACAO', data: dataEvento,
+  await eventosRepo.create({
+    entidade: 'processo', entidadeId: req.params.id, tipo: 'TRAMITACAO', data: dataEvento,
     unidadeId: req.body.unidadeId, descricao: req.body.descricao || null,
   }, req.user?.id);
   res.json(updated);
 };
 
 export const deleteProcesso = async (req, res) => {
-  const ok = await camaraProcessosRepo.remove(req.params.id);
+  const ok = await processosRepo.remove(req.params.id);
   if (ok) res.json({ message: 'Processo removido com sucesso.' });
   else res.status(404).json({ message: 'Processo não encontrado.' });
 };
@@ -269,13 +270,15 @@ export const addEvento = async (req, res) => {
   if (!isPlainObject(req.body) || !req.body.tipo || !req.body.descricao) {
     return res.status(400).json({ message: 'Informe o tipo e a descrição do evento.' });
   }
-  const processo = await camaraProcessosRepo.getById(req.params.id);
+  const processo = await processosRepo.getById(req.params.id);
   if (!processo) return res.status(404).json({ message: 'Processo não encontrado.' });
-  const evento = await camaraEventosRepo.create({
-    processoId: req.params.id, tipo: req.body.tipo,
+  // anexoUrl: URL crua enquanto a Fase E/G não migra este formulário para o
+  // fluxo de upload -> arquivos/anexos; guardada em `dados` (JSONB) até lá.
+  const evento = await eventosRepo.create({
+    entidade: 'processo', entidadeId: req.params.id, tipo: req.body.tipo,
     data: req.body.data || new Date().toISOString().slice(0, 10),
     descricao: req.body.descricao, unidadeId: req.body.unidadeId || null,
-    anexoUrl: req.body.anexoUrl || null,
+    dados: req.body.anexoUrl ? { anexoUrl: req.body.anexoUrl } : {},
   }, req.user?.id);
   res.status(201).json(evento);
 };
@@ -285,7 +288,7 @@ export const addRelatoria = async (req, res) => {
   if (!isPlainObject(req.body) || !req.body.relatorNome) {
     return res.status(400).json({ message: 'Informe o nome do relator.' });
   }
-  const processo = await camaraProcessosRepo.getById(req.params.id);
+  const processo = await processosRepo.getById(req.params.id);
   if (!processo) return res.status(404).json({ message: 'Processo não encontrado.' });
 
   const ativa = await camaraRelatoriasRepo.getAtiva(processo.id);
@@ -298,10 +301,10 @@ export const addRelatoria = async (req, res) => {
     prazoDevolucao: req.body.prazoDevolucao || null,
   }, req.user?.id);
 
-  await camaraProcessosRepo.update(processo.id, { status: 'RELATOR_DESIGNADO' }, req.user?.id);
-  await camaraEventosRepo.create({
-    processoId: processo.id, tipo: 'RELATORIA', data: relatoria.data_designacao,
-    relatoriaId: relatoria.id, descricao: `Relator designado: ${req.body.relatorNome}`,
+  await processosRepo.update(processo.id, { status: 'RELATOR_DESIGNADO' }, req.user?.id);
+  await eventosRepo.create({
+    entidade: 'processo', entidadeId: processo.id, tipo: 'RELATORIA', data: relatoria.data_designacao,
+    origemTipo: 'relatoria', origemId: relatoria.id, descricao: `Relator designado: ${req.body.relatorNome}`,
   }, req.user?.id);
   res.status(201).json(relatoria);
 };
@@ -312,10 +315,10 @@ export const registrarDevolucaoRelatoria = async (req, res) => {
     resultadoParecer: req.body.resultadoParecer, parecerUrl: req.body.parecerUrl,
   });
   if (!relatoria) return res.status(404).json({ message: 'Relatoria não encontrada.' });
-  await camaraProcessosRepo.update(relatoria.processo_id, { status: 'PARECER_RECEBIDO' }, req.user?.id);
-  await camaraEventosRepo.create({
-    processoId: relatoria.processo_id, tipo: 'PARECER', data: relatoria.data_devolucao,
-    relatoriaId: relatoria.id, descricao: `Parecer recebido: ${req.body.resultadoParecer || ''}`.trim(),
+  await processosRepo.update(relatoria.processo_id, { status: 'PARECER_RECEBIDO' }, req.user?.id);
+  await eventosRepo.create({
+    entidade: 'processo', entidadeId: relatoria.processo_id, tipo: 'PARECER', data: relatoria.data_devolucao,
+    origemTipo: 'relatoria', origemId: relatoria.id, descricao: `Parecer recebido: ${req.body.resultadoParecer || ''}`.trim(),
   }, req.user?.id);
   res.json(relatoria);
 };
@@ -323,7 +326,7 @@ export const registrarDevolucaoRelatoria = async (req, res) => {
 // ============================ Atos resultantes ============================
 export const addAto = async (req, res) => {
   if (!isPlainObject(req.body) || !req.body.tipo) return res.status(400).json({ message: 'Informe o tipo do ato.' });
-  const processo = await camaraProcessosRepo.getById(req.params.id);
+  const processo = await processosRepo.getById(req.params.id);
   if (!processo) return res.status(404).json({ message: 'Processo não encontrado.' });
   const ato = await camaraAtosRepo.create({
     id: 'camato-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -331,8 +334,8 @@ export const addAto = async (req, res) => {
     data: req.body.data, ementa: req.body.ementa, link: req.body.link,
     resolucaoId: req.body.resolucaoId || null,
   }, req.user?.id);
-  await camaraEventosRepo.create({
-    processoId: processo.id, tipo: 'ATO', data: req.body.data || new Date().toISOString().slice(0, 10),
+  await eventosRepo.create({
+    entidade: 'processo', entidadeId: processo.id, tipo: 'ATO', data: req.body.data || new Date().toISOString().slice(0, 10),
     descricao: `${req.body.tipo}${req.body.numero ? ' nº ' + req.body.numero : ''}${req.body.ano ? '/' + req.body.ano : ''}`,
   }, req.user?.id);
   res.status(201).json(ato);

@@ -50,7 +50,7 @@ async function main() {
     faq, disciplinas, bolsas, pages, users, taxonomias, grupos_pesquisa,
     calendarios, calendario_milestones,
     programas, programa_paginas, pessoas, modalidades, vinculos, metricas_anuais,
-    processos, camara_eventos, camara_reunioes, camara_pauta_itens,
+    processos, camara_reunioes, camara_pauta_itens,
     camara_relatorias, camara_atos,
     arquivos, anexos, contatos, eventos,
     ato_series, atos, ato_referencias, documentos, declaracoes

@@ -652,8 +652,8 @@ export const taxonomiaRefsRepo = {
 // =================== Câmara de Pós-Graduação (Fase 0) =============
 // Entidades de tabela única (CRUD simples). As relações N:N e o histórico
 // append-only (eventos, pauta_itens, relatorias) ficam em camaraRepo.js.
-export const camaraUnidadesRepo = createRepository({
-  table: 'unidades', // Fase A.4 (G8): era camara_unidades; o binding JS so muda na Fase B
+export const unidadesRepo = createRepository({
+  table: 'unidades', // Fase A.4 (G8): era camara_unidades; binding JS renomeado na Fase B.1
   orderBy: 'sigla ASC',
   fromRow: (r) => ({
     id: r.id, sigla: r.sigla, nome: r.nome, aliases: r.aliases ?? [],
@@ -665,8 +665,8 @@ export const camaraUnidadesRepo = createRepository({
   }),
 });
 
-export const camaraProcessosRepo = createRepository({
-  table: 'processos', // Fase A.7 (G3): era camara_processos; o binding JS so muda na Fase B
+export const processosRepo = createRepository({
+  table: 'processos', // Fase A.7 (G3): era camara_processos; binding JS renomeado na Fase B.1
   orderBy: 'criado_em DESC',
   fromRow: (r) => ({
     id: r.id, numero: r.numero, numeroValido: r.numero_valido, linkSipac: r.link_sipac,

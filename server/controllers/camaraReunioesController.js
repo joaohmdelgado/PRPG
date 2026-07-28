@@ -1,8 +1,9 @@
 // Reuniões da Câmara e montagem/lançamento de pauta.
 // Ver requisitos-camara.md §9.4 (montagem da pauta) e §13 (Fase 1).
 import { isPlainObject } from '../utils/sanitize.js';
-import { camaraReunioesRepo, camaraProcessosRepo } from '../db/repositories.js';
-import { camaraPautaItensRepo, camaraEventosRepo } from '../db/camaraRepo.js';
+import { camaraReunioesRepo, processosRepo } from '../db/repositories.js';
+import { camaraPautaItensRepo } from '../db/camaraRepo.js';
+import { eventosRepo } from '../db/eventosRepo.js';
 import { gerarPautaPdf } from '../services/camaraPdf.js';
 
 export const getReunioes = async (req, res) => {
@@ -60,9 +61,10 @@ export const addToPauta = async (req, res) => {
     try {
       const item = await camaraPautaItensRepo.create({ reuniaoId: reuniao.id, processoId, bloco: req.body.bloco }, req.user?.id);
       criados.push(item);
-      await camaraProcessosRepo.update(processoId, { status: 'PAUTADO' }, req.user?.id);
-      await camaraEventosRepo.create({
-        processoId, tipo: 'PAUTA', data: reuniao.data, reuniaoId: reuniao.id,
+      await processosRepo.update(processoId, { status: 'PAUTADO' }, req.user?.id);
+      await eventosRepo.create({
+        entidade: 'processo', entidadeId: processoId, tipo: 'PAUTA', data: reuniao.data,
+        origemTipo: 'reuniao', origemId: reuniao.id,
         descricao: `Incluído na pauta da reunião de ${reuniao.data}`,
       }, req.user?.id);
     } catch (e) {
@@ -94,10 +96,11 @@ export const lancarResultados = async (req, res) => {
     if (!pautaItem) continue;
     atualizados.push(pautaItem);
     if (it.statusResultante) {
-      await camaraProcessosRepo.update(pautaItem.processo_id, { status: it.statusResultante }, req.user?.id);
+      await processosRepo.update(pautaItem.processo_id, { status: it.statusResultante }, req.user?.id);
     }
-    await camaraEventosRepo.create({
-      processoId: pautaItem.processo_id, tipo: 'DELIBERACAO', data: reuniao.data, reuniaoId: reuniao.id,
+    await eventosRepo.create({
+      entidade: 'processo', entidadeId: pautaItem.processo_id, tipo: 'DELIBERACAO', data: reuniao.data,
+      origemTipo: 'reuniao', origemId: reuniao.id,
       descricao: `${it.deliberacao || 'Deliberado'}${it.registro ? ' — ' + it.registro : ''}`,
     }, req.user?.id);
   }

@@ -954,21 +954,11 @@ BEGIN
   END IF;
 END$$;
 
--- Histórico append-only. NADA aqui é atualizado ou apagado.
-CREATE TABLE IF NOT EXISTS camara_eventos (
-  id            TEXT PRIMARY KEY,
-  processo_id   TEXT NOT NULL REFERENCES processos(id) ON DELETE CASCADE,
-  tipo          TEXT NOT NULL,  -- TRAMITACAO|STATUS|RELATORIA|PAUTA|PARECER|DELIBERACAO|ATO|NOTA|COBRANCA
-  data          DATE NOT NULL,  -- data do fato (não do registro)
-  unidade_id    TEXT REFERENCES unidades(id),
-  descricao     TEXT,
-  reuniao_id    TEXT,
-  relatoria_id  TEXT,
-  anexo_url     TEXT,
-  criado_em     TIMESTAMPTZ DEFAULT now(),
-  criado_por    TEXT
-);
-CREATE INDEX IF NOT EXISTS camara_ev_proc_idx ON camara_eventos(processo_id, data);
+-- Histórico append-only de tramitação: era `camara_eventos` (tabela dedicada);
+-- Fase B.1 migrou para a tabela genérica `eventos` (entidade='processo'),
+-- ver db/eventosRepo.js. reuniao_id/relatoria_id viram eventos.origem_tipo/
+-- origem_id; anexo_url crua fica em eventos.dados (JSONB) até a Fase E/G
+-- migrar o upload de anexos do processo para o fluxo arquivos/anexos.
 
 -- Reuniões da Câmara.
 CREATE TABLE IF NOT EXISTS camara_reunioes (

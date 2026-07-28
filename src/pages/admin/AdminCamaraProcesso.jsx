@@ -92,7 +92,7 @@ const AdminCamaraProcesso = () => {
   if (loading) return <div className="bg-white rounded-lg shadow-sm p-6 animate-pulse h-96" />;
   if (error || !processo) return <div className="bg-red-50 text-red-600 p-4 rounded-md">{error || 'Processo não encontrado.'}</div>;
 
-  const eventosOrdenados = [...(processo.eventos || [])].sort((a, b) => (b.data || '').localeCompare(a.data || '') || (b.criado_em || '').localeCompare(a.criado_em || ''));
+  const eventosOrdenados = [...(processo.eventos || [])].sort((a, b) => (b.data || '').localeCompare(a.data || '') || (b.criadoEm || '').localeCompare(a.criadoEm || ''));
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
