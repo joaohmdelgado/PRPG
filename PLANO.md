@@ -315,10 +315,10 @@ importados e validados.
 | `[x]` | G.2 | Controller: CRUD, agenda por cargo, "copiar e-mails do cargo" (front monta a partir da agenda), exportar XLSX | `controllers/contatosController.js` | |
 | `[x]` | G.3 | Rotas e permissões (Admin/Gestor por enquanto) | `routes/adminRoutes.js` | ⛔ escopo por `GestorPrograma` adiado — D-G7 não respondida |
 | `[ ]` | G.4 | Importador da planilha (47 programas, 113 pessoas, 157 e-mails, 72 telefones) | `services/importers/contatosImporter.js` | ⛔ D-G2..D-G6, D-G8 |
-| `[ ]` | G.5 | Tela de agenda, indexada por cargo | `src/pages/admin/AdminContatos.jsx` | |
+| `[x]` | G.5 | Tela de agenda, indexada por cargo | `src/pages/admin/AdminContatos.jsx` | verificado no navegador com dado real de produção |
 | `[ ]` | G.6 | Ficha da pessoa (dados, contatos, todos os vínculos, expedientes) | `src/pages/admin/AdminPessoa.jsx` | |
 | `[ ]` | G.7 | Bloco de contatos no formulário de programa e de usuário | telas existentes | |
-| `[ ]` | G.8 | Importação em 5 passos | `src/pages/admin/AdminContatosImportar.jsx` | |
+| `[ ]` | G.8 | Importação em 5 passos | `src/pages/admin/AdminContatosImportar.jsx` | ⛔ depende de G.4 |
 | `[ ]` | G.9 | Microsite: seção de contato lendo `contatos.publico` | `src/components/programa/` | ⛔ D-G1 |
 
 **Critério de pronto**: os 31 programas sem sigla passam a ter sigla; a agenda responde "todos

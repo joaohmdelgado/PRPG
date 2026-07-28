@@ -85,6 +85,7 @@ const AdminCamaraProcesso = lazy(() => import('./pages/admin/AdminCamaraProcesso
 const AdminCamaraReunioes = lazy(() => import('./pages/admin/AdminCamaraReunioes'));
 const AdminCamaraReuniao = lazy(() => import('./pages/admin/AdminCamaraReuniao'));
 const AdminCamaraUnidades = lazy(() => import('./pages/admin/AdminCamaraUnidades'));
+const AdminContatos = lazy(() => import('./pages/admin/AdminContatos'));
 const ProficienciaInscricao = lazy(() => import('./pages/ProficienciaInscricao'));
 const ProficienciaInscricaoSucesso = lazy(() => import('./pages/ProficienciaInscricaoSucesso'));
 const PageView = lazy(() => import('./pages/PageView'));
@@ -215,6 +216,11 @@ function App() {
               <Route path="unidades" element={<AdminCamaraUnidades />} />
               <Route path="reunioes" element={<AdminCamaraReunioes />} />
               <Route path="reunioes/:id" element={<AdminCamaraReuniao />} />
+            </Route>
+            {/* Agenda de contatos (Fase G): Admin/Gestor por enquanto — o
+                escopo por GestorPrograma (D-G7) ainda não foi respondido. */}
+            <Route path="contatos" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+              <Route index element={<AdminContatos />} />
             </Route>
           </Route>
         </Route>
