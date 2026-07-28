@@ -516,7 +516,7 @@ em lote, que **muda o procedimento administrativo**.
 | Fase | Itens | Decisões a responder antes | Início | Fim | Estado |
 |---|---|---|---|---|---|
 | A — Núcleo | 18 | D-A1, D-A2, D-A3, D-A4, D-E1 | 27/07/2026 | 27/07/2026 | ✅ concluída (D-A1/D-A4 conforme recomendação; FK real de `vinculos.pessoa_id` adiada para B.3 — ver A.10) |
-| B — Refit + Câmara | 10 | D-B1, D-G8, D-A4 | | | ⬜ |
+| B — Refit + Câmara | 10 | D-B1, D-G8, D-A4 | 28/07/2026 | 28/07/2026 | 🟡 7/10 feitos (B.1-B.3, B.5, B.7 aplicados; B.4/B.6 investigados e adiados p/ Fase E/G; B.8-B.10 bloqueados por D-B1) |
 | G — Contatos | 9 | D-G1..D-G8 | | | ⬜ |
 | E — Expedientes | 14 | D-E1..D-E3, D-E5..D-E8 | | | ⬜ |
 | C — PNPD | 8 | D-C1..D-C4, D-C6..D-C9 | | | ⬜ |
