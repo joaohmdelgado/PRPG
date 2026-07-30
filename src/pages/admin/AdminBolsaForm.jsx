@@ -12,13 +12,13 @@ const AdminBolsaForm = () => {
 
   const [formData, setFormData] = useState({
     title: '',
-    field_aluno: '',
-    field_periodo_bolsa: {
-      data_inicio: '',
-      data_fim: ''
-    },
-    field_tipo_bolsa: ''
+    alunoId: '',
+    dataInicio: '',
+    dataFim: '',
+    tipoBolsa: ''
   });
+  // Nome/e-mail exibidos no chip do beneficiário selecionado.
+  const [alunoDisplay, setAlunoDisplay] = useState(null);
 
   const [users, setUsers] = useState([]);
   const [tiposBolsa, setTiposBolsa] = useState([]);
@@ -35,11 +35,9 @@ const AdminBolsaForm = () => {
       try {
         // Carrega todos os usuários para vinculação
         const usersResponse = await apiFetch('/api/users');
-        
-        let loadedUsers = [];
+
         if (usersResponse.ok) {
-          loadedUsers = await usersResponse.json();
-          setUsers(loadedUsers);
+          setUsers(await usersResponse.json());
         } else if (usersResponse.status === 401 || usersResponse.status === 403) {
           navigate('/admin/login');
           return;
@@ -60,16 +58,12 @@ const AdminBolsaForm = () => {
             setAudit(data);
             setFormData({
               title: data.title || '',
-              field_aluno: data.field_aluno || '',
-              field_periodo_bolsa: data.field_periodo_bolsa || { data_inicio: '', data_fim: '' },
-              field_tipo_bolsa: data.field_tipo_bolsa || ''
+              alunoId: data.pessoaId || '',
+              dataInicio: data.dataInicio || '',
+              dataFim: data.dataFim || '',
+              tipoBolsa: data.tipoBolsa || ''
             });
-
-            // Se o aluno estiver preenchido, inicializa o autocomplete
-            const selectedUser = loadedUsers.find(u => u.id === data.field_aluno);
-            if (selectedUser) {
-              setSearchQuery(selectedUser.perfil_geral?.nome || selectedUser.email);
-            }
+            if (data.aluno) setAlunoDisplay({ nome: data.aluno.nome, email: data.aluno.email });
           } else {
             setError('Bolsa não encontrada');
           }
@@ -100,29 +94,18 @@ const AdminBolsaForm = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePeriodChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      field_periodo_bolsa: {
-        ...prev.field_periodo_bolsa,
-        [name]: value
-      }
-    }));
-  };
-
   const handleSelectUser = (u) => {
-    setFormData(prev => ({ ...prev, field_aluno: u.id }));
+    setFormData(prev => ({ ...prev, alunoId: u.id }));
+    setAlunoDisplay({ nome: u.perfil_geral?.nome, email: u.email, roles: u.roles });
     setSearchQuery(u.perfil_geral?.nome || u.email);
     setShowDropdown(false);
   };
 
   const handleRemoveUser = () => {
-    setFormData(prev => ({ ...prev, field_aluno: '' }));
+    setFormData(prev => ({ ...prev, alunoId: '' }));
+    setAlunoDisplay(null);
     setSearchQuery('');
   };
-
-  const selectedUserObj = users.find(u => u.id === formData.field_aluno);
 
   const filteredUsers = users.filter(u => {
     const nome = u.perfil_geral?.nome || '';
@@ -133,26 +116,26 @@ const AdminBolsaForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       setError('O título é obrigatório.');
       return;
     }
-    if (!formData.field_aluno) {
+    if (!formData.alunoId) {
       setError('O beneficiário (Aluno) é obrigatório.');
       return;
     }
-    if (!formData.field_periodo_bolsa.data_inicio || !formData.field_periodo_bolsa.data_fim) {
+    if (!formData.dataInicio || !formData.dataFim) {
       setError('As datas de início e fim da bolsa são obrigatórias.');
       return;
     }
-    if (!formData.field_tipo_bolsa) {
+    if (!formData.tipoBolsa) {
       setError('O tipo de bolsa é obrigatório.');
       return;
     }
 
     // Verificar se data_inicio é anterior a data_fim
-    if (new Date(formData.field_periodo_bolsa.data_inicio) > new Date(formData.field_periodo_bolsa.data_fim)) {
+    if (new Date(formData.dataInicio) > new Date(formData.dataFim)) {
       setError('A data de início não pode ser posterior à data de término da bolsa.');
       return;
     }
@@ -226,8 +209,8 @@ const AdminBolsaForm = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Bolsa *</label>
             <select
-              name="field_tipo_bolsa"
-              value={formData.field_tipo_bolsa}
+              name="tipoBolsa"
+              value={formData.tipoBolsa}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm bg-white"
@@ -242,16 +225,16 @@ const AdminBolsaForm = () => {
           {/* Aluno/User Autocomplete */}
           <div ref={dropdownRef} className="relative md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Beneficiário (Usuário/Aluno) *</label>
-            
-            {formData.field_aluno ? (
+
+            {formData.alunoId ? (
               // Usuário Selecionado
               <div className="flex items-center justify-between bg-ufrpe-blue/5 border border-ufrpe-blue/20 text-ufrpe-blue rounded-md px-4 py-2.5">
                 <div>
                   <p className="font-semibold text-sm">
-                    {selectedUserObj?.perfil_geral?.nome || 'Usuário carregando...'}
+                    {alunoDisplay?.nome || 'Usuário carregando...'}
                   </p>
                   <p className="text-xs text-ufrpe-blue">
-                    {selectedUserObj?.email} {selectedUserObj?.roles && `(${selectedUserObj.roles.join(', ')})`}
+                    {alunoDisplay?.email} {alunoDisplay?.roles && `(${alunoDisplay.roles.join(', ')})`}
                   </p>
                 </div>
                 <button
@@ -326,9 +309,9 @@ const AdminBolsaForm = () => {
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Data de Início *</label>
                 <input
                   type="date"
-                  name="data_inicio"
-                  value={formData.field_periodo_bolsa.data_inicio}
-                  onChange={handlePeriodChange}
+                  name="dataInicio"
+                  value={formData.dataInicio}
+                  onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 bg-white rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
                 />
@@ -337,9 +320,9 @@ const AdminBolsaForm = () => {
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Data de Término *</label>
                 <input
                   type="date"
-                  name="data_fim"
-                  value={formData.field_periodo_bolsa.data_fim}
-                  onChange={handlePeriodChange}
+                  name="dataFim"
+                  value={formData.dataFim}
+                  onChange={handleChange}
                   required
                   className="w-full px-4 py-2 border border-gray-300 bg-white rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
                 />
@@ -350,13 +333,13 @@ const AdminBolsaForm = () => {
 
         {/* Botões */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <Link 
+          <Link
             to="/admin/bolsas"
             className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Cancelar
           </Link>
-          <button 
+          <button
             type="submit"
             disabled={loading}
             className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50"

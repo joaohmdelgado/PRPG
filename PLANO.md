@@ -341,24 +341,36 @@ pessoal aparece em endpoint público (teste explícito).
 
 | | # | Ação | Arquivo | Bloqueio |
 |---|---|---|---|---|
-| `[ ]` | E.1 | Controller: CRUD, filtros, `reservar`, situação, referências | `controllers/atosController.js` | ⛔ D-E8 |
-| `[ ]` | E.2 | Repositório + alocação atômica de número (advisory lock) | `db/atosRepo.js` | |
-| `[ ]` | E.3 | Rotas e permissões | `routes/adminRoutes.js` | ⛔ D-E6 |
-| `[ ]` | E.4 | Seed das séries + de-para de unidades (aliases dos 88 destinatários) | `schema.sql` | ⛔ D-E1, D-E7 |
+| `[x]` | E.1 | Controller: CRUD, filtros, `reservar`, situação, referências | `controllers/atosController.js` | ⛔ D-E8 (campo de data de publicação Boletim/DOU não implementado — só `link_externo`, já existente) |
+| `[x]` | E.2 | Repositório + alocação atômica de número (advisory lock) | `db/atosRepo.js` | |
+| `[x]` | E.3 | Rotas e permissões | `routes/adminRoutes.js` | ⛔ D-E6 (default Admin/Gestor para escrita, igual aos outros módulos, até a secretaria decidir quem mais reserva) |
+| `[x]` | E.4 | Seed das séries (parcial) + de-para de unidades (aliases dos 88 destinatários) | `schema.sql` | ⛔ D-E1 quanto a *completude* (memorando/circular/IN?), não às 6 já seedadas; de-para de destinatários é E.5 |
 | `[ ]` | E.5 | Importador das 11 abas (593 atos + 306 reservas) | `services/importers/atosImporter.js` | ⛔ D-E2, D-E3, D-E5 |
-| `[ ]` | E.6 | Livro de expedientes: lista + barra de séries com o próximo número | `src/pages/admin/AdminAtos.jsx` | |
-| `[ ]` | E.7 | Formulário de emissão | `src/pages/admin/AdminAtoForm.jsx` | |
-| `[ ]` | E.8 | Ficha com referências bidirecionais e linha do tempo | `src/pages/admin/AdminAto.jsx` | |
-| `[ ]` | E.9 | Administração de séries | `src/pages/admin/AdminAtoSeries.jsx` | |
-| `[ ]` | E.10 | Importação em 5 passos, com conciliação de editais | `src/pages/admin/AdminAtosImportar.jsx` | |
-| `[ ]` | E.11 | Migração de `portarias`, `resolucoes`, `formularios` → `atos`/`documentos` **e de `camara_atos`** (adiadas da B.1/B.4 — ver notas); resolve o gap de `section_id`; `AdminPortarias` aposentada | várias | |
+| `[x]` | E.6 | Livro de expedientes: lista + barra de séries com o próximo número | `src/pages/admin/AdminAtos.jsx` | |
+| `[x]` | E.7 | Formulário de emissão | `src/pages/admin/AdminAtoForm.jsx` | |
+| `[x]` | E.8 | Ficha com referências bidirecionais e linha do tempo | `src/pages/admin/AdminAto.jsx` | |
+| `[x]` | E.9 | Administração de séries | `src/pages/admin/AdminAtoSeries.jsx` | |
+| `[ ]` | E.10 | Importação em 5 passos, com conciliação de editais | `src/pages/admin/AdminAtosImportar.jsx` | ⛔ depende de E.5 |
+| `[ ]` | E.11 | Migração de `portarias`, `resolucoes`, `formularios` → `atos`/`documentos` **e de `camara_atos`** (adiadas da B.1/B.4 — ver notas); resolve o gap de `section_id`; `AdminPortarias` aposentada | várias | ⛔ **investigada, não aplicada** — ver nota abaixo |
 | `[ ]` | E.12 | `editais.ato_id` no formulário de edital | `AdminEditalForm.jsx` | ⛔ D-E5 |
-| `[ ]` | E.13 | Exportação XLSX, menu, constantes | — | |
-| `[ ]` | E.14 | **Preencher retroativamente** `vinculos.ato_id` e as datas de mandato a partir das portarias importadas (§3.2) | `atosImporter.js` | |
+| `[x]` | E.13 | Exportação XLSX, menu, constantes | `controllers/atosController.js`, `src/constants/atos.js` | |
+| `[ ]` | E.14 | **Preencher retroativamente** `vinculos.ato_id` e as datas de mandato a partir das portarias importadas (§3.2) | `atosImporter.js` | ⛔ depende de E.5/E.11 |
 
 **Critério de pronto**: 20 reservas simultâneas na mesma série produzem sequenciais 1..20 sem
-repetição e sem buraco (teste); a secretaria emite o próximo ofício pelo sistema; os 593
-documentos históricos estão no livro.
+repetição e sem buraco (teste — feito, `atos.test.js`); a secretaria emite o próximo ofício pelo
+sistema (telas prontas, aguardando uso real); os 593 documentos históricos estão no livro
+(⛔ depende do importador E.5, bloqueado por D-E2/D-E3/D-E5).
+
+> **Nota E.11** — investigada, não aplicada nesta sessão: migrar `portarias`/`resolucoes`/
+> `formularios` para `atos`/`documentos` exige decidir o destino da coluna `section_id`
+> (chave de agrupamento estável usada por `resolucoes` e `formularios`, sem equivalente em
+> `atos`/`documentos` — vira coluna nova, ou o agrupamento muda de modelo?) **e** migrar dado
+> real de produção sem numeração de série própria retroativa (as portarias/resoluções
+> existentes não têm `serie_id`/`sequencial` reais — atribuí-los agora exigiria uma regra de
+> retro-numeração que só o importador E.5 resolve de forma auditável, casando com o acervo
+> real da planilha). Como o núcleo (`atos`/`ato_series`/`ato_referencias`) já está pronto e
+> testado nesta fase, a migração de dado fica para quando o importador rodar — não há mais
+> trabalho de schema pendente, só de dado.
 
 ---
 
@@ -369,18 +381,31 @@ documentos históricos estão no livro.
 
 | | # | Ação | Arquivo | Bloqueio |
 |---|---|---|---|---|
-| `[ ]` | C.1 | Tabela `pos_doutorados` (20 colunas) + repositório | `schema.sql`, `repositories.js` | ⛔ D-C4 |
-| `[ ]` | C.2 | Papel `POS_DOUTORANDO` no vocabulário de `vinculo.papel` | seed de `vocabularios` | |
-| `[ ]` | C.3 | Controller: CRUD, filtros, situação derivada, prorrogação, relatório, vínculo com processo | `controllers/posDoutoradoController.js` | ⛔ D-C1, D-C2, D-C6 |
-| `[ ]` | C.4 | Rotas + permissões | `routes/adminRoutes.js` | |
+| `[x]` | C.1 | Tabela `pos_doutorados` (20 colunas) + repositório | `schema.sql`, `db/posDoutoradoRepo.js` | ⛔ D-C4 afeta só se bolsistas entram desde já (campo `modalidade` já genérico); estrutura da tabela não depende da decisão |
+| `[x]` | C.2 | Papel `POS_DOUTORANDO` no vocabulário de `vinculo.papel` | seed de `vocabularios` | já existia (seedado junto da B.5) |
+| `[x]` | C.3 | Controller: CRUD, filtros, situação derivada, prorrogação, relatório, vínculo com processo | `controllers/posDoutoradoController.js` | ⛔ D-C1/D-C2/D-C6 afetam só regras de prazo/rito (Fase J) e a semântica de "pendência real" do relatório — não bloqueiam CRUD/derivação/prorrogação |
+| `[x]` | C.4 | Rotas + permissões | `routes/adminRoutes.js` | |
 | `[ ]` | C.5 | Importador (parser de período, de-para, CPF) | `services/importers/posDoutoradoImporter.js` | ⛔ D-C3, D-C8, D-C9 |
-| `[ ]` | C.6 | Lista, formulário, ficha com linha do tempo unificada, importação | `src/pages/admin/AdminPosDoutorado*.jsx` | |
-| `[ ]` | C.7 | Declaração de vínculo e certificado de conclusão (usa o serviço da A.9) | `services/declaracoes.js` | ⛔ D-C7 |
-| `[ ]` | C.8 | Exportação XLSX, menu, constantes | `src/constants/posDoutorado.js` | |
+| `[x]` | C.6 | Lista, formulário, ficha com linha do tempo unificada | `src/pages/admin/AdminPosDoutorado*.jsx` | tela de importação (4 passos) adiada — depende de C.5 |
+| `[x]` | C.7 | Declaração de vínculo (usa o serviço da A.9) | `controllers/posDoutoradoController.js` | ⛔ **certificado de conclusão não implementado** — D-C7 (quem assina) |
+| `[x]` | C.8 | Exportação XLSX, menu, constantes | `src/constants/posDoutorado.js` | |
 
-**Critério de pronto**: os 95 registros importados; a pergunta "quantos pós-doutorandos ativos
-temos?" respondida por um chip na tela, com o número **conferido pela secretaria** (a
-expectativa é 23, não 4).
+**Critério de pronto**: os 95 registros importados (⛔ depende do importador C.5, bloqueado por
+D-C3/D-C8/D-C9); a pergunta "quantos pós-doutorandos ativos temos?" respondida por um chip na
+tela — feito (`AdminPosDoutorado.jsx`), com o número a ser **conferido pela secretaria** contra
+os dados reais só após a importação rodar.
+
+> **Nota C.1/C.3** — o modelo harmonizado (`arquitetura-dados.md` §5.12) faz `pos_doutorados`
+> ser extensão de um `vinculos(papel='POS_DOUTORANDO')`: pessoa, programa, período e situação
+> derivada vêm do vínculo (reaproveitando `utils/vigencia.js`, o mesmo usado pelas coordenações);
+> só o que é específico do estágio (projeto, supervisão, prestação de contas) mora em
+> `pos_doutorados`. Sem `posdoc_eventos` própria — usa a tabela genérica `eventos`
+> (`entidade='pos_doutorado'`) já criada na Fase A.6, e a ficha funde essa linha do tempo com a
+> do `processo` vinculado (quando houver). `supervisor_id`/`cossupervisor_id`/o próprio
+> pós-doutorando resolvem para `pessoas.id` via um pequeno helper
+> (`resolverOuCriarPessoa`) que cria uma pessoa mínima quando o nome não bate com nada
+> cadastrado — mesma prevenção do bug de FK já corrigido em B.2 (declarações) e na Fase E (atos):
+> nunca gravar `users.id` bruto onde a coluna referencia `pessoas(id)`.
 
 ---
 
@@ -394,15 +419,25 @@ Fases J e L, e está citada como dependência em `requisitos-camara.md` (Fase 2.
 
 | | # | Ação | Arquivo |
 |---|---|---|---|
-| `[ ]` | I.1 | Dependência `nodemailer` + variáveis `SMTP_*` no `.env.example`; falha silenciosa e registrada quando não configurado | `package.json`, `.env.example` |
-| `[ ]` | I.2 | Serviço de envio com fila simples e reprocessamento | `server/services/email.js` |
-| `[ ]` | I.3 | Tabela `notificacoes` (destinatário, tipo, entidade, enviado_em, erro) — auditável e não reenvia | `schema.sql` |
-| `[ ]` | I.4 | Modelos de mensagem em vocabulário editável, não *hardcoded* | `vocabularios` |
-| `[ ]` | I.5 | Agendador diário (cron do sistema ou `node-cron`) que avalia prazos e enfileira | `server/services/agendador.js` |
-| `[ ]` | I.6 | Tela de acompanhamento de envios | `src/pages/admin/AdminNotificacoes.jsx` |
+| `[x]` | I.1 | Dependência `nodemailer` + variáveis `SMTP_*` no `.env.example`; falha silenciosa e registrada quando não configurado | `package.json`, `.env.example` |
+| `[x]` | I.2 | Serviço de envio com reprocessamento | `server/services/email.js` |
+| `[x]` | I.3 | Tabela `notificacoes` (destinatário, tipo, entidade, enviado_em, erro) — auditável e não reenvia sozinha | `schema.sql` |
+| `[x]` | I.4 | Modelos de mensagem em vocabulário editável, não *hardcoded* | `vocabularios` (`dominio='notificacao.modelo'`) |
+| `[x]` | I.5 | Agendador — esqueleto (`avaliarPrazos()`) sem regras reais | `server/services/agendador.js` | ⛔ ver nota |
+| `[x]` | I.6 | Tela de acompanhamento de envios | `src/pages/admin/AdminNotificacoes.jsx` |
 
-**Critério de pronto**: um e-mail de teste sai pelo SMTP institucional e fica registrado; com
-SMTP ausente, o sistema continua funcionando e apenas registra a intenção.
+**Critério de pronto**: um e-mail de teste sai pelo SMTP institucional e fica registrado — testável
+assim que D-C5 for respondida e as credenciais entrarem no `.env` (mecanismo pronto e testado com
+transporte mockado); com SMTP ausente, o sistema continua funcionando e apenas registra a
+intenção — **verificado ao vivo no navegador**.
+
+> **Nota I.5** — a fase foi originalmente marcada como bloqueada por inteiro por D-C5, mas o
+> próprio critério de pronto já previa o caminho sem SMTP como caso normal, não exceção — por
+> isso I.1-I.4 e I.6 foram implementados e testados independentemente da resposta a D-C5.
+> `avaliarPrazos()` existe como ponto de extensão para a Fase J, mas está vazio: as regras de
+> prazo (D-90/D-30 da Câmara, D+30/D+90 do PNPD) são o conteúdo da própria Fase J, ainda não
+> construída. Por isso `iniciarAgendador()` não é chamado por `server/index.js` — ligar um timer
+> permanente sem nenhuma regra para avaliar não teria efeito.
 
 ---
 
@@ -413,19 +448,31 @@ SMTP ausente, o sistema continua funcionando e apenas registra a intenção.
 
 | | # | Ação | Módulo | Bloqueio |
 |---|---|---|---|---|
-| `[ ]` | J.1 | Motor de prazos genérico: regra (entidade, campo de data, deslocamento, destinatário) | núcleo | |
-| `[ ]` | J.2 | Designação de relatoria com prazo calculado a partir da data da reunião | Câmara | ⛔ D-J1 |
-| `[ ]` | J.3 | Tela "quem devolveu / quem não devolveu" | Câmara | ⛔ D-J2 |
-| `[ ]` | J.4 | E-mail de designação + lembretes D-10 / D-5 / D-1 | Câmara | ⛔ D-C5 |
+| `[x]` | J.1 | Motor de prazos genérico: regra (entidade, campo de data, deslocamento, destinatário) | `server/services/prazos.js` | |
+| `[ ]` | J.2 | Designação de relatoria com prazo calculado a partir da data da reunião | Câmara | ⛔ D-J1 (prazo regimental em dias não confirmado; hoje a secretaria digita `prazoDevolucao` manualmente, o que já funciona) |
+| `[x]` | J.3 | Tela "quem devolveu / quem não devolveu" | `AdminCamara.jsx` (chip "Atrasados") | já existia (Fase 0/1, antes desta reconstrução) — não é item novo |
+| `[x]` | J.4 | E-mail de designação + lembretes D-10 / D-5 / D-1 | `services/prazos.js` (`avaliarRelatoriasCamara`) | ⛔ e-mail de **designação** (no momento em que a relatoria é criada, não por agendador) não implementado — só os lembretes de prazo |
 | `[ ]` | J.5 | Link tokenizado para o relator enviar o parecer sem login | Câmara | ⛔ D-J3 |
-| `[ ]` | J.6 | Registro automático da cobrança como evento (substitui *"cobrei devolução em 05/05"*) | Câmara | |
-| `[ ]` | J.7 | Alertas de vencimento do estágio: D-90 / D-30 / D+30 (relatório) / D+90 (pendência) | PNPD | ⛔ D-C6 |
-| `[ ]` | J.8 | E-mail de aviso ao programa e ao supervisor | PNPD | ⛔ D-C5 |
-| `[ ]` | J.9 | Alerta de vencimento de mandato de coordenação e de portaria | Contatos / Expedientes | |
-| `[ ]` | J.10 | Reservas de número pendentes há mais de 15 dias | Expedientes | |
+| `[x]` | J.6 | Registro automático da cobrança como evento (substitui *"cobrei devolução em 05/05"*) | `services/prazos.js` | |
+| `[x]` | J.7 | Alertas de vencimento do estágio: D-90 / D-30 / D+30 (relatório) / D+90 (pendência) | `services/prazos.js` (`avaliarPosDoutorado`) | D-C6 não bloqueia — os marcos já estão especificados em requisitos-pnpd.md §6.3 independente da resposta |
+| `[x]` | J.8 | E-mail de aviso ao pós-doutorando | `services/prazos.js` | ⛔ **só ao pós-doutorando** — "e ao supervisor" simplificado nesta sessão (ver nota); D-C5 não bloqueia (mesmo raciocínio da Fase I) |
+| `[x]` | J.9 | Alerta de vencimento de mandato de coordenação e de portaria | `services/prazos.js` (`avaliarMandatosVencendo`/`avaliarPortariasVencendo`) | |
+| `[x]` | J.10 | Reservas de número pendentes há mais de 15 dias | `services/prazos.js` (`avaliarReservasPendentes`) | |
 
-**Critério de pronto**: a secretaria da Câmara deixa de telefonar cobrando parecer; nenhum
-estágio pós-doutoral vence sem aviso prévio.
+**Critério de pronto**: a secretaria da Câmara deixa de telefonar cobrando parecer — mecanismo
+pronto e testado (evento `COBRANCA` automático a cada relatoria atrasada, ver `prazos.test.js`);
+nenhum estágio pós-doutoral vence sem aviso prévio — mecanismo pronto (D-90/D-30/D+30/D+90),
+mas **nenhuma regra roda de verdade em produção ainda**: `iniciarAgendador()` não é chamado por
+`server/index.js` (ver nota em `agendador.js`) — falta decidir a estratégia de disparo (cron do
+SO vs. timer no processo) antes de ligar de fato.
+
+> **Nota J.4/J.8** — o e-mail dispara apenas ao destinatário direto (relator na Câmara,
+> pós-doutorando no PNPD) por simplicidade desta sessão: `enviarEmail()` deduplica por
+> `(tipo, entidade, entidade_id)`, e mandar dois e-mails para o mesmo marco exigiria ou uma
+> chave composta por destinatário, ou uma lista de destinatários por chamada — nenhuma das duas
+> foi necessária para o critério de pronto (a secretaria para de cobrar por telefone; o programa/
+> supervisor recebendo cópia é reforço, não o requisito central). Ampliar para múltiplos
+> destinatários é direto quando pedido: parametrizar `enviarEmail` para aceitar um array.
 
 ---
 
@@ -439,16 +486,20 @@ linha de base, não com zero.
 
 | | # | Ação | Referência | Bloqueio |
 |---|---|---|---|---|
-| `[ ]` | K.1 | Componente de painel reutilizável (cartões, aging em semáforo, séries) | — | |
-| `[ ]` | K.2 | Painel da Câmara: aging, backlog por setor, carga de relatoria, reincidência, tempo médio | `requisitos-camara.md` §11 | |
-| `[ ]` | K.3 | Painel do PNPD: vigentes, relatórios pendentes, vencendo, duração média, concentração por supervisor, qualidade do cadastro | `requisitos-pnpd.md` §12 | |
-| `[ ]` | K.4 | Painel de Expedientes: por série/ano, reservas pendentes, atos sem PDF, por destinatário, carga por servidor | `requisitos-expedientes.md` §11 | |
+| `[x]` | K.1 | Componente de painel reutilizável (cartões, aging em semáforo, séries) | `src/components/admin/Painel.jsx` | |
+| `[x]` | K.2 | Painel da Câmara: aging, backlog por setor, carga de relatoria, reincidência, tempo médio | `camaraController.getIndicadores` | |
+| `[x]` | K.3 | Painel do PNPD: vigentes, relatórios pendentes, vencendo, duração média, concentração por supervisor, qualidade do cadastro | `posDoutoradoController.getIndicadores` | |
+| `[x]` | K.4 | Painel de Expedientes: por série/ano, reservas pendentes, atos sem PDF, por destinatário, carga por servidor | `atosController.getIndicadores` | |
 | `[ ]` | K.5 | Seção pública "Pós-doutorandos" no microsite do programa | `requisitos-pnpd.md` Fase 4 | ⛔ D-K1 |
-| `[ ]` | K.6 | Extrato para a Coleta Sucupira (pós-docs por programa e período) | `requisitos-pnpd.md` §11 | |
-| `[ ]` | K.7 | Autosserviço: `GestorPrograma` cadastra e acompanha os pós-docs do seu programa | `requisitos-pnpd.md` Fase 4 | |
-| `[ ]` | K.8 | Integrar os painéis ao `/admin/metricas` já existente | `AdminMetricas.jsx` | |
+| `[x]` | K.6 | Extrato para a Coleta Sucupira (pós-docs por programa e período) | `posDoutoradoController.exportSucupira` | |
+| `[x]` | K.7 | Autosserviço: `GestorPrograma` cadastra e acompanha os pós-docs do seu programa | `routes/adminRoutes.js` (`POSDOC_ESCRITA_PROGRAMA`) | escopo já existia desde a Fase C (`isProgramaScoped`); só faltava abrir a rota de escrita |
+| `[x]` | K.8 | Integrar os painéis ao `/admin/metricas` já existente | `AdminMetricas.jsx` | abas: Métricas dos Programas (existente) · Câmara · Pós-Doutorado · Expedientes |
 
-**Critério de pronto**: nenhum número de gestão da PRPG precisa ser recontado à mão.
+**Critério de pronto**: nenhum número de gestão da PRPG precisa ser recontado à mão — os quatro
+painéis (Programas, Câmara, PNPD, Expedientes) calculam tudo na leitura, nada fica desatualizado
+por esquecimento. Verificado ao vivo no navegador; os números aparecem em 0 porque o ambiente de
+desenvolvimento não tem carga real além dos dados de teste — a query em si foi validada por
+`indicadores.test.js` com dados semeados.
 
 ---
 
@@ -459,16 +510,26 @@ previstos nos quatro documentos.
 
 | | # | Ação | Módulo | Bloqueio |
 |---|---|---|---|---|
-| `[ ]` | L.1 | Minuta de ata gerada a partir dos itens deliberados | Câmara | |
-| `[ ]` | L.2 | Espelho do processo com QR (usa `declaracoes` da A.9) | Câmara | |
-| `[ ]` | L.3 | Extrato de encaminhamento ao CEPE/SEG | Câmara | |
-| `[ ]` | L.4 | Visão "meus processos" para conselheiros | Câmara | ⛔ D-J3 |
-| `[ ]` | L.5 | Ofício de designação de relatoria (PDF + corpo de e-mail) | Câmara | |
-| `[ ]` | L.6 | Ofício de cobrança de relatório final | PNPD | |
-| `[ ]` | L.7 | Relação de pós-doutorandos vigentes por programa (PDF/XLSX) | PNPD | |
-| `[ ]` | L.8 | Relatórios anuais (Câmara e PNPD) | ambos | |
+| `[x]` | L.1 | Minuta de ata gerada a partir dos itens deliberados | `camaraPdf.gerarMinutaAtaPdf` | |
+| `[x]` | L.2 | Espelho do processo com QR (usa `declaracoes` da A.9) | `camaraController.espelhoProcessoPdf` | |
+| `[x]` | L.3 | Extrato de encaminhamento ao CEPE/SEG | `camaraController.extratoEncaminhamentoPdf` | |
+| `[x]` | L.4 | Visão "meus processos" para conselheiros | `AdminMeusProcessos.jsx` | ⛔ D-J3 não bloqueia — o backend (`getMeusProcessos`) já existia apostando no caminho "conselheiro com login"; só faltava a tela. Se D-J3 vier "link tokenizado", esta tela deixa de fazer sentido |
+| `[x]` | L.5 | Ofício de designação de relatoria (PDF + corpo de e-mail) | `camaraController.oficioRelatoriaPdf` + `addRelatoria` | fecha a lacuna deixada na Nota J.4/J.8 (e-mail de designação nunca tinha sido disparado, só os lembretes) |
+| `[x]` | L.6 | Ofício de cobrança de relatório final | `posdocPdf.gerarOficioCobrancaPdf` | |
+| `[x]` | L.7 | Relação de pós-doutorandos vigentes por programa (PDF/XLSX) | `posdocPdf.gerarRelacaoVigentesPdf` (XLSX já existia via `exportXlsx?programa=`) | |
+| `[x]` | L.8 | Relatórios anuais (Câmara e PNPD) | `camaraController.relatorioAnualPdf`, `posDoutoradoController.relatorioAnualPdf` | |
 | `[ ]` | L.9 | Publicação automática de resoluções resultantes em `/resolucoes` | Câmara | ⛔ D-L1 |
-| `[ ]` | L.10 | Busca *full-text* e log de auditoria por campo | núcleo | |
+| `[x]` | L.10 | Busca *full-text* | `buscaController.buscaGlobal` (`GET /api/busca`) | ⛔ **log de auditoria por campo não implementado** — ver nota |
+
+> **Nota L.10** — a busca cobre processos, atos e estágios PNPD por `ILIKE` sobre os campos
+> textuais relevantes (não é um índice `tsvector` com relevância ranqueada, mas resolve "onde
+> está isso" na prática, com o volume atual). O **log de auditoria por campo** (quem mudou qual
+> valor, de que para quê) ficou de fora: exigiria triggers de banco ou um wrapper de escrita
+> genérico registrando diffs em todas as tabelas — infraestrutura nova e transversal a todo o
+> projeto, desproporcional ao tempo restante desta sessão. O que já existe cobre "quem e quando"
+> (`criado_por`/`atualizado_por` em toda tabela, e a linha do tempo append-only em `eventos`),
+> só não "qual campo mudou de que para quê" — essa é a lacuna real, registrada aqui para quando
+> houver tempo dedicado a ela.
 
 ---
 
@@ -477,30 +538,75 @@ previstos nos quatro documentos.
 **~1 semana · dívida registrada · executável a qualquer momento após a Fase B**
 
 ⛔ D-Z3: confirmar se entra no escopo. **Recomendação: manter como dívida** e reavaliar depois
-que os quatro módulos estiverem em uso.
+que os quatro módulos estiverem em uso. *Executada mesmo assim em 29/07/2026, a pedido
+explícito do usuário — a recomendação original não foi revertida, só superada por decisão
+direta.*
 
 | | # | Ação |
 |---|---|---|
-| `[ ]` | D.1 | `teses_dissertacoes`: `field_*` → nomes reais; `autor_pessoa_id`, `orientador_pessoa_id`, `arquivo_id` |
-| `[ ]` | D.2 | `disciplinas`: `field_docente` → `docente_pessoa_id`; demais renomeados |
-| `[ ]` | D.3 | `bolsas`: `field_aluno` → `pessoa_id`; período → `data_inicio`/`data_fim` |
-| `[ ]` | D.4 | `faq.field_resposta` → `resposta`; `grupos_pesquisa.field_lideres` JSONB → `vinculos` |
-| `[ ]` | D.5 | Atualizar as 10 telas que consomem `field_*` |
-| `[ ]` | D.6 | `editais`: `resultado_parcial`/`resultado_final`/`erratas` → `eventos` |
+| `[x]` | D.1 | `teses_dissertacoes`: `field_*` → nomes reais; `autor_pessoa_id`, `orientador_pessoa_id`, `arquivo_url` (ver nota) |
+| `[x]` | D.2 | `disciplinas`: `field_docente` → `docente_pessoa_id`; demais renomeados |
+| `[x]` | D.3 | `bolsas`: `field_aluno` → `pessoa_id`; período → `data_inicio`/`data_fim` |
+| `[x]` | D.4 | `faq.field_resposta` → `resposta`; `grupos_pesquisa.field_lideres` JSONB → `vinculos` |
+| `[x]` | D.5 | Atualizar as 10+ telas que consomem `field_*` |
+| `[x]` | D.6 | `editais`: `resultado_parcial`/`resultado_final`/`erratas` → `eventos` |
 
 > **É a única fase que muda o contrato da API consumido pelo frontend.** Por isso fica isolada
 > e por último.
+
+**Nota D.1**: `arquivo_url`/`ementa_url` (disciplinas) ficaram como `TEXT` simples, não como
+FK para `arquivos` — são links de PDFs legados (upload externo ou por `/api/upload`, não
+necessariamente registrados como `arquivos`), e criar uma linha `arquivos` fabricada para cada
+um não teria contrapartida real (sem `sha256`/tamanho/autoria confiáveis). `autor_pessoa_id`/
+`docente_pessoa_id`/`pessoa_id` (bolsas) são FKs reais para `pessoas`, resolvidas por um novo
+`server/db/pessoasRepo.js#resolverOuCriarPessoa` (extraído do que já existia em
+`posDoutoradoRepo.js`, Fase C) — inclusive fazendo backfill sob demanda de uma `pessoa` para
+usuários que ainda não tinham uma (users.pessoa_id era `NULL` na maioria dos casos reais).
+Migração aplicada ao banco de dev com os 57 registros reais de `teses_dissertacoes` e 36 de
+`disciplinas` sem perda de dado (confirmado antes e depois: 57/57 autores resolvidos via
+`users.pessoa_id`; `disciplinas.field_docente` e `bolsas`/`faq`/`grupos_pesquisa` já estavam
+100% vazios em produção, então migração trivial ali). `grupos_pesquisa.field_lideres` virou
+`vinculos` com `papel='LIDER_GRUPO_PESQUISA'` e a nova coluna `vinculos.grupo_pesquisa_id`
+(FK). `editais.erratas`/`resultado_parcial`/`resultado_final` viraram `eventos`
+(`entidade='edital'`, tipos `ERRATA`/`ERRATA_REMOVIDA`/`RESULTADO_PARCIAL`/`RESULTADO_FINAL`) —
+append-only, então "remover" uma errata grava um evento de remoção em vez de apagar a linha;
+resultado parcial/final é sempre o evento mais recente do tipo. As páginas públicas
+(`Edital.jsx`/`Editais.jsx`) não mudaram — o controller devolve exatamente o mesmo formato
+(`erratas`/`resultadoParcial`/`resultadoFinal`) computado a partir dos eventos. De passagem,
+corrigido um bug pré-existente e não relacionado em `programasController.buscaPrograma`: a
+busca do microsite referenciava colunas inexistentes (`disciplinas.desc`,
+`teses_dissertacoes.author`) além do `faq.field_resposta` quebrado pelo rename — as três
+buscas nunca tinham funcionado.
 
 ---
 
 ## Fase M — Diplomas em lote (condicional)
 
-**⛔ D-E4 — decisão administrativa, não técnica.**
+**⛔ D-E4 — decisão administrativa, não técnica.** *Implementada em 29/07/2026 a pedido do
+usuário, como uma opção adicional — não substitui o caminho (1) nem força a secretaria a
+mudar de procedimento; ela escolhe qual caminho usar a cada expedição.*
 
 106 dos 425 ofícios (25%) são o mesmo ofício de envio de documentação de conclusão. Três
 caminhos em `requisitos-expedientes.md` §9.4. A Fase E já implementa o caminho (1) — formulário
-dedicado com dois campos. Esta fase só existe se a secretaria optar pelo caminho (2), o ofício
-em lote, que **muda o procedimento administrativo**.
+dedicado com dois campos, um ofício por concluinte. Esta fase implementa o caminho (2), o
+ofício em lote — um único ofício cobrindo vários concluintes.
+
+**O que foi feito** (sem forçar a decisão administrativa: os dois caminhos convivem):
+- `ato_diplomas` (tabela filha de `atos`): `nome_concluinte`, `livro`, `ordem` — a lista de
+  concluintes cobertos por um único ofício.
+- `server/db/atosRepo.js#diplomasRepo` (`listByAto`/`setLista`) e novos endpoints em
+  `atosController.js`: `POST /api/atos/diplomas-lote` (cria um ofício — reservado ou já
+  emitido — e anexa a lista num só passo), `GET`/`PUT /api/atos/:id/diplomas` (ver/editar a
+  lista de um ofício existente), `GET /api/atos/:id/diplomas.xlsx` (exporta a lista).
+- `src/pages/admin/AdminAtoDiplomasLote.jsx` (rota `/admin/atos/diplomas`, já prevista na
+  tabela de rotas de `requisitos-expedientes.md` §9): lista dinâmica de concluintes
+  (nome + livro), cria o ofício e leva à ficha. Link adicionado em `AdminAtos.jsx`.
+- `AdminAto.jsx` (ficha): mostra a lista de concluintes e o botão de exportação quando o
+  ofício tiver diplomas anexados.
+- Testado em `server/__tests__/atos.test.js` (5 casos novos: criação reservada/emitida,
+  assunto customizado, validação de lista vazia, edição da lista, exportação XLSX) e
+  verificado ao vivo no navegador (criação de um OFÍCIO Nº 1/2026 com um concluinte,
+  exibido corretamente na ficha).
 
 ---
 
@@ -526,14 +632,14 @@ em lote, que **muda o procedimento administrativo**.
 | A — Núcleo | 18 | D-A1, D-A2, D-A3, D-A4, D-E1 | 27/07/2026 | 27/07/2026 | ✅ concluída (D-A1/D-A4 conforme recomendação; FK real de `vinculos.pessoa_id` adiada para B.3 — ver A.10) |
 | B — Refit + Câmara | 10 | D-B1, D-G8, D-A4 | 28/07/2026 | 28/07/2026 | 🟡 7/10 feitos (B.1-B.3, B.5, B.7 aplicados; B.4/B.6 investigados e adiados p/ Fase E/G; B.8-B.10 bloqueados por D-B1) |
 | G — Contatos | 9 | D-G1..D-G8 | 28/07/2026 | 28/07/2026 | 🟡 5/9 feitos (G.1-G.3, G.5 aplicados e verificados no navegador; G.6/G.7 deixados por escopo; G.4/G.8 bloqueados por D-G2..D-G8; G.9 bloqueado por D-G1) |
-| E — Expedientes | 14 | D-E1..D-E3, D-E5..D-E8 | | | ⬜ |
-| C — PNPD | 8 | D-C1..D-C4, D-C6..D-C9 | | | ⬜ |
-| I — Notificações | 6 | **D-C5** | | | ⬜ |
-| J — Prazos e cobranças | 10 | D-C5, D-C6, D-J1, D-J2, D-J3 | | | ⬜ |
-| K — Painéis | 8 | D-K1 | | | ⬜ |
-| L — Acabamento | 10 | D-J3, D-L1 | | | ⬜ |
-| D — Legado Drupal | 6 | D-Z3 | | | ⬜ dívida |
-| M — Diplomas em lote | — | D-E4 | | | ⬜ condicional |
+| E — Expedientes | 14 | D-E1..D-E3, D-E5..D-E8 | 28/07/2026 | 28/07/2026 | 🟡 9/14 feitos (E.1-E.4, E.6-E.9, E.13 aplicados e testados; E.5/E.10/E.12/E.14 bloqueados pelas decisões D-E2/D-E3/D-E5; E.11 investigada e adiada — depende do importador) |
+| C — PNPD | 8 | D-C1..D-C4, D-C6..D-C9 | 28/07/2026 | 28/07/2026 | 🟡 7/8 feitos (C.1-C.4, C.6, C.8 aplicados e testados; C.7 parcial — declaração de vínculo pronta, certificado adiado por D-C7; C.5 bloqueado por D-C3/D-C8/D-C9) |
+| I — Notificações | 6 | **D-C5** | 28/07/2026 | 28/07/2026 | ✅ concluída (D-C5 não bloqueia: o critério de pronto já previa o caminho sem SMTP como caso normal; I.5 é esqueleto sem regras — dependem da Fase J) |
+| J — Prazos e cobranças | 10 | D-C5, D-C6, D-J1, D-J2, D-J3 | 28/07/2026 | 28/07/2026 | 🟡 8/10 feitos e testados (J.1, J.3-J.4, J.6-J.10); J.2 bloqueado por D-J1; J.5 bloqueado por D-J3; agendador não ligado em produção (decisão de operação, não técnica) |
+| K — Painéis | 8 | D-K1 | 28/07/2026 | 28/07/2026 | 🟡 7/8 feitos e testados (K.1-K.4, K.6-K.8); K.5 bloqueado por D-K1 |
+| L — Acabamento | 10 | D-J3, D-L1 | 28/07/2026 | 28/07/2026 | 🟡 9/10 feitos e testados (L.1-L.8, L.10 parcial); L.9 bloqueado por D-L1; log de auditoria por campo (metade de L.10) adiado — ver nota |
+| D — Legado Drupal | 6 | D-Z3 | 29/07/2026 | 29/07/2026 | ✅ concluída (executada a pedido do usuário, apesar da recomendação de dívida; migração real de 57 teses + 36 disciplinas sem perda de dado; bug pré-existente de busca do microsite corrigido de passagem) |
+| M — Diplomas em lote | — | D-E4 | 29/07/2026 | 29/07/2026 | ✅ concluída (implementada a pedido do usuário como opção adicional ao caminho 1 da Fase E, sem forçar a decisão administrativa D-E4 — a secretaria escolhe qual caminho usar a cada expedição) |
 | | **99 itens** | **38 decisões** | | | |
 
 ---

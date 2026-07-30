@@ -28,6 +28,9 @@ export const newsRepo = createRepository({
 });
 
 // ============================= Editais ============================
+// Fase D: erratas/resultadoParcial/resultadoFinal saíram das colunas — agora
+// são eventos (entidade='edital'), montados em editaisController a partir de
+// eventosRepo.listByEntidade, não neste repo (que só mapeia a tabela `editais`).
 export const editaisRepo = createRepository({
   table: 'editais',
   fromRow: (r) => ({
@@ -35,8 +38,7 @@ export const editaisRepo = createRepository({
     publishedAt: r.published_at, deadline: r.deadline, year: r.year, description: r.description,
     downloadLink: r.download_link, detailsLink: r.details_link,
     field_periodo: { data_inicio: r.periodo_data_inicio, data_fim: r.periodo_data_fim },
-    numero: r.numero, erratas: r.erratas ?? [],
-    resultadoParcial: r.resultado_parcial, resultadoFinal: r.resultado_final,
+    numero: r.numero,
     programaId: r.programa_id ?? null,
     proficiencia: r.proficiencia ?? false,
     proficienciaDataProva: r.proficiencia_data_prova ?? null,
@@ -47,8 +49,7 @@ export const editaisRepo = createRepository({
     description: o.description, download_link: o.downloadLink, details_link: o.detailsLink,
     periodo_data_inicio: o.field_periodo?.data_inicio || null,
     periodo_data_fim: o.field_periodo?.data_fim || null,
-    numero: o.numero, erratas: JSON.stringify(o.erratas ?? []),
-    resultado_parcial: o.resultadoParcial ?? null, resultado_final: o.resultadoFinal ?? null,
+    numero: o.numero,
     programa_id: o.programaId || null,
     proficiencia: o.proficiencia ? true : false,
     proficiencia_data_prova: o.proficienciaDataProva || null,
@@ -83,54 +84,60 @@ export const portariasRepo = createRepository({
 });
 
 // ====================== Teses e Dissertacoes ======================
+// Fase D (Legado Drupal): field_* -> nomes reais; autor_pessoa_id/orientador_pessoa_id
+// são FK de verdade para pessoas (resolvidos em tesesController/tesesImporter
+// via resolverOuCriarPessoa, não aqui — o repo só mapeia a coluna).
 export const tesesRepo = createRepository({
   table: 'teses_dissertacoes',
   fromRow: (r) => ({
-    id: r.id, title: r.title, field_ano: r.field_ano, field_arquivo: r.field_arquivo,
-    field_autor: r.field_autor, field_tipo_td: r.field_tipo_td, programaId: r.programa_id || null,
+    id: r.id, title: r.title, ano: r.ano, arquivoUrl: r.arquivo_url,
+    autorPessoaId: r.autor_pessoa_id, orientadorPessoaId: r.orientador_pessoa_id,
+    tipo: r.tipo, programaId: r.programa_id || null,
   }),
   toRow: (o) => ({
-    id: o.id, title: o.title, field_ano: o.field_ano || null, field_arquivo: o.field_arquivo || null,
-    field_autor: o.field_autor || null, field_tipo_td: o.field_tipo_td || null,
-    programa_id: o.programaId || null,
+    id: o.id, title: o.title, ano: o.ano || null, arquivo_url: o.arquivoUrl || null,
+    autor_pessoa_id: o.autorPessoaId || null, orientador_pessoa_id: o.orientadorPessoaId || null,
+    tipo: o.tipo || null, programa_id: o.programaId || null,
   }),
 });
 
 // ============================== FAQ ===============================
 export const faqRepo = createRepository({
   table: 'faq',
-  fromRow: (r) => ({ id: r.id, title: r.title, field_resposta: r.field_resposta, programaId: r.programa_id || null }),
-  toRow: (o) => ({ id: o.id, title: o.title, field_resposta: o.field_resposta || null, programa_id: o.programaId || null }),
+  fromRow: (r) => ({ id: r.id, title: r.title, resposta: r.resposta, programaId: r.programa_id || null }),
+  toRow: (o) => ({ id: o.id, title: o.title, resposta: o.resposta || null, programa_id: o.programaId || null }),
 });
 
 // =========================== Disciplinas ==========================
+// Fase D: field_* -> nomes reais; docente_pessoa_id é FK de verdade (resolvido
+// em disciplinasController, não aqui).
 export const disciplinasRepo = createRepository({
   table: 'disciplinas',
   fromRow: (r) => ({
-    id: r.id, title: r.title, field_carga_horaria: r.field_carga_horaria,
-    field_docente: r.field_docente, field_ementa: r.field_ementa,
-    field_tipo_disciplina: r.field_tipo_disciplina, programaId: r.programa_id || null,
+    id: r.id, title: r.title, cargaHoraria: r.carga_horaria,
+    docentePessoaId: r.docente_pessoa_id, ementaUrl: r.ementa_url,
+    tipoDisciplina: r.tipo_disciplina, programaId: r.programa_id || null,
   }),
   toRow: (o) => ({
-    id: o.id, title: o.title, field_carga_horaria: o.field_carga_horaria || null,
-    field_docente: o.field_docente || null, field_ementa: o.field_ementa || null,
-    field_tipo_disciplina: o.field_tipo_disciplina || null, programa_id: o.programaId || null,
+    id: o.id, title: o.title, carga_horaria: o.cargaHoraria || null,
+    docente_pessoa_id: o.docentePessoaId || null, ementa_url: o.ementaUrl || null,
+    tipo_disciplina: o.tipoDisciplina || null, programa_id: o.programaId || null,
   }),
 });
 
 // ============================= Bolsas =============================
+// Fase D: field_aluno -> pessoa_id (FK de verdade); período TEXT -> DATE.
 export const bolsasRepo = createRepository({
   table: 'bolsas',
   fromRow: (r) => ({
-    id: r.id, title: r.title, field_aluno: r.field_aluno,
-    field_periodo_bolsa: { data_inicio: r.field_periodo_inicio, data_fim: r.field_periodo_fim },
-    field_tipo_bolsa: r.field_tipo_bolsa,
+    id: r.id, title: r.title, pessoaId: r.pessoa_id,
+    dataInicio: r.data_inicio, dataFim: r.data_fim,
+    tipoBolsa: r.tipo_bolsa,
   }),
   toRow: (o) => ({
-    id: o.id, title: o.title, field_aluno: o.field_aluno || null,
-    field_periodo_inicio: o.field_periodo_bolsa?.data_inicio || null,
-    field_periodo_fim: o.field_periodo_bolsa?.data_fim || null,
-    field_tipo_bolsa: o.field_tipo_bolsa || null,
+    id: o.id, title: o.title, pessoa_id: o.pessoaId || null,
+    data_inicio: o.dataInicio || null, data_fim: o.dataFim || null,
+    tipo_bolsa: o.tipoBolsa || null,
   }),
 });
 
@@ -150,17 +157,19 @@ export const pagesRepo = createRepository({
 });
 
 // ======================= Grupos de Pesquisa =======================
+// Fase D: field_lideres (JSONB) saiu daqui — líderes agora são linhas de
+// `vinculos` (papel='LIDER_GRUPO_PESQUISA'), geridas em gruposPesquisaController.
 export const gruposRepo = createRepository({
   table: 'grupos_pesquisa',
   fromRow: (r) => ({
     id: r.id, title: r.title,
     body: { value: r.body_value, summary: r.body_summary },
-    field_lideres: r.field_lideres ?? [], programaId: r.programa_id || null,
+    programaId: r.programa_id || null,
   }),
   toRow: (o) => ({
     id: o.id, title: o.title,
     body_value: o.body?.value ?? null, body_summary: o.body?.summary ?? null,
-    field_lideres: JSON.stringify(o.field_lideres ?? []), programa_id: o.programaId || null,
+    programa_id: o.programaId || null,
   }),
 });
 

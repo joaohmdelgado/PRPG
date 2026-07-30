@@ -63,7 +63,7 @@ const AdminTesesList = () => {
 
   const filteredTeses = teses.filter(item => {
     const title = item.title || '';
-    const autor = item.field_autor_resolved?.nome || '';
+    const autor = item.autor?.nome || '';
     const query = searchQuery.toLowerCase();
     return title.toLowerCase().includes(query) || autor.toLowerCase().includes(query);
   });
@@ -150,26 +150,26 @@ const AdminTesesList = () => {
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    item.field_tipo_td === 'Tese' 
-                      ? 'bg-purple-100 text-purple-800' 
+                    item.tipo === 'Tese'
+                      ? 'bg-purple-100 text-purple-800'
                       : 'bg-emerald-100 text-emerald-800'
                   }`}>
-                    {item.field_tipo_td}
+                    {item.tipo}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   <div>
-                    <p className="font-medium">{item.field_autor_resolved?.nome}</p>
-                    <p className="text-xs text-gray-500">{item.field_autor_resolved?.email}</p>
+                    <p className="font-medium">{item.autor?.nome}</p>
+                    <p className="text-xs text-gray-500">{item.autor?.email}</p>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {formatDate(item.field_ano)}
+                  {formatDate(item.ano)}
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {item.field_arquivo ? (
+                  {item.arquivoUrl ? (
                     <a
-                      href={item.field_arquivo.startsWith('http') ? item.field_arquivo : `${API_URL}${item.field_arquivo}`}
+                      href={item.arquivoUrl.startsWith('http') ? item.arquivoUrl : `${API_URL}${item.arquivoUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-red-600 hover:text-red-800 inline-flex items-center gap-1.5 font-medium hover:underline"

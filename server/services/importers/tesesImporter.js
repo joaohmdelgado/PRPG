@@ -1,14 +1,17 @@
 import { tesesRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
+import { resolverOuCriarPessoa } from '../../db/pessoasRepo.js';
 
 // Importador de TESES e DISSERTAÇÕES a partir do export de nós do site antigo
 // (Drupal: array de objetos onde cada campo é uma lista de { value | url | target_id | ... }).
 // Armazena: Título, Data/Ano, Tipo (Tese/Dissertação), Arquivo (URL do PDF) e Autor,
 // sempre vinculando ao programa de destino escolhido no painel.
 //
-// O Autor (field_autor) no sistema novo guarda o ID de um usuário (Aluno). Quando o
-// aluno já foi importado (perfil_aluno.uid_legado), resolvemos o ID; senão, guardamos
-// o nome derivado do slug do export como fallback legível (importe os alunos antes).
+// Fase D (Legado Drupal): o Autor não guarda mais um users.id (nem, pior,
+// às vezes um nome solto) — autor_pessoa_id é sempre um pessoas.id de verdade.
+// Quando o aluno já foi importado (perfil_aluno.uid_legado), resolvemos o
+// usuário e daí a pessoa (users.pessoa_id); senão criamos uma pessoa mínima
+// com o nome derivado do slug do export (resolverOuCriarPessoa).
 
 // Lê o primeiro item de um campo Drupal (lista) e devolve a chave pedida.
 const first = (campo, chave = 'value') => {
@@ -64,9 +67,9 @@ const map = (raw) => {
   return {
     uuid: first(raw.uuid),
     title: titulo,
-    field_ano: soData(first(raw.field_ano)) || null,
-    field_arquivo: first(raw.field_arquivo, 'url') || null,
-    field_tipo_td: normalizarTipo(first(raw.field_tipo_td)) || null,
+    ano: soData(first(raw.field_ano)) || null,
+    arquivoUrl: first(raw.field_arquivo, 'url') || null,
+    tipo: normalizarTipo(first(raw.field_tipo_td)) || null,
     autor_uid: first(raw.field_autor, 'target_id') || null,
     autor_nome: nomeDoSlug(first(raw.field_autor, 'url')),
   };
@@ -92,7 +95,7 @@ const montarId = (m) => `tese-${slugify(m.uuid) || slugify(m.title)}`;
 
 // Resolve o autor para um usuário existente cujo perfil_aluno/perfil_professor tenha
 // uid_legado igual ao target_id do export. Retorna users.id ou null.
-const resolverAutorId = async (autorUid) => {
+const resolverAutorUserId = async (autorUid) => {
   if (!autorUid) return null;
   const { rows } = await query(
     `SELECT id FROM users
@@ -107,33 +110,43 @@ const resolverAutorId = async (autorUid) => {
 // Indica se os campos relevantes mudaram (para distinguir atualizado de inalterado).
 const mudou = (existente, dados) =>
   existente.title !== dados.title ||
-  (existente.field_ano ?? null) !== dados.field_ano ||
-  (existente.field_arquivo ?? null) !== dados.field_arquivo ||
-  (existente.field_tipo_td ?? null) !== dados.field_tipo_td ||
-  (existente.field_autor ?? null) !== dados.field_autor ||
+  (existente.ano ?? null) !== dados.ano ||
+  (existente.arquivoUrl ?? null) !== dados.arquivoUrl ||
+  (existente.tipo ?? null) !== dados.tipo ||
+  (existente.autorPessoaId ?? null) !== dados.autorPessoaId ||
   (existente.programaId ?? null) !== dados.programaId;
 
 // Importa um único registro já mapeado. Em dryRun apenas calcula a ação prevista.
 // Retorna { acao, nome, email, mensagem } — "email" não se aplica e fica vazio.
 const importOne = async (m, { programaId, actor, dryRun }) => {
   const id = montarId(m);
-  const autorId = await resolverAutorId(m.autor_uid);
-  // Se o aluno ainda não existe no sistema, guarda o nome como fallback legível.
-  const field_autor = autorId || m.autor_nome || null;
+  const autorUserId = await resolverAutorUserId(m.autor_uid);
+  // Aluno já cadastrado: resolve a pessoa por trás do usuário. Senão, cria uma
+  // pessoa mínima com o nome derivado do export (nunca guarda nome solto).
+  // Em dryRun não cria nada — só verifica se já existiria uma pessoa (preview).
+  let autorPessoaId = null;
+  if (!dryRun) {
+    autorPessoaId = autorUserId
+      ? await resolverOuCriarPessoa({ pessoaId: autorUserId })
+      : await resolverOuCriarPessoa({ nome: m.autor_nome });
+  } else if (autorUserId) {
+    const { rows } = await query('SELECT pessoa_id FROM users WHERE id = $1', [autorUserId]);
+    autorPessoaId = rows[0]?.pessoa_id || null;
+  }
 
   const dados = {
     id,
     title: m.title,
-    field_ano: m.field_ano,
-    field_arquivo: m.field_arquivo,
-    field_tipo_td: m.field_tipo_td,
-    field_autor,
+    ano: m.ano,
+    arquivoUrl: m.arquivoUrl,
+    tipo: m.tipo,
+    autorPessoaId,
     programaId,
   };
 
   // Sufixo informativo para a coluna "Detalhe".
-  const partes = [m.field_tipo_td, m.field_ano ? m.field_ano.slice(0, 4) : null];
-  partes.push(autorId ? 'autor vinculado' : (m.autor_nome ? 'autor não cadastrado' : null));
+  const partes = [m.tipo, m.ano ? m.ano.slice(0, 4) : null];
+  partes.push(autorUserId ? 'autor vinculado a usuário' : (m.autor_nome ? 'autor cadastrado sem login' : null));
   const info = partes.filter(Boolean).join(', ');
   const suf = info ? ` (${info})` : '';
   const nome = m.autor_nome || m.title;

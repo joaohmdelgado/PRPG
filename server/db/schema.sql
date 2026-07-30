@@ -88,9 +88,9 @@ CREATE TABLE IF NOT EXISTS editais (
   periodo_data_inicio DATE,
   periodo_data_fim    DATE,
   numero              TEXT,
-  erratas             JSONB DEFAULT '[]',
-  resultado_parcial   TEXT,
-  resultado_final     TEXT,
+  -- Fase D: erratas/resultado_parcial/resultado_final saíram daqui - viram
+  -- eventos (entidade='edital', tipo ERRATA|RESULTADO_PARCIAL|RESULTADO_FINAL,
+  -- dados.link) para ganhar histórico (append-only) em vez de 3 colunas mutáveis.
   programa_id         TEXT, -- Fase 5: vincula o edital a um programa (NULL = edital global da PRPG)
   proficiencia        BOOLEAN DEFAULT FALSE, -- quando TRUE, o edital define o período de inscrição da proficiência
   proficiencia_data_prova DATE, -- data da prova de proficiência (usada na declaração)
@@ -435,8 +435,15 @@ CREATE TABLE IF NOT EXISTS vinculos (
   ordem               INTEGER DEFAULT 0,       -- ordenacao da equipe na exibicao
   situacao_manual     TEXT,                    -- so o que as datas nao dizem: RENUNCIA|AFASTADO|...
   ativo           BOOLEAN DEFAULT TRUE,
-  criado_em       TIMESTAMPTZ DEFAULT now()
+  criado_em       TIMESTAMPTZ DEFAULT now(),
+  -- Fase D (Legado Drupal): liderança de grupo de pesquisa também é um vínculo
+  -- (papel='LIDER_GRUPO_PESQUISA') — grupo_pesquisa_id no lugar de programa_id
+  -- quando o vínculo é com um grupo, não com um programa. Substitui
+  -- grupos_pesquisa.field_lideres (JSONB solto, sem período/situação). FK real
+  -- só pode ser adicionada mais abaixo, depois que grupos_pesquisa existe.
+  grupo_pesquisa_id TEXT
 );
+CREATE INDEX IF NOT EXISTS vinculos_grupo_pesquisa_idx ON vinculos(grupo_pesquisa_id);
 
 -- contatos.vinculo_id so pode ganhar FK depois que `vinculos` existe.
 DO $$
@@ -578,6 +585,20 @@ CREATE TABLE IF NOT EXISTS ato_referencias (
 -- O edital publicado no site aponta para o ato que lhe deu numero.
 ALTER TABLE editais ADD COLUMN IF NOT EXISTS ato_id TEXT REFERENCES atos(id) ON DELETE SET NULL;
 
+-- Fase M (Expedicao de diplomas em lote, requisitos-expedientes.md SS9.4,
+-- caminho 2): um oficio cobrindo varios concluintes, em vez de um oficio por
+-- concluinte (caminho 1, ja implementado na Fase E - continua disponivel via
+-- o fluxo normal de criacao de ato). Nao substitui o caminho 1: a secretaria
+-- escolhe qual usar a cada expedicao.
+CREATE TABLE IF NOT EXISTS ato_diplomas (
+  id              SERIAL PRIMARY KEY,
+  ato_id          TEXT NOT NULL REFERENCES atos(id) ON DELETE CASCADE,
+  nome_concluinte TEXT NOT NULL,
+  livro           TEXT,
+  ordem           INTEGER DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS ato_diplomas_ato_idx ON ato_diplomas(ato_id);
+
 -- Documentos para download que NAO sao atos (sem numero/ano/orgao emissor):
 -- formularios, manuais, modelos, cartilhas. Sera o destino de `formularios`
 -- na Fase B (D-A3: conferido o conteudo real de formularios.json - nenhum
@@ -633,12 +654,15 @@ CREATE TABLE IF NOT EXISTS portarias (
 );
 
 -- ======================= Grupos de Pesquisa =======================
+-- Fase D: field_lideres (JSONB de users.id) sai daqui - líderes agora são
+-- linhas de `vinculos` (papel='LIDER_GRUPO_PESQUISA', grupo_pesquisa_id
+-- abaixo), reusando a mesma tabela que já modela papel/período/situação de
+-- vínculo em vez de duplicar isso num array solto (arquitetura-dados.md §2.1).
 CREATE TABLE IF NOT EXISTS grupos_pesquisa (
   id            TEXT PRIMARY KEY,
   title         TEXT NOT NULL,
   body_value    TEXT,
   body_summary  TEXT,
-  field_lideres JSONB DEFAULT '[]',
   programa_id   TEXT,
   criado_por    TEXT,
   atualizado_por TEXT
@@ -646,16 +670,21 @@ CREATE TABLE IF NOT EXISTS grupos_pesquisa (
 CREATE INDEX IF NOT EXISTS grupos_prog_idx ON grupos_pesquisa(programa_id);
 
 -- ====================== Teses e Dissertacoes ======================
+-- Fase D (Legado Drupal, PLANO.md): field_* renomeados; field_autor (que já
+-- guardava um users.id) virou autor_pessoa_id de verdade, com orientador_pessoa_id
+-- novo (não existia no Drupal). arquivo_url continua TEXT (link externo do
+-- PDF, não um upload nosso) — ver arquitetura-dados.md, não força arquivo_id.
 CREATE TABLE IF NOT EXISTS teses_dissertacoes (
-  id            TEXT PRIMARY KEY,
-  title         TEXT NOT NULL,
-  field_ano     TEXT,
-  field_arquivo TEXT,
-  field_autor   TEXT,
-  field_tipo_td TEXT,
-  programa_id   TEXT,
-  criado_por    TEXT,
-  atualizado_por TEXT
+  id                   TEXT PRIMARY KEY,
+  title                TEXT NOT NULL,
+  ano                  DATE,
+  arquivo_url          TEXT,
+  tipo                 TEXT,
+  autor_pessoa_id      TEXT REFERENCES pessoas(id) ON DELETE SET NULL,
+  orientador_pessoa_id TEXT REFERENCES pessoas(id) ON DELETE SET NULL,
+  programa_id          TEXT,
+  criado_por           TEXT,
+  atualizado_por       TEXT
 );
 CREATE INDEX IF NOT EXISTS teses_prog_idx ON teses_dissertacoes(programa_id);
 
@@ -663,7 +692,7 @@ CREATE INDEX IF NOT EXISTS teses_prog_idx ON teses_dissertacoes(programa_id);
 CREATE TABLE IF NOT EXISTS faq (
   id             TEXT PRIMARY KEY,
   title          TEXT NOT NULL,
-  field_resposta TEXT,
+  resposta       TEXT,
   programa_id    TEXT,
   criado_por     TEXT,
   atualizado_por TEXT
@@ -671,13 +700,16 @@ CREATE TABLE IF NOT EXISTS faq (
 CREATE INDEX IF NOT EXISTS faq_prog_idx ON faq(programa_id);
 
 -- =========================== Disciplinas ==========================
+-- Fase D: field_docente vira docente_pessoa_id (sem dado legado a migrar -
+-- nenhum registro tinha esse campo preenchido); field_ementa é link (PDF
+-- externo) -> ementa_url, mantido TEXT pelo mesmo motivo de arquivo_url acima.
 CREATE TABLE IF NOT EXISTS disciplinas (
   id                     TEXT PRIMARY KEY,
   title                  TEXT NOT NULL,
-  field_carga_horaria    TEXT,
-  field_docente          TEXT,
-  field_ementa           TEXT,
-  field_tipo_disciplina  TEXT,
+  carga_horaria          TEXT,
+  docente_pessoa_id      TEXT REFERENCES pessoas(id) ON DELETE SET NULL,
+  ementa_url             TEXT,
+  tipo_disciplina        TEXT,
   programa_id            TEXT,
   criado_por             TEXT,
   atualizado_por         TEXT
@@ -704,16 +736,22 @@ BEGIN
     ALTER TABLE grupos_pesquisa ADD CONSTRAINT grupos_pesquisa_programa_id_fkey
       FOREIGN KEY (programa_id) REFERENCES programas(id) ON DELETE SET NULL;
   END IF;
+  -- Fase D: vinculos.grupo_pesquisa_id só ganha FK aqui, depois que grupos_pesquisa existe.
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vinculos_grupo_pesquisa_id_fkey') THEN
+    ALTER TABLE vinculos ADD CONSTRAINT vinculos_grupo_pesquisa_id_fkey
+      FOREIGN KEY (grupo_pesquisa_id) REFERENCES grupos_pesquisa(id) ON DELETE CASCADE;
+  END IF;
 END$$;
 
 -- ============================= Bolsas =============================
+-- Fase D: field_aluno vira pessoa_id de verdade; periodo TEXT vira DATE.
 CREATE TABLE IF NOT EXISTS bolsas (
   id                    TEXT PRIMARY KEY,
   title                 TEXT NOT NULL,
-  field_aluno           TEXT,
-  field_periodo_inicio  TEXT,
-  field_periodo_fim     TEXT,
-  field_tipo_bolsa      TEXT,
+  pessoa_id             TEXT REFERENCES pessoas(id) ON DELETE SET NULL,
+  data_inicio           DATE,
+  data_fim              DATE,
+  tipo_bolsa            TEXT,
   criado_por            TEXT,
   atualizado_por        TEXT
 );
@@ -1030,6 +1068,66 @@ CREATE TABLE IF NOT EXISTS camara_atos (
   atualizado_por TEXT
 );
 
+-- ===================== Pós-Doutorado / PNPD (Fase C, PLANO.md) ==============
+-- Ver arquitetura-dados.md §5.12. Extensão de um vinculo(papel='POS_DOUTORANDO'):
+-- pessoa, programa, período (data_inicio/fim_mandato), ato de designação
+-- (vinculo.ato_id) e situação derivada vêm do vínculo; esta tabela só guarda
+-- o que é específico do estágio (projeto, supervisão, prestação de contas).
+CREATE TABLE IF NOT EXISTS pos_doutorados (
+  id                  TEXT PRIMARY KEY,
+  vinculo_id          TEXT NOT NULL UNIQUE REFERENCES vinculos(id) ON DELETE CASCADE,
+  supervisor_id       TEXT REFERENCES pessoas(id) ON DELETE SET NULL,
+  cossupervisor_id    TEXT REFERENCES pessoas(id) ON DELETE SET NULL,
+  projeto_titulo      TEXT NOT NULL,
+  projeto_resumo      TEXT,
+  linha_pesquisa_id   INTEGER REFERENCES linhas_pesquisa(id) ON DELETE SET NULL,
+  modalidade          TEXT NOT NULL DEFAULT 'VOLUNTARIO',
+  agencia_fomento     TEXT,
+  vinculo_origem      TEXT,
+  instituicao_origem  TEXT,
+  processo_id         TEXT REFERENCES processos(id) ON DELETE SET NULL,
+  renovacao_de_id     TEXT REFERENCES pos_doutorados(id) ON DELETE SET NULL,
+  relatorio_entregue_em DATE,
+  data_aprovacao_colegiado DATE,
+  -- Fidelidade à origem (requisitos-pnpd.md §13): texto íntegro da planilha.
+  periodo_original    TEXT,
+  programa_original   TEXT,
+  supervisor_original TEXT,
+  data_inicio_aprox   BOOLEAN DEFAULT FALSE,
+  data_fim_aprox      BOOLEAN DEFAULT FALSE,
+  observacoes         TEXT,
+  criado_em           TIMESTAMPTZ DEFAULT now(),
+  atualizado_em       TIMESTAMPTZ DEFAULT now(),
+  criado_por          TEXT,
+  atualizado_por      TEXT
+);
+CREATE INDEX IF NOT EXISTS posdoc_processo_idx ON pos_doutorados(processo_id);
+CREATE INDEX IF NOT EXISTS posdoc_supervisor_idx ON pos_doutorados(supervisor_id);
+
+-- ===================== Notificações (Fase I, PLANO.md) =======================
+-- Registro de toda tentativa de e-mail — inclusive quando o SMTP não está
+-- configurado (situacao='SEM_SMTP'), para que "a intenção foi registrada"
+-- seja verificável mesmo sem envio real. Reenvio (ver services/email.js)
+-- atualiza a mesma linha (tentativas += 1) — não duplica o registro.
+CREATE TABLE IF NOT EXISTS notificacoes (
+  id                TEXT PRIMARY KEY,
+  destinatario_email TEXT NOT NULL,
+  destinatario_pessoa_id TEXT REFERENCES pessoas(id) ON DELETE SET NULL,
+  tipo              TEXT NOT NULL,   -- chave do modelo (vocabularios: notificacao.modelo)
+  entidade          TEXT,           -- polimórfico, mesma lista de eventos.entidade
+  entidade_id       TEXT,
+  assunto           TEXT NOT NULL,
+  corpo             TEXT NOT NULL,
+  situacao          TEXT NOT NULL DEFAULT 'PENDENTE', -- PENDENTE|ENVIADO|ERRO|SEM_SMTP
+  erro              TEXT,
+  enviado_em        TIMESTAMPTZ,
+  tentativas        INTEGER NOT NULL DEFAULT 0,
+  criado_em         TIMESTAMPTZ DEFAULT now(),
+  criado_por        TEXT
+);
+CREATE INDEX IF NOT EXISTS notificacoes_situacao_idx ON notificacoes(situacao);
+CREATE INDEX IF NOT EXISTS notificacoes_entidade_idx ON notificacoes(entidade, entidade_id);
+
 -- Seed do vocabulário de unidades/setores (não depende das decisões pendentes
 -- em requisitos-camara.md §16 — cores e prazo de relatoria seguem em aberto).
 -- Idempotente: ON CONFLICT (id) DO NOTHING.
@@ -1141,5 +1239,55 @@ INSERT INTO vocabularios (dominio, valor, rotulo, cor, ordem) VALUES
   ('vinculo.papel', 'COMISSAO_SELECAO', 'Comissão de Seleção', NULL, 14),
   ('vinculo.papel', 'COMISSAO_PESQUISA', 'Comissão de Pesquisa', NULL, 15),
   ('vinculo.papel', 'COMISSAO_ORIENTACAO', 'Comissão de Orientação', NULL, 16),
-  ('vinculo.papel', 'COMISSAO_AUTOAVALIACAO', 'Comissão de Autoavaliação', NULL, 17)
+  ('vinculo.papel', 'COMISSAO_AUTOAVALIACAO', 'Comissão de Autoavaliação', NULL, 17),
+
+  ('posdoc.modalidade', 'VOLUNTARIO', 'Voluntário', NULL, 0),
+  ('posdoc.modalidade', 'BOLSISTA_PNPD_CAPES', 'Bolsista PNPD/CAPES', NULL, 1),
+  ('posdoc.modalidade', 'BOLSISTA_FACEPE', 'Bolsista FACEPE', NULL, 2),
+  ('posdoc.modalidade', 'BOLSISTA_CNPQ', 'Bolsista CNPq', NULL, 3),
+  ('posdoc.modalidade', 'BOLSISTA_OUTRA_AGENCIA', 'Bolsista de outra agência', NULL, 4),
+  ('posdoc.modalidade', 'SENIOR', 'Sênior', NULL, 5),
+  ('posdoc.modalidade', 'EMPRESARIAL', 'Empresarial', NULL, 6),
+
+  ('posdoc.vinculo_origem', 'SEM_VINCULO', 'Sem vínculo', NULL, 0),
+  ('posdoc.vinculo_origem', 'DOCENTE_OUTRA_IES', 'Docente de outra IES', NULL, 1),
+  ('posdoc.vinculo_origem', 'SERVIDOR_UFRPE', 'Servidor(a) da UFRPE', NULL, 2),
+  ('posdoc.vinculo_origem', 'SERVIDOR_OUTRO_ORGAO', 'Servidor(a) de outro órgão', NULL, 3),
+  ('posdoc.vinculo_origem', 'PROFISSIONAL_LIBERAL', 'Profissional liberal', NULL, 4),
+  ('posdoc.vinculo_origem', 'ESTRANGEIRO_VISITANTE', 'Estrangeiro(a) visitante', NULL, 5),
+
+  ('posdoc.situacao_manual', 'EM_ANALISE', 'Em análise', 'bg-gray-100 text-gray-700', 0),
+  ('posdoc.situacao_manual', 'INTERROMPIDO', 'Interrompido', 'bg-rose-100 text-rose-800', 1),
+  ('posdoc.situacao_manual', 'INDEFERIDO', 'Indeferido', 'bg-rose-100 text-rose-800', 2),
+  ('posdoc.situacao_manual', 'CANCELADO', 'Cancelado', 'bg-rose-100 text-rose-800', 3)
 ON CONFLICT (dominio, valor, COALESCE(programa_id, '')) DO NOTHING;
+
+-- ============================= Modelos de notificação (Fase I.4) ============
+-- Assunto/corpo editáveis (não hardcoded no controller); {{placeholders}}
+-- resolvidos por services/email.js. Sem regra de disparo ainda — a Fase J
+-- (prazos e cobranças) é quem decide quando cada modelo é usado.
+INSERT INTO vocabularios (dominio, valor, rotulo, meta, ordem) VALUES
+  ('notificacao.modelo', 'TESTE', 'E-mail de teste', '{"assunto": "Teste de envio - PRPG/UFRPE", "corpo": "Este é um e-mail de teste do painel administrativo da PRPG/UFRPE. Se você o recebeu, o SMTP institucional está funcionando."}', 0),
+  ('notificacao.modelo', 'RELATORIA_DESIGNADA', 'Designação de relatoria (Câmara)', '{"assunto": "Designação de relatoria - Processo {{numeroProcesso}}", "corpo": "Prezado(a) {{nome}}, você foi designado(a) relator(a) do processo {{numeroProcesso}} ({{assunto}}). Prazo para devolução: {{prazoDevolucao}}."}', 1),
+  ('notificacao.modelo', 'POSDOC_RELATORIO_PENDENTE', 'Cobrança de relatório final (PNPD)', '{"assunto": "Relatório final pendente - Estágio pós-doutoral", "corpo": "Prezado(a) {{nome}}, o estágio pós-doutoral encerrado em {{dataFim}} ainda não tem relatório final registrado."}', 2),
+  ('notificacao.modelo', 'RELATORIA_LEMBRETE', 'Lembrete de prazo de relatoria (Câmara)', '{"assunto": "Lembrete: prazo de relatoria - Processo {{numeroProcesso}}", "corpo": "Prezado(a) {{nome}}, faltam {{dias}} dia(s) para o prazo de devolução do parecer do processo {{numeroProcesso}} ({{assunto}}). Prazo: {{prazoDevolucao}}."}', 3),
+  ('notificacao.modelo', 'RELATORIA_COBRANCA', 'Cobrança de relatoria atrasada (Câmara)', '{"assunto": "Parecer pendente - Processo {{numeroProcesso}}", "corpo": "Prezado(a) {{nome}}, o prazo de devolução do parecer do processo {{numeroProcesso}} ({{assunto}}) venceu em {{prazoDevolucao}} e o parecer ainda não foi registrado."}', 4),
+  ('notificacao.modelo', 'POSDOC_VENCENDO', 'Aviso de vencimento do estágio (PNPD)', '{"assunto": "Estágio pós-doutoral vencendo em {{dias}} dias", "corpo": "Prezado(a), o estágio pós-doutoral de {{nome}} no programa {{programa}} vence em {{dataFim}} ({{dias}} dia(s)). Avalie se há renovação a solicitar."}', 5),
+  ('notificacao.modelo', 'MANDATO_VENCENDO', 'Aviso de vencimento de mandato', '{"assunto": "Mandato vencendo em {{dias}} dias - {{programa}}", "corpo": "O mandato de {{nome}} como {{papel}} do programa {{programa}} vence em {{dataFim}} ({{dias}} dia(s))."}', 6),
+  ('notificacao.modelo', 'PORTARIA_VENCENDO', 'Aviso de vigência de ato vencendo', '{"assunto": "Vigência de {{numeroExibicao}} vencendo em {{dias}} dias", "corpo": "A vigência de {{numeroExibicao}} ({{assunto}}) vence em {{dataFim}} ({{dias}} dia(s))."}', 7),
+  ('notificacao.modelo', 'RESERVA_PENDENTE', 'Reserva de número pendente há mais de 15 dias', '{"assunto": "Reserva de número pendente - {{numeroExibicao}}", "corpo": "O número {{numeroExibicao}} ({{assunto}}) está reservado há mais de 15 dias e ainda não foi emitido."}', 8)
+ON CONFLICT (dominio, valor, COALESCE(programa_id, '')) DO NOTHING;
+
+-- ============================= Séries de numeração (Fase E.4) ================
+-- As 6 séries identificadas em requisitos-expedientes.md §1.1/§14.1 (D-E1 em
+-- aberto: se há memorando/circular/instrução normativa com numeração própria,
+-- entram depois via AdminAtoSeries.jsx — a tela de administração de séries
+-- não exige migração de schema para uma série nova).
+INSERT INTO ato_series (id, nome, especie, sigla, unidade_id, exige_destinatario, publica_no_site, ordem) VALUES
+  ('OFICIO', 'Ofícios da PRPG', 'OFICIO', 'OFÍCIO', NULL, TRUE, FALSE, 0),
+  ('PORTARIA_PRPG', 'Portarias da PRPG', 'PORTARIA', 'PORTARIA', NULL, FALSE, FALSE, 1),
+  ('EDITAL_PRPG', 'Editais da PRPG', 'EDITAL', 'EDITAL', NULL, FALSE, TRUE, 2),
+  ('EDITAL_PRINT', 'Editais PRINT', 'EDITAL', 'EDITAL PRINT', NULL, FALSE, TRUE, 3),
+  ('EDITAL_LATO_SENSU', 'Editais Lato Sensu', 'EDITAL', 'EDITAL LATO SENSU', 'prpg-lato-sensu', FALSE, TRUE, 4),
+  ('EDITAL_PROFICIENCIA', 'Editais de Proficiência', 'EDITAL', 'EDITAL PROFICIÊNCIA', NULL, FALSE, TRUE, 5)
+ON CONFLICT (id) DO NOTHING;

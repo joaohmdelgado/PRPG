@@ -5,7 +5,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 import { getNews, getNewsById, createNews, updateNews, deleteNews } from '../controllers/newsController.js';
-import { getEditais, getEditalById, createEdital, updateEdital, deleteEdital } from '../controllers/editaisController.js';
+import { getEditais, getEditalById, createEdital, updateEdital, deleteEdital, addErrata, removeErrata, setResultadoParcial, setResultadoFinal } from '../controllers/editaisController.js';
 import { getResolucoes, getResolucaoById, createResolucao, updateResolucao, deleteResolucao } from '../controllers/resolucoesController.js';
 import { getFormularios, getFormularioById, createFormulario, updateFormulario, deleteFormulario } from '../controllers/formulariosController.js';
 import { getProgramas, getProgramaById, getProgramaBySlug, createPrograma, updatePrograma, deletePrograma, getProgramaDocentesPublic, getDocentesAdmin, addDocente, removeDocente, buscaPrograma, getComissoesAdmin, addComissaoMembro, removeComissaoMembro, getProgramaMetricasPublic, getProgramaDiscentesPublic, getDiscentesAdmin, addDiscente, removeDiscente, getProgramaLinhas, updateProgramaLinhas } from '../controllers/programasController.js';
@@ -33,12 +33,29 @@ import {
   getVocabularios, getUnidades, createUnidade, updateUnidade, deleteUnidade,
   getProcessos, getMeusProcessos, getProcessoById, createProcesso, updateProcesso,
   patchStatus, patchLocalizacao, deleteProcesso, addEvento, addRelatoria,
-  registrarDevolucaoRelatoria, addAto, exportXlsx,
+  registrarDevolucaoRelatoria, addAto, exportXlsx, getIndicadores as getIndicadoresCamara,
+  espelhoProcessoPdf, extratoEncaminhamentoPdf, oficioRelatoriaPdf, relatorioAnualPdf as relatorioAnualCamaraPdf,
 } from '../controllers/camaraController.js';
 import {
   getReunioes, getReuniaoById, createReuniao, updateReuniao, deleteReuniao,
-  getPauta, addToPauta, removeFromPauta, lancarResultados, pautaPdf,
+  getPauta, addToPauta, removeFromPauta, lancarResultados, pautaPdf, minutaAtaPdf,
 } from '../controllers/camaraReunioesController.js';
+import {
+  getSeries, createSerie, updateSerie, deleteSerie,
+  getAtos, getAtoById, getPublico as getAtosPublico, reservar, createAto, updateAto,
+  patchSituacao, deleteAto, addReferencia, removeReferencia, linkProcesso, attachArquivo,
+  exportXlsx as exportAtosXlsx, getIndicadores as getIndicadoresAtos,
+  createDiplomasLote, getDiplomas, putDiplomas, exportDiplomasXlsx,
+} from '../controllers/atosController.js';
+import {
+  getPosDoutorados, getPosDoutoradoById, createPosDoutorado, updatePosDoutorado,
+  patchSituacao as patchSituacaoPosDoc, registrarRelatorio, prorrogar,
+  linkProcesso as linkProcessoPosDoc, deletePosDoutorado, gerarDeclaracao as gerarDeclaracaoPosDoc,
+  exportXlsx as exportPosDoutoradoXlsx, exportSucupira, getIndicadores as getIndicadoresPosDoutorado,
+  oficioCobrancaPdf, relacaoVigentesPdf, relatorioAnualPdf as relatorioAnualPosdocPdf,
+} from '../controllers/posDoutoradoController.js';
+import { getNotificacoes, reenviarNotificacao, enviarTeste } from '../controllers/notificacoesController.js';
+import { buscaGlobal } from '../controllers/buscaController.js';
 
 
 import { getLinhas, getLinhaById, createLinha, updateLinha, deleteLinha } from '../controllers/linhasPesquisaController.js';
@@ -247,6 +264,11 @@ router.delete('/news/:id', protect, requireProgramaOwnership((id) => newsRepo.ge
 router.post('/editais', protect, scopeProgramaWrite, createEdital);
 router.put('/editais/:id', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, updateEdital);
 router.delete('/editais/:id', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), deleteEdital);
+// Fase D: erratas/resultado parcial/final agora são eventos (append-only).
+router.post('/editais/:id/erratas', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, addErrata);
+router.delete('/editais/:id/erratas/:eventoId', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, removeErrata);
+router.put('/editais/:id/resultado-parcial', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, setResultadoParcial);
+router.put('/editais/:id/resultado-final', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, setResultadoFinal);
 router.post('/resolucoes', protect, scopeProgramaWrite, createResolucao);
 router.put('/resolucoes/:id', protect, requireProgramaOwnership((id) => resolucoesRepo.getById(id)), scopeProgramaWrite, updateResolucao);
 router.delete('/resolucoes/:id', protect, requireProgramaOwnership((id) => resolucoesRepo.getById(id)), deleteResolucao);
@@ -338,8 +360,14 @@ router.post('/camara/reunioes/:id/pauta', protect, requireRole(CAMARA_ESCRITA), 
 router.delete('/camara/reunioes/:id/pauta/:itemId', protect, requireRole(CAMARA_ESCRITA), removeFromPauta);
 router.put('/camara/reunioes/:id/resultados', protect, requireRole(CAMARA_ESCRITA), lancarResultados);
 router.get('/camara/reunioes/:id/pauta.pdf', protect, requireRole(CAMARA_ESCRITA), pautaPdf);
+router.get('/camara/reunioes/:id/ata.pdf', protect, requireRole(CAMARA_ESCRITA), minutaAtaPdf);
 
 router.get('/camara/exportar.xlsx', protect, requireRole(CAMARA_ESCRITA), exportXlsx);
+router.get('/camara/indicadores', protect, requireRole(CAMARA_ESCRITA), getIndicadoresCamara);
+router.get('/camara/extrato-encaminhamento.pdf', protect, requireRole(CAMARA_ESCRITA), extratoEncaminhamentoPdf);
+router.get('/camara/relatorio-anual.pdf', protect, requireRole(CAMARA_ESCRITA), relatorioAnualCamaraPdf);
+router.get('/camara/relatorias/:relatoriaId/oficio.pdf', protect, requireRole(CAMARA_ESCRITA), oficioRelatoriaPdf);
+router.get('/camara/processos/:id/espelho.pdf', protect, requireRole(CAMARA_LEITURA), espelhoProcessoPdf);
 router.put('/camara/relatorias/:relatoriaId', protect, requireRole(CAMARA_ESCRITA), registrarDevolucaoRelatoria);
 
 router.get('/camara/processos', protect, requireRole(CAMARA_LEITURA), getProcessos);
@@ -367,5 +395,79 @@ router.get('/contatos/programa/:programaId', protect, requireRole(CONTATOS_ESCRI
 router.post('/contatos/programa/:programaId', protect, requireRole(CONTATOS_ESCRITA), createContatoPrograma);
 router.put('/contatos/:id', protect, requireRole(CONTATOS_ESCRITA), updateContato);
 router.delete('/contatos/:id', protect, requireRole(CONTATOS_ESCRITA), deleteContato);
+
+// ===================== Expedientes (Fase E) =====================
+// Ver requisitos-expedientes.md §8. Leitura escopada para GestorPrograma nos
+// atos do seu próprio programa (D-E6 segue em aberto quanto a "quem reserva
+// número" fora de Admin/Gestor — o padrão default segue o mesmo dos outros
+// módulos até a secretaria decidir).
+const ATOS_LEITURA = ['Administrator', 'Gestor', 'GestorPrograma'];
+const ATOS_ESCRITA = ['Administrator', 'Gestor'];
+
+router.get('/atos/publico', getAtosPublico);
+
+router.get('/atos/series', protect, requireRole(ATOS_LEITURA), getSeries);
+router.post('/atos/series', protect, requireRole(['Administrator']), createSerie);
+router.put('/atos/series/:id', protect, requireRole(['Administrator']), updateSerie);
+router.delete('/atos/series/:id', protect, requireRole(['Administrator']), deleteSerie);
+
+router.get('/atos/exportar.xlsx', protect, requireRole(ATOS_ESCRITA), exportAtosXlsx);
+router.get('/atos/indicadores', protect, requireRole(ATOS_ESCRITA), getIndicadoresAtos);
+router.post('/atos/reservar', protect, requireRole(ATOS_ESCRITA), reservar);
+// Fase M (§9.4 caminho 2): expedição de diplomas em lote — um ofício por lista de concluintes.
+router.post('/atos/diplomas-lote', protect, requireRole(ATOS_ESCRITA), createDiplomasLote);
+
+router.get('/atos', protect, requireRole(ATOS_LEITURA), getAtos);
+router.post('/atos', protect, requireRole(ATOS_ESCRITA), createAto);
+router.get('/atos/:id', protect, requireRole(ATOS_LEITURA), getAtoById);
+router.put('/atos/:id', protect, requireRole(ATOS_ESCRITA), updateAto);
+router.patch('/atos/:id/situacao', protect, requireRole(ATOS_ESCRITA), patchSituacao);
+router.delete('/atos/:id', protect, requireRole(ATOS_ESCRITA), deleteAto);
+router.post('/atos/:id/referencias', protect, requireRole(ATOS_ESCRITA), addReferencia);
+router.delete('/atos/referencias/:refId', protect, requireRole(ATOS_ESCRITA), removeReferencia);
+router.post('/atos/:id/processo', protect, requireRole(ATOS_ESCRITA), linkProcesso);
+router.get('/atos/:id/diplomas', protect, requireRole(ATOS_LEITURA), getDiplomas);
+router.put('/atos/:id/diplomas', protect, requireRole(ATOS_ESCRITA), putDiplomas);
+router.get('/atos/:id/diplomas.xlsx', protect, requireRole(ATOS_ESCRITA), exportDiplomasXlsx);
+router.post('/atos/:id/arquivo', protect, requireRole(ATOS_ESCRITA), attachArquivo);
+
+// ===================== Pós-Doutorado / PNPD (Fase C) =====================
+// Ver requisitos-pnpd.md §9. Leitura escopada para GestorPrograma nos
+// registros do seu próprio programa (mesmo desenho de isProgramaScoped já
+// usado em Câmara/Expedientes).
+const POSDOC_LEITURA = ['Administrator', 'Gestor', 'GestorPrograma'];
+const POSDOC_ESCRITA = ['Administrator', 'Gestor'];
+// Fase K.7: autosserviço — o GestorPrograma cadastra e acompanha os
+// pós-docs do seu próprio programa (escopo já forçado no controller via
+// isProgramaScoped); exclusão continua exclusiva de Administrator.
+const POSDOC_ESCRITA_PROGRAMA = ['Administrator', 'Gestor', 'GestorPrograma'];
+
+router.get('/pos-doutorado/exportar.xlsx', protect, requireRole(POSDOC_ESCRITA), exportPosDoutoradoXlsx);
+router.get('/pos-doutorado/exportar-sucupira.xlsx', protect, requireRole(POSDOC_ESCRITA), exportSucupira);
+router.get('/pos-doutorado/indicadores', protect, requireRole(POSDOC_ESCRITA), getIndicadoresPosDoutorado);
+router.get('/pos-doutorado/relacao-vigentes.pdf', protect, requireRole(POSDOC_LEITURA), relacaoVigentesPdf);
+router.get('/pos-doutorado/relatorio-anual.pdf', protect, requireRole(POSDOC_ESCRITA), relatorioAnualPosdocPdf);
+
+router.get('/pos-doutorado', protect, requireRole(POSDOC_LEITURA), getPosDoutorados);
+router.post('/pos-doutorado', protect, requireRole(POSDOC_ESCRITA_PROGRAMA), createPosDoutorado);
+router.get('/pos-doutorado/:id', protect, requireRole(POSDOC_LEITURA), getPosDoutoradoById);
+router.put('/pos-doutorado/:id', protect, requireRole(POSDOC_ESCRITA_PROGRAMA), updatePosDoutorado);
+router.patch('/pos-doutorado/:id/situacao', protect, requireRole(POSDOC_ESCRITA_PROGRAMA), patchSituacaoPosDoc);
+router.post('/pos-doutorado/:id/relatorio', protect, requireRole(POSDOC_ESCRITA_PROGRAMA), registrarRelatorio);
+router.post('/pos-doutorado/:id/prorrogar', protect, requireRole(POSDOC_ESCRITA_PROGRAMA), prorrogar);
+router.post('/pos-doutorado/:id/processo', protect, requireRole(POSDOC_ESCRITA_PROGRAMA), linkProcessoPosDoc);
+router.delete('/pos-doutorado/:id', protect, requireRole(['Administrator']), deletePosDoutorado);
+router.get('/pos-doutorado/:id/declaracao', protect, requireRole(POSDOC_ESCRITA_PROGRAMA), gerarDeclaracaoPosDoc);
+router.get('/pos-doutorado/:id/oficio-cobranca.pdf', protect, requireRole(POSDOC_ESCRITA_PROGRAMA), oficioCobrancaPdf);
+
+// ===================== Notificações (Fase I) =====================
+// Ver services/email.js. Admin-only: é infraestrutura de envio, não conteúdo
+// de um módulo específico.
+router.get('/notificacoes', protect, requireRole(['Administrator']), getNotificacoes);
+router.post('/notificacoes/teste', protect, requireRole(['Administrator']), enviarTeste);
+router.post('/notificacoes/:id/reenviar', protect, requireRole(['Administrator']), reenviarNotificacao);
+
+// ===================== Busca global (Fase L.10) =====================
+router.get('/busca', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), buscaGlobal);
 
 export default router;

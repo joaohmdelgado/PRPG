@@ -18,7 +18,7 @@ const AdminGrupoPesquisaForm = () => {
       value: '',
       summary: ''
     },
-    field_lideres: [],
+    liderIds: [],
     programaId: ''
   });
 
@@ -130,7 +130,7 @@ const AdminGrupoPesquisaForm = () => {
                 value: valueHTML,
                 summary: data.body?.summary || ''
               },
-              field_lideres: data.field_lideres || [],
+              liderIds: (data.lideres || []).map(l => l.id),
               programaId: data.programaId || ''
             });
 
@@ -167,8 +167,8 @@ const AdminGrupoPesquisaForm = () => {
 
   const handleAddLeader = (professorId) => {
     setFormData(prev => {
-      if (prev.field_lideres.includes(professorId)) return prev;
-      return { ...prev, field_lideres: [...prev.field_lideres, professorId] };
+      if (prev.liderIds.includes(professorId)) return prev;
+      return { ...prev, liderIds: [...prev.liderIds, professorId] };
     });
     setSearchQuery('');
     setShowDropdown(false);
@@ -177,11 +177,11 @@ const AdminGrupoPesquisaForm = () => {
   const handleRemoveLeader = (professorId) => {
     setFormData(prev => ({
       ...prev,
-      field_lideres: prev.field_lideres.filter(id => id !== professorId)
+      liderIds: prev.liderIds.filter(id => id !== professorId)
     }));
   };
 
-  const selectedLeaders = formData.field_lideres.map(leaderId => {
+  const selectedLeaders = formData.liderIds.map(leaderId => {
     const p = professores.find(prof => prof.id === leaderId);
     return p ? { id: p.id, nome: p.perfil_geral?.nome || p.email, email: p.email } : { id: leaderId, nome: 'Usuário Desconhecido', email: '' };
   });
@@ -191,7 +191,7 @@ const AdminGrupoPesquisaForm = () => {
     const email = prof.email || '';
     const matchesQuery = nome.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          email.toLowerCase().includes(searchQuery.toLowerCase());
-    const isAlreadySelected = formData.field_lideres.includes(prof.id);
+    const isAlreadySelected = formData.liderIds.includes(prof.id);
     return matchesQuery && !isAlreadySelected;
   });
 

@@ -33,13 +33,17 @@ const AdminEditalForm = () => {
     downloadLink: '',
     numero: '',
     year: new Date().getFullYear(),
-    erratas: [],
-    resultadoParcial: '',
-    resultadoFinal: '',
     programaId: '',
     proficiencia: false,
     proficienciaDataProva: ''
   });
+
+  // Fase D (Legado Drupal): erratas/resultado parcial/final são eventos
+  // (append-only) do edital, não colunas do formulário — persistem na hora
+  // via endpoints próprios, e só existem depois que o edital foi salvo.
+  const [erratas, setErratas] = useState([]);
+  const [resultadoParcial, setResultadoParcial] = useState('');
+  const [resultadoFinal, setResultadoFinal] = useState('');
 
   const { toast, Toasts } = useToast();
   const [loading, setLoading] = useState(isEditing);
@@ -124,7 +128,7 @@ const AdminEditalForm = () => {
             setAudit(data);
             const desc = data.description || '';
             descriptionRef.current = desc;
-            
+
             setFormData({
               categoryId: data.categoryId || '',
               title: data.title || '',
@@ -138,13 +142,13 @@ const AdminEditalForm = () => {
               downloadLink: data.downloadLink || '',
               numero: data.numero || '',
               year: data.year || new Date().getFullYear(),
-              erratas: data.erratas || [],
-              resultadoParcial: data.resultadoParcial || '',
-              resultadoFinal: data.resultadoFinal || '',
               programaId: data.programaId || '',
               proficiencia: !!data.proficiencia,
               proficienciaDataProva: data.proficienciaDataProva || ''
             });
+            setErratas(data.erratas || []);
+            setResultadoParcial(data.resultadoParcial || '');
+            setResultadoFinal(data.resultadoFinal || '');
 
             if (editorInstanceRef.current) {
               editorInstanceRef.current.setData(desc);
@@ -178,9 +182,8 @@ const AdminEditalForm = () => {
     }));
   };
 
-  const handleFileUpload = async (file, fieldName, errataIndex = null) => {
-    const fieldKey = errataIndex !== null ? `erratas-${errataIndex}` : fieldName;
-    setUploadingFields(prev => ({ ...prev, [fieldKey]: true }));
+  const handleFileUpload = async (file, fieldName) => {
+    setUploadingFields(prev => ({ ...prev, [fieldName]: true }));
 
     const fileData = new FormData();
     fileData.append('file', file);
@@ -190,21 +193,7 @@ const AdminEditalForm = () => {
 
       if (response.ok) {
         const data = await response.json();
-        if (fieldName === 'erratas') {
-          setFormData(prev => {
-            const newErratas = [...(prev.erratas || [])];
-            newErratas[errataIndex] = {
-              ...newErratas[errataIndex],
-              downloadLink: data.url
-            };
-            return { ...prev, erratas: newErratas };
-          });
-        } else {
-          setFormData(prev => ({
-            ...prev,
-            [fieldName]: data.url
-          }));
-        }
+        setFormData(prev => ({ ...prev, [fieldName]: data.url }));
       } else {
         const errData = await response.json();
         toast.error(errData.message || 'Erro ao fazer upload do arquivo');
@@ -213,34 +202,85 @@ const AdminEditalForm = () => {
       console.error('Erro de upload:', error);
       toast.error('Erro de conexão ao fazer upload');
     } finally {
+      setUploadingFields(prev => ({ ...prev, [fieldName]: false }));
+    }
+  };
+
+  // Resultado parcial/final: upload + PUT imediato (evento append-only no servidor).
+  const handleUploadResultado = async (file, tipo) => {
+    const fieldKey = `resultado-${tipo}`;
+    setUploadingFields(prev => ({ ...prev, [fieldKey]: true }));
+    const fileData = new FormData();
+    fileData.append('file', file);
+    try {
+      const upload = await apiFetch('/api/upload', { method: 'POST', body: fileData });
+      if (!upload.ok) {
+        const errData = await upload.json();
+        toast.error(errData.message || 'Erro ao fazer upload do arquivo');
+        return;
+      }
+      const { url } = await upload.json();
+      const res = await apiFetch(`/api/editais/${id}/resultado-${tipo}`, { method: 'PUT', json: { downloadLink: url } });
+      if (res.ok) {
+        if (tipo === 'parcial') setResultadoParcial(url);
+        else setResultadoFinal(url);
+      } else {
+        toast.error('Erro ao salvar o resultado');
+      }
+    } catch (err) {
+      toast.error('Erro de conexão ao salvar o resultado');
+    } finally {
       setUploadingFields(prev => ({ ...prev, [fieldKey]: false }));
     }
   };
 
-  const handleAddErrata = () => {
-    setFormData(prev => ({
-      ...prev,
-      erratas: [
-        ...(prev.erratas || []),
-        { id: Date.now().toString(), numero: ((prev.erratas || []).length + 1).toString().padStart(2, '0'), downloadLink: '' }
-      ]
-    }));
+  const handleRemoveResultado = async (tipo) => {
+    try {
+      const res = await apiFetch(`/api/editais/${id}/resultado-${tipo}`, { method: 'PUT', json: { downloadLink: null } });
+      if (res.ok) {
+        if (tipo === 'parcial') setResultadoParcial('');
+        else setResultadoFinal('');
+      }
+    } catch (err) {
+      toast.error('Erro de conexão ao remover o resultado');
+    }
   };
 
-  const handleRemoveErrata = (index) => {
-    setFormData(prev => {
-      const newErratas = [...prev.erratas];
-      newErratas.splice(index, 1);
-      return { ...prev, erratas: newErratas };
-    });
+  // Erratas: cada uma é criada/removida na hora (não fica em rascunho local).
+  const handleAddErrataFile = async (file) => {
+    setUploadingFields(prev => ({ ...prev, 'errata-nova': true }));
+    const fileData = new FormData();
+    fileData.append('file', file);
+    try {
+      const upload = await apiFetch('/api/upload', { method: 'POST', body: fileData });
+      if (!upload.ok) {
+        const errData = await upload.json();
+        toast.error(errData.message || 'Erro ao fazer upload do arquivo');
+        return;
+      }
+      const { url } = await upload.json();
+      const numero = (erratas.length + 1).toString().padStart(2, '0');
+      const res = await apiFetch(`/api/editais/${id}/erratas`, { method: 'POST', json: { numero, downloadLink: url } });
+      if (res.ok) {
+        const nova = await res.json();
+        setErratas(prev => [...prev, nova]);
+      } else {
+        toast.error('Erro ao salvar a errata');
+      }
+    } catch (err) {
+      toast.error('Erro de conexão ao salvar a errata');
+    } finally {
+      setUploadingFields(prev => ({ ...prev, 'errata-nova': false }));
+    }
   };
 
-  const handleErrataNumeroChange = (index, value) => {
-    setFormData(prev => {
-      const newErratas = [...prev.erratas];
-      newErratas[index] = { ...newErratas[index], numero: value };
-      return { ...prev, erratas: newErratas };
-    });
+  const handleRemoveErrata = async (eventoId) => {
+    try {
+      const res = await apiFetch(`/api/editais/${id}/erratas/${eventoId}`, { method: 'DELETE' });
+      if (res.ok) setErratas(prev => prev.filter(e => e.id !== eventoId));
+    } catch (err) {
+      toast.error('Erro de conexão ao remover a errata');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -255,7 +295,7 @@ const AdminEditalForm = () => {
     }
 
     setLoading(true);
-    
+
     // Calcula os labels e ano
     const categoryTitle = CATEGORIES[formData.categoryId] || '';
     const yearVal = formData.year ? parseInt(formData.year, 10) : (formData.publishedAt ? parseInt(formData.publishedAt.split('-')[0], 10) : new Date().getFullYear());
@@ -274,7 +314,13 @@ const AdminEditalForm = () => {
       const response = await apiFetch(path, { method, json: payload });
 
       if (response.ok) {
-        navigate('/admin/editais');
+        if (isEditing) {
+          navigate('/admin/editais');
+        } else {
+          const created = await response.json();
+          // Edital novo: fica na tela de edição para permitir anexar erratas/resultados.
+          navigate(`/admin/editais/editar/${created.id}`);
+        }
       } else if (response.status === 401) {
         navigate('/admin/login');
       } else {
@@ -468,10 +514,10 @@ const AdminEditalForm = () => {
             {formData.downloadLink ? (
               <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
                 <FileText className="text-red-500 shrink-0" size={24} />
-                <a 
-                  href={formData.downloadLink.startsWith('http') ? formData.downloadLink : `${API_URL}${formData.downloadLink}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href={formData.downloadLink.startsWith('http') ? formData.downloadLink : `${API_URL}${formData.downloadLink}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
                 >
                   Visualizar PDF do Edital
@@ -517,211 +563,181 @@ const AdminEditalForm = () => {
             )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Resultado Parcial (PDF)</label>
-            {formData.resultadoParcial ? (
-              <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
-                <FileText className="text-red-500 shrink-0" size={24} />
-                <a 
-                  href={`${API_URL}${formData.resultadoParcial}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
-                >
-                  Visualizar PDF
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, resultadoParcial: '' }))}
-                  className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors"
-                  title="Remover documento"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            ) : (
-              <div className="relative">
-                {uploadingFields['resultadoParcial'] ? (
-                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5 text-ufrpe-blue text-sm font-medium animate-pulse">
-                    <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
-                    Enviando arquivo...
-                  </div>
-                ) : (
-                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
-                    <Upload className="text-gray-400 shrink-0" size={20} />
-                    <div className="flex-grow min-w-0">
-                      <span className="block text-sm font-medium text-gray-700">Selecionar PDF</span>
-                      <span className="block text-xs text-gray-400">Clique para escolher</span>
-                    </div>
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      disabled={uploadingFields['resultadoParcial']}
-                      onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          handleFileUpload(e.target.files[0], 'resultadoParcial');
-                        }
-                      }}
-                      className="sr-only"
-                    />
-                  </label>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Resultado Final (PDF)</label>
-            {formData.resultadoFinal ? (
-              <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
-                <FileText className="text-red-500 shrink-0" size={24} />
-                <a 
-                  href={`${API_URL}${formData.resultadoFinal}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
-                >
-                  Visualizar PDF
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, resultadoFinal: '' }))}
-                  className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors"
-                  title="Remover documento"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            ) : (
-              <div className="relative">
-                {uploadingFields['resultadoFinal'] ? (
-                  <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5 text-ufrpe-blue text-sm font-medium animate-pulse">
-                    <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
-                    Enviando arquivo...
-                  </div>
-                ) : (
-                  <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
-                    <Upload className="text-gray-400 shrink-0" size={20} />
-                    <div className="flex-grow min-w-0">
-                      <span className="block text-sm font-medium text-gray-700">Selecionar PDF</span>
-                      <span className="block text-xs text-gray-400">Clique para escolher</span>
-                    </div>
-                    <input
-                      type="file"
-                      accept=".pdf"
-                      disabled={uploadingFields['resultadoFinal']}
-                      onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          handleFileUpload(e.target.files[0], 'resultadoFinal');
-                        }
-                      }}
-                      className="sr-only"
-                    />
-                  </label>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="md:col-span-2 border-t border-gray-200 pt-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-800">Erratas do Edital</h3>
-              <button
-                type="button"
-                onClick={handleAddErrata}
-                className="bg-ufrpe-blue/5 hover:bg-ufrpe-blue/10 text-ufrpe-blue px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
-              >
-                + Adicionar Errata
-              </button>
-            </div>
-            
-            {(formData.erratas || []).length === 0 ? (
-              <p className="text-sm text-gray-500 italic">Nenhuma errata cadastrada.</p>
-            ) : (
-              <div className="space-y-4">
-                {(formData.erratas || []).map((errata, index) => (
-                  <div key={errata.id || index} className="flex flex-col md:flex-row gap-4 items-end bg-gray-50 p-4 rounded-md border border-gray-200">
-                    <div className="flex-grow">
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Número da Errata</label>
-                      <input
-                        type="text"
-                        value={errata.numero || ''}
-                        onChange={(e) => handleErrataNumeroChange(index, e.target.value)}
-                        placeholder="Ex: 01"
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white text-sm"
-                      />
-                    </div>
-                    <div className="w-full md:w-80">
-                      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Arquivo PDF *</label>
-                      {errata.downloadLink ? (
-                        <div className="flex items-center gap-3 bg-white px-3 py-2 border border-gray-300 rounded-md text-sm">
-                          <FileText className="text-red-500 shrink-0" size={20} />
-                          <a 
-                            href={`${API_URL}${errata.downloadLink}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="text-ufrpe-blue hover:underline truncate flex-grow font-medium"
-                          >
-                            Visualizar PDF
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFormData(prev => {
-                                const newErratas = [...prev.erratas];
-                                newErratas[index] = { ...newErratas[index], downloadLink: '' };
-                                return { ...prev, erratas: newErratas };
-                              });
-                            }}
-                            className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors text-xs font-medium"
-                            title="Remover documento"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="relative">
-                          {uploadingFields[`erratas-${index}`] ? (
-                            <div className="flex items-center gap-2 px-3 py-2 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5 text-ufrpe-blue text-xs font-medium animate-pulse">
-                              <span className="w-4 h-4 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
-                              Enviando errata...
-                            </div>
-                          ) : (
-                            <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-white hover:bg-ufrpe-blue/5 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
-                              <Upload className="text-gray-400 shrink-0" size={16} />
-                              <div className="flex-grow min-w-0">
-                                <span className="block text-xs font-medium text-gray-700">Selecionar PDF</span>
-                              </div>
-                              <input
-                                type="file"
-                                accept=".pdf"
-                                disabled={uploadingFields[`erratas-${index}`]}
-                                onChange={(e) => {
-                                  if (e.target.files?.[0]) {
-                                    handleFileUpload(e.target.files[0], 'erratas', index);
-                                  }
-                                }}
-                                required
-                                className="sr-only"
-                              />
-                            </label>
-                          )}
-                        </div>
-                      )}
-                    </div>
+          {isEditing ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Resultado Parcial (PDF)</label>
+                {resultadoParcial ? (
+                  <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
+                    <FileText className="text-red-500 shrink-0" size={24} />
+                    <a
+                      href={`${API_URL}${resultadoParcial}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
+                    >
+                      Visualizar PDF
+                    </a>
                     <button
                       type="button"
-                      onClick={() => handleRemoveErrata(index)}
-                      className="text-red-600 hover:text-red-800 text-sm font-medium pb-2.5"
+                      onClick={() => handleRemoveResultado('parcial')}
+                      className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors"
+                      title="Remover documento"
                     >
-                      Remover
+                      <Trash2 size={18} />
                     </button>
                   </div>
-                ))}
+                ) : (
+                  <div className="relative">
+                    {uploadingFields['resultado-parcial'] ? (
+                      <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5 text-ufrpe-blue text-sm font-medium animate-pulse">
+                        <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
+                        Enviando arquivo...
+                      </div>
+                    ) : (
+                      <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
+                        <Upload className="text-gray-400 shrink-0" size={20} />
+                        <div className="flex-grow min-w-0">
+                          <span className="block text-sm font-medium text-gray-700">Selecionar PDF</span>
+                          <span className="block text-xs text-gray-400">Clique para escolher</span>
+                        </div>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          disabled={uploadingFields['resultado-parcial']}
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleUploadResultado(e.target.files[0], 'parcial');
+                            }
+                          }}
+                          className="sr-only"
+                        />
+                      </label>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Resultado Final (PDF)</label>
+                {resultadoFinal ? (
+                  <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
+                    <FileText className="text-red-500 shrink-0" size={24} />
+                    <a
+                      href={`${API_URL}${resultadoFinal}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
+                    >
+                      Visualizar PDF
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveResultado('final')}
+                      className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors"
+                      title="Remover documento"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    {uploadingFields['resultado-final'] ? (
+                      <div className="flex items-center gap-3 px-4 py-3 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5 text-ufrpe-blue text-sm font-medium animate-pulse">
+                        <span className="w-5 h-5 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
+                        Enviando arquivo...
+                      </div>
+                    ) : (
+                      <label className="flex items-center gap-3 px-4 py-3 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-gray-50 hover:bg-ufrpe-blue/5 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
+                        <Upload className="text-gray-400 shrink-0" size={20} />
+                        <div className="flex-grow min-w-0">
+                          <span className="block text-sm font-medium text-gray-700">Selecionar PDF</span>
+                          <span className="block text-xs text-gray-400">Clique para escolher</span>
+                        </div>
+                        <input
+                          type="file"
+                          accept=".pdf"
+                          disabled={uploadingFields['resultado-final']}
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleUploadResultado(e.target.files[0], 'final');
+                            }
+                          }}
+                          className="sr-only"
+                        />
+                      </label>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="md:col-span-2 text-xs text-gray-500 italic">
+              Resultados parcial/final e erratas podem ser anexados depois de salvar o edital.
+            </div>
+          )}
+
+          {isEditing && (
+            <div className="md:col-span-2 border-t border-gray-200 pt-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-800">Erratas do Edital</h3>
+              </div>
+
+              {erratas.length === 0 ? (
+                <p className="text-sm text-gray-500 italic mb-4">Nenhuma errata cadastrada.</p>
+              ) : (
+                <div className="space-y-3 mb-4">
+                  {erratas.map((errata) => (
+                    <div key={errata.id} className="flex items-center gap-4 bg-gray-50 p-4 rounded-md border border-gray-200">
+                      <span className="text-sm font-semibold text-gray-700 shrink-0">Errata {errata.numero}</span>
+                      <a
+                        href={`${API_URL}${errata.downloadLink}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-ufrpe-blue hover:underline truncate flex-grow font-medium text-sm"
+                      >
+                        Visualizar PDF
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveErrata(errata.id)}
+                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="relative w-full md:w-80">
+                {uploadingFields['errata-nova'] ? (
+                  <div className="flex items-center gap-2 px-3 py-2 border border-dashed border-ufrpe-blue/30 rounded-lg bg-ufrpe-blue/5 text-ufrpe-blue text-xs font-medium animate-pulse">
+                    <span className="w-4 h-4 border-2 border-ufrpe-blue border-t-transparent rounded-full animate-spin"></span>
+                    Enviando errata...
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 hover:border-ufrpe-blue/40 rounded-lg cursor-pointer bg-white hover:bg-ufrpe-blue/5 transition-all focus-within:ring-2 focus-within:ring-ufrpe-yellow">
+                    <Upload className="text-gray-400 shrink-0" size={16} />
+                    <div className="flex-grow min-w-0">
+                      <span className="block text-xs font-medium text-gray-700">+ Adicionar Errata (PDF)</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      disabled={uploadingFields['errata-nova']}
+                      onChange={(e) => {
+                        if (e.target.files?.[0]) {
+                          handleAddErrataFile(e.target.files[0]);
+                        }
+                      }}
+                      className="sr-only"
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>

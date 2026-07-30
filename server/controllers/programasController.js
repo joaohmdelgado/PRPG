@@ -514,18 +514,18 @@ export const buscaPrograma = async (req, res) => {
         [pid, like]
       ),
       query(
-        `SELECT id, title AS titulo, desc AS resumo, 'disciplina' AS tipo FROM disciplinas
-         WHERE programa_id = $1 AND (title ILIKE $2 OR desc ILIKE $2) LIMIT 5`,
+        `SELECT id, title AS titulo, '' AS resumo, 'disciplina' AS tipo FROM disciplinas
+         WHERE programa_id = $1 AND title ILIKE $2 LIMIT 5`,
         [pid, like]
       ),
       query(
         `SELECT id, title AS titulo, '' AS resumo, 'tese' AS tipo FROM teses_dissertacoes
-         WHERE programa_id = $1 AND (title ILIKE $2 OR author ILIKE $2) LIMIT 5`,
+         WHERE programa_id = $1 AND title ILIKE $2 LIMIT 5`,
         [pid, like]
       ),
       query(
         `SELECT id, title AS titulo, '' AS resumo, 'faq' AS tipo FROM faq
-         WHERE programa_id = $1 AND (title ILIKE $2 OR field_resposta ILIKE $2) LIMIT 5`,
+         WHERE programa_id = $1 AND (title ILIKE $2 OR resposta ILIKE $2) LIMIT 5`,
         [pid, like]
       ),
       query(

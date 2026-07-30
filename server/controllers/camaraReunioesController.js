@@ -4,7 +4,7 @@ import { isPlainObject } from '../utils/sanitize.js';
 import { camaraReunioesRepo, processosRepo } from '../db/repositories.js';
 import { camaraPautaItensRepo } from '../db/camaraRepo.js';
 import { eventosRepo } from '../db/eventosRepo.js';
-import { gerarPautaPdf } from '../services/camaraPdf.js';
+import { gerarPautaPdf, gerarMinutaAtaPdf } from '../services/camaraPdf.js';
 
 export const getReunioes = async (req, res) => {
   res.json(await camaraReunioesRepo.getAll());
@@ -116,4 +116,14 @@ export const pautaPdf = async (req, res) => {
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="pauta-${reuniao.data}.pdf"`);
   gerarPautaPdf(res, reuniao, itens);
+};
+
+// Fase L.1: minuta de ata — só os itens já deliberados.
+export const minutaAtaPdf = async (req, res) => {
+  const reuniao = await camaraReunioesRepo.getById(req.params.id);
+  if (!reuniao) return res.status(404).json({ message: 'Reunião não encontrada.' });
+  const itens = await camaraPautaItensRepo.listByReuniao(reuniao.id);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="minuta-ata-${reuniao.data}.pdf"`);
+  gerarMinutaAtaPdf(res, reuniao, itens);
 };

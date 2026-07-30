@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet,
   GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle,
-  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Gavel, Contact
+  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Gavel, Contact, Inbox, Microscope, Mail, ClipboardList
 } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../auth';
 
@@ -31,6 +31,9 @@ const ADMINISTRACAO = [
   { to: '/admin/proficiencia', label: 'Proficiência', icon: Languages },
   { to: '/admin/camara', label: 'Câmara de Pós-Graduação', icon: Gavel },
   { to: '/admin/contatos', label: 'Agenda de Contatos', icon: Contact },
+  { to: '/admin/atos', label: 'Expedientes', icon: Inbox },
+  { to: '/admin/pos-doutorado', label: 'Pós-Doutorado', icon: Microscope },
+  { to: '/admin/notificacoes', label: 'Notificações', icon: Mail },
   { to: '/admin/importacao', label: 'Importação', icon: Upload },
 ];
 
@@ -126,6 +129,13 @@ const AdminLayout = () => {
             {conteudoItems.map((item) => (
               <NavItem key={item.to} {...item} />
             ))}
+          </div>
+
+          {/* Visível a qualquer usuário autenticado (Fase L.4): a relatoria é
+              resolvida pelo próprio login, sem exigir papel da Câmara. */}
+          <SectionLabel>Pessoal</SectionLabel>
+          <div className="space-y-1">
+            <NavItem to="/admin/meus-processos" label="Meus Processos" icon={ClipboardList} />
           </div>
 
           {isSuperAdmin && (

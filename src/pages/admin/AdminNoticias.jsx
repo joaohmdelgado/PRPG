@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { API_URL } from '../../api';
-import { withProgramaScope } from '../../auth';
+import { withProgramaScope, isProgramaGestor } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
@@ -37,7 +37,8 @@ const AdminNoticias = () => {
     try {
       const response = await fetch(withProgramaScope(`${API_URL}/api/news`));
       const data = await response.json();
-      setNews(data);
+      // No painel geral da PRPG (não gestor de programa), exibe só notícias sem programa.
+      setNews(isProgramaGestor() ? data : data.filter((n) => !n.programaId));
     } catch (error) {
       console.error('Erro ao buscar notícias:', error);
     } finally {

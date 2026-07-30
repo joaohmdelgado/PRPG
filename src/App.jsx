@@ -86,6 +86,16 @@ const AdminCamaraReunioes = lazy(() => import('./pages/admin/AdminCamaraReunioes
 const AdminCamaraReuniao = lazy(() => import('./pages/admin/AdminCamaraReuniao'));
 const AdminCamaraUnidades = lazy(() => import('./pages/admin/AdminCamaraUnidades'));
 const AdminContatos = lazy(() => import('./pages/admin/AdminContatos'));
+const AdminAtos = lazy(() => import('./pages/admin/AdminAtos'));
+const AdminAtoForm = lazy(() => import('./pages/admin/AdminAtoForm'));
+const AdminAto = lazy(() => import('./pages/admin/AdminAto'));
+const AdminAtoSeries = lazy(() => import('./pages/admin/AdminAtoSeries'));
+const AdminAtoDiplomasLote = lazy(() => import('./pages/admin/AdminAtoDiplomasLote'));
+const AdminPosDoutorado = lazy(() => import('./pages/admin/AdminPosDoutorado'));
+const AdminPosDoutoradoForm = lazy(() => import('./pages/admin/AdminPosDoutoradoForm'));
+const AdminPosDoutoradoFicha = lazy(() => import('./pages/admin/AdminPosDoutoradoFicha'));
+const AdminNotificacoes = lazy(() => import('./pages/admin/AdminNotificacoes'));
+const AdminMeusProcessos = lazy(() => import('./pages/admin/AdminMeusProcessos'));
 const ProficienciaInscricao = lazy(() => import('./pages/ProficienciaInscricao'));
 const ProficienciaInscricaoSucesso = lazy(() => import('./pages/ProficienciaInscricaoSucesso'));
 const PageView = lazy(() => import('./pages/PageView'));
@@ -221,6 +231,36 @@ function App() {
                 escopo por GestorPrograma (D-G7) ainda não foi respondido. */}
             <Route path="contatos" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
               <Route index element={<AdminContatos />} />
+            </Route>
+            {/* Expedientes (Fase E): leitura também para GestorPrograma nos
+                atos do seu programa (requisitos-expedientes.md §8); escrita
+                (reservar/emitir/séries) fica só com Admin/Gestor no backend. */}
+            <Route path="atos" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
+              <Route index element={<AdminAtos />} />
+              <Route path="novo" element={<AdminAtoForm />} />
+              <Route path="series" element={<AdminAtoSeries />} />
+              <Route path="diplomas" element={<AdminAtoDiplomasLote />} />
+              <Route path=":id" element={<AdminAto />} />
+              <Route path=":id/editar" element={<AdminAtoForm />} />
+            </Route>
+            {/* Pós-Doutorado / PNPD (Fase C): leitura também para GestorPrograma,
+                escopada ao seu programa (requisitos-pnpd.md §9); escrita fica
+                só com Admin/Gestor no backend. */}
+            <Route path="pos-doutorado" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
+              <Route index element={<AdminPosDoutorado />} />
+              <Route path="novo" element={<AdminPosDoutoradoForm />} />
+              <Route path=":id" element={<AdminPosDoutoradoFicha />} />
+              <Route path=":id/editar" element={<AdminPosDoutoradoForm />} />
+            </Route>
+            {/* Notificações (Fase I): infraestrutura de envio, Admin-only. */}
+            <Route path="notificacoes" element={<RequireAuth allowedRoles={['Administrator']} />}>
+              <Route index element={<AdminNotificacoes />} />
+            </Route>
+            {/* Meus Processos (Fase L.4): qualquer usuário autenticado — a
+                relatoria é resolvida pelo próprio login (relator_id), sem
+                exigir papel específico da Câmara. */}
+            <Route path="meus-processos" element={<RequireAuth />}>
+              <Route index element={<AdminMeusProcessos />} />
             </Route>
           </Route>
         </Route>

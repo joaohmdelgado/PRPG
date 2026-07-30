@@ -17,9 +17,9 @@ function Accordion({ item }) {
       </button>
       {open && (
         <div className="px-5 pb-5 bg-white border-t border-gray-100">
-          {item.field_resposta ? (
+          {item.resposta ? (
             <div className="prose prose-sm max-w-none text-gray-600 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: item.field_resposta }} />
+              dangerouslySetInnerHTML={{ __html: item.resposta }} />
           ) : (
             <p className="text-sm text-gray-500 italic">Resposta não disponível.</p>
           )}

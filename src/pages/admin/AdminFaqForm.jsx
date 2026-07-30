@@ -14,7 +14,7 @@ const AdminFaqForm = () => {
 
   const [formData, setFormData] = useState({
     title: '',
-    field_resposta: '',
+    resposta: '',
     programaId: ''
   });
 
@@ -55,7 +55,7 @@ const AdminFaqForm = () => {
             editor.model.document.on('change:data', () => {
               const data = editor.getData();
               contentRef.current = data;
-              setFormData(prev => ({ ...prev, field_resposta: data }));
+              setFormData(prev => ({ ...prev, resposta: data }));
             });
           })
           .catch(err => {
@@ -98,12 +98,12 @@ const AdminFaqForm = () => {
           if (response.ok) {
             const data = await response.json();
             setAudit(data);
-            const resp = data.field_resposta || '';
+            const resp = data.resposta || '';
             contentRef.current = resp;
 
             setFormData({
               title: data.title || '',
-              field_resposta: resp,
+              resposta: resp,
               programaId: data.programaId || ''
             });
 
@@ -135,7 +135,7 @@ const AdminFaqForm = () => {
       setError('A pergunta é obrigatória.');
       return;
     }
-    if (!formData.field_resposta.trim()) {
+    if (!formData.resposta.trim()) {
       setError('A resposta é obrigatória.');
       return;
     }

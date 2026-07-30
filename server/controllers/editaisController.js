@@ -1,6 +1,8 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { editaisRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
+import { eventosRepo } from '../db/eventosRepo.js';
+import { hojeISO } from '../utils/datas.js';
 
 // Resolve um parametro `programa` (id OU slug) para o id real do programa.
 const resolveProgramaId = async (param) => {
@@ -50,19 +52,48 @@ const calculateEditalStatus = (edital) => {
   return { ...edital, situation, situationLabel: SITUATIONS[situation] || 'Concluído' };
 };
 
+// Fase D (Legado Drupal): erratas/resultadoParcial/resultadoFinal saíram das
+// colunas de `editais` — agora são `eventos` (entidade='edital'), lidos aqui
+// e devolvidos com a mesma forma de antes para não quebrar Editais.jsx/Edital.jsx
+// (só o formulário administrativo muda de fluxo de escrita).
+const TIPO_ERRATA = 'ERRATA';
+const TIPO_ERRATA_REMOVIDA = 'ERRATA_REMOVIDA';
+const TIPO_RESULTADO_PARCIAL = 'RESULTADO_PARCIAL';
+const TIPO_RESULTADO_FINAL = 'RESULTADO_FINAL';
+
+const anexarEventos = (edital, eventos) => {
+  const removidos = new Set(eventos.filter((e) => e.tipo === TIPO_ERRATA_REMOVIDA).map((e) => e.origemId));
+  const erratas = eventos
+    .filter((e) => e.tipo === TIPO_ERRATA && !removidos.has(e.id))
+    .map((e) => ({ id: e.id, numero: e.descricao, downloadLink: e.dados?.link || '' }))
+    .reverse(); // eventos vêm mais-recente-primeiro; erratas ficam na ordem de criação
+  const ultimoParcial = eventos.find((e) => e.tipo === TIPO_RESULTADO_PARCIAL);
+  const ultimoFinal = eventos.find((e) => e.tipo === TIPO_RESULTADO_FINAL);
+  return {
+    ...edital,
+    erratas,
+    resultadoParcial: ultimoParcial?.dados?.link || '',
+    resultadoFinal: ultimoFinal?.dados?.link || '',
+  };
+};
+
 export const getEditais = async (req, res) => {
   let editais = await editaisRepo.getAll();
   if (req.query.programa) {
     const pid = await resolveProgramaId(req.query.programa);
     editais = editais.filter((e) => e.programaId === pid);
   }
-  res.json(editais.map(calculateEditalStatus));
+  const comEventos = await Promise.all(
+    editais.map(async (e) => anexarEventos(e, await eventosRepo.listByEntidade('edital', e.id)))
+  );
+  res.json(comEventos.map(calculateEditalStatus));
 };
 
 export const getEditalById = async (req, res) => {
   const edital = await editaisRepo.getById(req.params.id);
-  if (edital) res.json(calculateEditalStatus(edital));
-  else res.status(404).json({ message: 'Edital não encontrado' });
+  if (!edital) return res.status(404).json({ message: 'Edital não encontrado' });
+  const eventos = await eventosRepo.listByEntidade('edital', edital.id);
+  res.json(calculateEditalStatus(anexarEventos(edital, eventos)));
 };
 
 export const createEdital = async (req, res) => {
@@ -98,3 +129,40 @@ export const deleteEdital = async (req, res) => {
   if (ok) res.json({ message: 'Edital removido com sucesso' });
   else res.status(404).json({ message: 'Edital não encontrado' });
 };
+
+// ------------------------- Errata / Resultados (eventos) -------------------------
+
+export const addErrata = async (req, res) => {
+  const edital = await editaisRepo.getById(req.params.id);
+  if (!edital) return res.status(404).json({ message: 'Edital não encontrado' });
+  const { numero, downloadLink } = req.body || {};
+  if (!downloadLink) return res.status(400).json({ message: 'O link de download é obrigatório.' });
+  const evento = await eventosRepo.create({
+    entidade: 'edital', entidadeId: edital.id, tipo: TIPO_ERRATA,
+    data: hojeISO(), descricao: numero || null, dados: { link: downloadLink },
+  }, req.user?.id);
+  res.status(201).json({ id: evento.id, numero: evento.descricao, downloadLink });
+};
+
+export const removeErrata = async (req, res) => {
+  const edital = await editaisRepo.getById(req.params.id);
+  if (!edital) return res.status(404).json({ message: 'Edital não encontrado' });
+  await eventosRepo.create({
+    entidade: 'edital', entidadeId: edital.id, tipo: TIPO_ERRATA_REMOVIDA,
+    data: hojeISO(), origemTipo: TIPO_ERRATA, origemId: req.params.eventoId,
+  }, req.user?.id);
+  res.json({ message: 'Errata removida com sucesso' });
+};
+
+const setResultado = (tipo) => async (req, res) => {
+  const edital = await editaisRepo.getById(req.params.id);
+  if (!edital) return res.status(404).json({ message: 'Edital não encontrado' });
+  const { downloadLink } = req.body || {};
+  const evento = await eventosRepo.create({
+    entidade: 'edital', entidadeId: edital.id, tipo, data: hojeISO(), dados: { link: downloadLink || null },
+  }, req.user?.id);
+  res.status(201).json({ id: evento.id, link: downloadLink || null });
+};
+
+export const setResultadoParcial = setResultado(TIPO_RESULTADO_PARCIAL);
+export const setResultadoFinal = setResultado(TIPO_RESULTADO_FINAL);

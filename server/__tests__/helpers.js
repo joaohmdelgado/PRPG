@@ -12,7 +12,8 @@ const TABLES = `news, editais, resolucoes, formularios, portarias, teses_dissert
   processos, camara_reunioes, camara_pauta_itens,
   camara_relatorias, camara_atos,
   arquivos, anexos, contatos, eventos,
-  ato_series, atos, ato_referencias, documentos, declaracoes`;
+  ato_series, atos, ato_referencias, documentos, declaracoes,
+  pos_doutorados, notificacoes, ato_diplomas`;
 
 export async function resetDb() {
   await pool.query(`TRUNCATE ${TABLES} RESTART IDENTITY CASCADE`);
@@ -22,6 +23,21 @@ export async function resetDb() {
   // o vocabulario global (programa_id IS NULL) se ficou vazio.
   const { rows } = await pool.query('SELECT count(*)::int AS n FROM vocabularios');
   if (rows[0].n === 0) await reseedVocabularios();
+
+  // ato_series está na lista de TRUNCATE acima (é tabela real, não só seed
+  // como unidades) — reseeda as séries-base para os testes de atos.test.js.
+  const { rows: rowsSeries } = await pool.query('SELECT count(*)::int AS n FROM ato_series');
+  if (rowsSeries[0].n === 0) await reseedAtoSeries();
+}
+
+async function reseedAtoSeries() {
+  await pool.query(`
+    INSERT INTO ato_series (id, nome, especie, sigla, exige_destinatario, publica_no_site, ordem) VALUES
+      ('OFICIO', 'Ofícios da PRPG', 'OFICIO', 'OFÍCIO', TRUE, FALSE, 0),
+      ('PORTARIA_PRPG', 'Portarias da PRPG', 'PORTARIA', 'PORTARIA', FALSE, FALSE, 1),
+      ('EDITAL_PRPG', 'Editais da PRPG', 'EDITAL', 'EDITAL', FALSE, TRUE, 2)
+    ON CONFLICT (id) DO NOTHING
+  `);
 }
 
 async function reseedVocabularios() {

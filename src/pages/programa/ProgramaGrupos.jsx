@@ -36,11 +36,11 @@ export default function ProgramaGrupos() {
                 {g.body?.summary && (
                   <p className="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-3">{g.body.summary}</p>
                 )}
-                {(g.field_lideres_resolved || []).length > 0 && (
+                {(g.lideres || []).length > 0 && (
                   <div>
                     <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Líderes</p>
                     <ul className="space-y-1">
-                      {g.field_lideres_resolved.map((l) => (
+                      {g.lideres.map((l) => (
                         <li key={l.id} className="flex items-center gap-2 text-xs text-gray-600">
                           <i className="fa-solid fa-user text-[var(--prog-primary)] text-[10px]"></i>
                           {l.nome}

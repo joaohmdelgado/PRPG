@@ -9,6 +9,14 @@ export default function Editais() {
   const [year, setYear] = useState("");
   const [editaisData, setEditaisData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [periodoAberto, setPeriodoAberto] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/proficiencia/periodo-aberto`)
+      .then(r => r.json())
+      .then(d => setPeriodoAberto(d))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const fetchEditais = async () => {
@@ -344,6 +352,14 @@ export default function Editais() {
                                 )}
                               </div>
                               <div className="flex flex-wrap items-center gap-3 shrink-0 w-full lg:w-auto">
+                                {edital.proficiencia && periodoAberto && periodoAberto.id === edital.id && (
+                                  <Link
+                                    to="/proficiencia/inscricao"
+                                    className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 w-full lg:w-auto"
+                                  >
+                                    <i className="fa-solid fa-pen-to-square"></i> Fazer Inscrição
+                                  </Link>
+                                )}
                                 <a
                                   href={getLinkUrl(edital.downloadLink)}
                                   target="_blank"

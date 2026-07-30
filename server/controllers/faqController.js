@@ -27,7 +27,7 @@ export const createFaq = async (req, res) => {
   if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
   const data = { ...req.body };
   if (!data.title || !String(data.title).trim()) return res.status(400).json({ message: 'A pergunta é obrigatória.' });
-  if (data.field_resposta) data.field_resposta = sanitizeHtml(data.field_resposta);
+  if (data.resposta) data.resposta = sanitizeHtml(data.resposta);
   if (!data.id) data.id = 'faq-' + Date.now().toString();
   try {
     res.status(201).json(await faqRepo.create(data, req.user?.id));
@@ -39,7 +39,7 @@ export const createFaq = async (req, res) => {
 export const updateFaq = async (req, res) => {
   if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
   const data = { ...req.body };
-  if (data.field_resposta) data.field_resposta = sanitizeHtml(data.field_resposta);
+  if (data.resposta) data.resposta = sanitizeHtml(data.resposta);
   const updated = await faqRepo.update(req.params.id, data, req.user?.id);
   if (updated) res.json(updated);
   else res.status(404).json({ message: 'FAQ não encontrado' });

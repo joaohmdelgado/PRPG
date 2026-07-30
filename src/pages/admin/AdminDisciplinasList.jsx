@@ -54,8 +54,8 @@ const AdminDisciplinasList = () => {
 
   const filteredDisciplinas = disciplinas.filter(item => {
     const title = item.title || '';
-    const docente = item.field_docente_resolved?.nome || '';
-    const tipo = item.field_tipo_disciplina || '';
+    const docente = item.docente?.nome || '';
+    const tipo = item.tipoDisciplina || '';
     const query = searchQuery.toLowerCase();
     return title.toLowerCase().includes(query) || 
            docente.toLowerCase().includes(query) || 
@@ -144,26 +144,26 @@ const AdminDisciplinasList = () => {
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    item.field_tipo_disciplina === 'Obrigatória' 
-                      ? 'bg-ufrpe-blue/10 text-ufrpe-blue' 
+                    item.tipoDisciplina === 'Obrigatória'
+                      ? 'bg-ufrpe-blue/10 text-ufrpe-blue'
                       : 'bg-yellow-100 text-yellow-800'
                   }`}>
-                    {item.field_tipo_disciplina}
+                    {item.tipoDisciplina}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   <div>
-                    <p className="font-medium">{item.field_docente_resolved?.nome}</p>
-                    <p className="text-xs text-gray-500">{item.field_docente_resolved?.email}</p>
+                    <p className="font-medium">{item.docente?.nome}</p>
+                    <p className="text-xs text-gray-500">{item.docente?.email}</p>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500 font-medium">
-                  {item.field_carga_horaria}h
+                  {item.cargaHoraria}h
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  {item.field_ementa ? (
+                  {item.ementaUrl ? (
                     <a
-                      href={item.field_ementa.startsWith('http') ? item.field_ementa : `${API_URL}${item.field_ementa}`}
+                      href={item.ementaUrl.startsWith('http') ? item.ementaUrl : `${API_URL}${item.ementaUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-red-600 hover:text-red-800 inline-flex items-center gap-1.5 font-medium hover:underline"

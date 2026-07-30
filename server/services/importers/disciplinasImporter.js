@@ -42,9 +42,9 @@ const map = (raw) => {
   return {
     codigo,
     title,
-    field_carga_horaria: carga === '' ? null : String(carga),
-    field_ementa: ementaUrl ? String(ementaUrl) : null,
-    field_tipo_disciplina: tipo ? String(tipo) : null,
+    cargaHoraria: carga === '' ? null : String(carga),
+    ementaUrl: ementaUrl ? String(ementaUrl) : null,
+    tipoDisciplina: tipo ? String(tipo) : null,
   };
 };
 
@@ -79,9 +79,9 @@ const montarId = (prefixo, m) => {
 // Indica se os campos relevantes mudaram (para distinguir atualizado de inalterado).
 const mudou = (existente, m, programaId) =>
   existente.title !== m.title ||
-  (existente.field_carga_horaria ?? null) !== m.field_carga_horaria ||
-  (existente.field_ementa ?? null) !== (m.field_ementa ? sanitizeHtml(m.field_ementa) : null) ||
-  (existente.field_tipo_disciplina ?? null) !== m.field_tipo_disciplina ||
+  (existente.cargaHoraria ?? null) !== m.cargaHoraria ||
+  (existente.ementaUrl ?? null) !== (m.ementaUrl ? sanitizeHtml(m.ementaUrl) : null) ||
+  (existente.tipoDisciplina ?? null) !== m.tipoDisciplina ||
   (existente.programaId ?? null) !== programaId;
 
 // Importa um único registro já mapeado. Em dryRun apenas calcula a ação prevista.
@@ -90,7 +90,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
   const prefixo = await prefixoPrograma(programaId);
   const id = montarId(prefixo, m);
   // Sufixo informativo para a coluna "Detalhe" (tipo + carga horária).
-  const info = [m.field_tipo_disciplina, m.field_carga_horaria ? `${m.field_carga_horaria}h` : null]
+  const info = [m.tipoDisciplina, m.cargaHoraria ? `${m.cargaHoraria}h` : null]
     .filter(Boolean).join(', ');
   const suf = info ? ` (${info})` : '';
 
@@ -99,9 +99,9 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
   const dados = {
     id,
     title: m.title,
-    field_carga_horaria: m.field_carga_horaria,
-    field_ementa: m.field_ementa ? sanitizeHtml(m.field_ementa) : null,
-    field_tipo_disciplina: m.field_tipo_disciplina,
+    cargaHoraria: m.cargaHoraria,
+    ementaUrl: m.ementaUrl ? sanitizeHtml(m.ementaUrl) : null,
+    tipoDisciplina: m.tipoDisciplina,
     programaId,
   };
 

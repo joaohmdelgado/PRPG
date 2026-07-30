@@ -1,8 +1,9 @@
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
 import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
-import { Save, Trash2, Edit2, X, GraduationCap, Users, Award, BarChart3 } from 'lucide-react';
+import { Save, Trash2, Edit2, X, GraduationCap, Users, Award, BarChart3, Scale, Microscope, Inbox } from 'lucide-react';
 import { apiFetch } from '../../api';
+import { IndicadorCard, PainelGrid, ListaRanking } from '../../components/admin/Painel';
 
 const INT_FIELDS = [
   { key: 'docentes_permanentes', label: 'Docentes permanentes' },
@@ -27,7 +28,130 @@ const emptyForm = {
 
 const num = (v) => (v == null || v === '' ? 0 : Number(v));
 
+// Fase K.8 (PLANO.md): painéis da Câmara/PNPD/Expedientes integrados como
+// abas desta mesma tela, ao lado das métricas anuais por programa (já
+// existentes). Cada painel busca seus próprios indicadores (K.2/K.3/K.4).
+const ABAS = [
+  { key: 'programas', label: 'Métricas dos Programas', icon: BarChart3 },
+  { key: 'camara', label: 'Câmara', icon: Scale },
+  { key: 'posdoutorado', label: 'Pós-Doutorado', icon: Microscope },
+  { key: 'expedientes', label: 'Expedientes', icon: Inbox },
+];
+
 export default function AdminMetricas() {
+  const [aba, setAba] = useState('programas');
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">Dashboard de Indicadores</h2>
+        <p className="text-sm text-gray-500 mt-1">Métricas dos programas e painéis operacionais da Câmara, PNPD e Expedientes.</p>
+      </div>
+
+      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-px">
+        {ABAS.map((a) => (
+          <button
+            key={a.key}
+            onClick={() => setAba(a.key)}
+            className={`flex items-center gap-1.5 px-3 py-2 text-sm border-b-2 -mb-px transition-colors ${
+              aba === a.key ? 'border-ufrpe-blue text-ufrpe-blue font-medium' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <a.icon size={15} /> {a.label}
+          </button>
+        ))}
+      </div>
+
+      {aba === 'programas' && <AbaProgramas />}
+      {aba === 'camara' && <AbaCamara />}
+      {aba === 'posdoutorado' && <AbaPosDoutorado />}
+      {aba === 'expedientes' && <AbaExpedientes />}
+    </div>
+  );
+}
+
+function AbaCamara() {
+  const [dados, setDados] = useState(null);
+  useEffect(() => { apiFetch('/api/camara/indicadores').then((r) => r.ok && r.json()).then(setDados); }, []);
+  if (!dados) return <TableSkeleton rows={4} cols={4} />;
+  return (
+    <div>
+      <PainelGrid>
+        <IndicadorCard label="Processos ativos" valor={dados.processosAtivos} />
+        <IndicadorCard label="Aging médio (dias no setor atual)" valor={dados.agingMedioDias} cor={dados.agingMedioDias > 30 ? 'text-red-600' : dados.agingMedioDias > 15 ? 'text-amber-600' : 'text-emerald-600'} />
+        <IndicadorCard label="Reincidentes (≥3 pautas)" valor={dados.processosReincidentes} />
+        <IndicadorCard label="Tempo médio de resolução" valor={`${dados.tempoMedioResolucaoDias}d`} />
+      </PainelGrid>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ListaRanking titulo="Backlog por setor" itens={dados.backlogPorSetor} labelKey="setor" valorKey="total" />
+        <ListaRanking titulo="Carga por relator (relatorias ativas)" itens={dados.cargaPorRelator} labelKey="relator" valorKey="total" />
+      </div>
+    </div>
+  );
+}
+
+function AbaPosDoutorado() {
+  const [dados, setDados] = useState(null);
+  useEffect(() => { apiFetch('/api/pos-doutorado/indicadores').then((r) => r.ok && r.json()).then(setDados); }, []);
+  if (!dados) return <TableSkeleton rows={4} cols={4} />;
+  const q = dados.qualidadeCadastro;
+  return (
+    <div>
+      <PainelGrid>
+        <IndicadorCard label="Vigentes" valor={dados.vigentes} cor="text-emerald-600" />
+        <IndicadorCard label="Relatórios pendentes" valor={dados.relatoriosPendentes} cor={dados.relatoriosPendentes > 0 ? 'text-amber-600' : 'text-gray-900'} />
+        <IndicadorCard label="Vencendo em 90 dias" valor={dados.vencendo} />
+        <IndicadorCard label="Duração média" valor={`${dados.duracaoMediaMeses} meses`} />
+      </PainelGrid>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ListaRanking titulo="Concentração por supervisor" itens={dados.concentracaoPorSupervisor} labelKey="supervisor" valorKey="total" />
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Qualidade do cadastro (% de {dados.total} registros)</h3>
+          <ul className="space-y-1.5 text-sm text-gray-600">
+            <li>Sem CPF: <strong>{q.semCpf}%</strong></li>
+            <li>Sem período completo: <strong>{q.semPeriodo}%</strong></li>
+            <li>Sem processo vinculado: <strong>{q.semProcesso}%</strong></li>
+            <li>Sem programa: <strong>{q.semPrograma}%</strong></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AbaExpedientes() {
+  const [dados, setDados] = useState(null);
+  useEffect(() => { apiFetch('/api/atos/indicadores').then((r) => r.ok && r.json()).then(setDados); }, []);
+  if (!dados) return <TableSkeleton rows={4} cols={4} />;
+  return (
+    <div>
+      <PainelGrid>
+        <IndicadorCard label="Reservas pendentes" valor={dados.reservasPendentes} />
+        <IndicadorCard label="Emitidos sem PDF anexado" valor={dados.semPdf} cor={dados.semPdf > 0 ? 'text-amber-600' : 'text-gray-900'} />
+      </PainelGrid>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <ListaRanking titulo="Por destinatário" itens={dados.porDestinatario} labelKey="destinatario" valorKey="total" />
+        <ListaRanking titulo="Carga por servidor (solicitante)" itens={dados.porServidor} labelKey="servidor" valorKey="total" />
+      </div>
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Por série e ano</h3>
+        <table className="w-full text-sm">
+          <thead><tr className="text-left text-gray-500 border-b border-gray-100">
+            <th className="py-1.5 pr-4 font-medium">Série</th><th className="py-1.5 pr-4 font-medium">Ano</th><th className="py-1.5 pr-4 font-medium">Total</th>
+          </tr></thead>
+          <tbody className="divide-y divide-gray-50">
+            {dados.porSerieAno.map((r, i) => (
+              <tr key={i}><td className="py-1.5 pr-4">{r.serie}</td><td className="py-1.5 pr-4">{r.ano}</td><td className="py-1.5 pr-4">{r.total}</td></tr>
+            ))}
+            {dados.porSerieAno.length === 0 && <tr><td colSpan={3} className="py-3 text-gray-400 italic">sem dados</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AbaProgramas() {
   const [programas, setProgramas] = useState([]);
   const [metricas, setMetricas] = useState([]);
   const [form, setForm] = useState(emptyForm);
@@ -129,13 +253,6 @@ export default function AdminMetricas() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue">Dashboard de Indicadores</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          Resumo com base no último ano informado de cada programa. Os dados são um <em>snapshot</em> anual — mantenha-os atualizados.
-        </p>
-      </div>
-
       {/* Cartões de resumo */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card icon={GraduationCap} label="Docentes permanentes" value={totals.docentes} color="bg-ufrpe-blue/10 text-ufrpe-blue" />

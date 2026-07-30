@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { API_URL } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner, formatDate } from '../../components/programa/ProgramaUI';
+import SafeHtml from '../../components/SafeHtml';
 
 const STATUS_CLS = {
   abertas: 'bg-green-100 text-green-700',
@@ -13,6 +15,14 @@ export default function ProgramaEditais() {
   const { programa, slug } = usePrograma();
   const [editais, setEditais] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [periodoAberto, setPeriodoAberto] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/proficiencia/periodo-aberto`)
+      .then((r) => r.json())
+      .then((d) => setPeriodoAberto(d))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -48,13 +58,19 @@ export default function ProgramaEditais() {
                     </span>
                   )}
                 </div>
-                {e.description && <p className="text-sm text-gray-600 mb-4">{e.description}</p>}
+                {e.description && <SafeHtml className="text-sm text-gray-600 mb-4 prose prose-sm max-w-none html-content" html={e.description} />}
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-gray-500 mb-4">
                   {e.publishedAt && <span><i className="fa-regular fa-calendar mr-1.5 text-[var(--prog-accent)]"></i>Publicado: {formatDate(e.publishedAt)}</span>}
                   {e.deadline && <span><i className="fa-regular fa-clock mr-1.5 text-[var(--prog-accent)]"></i>Prazo: {formatDate(e.deadline)}</span>}
                   {e.numero && <span><i className="fa-solid fa-hashtag mr-1.5 text-[var(--prog-accent)]"></i>{e.numero}</span>}
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  {e.proficiencia && periodoAberto && periodoAberto.id === e.id && (
+                    <Link to="/proficiencia/inscricao"
+                      className="text-sm px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-2">
+                      <i className="fa-solid fa-pen-to-square"></i>Fazer Inscrição
+                    </Link>
+                  )}
                   {e.downloadLink && e.downloadLink !== '#' && (
                     <a href={e.downloadLink} target="_blank" rel="noopener noreferrer"
                       className="text-sm px-4 py-2 rounded-lg bg-[var(--prog-primary)] text-white font-semibold hover:opacity-90 transition-opacity">

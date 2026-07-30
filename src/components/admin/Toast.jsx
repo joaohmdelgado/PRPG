@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, AlertCircle, CheckCircle, Info } from 'lucide-react';
 
@@ -18,11 +18,14 @@ export function useToast() {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4500);
   }, []);
 
-  const toast = {
+  // Memoizado: `add` é estável, então `toast` mantém identidade entre
+  // renders — evita que useCallback/useEffect que dependem de `toast`
+  // (padrão usado em várias telas admin) reexecutem a cada render.
+  const toast = useMemo(() => ({
     error: (msg) => add(msg, 'error'),
     success: (msg) => add(msg, 'success'),
     info: (msg) => add(msg, 'info'),
-  };
+  }), [add]);
 
   const remove = (id) => setToasts((t) => t.filter((x) => x.id !== id));
 

@@ -106,8 +106,8 @@ const AdminGruposPesquisa = () => {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {grupos.map((item) => {
-              const leadersText = item.field_lideres_resolved && item.field_lideres_resolved.length > 0
-                ? item.field_lideres_resolved.map(l => l.nome).join(', ')
+              const leadersText = item.lideres && item.lideres.length > 0
+                ? item.lideres.map(l => l.nome).join(', ')
                 : 'Nenhum líder associado';
 
               return (

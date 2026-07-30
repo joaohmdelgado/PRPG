@@ -8,6 +8,13 @@ import { eventosRepo } from '../db/eventosRepo.js';
 import { query } from '../db/pool.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { NUP_REGEX, validarNumeroProcesso } from '../utils/nup.js';
+import {
+  gerarEspelhoProcessoPdf, gerarExtratoEncaminhamentoPdf, gerarOficioRelatoriaPdf, gerarRelatorioAnualCamaraPdf,
+} from '../services/camaraPdf.js';
+import { emitir } from '../services/declaracoes.js';
+import { enviarEmail } from '../services/email.js';
+import { resolverEmail } from '../services/prazos.js';
+import QRCode from 'qrcode';
 
 // ============================ Vocabulários ============================
 // Listas sugeridas ao frontend (selects). Não bloqueiam o servidor: o campo
@@ -306,6 +313,17 @@ export const addRelatoria = async (req, res) => {
     entidade: 'processo', entidadeId: processo.id, tipo: 'RELATORIA', data: relatoria.data_designacao,
     origemTipo: 'relatoria', origemId: relatoria.id, descricao: `Relator designado: ${req.body.relatorNome}`,
   }, req.user?.id);
+
+  // Fase L.5 — e-mail de designação (o lembrete de prazo já existe desde a
+  // Fase J; faltava só este disparo pontual no momento da designação).
+  const emailRelator = await resolverEmail(relatoria.relator_id);
+  if (emailRelator) {
+    await enviarEmail({
+      destinatarioEmail: emailRelator, tipo: 'RELATORIA_DESIGNADA', entidade: 'relatoria', entidadeId: relatoria.id,
+      dados: { nome: relatoria.relator_nome, numeroProcesso: processo.numero, assunto: processo.assunto, prazoDevolucao: relatoria.prazo_devolucao || '—' },
+    }, req.user?.id);
+  }
+
   res.status(201).json(relatoria);
 };
 
@@ -366,4 +384,111 @@ export const exportXlsx = async (req, res) => {
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.setHeader('Content-Disposition', 'attachment; filename="processos-camara.xlsx"');
   res.send(buffer);
+};
+
+// ============================ Indicadores (Fase K.2) ========================
+// Ver requisitos-camara.md §11. Todos calculados na leitura — nenhum número
+// fica desatualizado por esquecimento (mesmo princípio de derivarSituacao).
+export const getIndicadores = async (req, res) => {
+  const [backlog, carga, aging, reincidencia, tempoMedio] = await Promise.all([
+    query(`
+      SELECT COALESCE(u.sigla, 'Sem setor') AS setor, COUNT(*)::int AS total
+      FROM processos p
+      LEFT JOIN unidades u ON u.id = p.localizacao_id
+      WHERE p.status != ALL($1::text[])
+      GROUP BY u.sigla ORDER BY total DESC
+    `, [STATUS_RESOLVIDOS]),
+    query(`
+      SELECT r.relator_nome AS relator, COUNT(*)::int AS total
+      FROM camara_relatorias r
+      WHERE r.ativa = TRUE AND r.data_devolucao IS NULL
+      GROUP BY r.relator_nome ORDER BY total DESC LIMIT 10
+    `),
+    query(`
+      SELECT COALESCE(AVG(CURRENT_DATE - p.localizacao_em), 0)::float AS media_dias
+      FROM processos p WHERE p.status != ALL($1::text[]) AND p.localizacao_em IS NOT NULL
+    `, [STATUS_RESOLVIDOS]),
+    query(`
+      SELECT COUNT(*)::int AS total FROM (
+        SELECT p.id FROM processos p
+        JOIN camara_pauta_itens pi ON pi.processo_id = p.id
+        GROUP BY p.id HAVING COUNT(*) >= 3
+      ) t
+    `),
+    query(`
+      SELECT COALESCE(AVG(data_encerramento - data_entrada), 0)::float AS media_dias
+      FROM processos WHERE status = ANY($1::text[]) AND data_encerramento IS NOT NULL
+    `, [STATUS_RESOLVIDOS]),
+  ]);
+  const { rows: totalAtivos } = await query(`SELECT COUNT(*)::int AS n FROM processos WHERE status != ALL($1::text[])`, [STATUS_RESOLVIDOS]);
+
+  res.json({
+    processosAtivos: totalAtivos[0].n,
+    backlogPorSetor: backlog.rows,
+    cargaPorRelator: carga.rows,
+    agingMedioDias: Math.round(aging.rows[0].media_dias),
+    processosReincidentes: reincidencia.rows[0].total,
+    tempoMedioResolucaoDias: Math.round(tempoMedio.rows[0].media_dias),
+  });
+};
+
+// ============================ Artefatos finais (Fase L) ============================
+const PUBLIC_SITE_URL = (process.env.PUBLIC_SITE_URL || 'http://localhost:3000').replace(/\/+$/, '');
+const urlVerificacao = (codigo) => `${PUBLIC_SITE_URL}/verificar/${codigo}`;
+
+// L.2 — espelho do processo com QR de verificação (mesmo padrão de A.9/C.7).
+export const espelhoProcessoPdf = async (req, res) => {
+  const processo = await processosRepo.getById(req.params.id);
+  if (!(await assertAcessoProcesso(req, res, processo))) return;
+  const eventos = await eventosRepo.listByEntidade('processo', processo.id);
+
+  const declaracao = await emitir({
+    tipo: 'espelho_processo', entidade: 'processo', entidadeId: processo.id, pessoaId: null,
+    dados: { numero: processo.numero, assunto: processo.assunto, status: processo.status },
+  }, req.user?.id);
+  const linkVerificacao = urlVerificacao(declaracao.codigo);
+  let qrBuffer = null;
+  try { qrBuffer = await QRCode.toBuffer(linkVerificacao, { margin: 1, width: 180, errorCorrectionLevel: 'M' }); } catch { /* sem QR não impede a emissão */ }
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="espelho-${processo.numero}.pdf"`);
+  gerarEspelhoProcessoPdf(res, processo, eventos, { qrBuffer, codigo: declaracao.codigo, linkVerificacao });
+};
+
+// L.3 — extrato de encaminhamento ao CEPE/SEG.
+export const extratoEncaminhamentoPdf = async (req, res) => {
+  const { rows } = await query(
+    `SELECT * FROM processos WHERE status = 'ENCAMINHADO_INSTANCIA_SUPERIOR' ORDER BY criado_em DESC`
+  );
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'inline; filename="extrato-encaminhamento.pdf"');
+  gerarExtratoEncaminhamentoPdf(res, rows);
+};
+
+// L.5 — ofício de designação de relatoria (PDF).
+export const oficioRelatoriaPdf = async (req, res) => {
+  const { rows } = await query('SELECT * FROM camara_relatorias WHERE id = $1', [req.params.relatoriaId]);
+  const relatoria = rows[0];
+  if (!relatoria) return res.status(404).json({ message: 'Relatoria não encontrada.' });
+  const processo = await processosRepo.getById(relatoria.processo_id);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="oficio-relatoria-${relatoria.id}.pdf"`);
+  gerarOficioRelatoriaPdf(res, relatoria, processo);
+};
+
+// L.8 — relatório anual da Câmara.
+export const relatorioAnualPdf = async (req, res) => {
+  const ano = Number(req.query.ano) || new Date().getFullYear();
+  const [recebidos, resolvidos, tempoMedio, porStatus] = await Promise.all([
+    query(`SELECT COUNT(*)::int AS n FROM processos WHERE EXTRACT(YEAR FROM data_entrada) = $1`, [ano]),
+    query(`SELECT COUNT(*)::int AS n FROM processos WHERE status = ANY($2::text[]) AND EXTRACT(YEAR FROM data_encerramento) = $1`, [ano, STATUS_RESOLVIDOS]),
+    query(`SELECT COALESCE(AVG(data_encerramento - data_entrada), 0)::float AS media FROM processos WHERE status = ANY($2::text[]) AND EXTRACT(YEAR FROM data_encerramento) = $1`, [ano, STATUS_RESOLVIDOS]),
+    query(`SELECT status, COUNT(*)::int AS total FROM processos WHERE EXTRACT(YEAR FROM data_entrada) = $1 GROUP BY status ORDER BY total DESC`, [ano]),
+  ]);
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="relatorio-anual-camara-${ano}.pdf"`);
+  gerarRelatorioAnualCamaraPdf(res, ano, {
+    recebidos: recebidos.rows[0].n, resolvidos: resolvidos.rows[0].n,
+    tempoMedioResolucaoDias: Math.round(tempoMedio.rows[0].media), porStatus: porStatus.rows,
+  });
 };

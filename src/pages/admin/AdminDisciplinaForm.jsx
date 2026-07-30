@@ -15,12 +15,15 @@ const AdminDisciplinaForm = () => {
 
   const [formData, setFormData] = useState({
     title: '',
-    field_carga_horaria: '',
-    field_docente: '',
-    field_ementa: '',
-    field_tipo_disciplina: '',
+    cargaHoraria: '',
+    docenteId: '',
+    ementaUrl: '',
+    tipoDisciplina: '',
     programaId: ''
   });
+  // Nome/e-mail exibidos no chip do docente selecionado — vem direto do GET
+  // (data.docente) na edição, ou do item escolhido no autocomplete.
+  const [docenteDisplay, setDocenteDisplay] = useState(null);
 
   const [professores, setProfessores] = useState([]);
   const [programas, setProgramas] = useState([]);
@@ -47,12 +50,10 @@ const AdminDisciplinaForm = () => {
       try {
         // Carrega usuários/professores do sistema
         const usersResponse = await apiFetch('/api/users');
-        
-        let filteredProfessores = [];
+
         if (usersResponse.ok) {
           const users = await usersResponse.json();
-          filteredProfessores = users.filter(u => u.roles && u.roles.includes('Professor'));
-          setProfessores(filteredProfessores);
+          setProfessores(users.filter(u => u.roles && u.roles.includes('Professor')));
         } else if (usersResponse.status === 401 || usersResponse.status === 403) {
           navigate('/admin/login');
           return;
@@ -66,18 +67,13 @@ const AdminDisciplinaForm = () => {
             setAudit(data);
             setFormData({
               title: data.title || '',
-              field_carga_horaria: data.field_carga_horaria || '',
-              field_docente: data.field_docente || '',
-              field_ementa: data.field_ementa || '',
-              field_tipo_disciplina: data.field_tipo_disciplina || '',
+              cargaHoraria: data.cargaHoraria || '',
+              docenteId: data.docentePessoaId || '',
+              ementaUrl: data.ementaUrl || '',
+              tipoDisciplina: data.tipoDisciplina || '',
               programaId: data.programaId || ''
             });
-
-            // Se o docente estiver preenchido, inicializa o autocomplete
-            const selectedProf = filteredProfessores.find(prof => prof.id === data.field_docente);
-            if (selectedProf) {
-              setSearchQuery(selectedProf.perfil_geral?.nome || selectedProf.email);
-            }
+            if (data.docente) setDocenteDisplay({ nome: data.docente.nome, email: data.docente.email });
           } else {
             setError('Disciplina não encontrada');
           }
@@ -120,7 +116,7 @@ const AdminDisciplinaForm = () => {
         const data = await response.json();
         setFormData(prev => ({
           ...prev,
-          field_ementa: data.url
+          ementaUrl: data.url
         }));
       } else {
         const errData = await response.json();
@@ -135,17 +131,17 @@ const AdminDisciplinaForm = () => {
   };
 
   const handleSelectProfessor = (prof) => {
-    setFormData(prev => ({ ...prev, field_docente: prof.id }));
+    setFormData(prev => ({ ...prev, docenteId: prof.id }));
+    setDocenteDisplay({ nome: prof.perfil_geral?.nome, email: prof.email });
     setSearchQuery(prof.perfil_geral?.nome || prof.email);
     setShowDropdown(false);
   };
 
   const handleRemoveProfessor = () => {
-    setFormData(prev => ({ ...prev, field_docente: '' }));
+    setFormData(prev => ({ ...prev, docenteId: '' }));
+    setDocenteDisplay(null);
     setSearchQuery('');
   };
-
-  const selectedProfessorObj = professores.find(p => p.id === formData.field_docente);
 
   const filteredProfessores = professores.filter(prof => {
     const nome = prof.perfil_geral?.nome || '';
@@ -156,24 +152,24 @@ const AdminDisciplinaForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       setError('O título é obrigatório.');
       return;
     }
-    if (!formData.field_carga_horaria) {
+    if (!formData.cargaHoraria) {
       setError('A carga horária é obrigatória.');
       return;
     }
-    if (!formData.field_tipo_disciplina) {
+    if (!formData.tipoDisciplina) {
       setError('O tipo de disciplina é obrigatório.');
       return;
     }
-    if (!formData.field_docente) {
+    if (!formData.docenteId) {
       setError('O docente (Professor) é obrigatório.');
       return;
     }
-    if (!formData.field_ementa) {
+    if (!formData.ementaUrl) {
       setError('O arquivo PDF da ementa é obrigatório.');
       return;
     }
@@ -248,8 +244,8 @@ const AdminDisciplinaForm = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Carga Horária (horas inteiras) *</label>
             <input
               type="number"
-              name="field_carga_horaria"
-              value={formData.field_carga_horaria}
+              name="cargaHoraria"
+              value={formData.cargaHoraria}
               onChange={handleChange}
               required
               min="1"
@@ -262,8 +258,8 @@ const AdminDisciplinaForm = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Disciplina *</label>
             <select
-              name="field_tipo_disciplina"
-              value={formData.field_tipo_disciplina}
+              name="tipoDisciplina"
+              value={formData.tipoDisciplina}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm bg-white"
@@ -290,16 +286,16 @@ const AdminDisciplinaForm = () => {
           {/* Docente Autocomplete */}
           <div ref={dropdownRef} className="relative md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Docente (Professor) *</label>
-            
-            {formData.field_docente ? (
+
+            {formData.docenteId ? (
               // Professor Selecionado
               <div className="flex items-center justify-between bg-ufrpe-blue/5 border border-ufrpe-blue/20 text-ufrpe-blue rounded-md px-4 py-2.5">
                 <div>
                   <p className="font-semibold text-sm">
-                    {selectedProfessorObj?.perfil_geral?.nome || 'Usuário carregando...'}
+                    {docenteDisplay?.nome || 'Usuário carregando...'}
                   </p>
                   <p className="text-xs text-ufrpe-blue">
-                    {selectedProfessorObj?.email}
+                    {docenteDisplay?.email}
                   </p>
                 </div>
                 <button
@@ -364,22 +360,22 @@ const AdminDisciplinaForm = () => {
           {/* Ementa PDF */}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Ementa (PDF) *</label>
-            
-            {formData.field_ementa ? (
+
+            {formData.ementaUrl ? (
               // Arquivo já enviado
               <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
                 <FileText className="text-red-500 shrink-0" size={24} />
-                <a 
-                  href={formData.field_ementa.startsWith('http') ? formData.field_ementa : `${API_URL}${formData.field_ementa}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href={formData.ementaUrl.startsWith('http') ? formData.ementaUrl : `${API_URL}${formData.ementaUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
                 >
                   Visualizar PDF da Ementa
                 </a>
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, field_ementa: '' }))}
+                  onClick={() => setFormData(prev => ({ ...prev, ementaUrl: '' }))}
                   className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors"
                   title="Remover ementa"
                 >
@@ -422,13 +418,13 @@ const AdminDisciplinaForm = () => {
 
         {/* Botões */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <Link 
+          <Link
             to="/admin/disciplinas"
             className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Cancelar
           </Link>
-          <button 
+          <button
             type="submit"
             disabled={loading || uploading}
             className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50"

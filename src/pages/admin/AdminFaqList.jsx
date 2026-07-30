@@ -54,7 +54,7 @@ const AdminFaqList = () => {
 
   const filteredFaqs = faqs.filter(item => {
     const title = item.title || '';
-    const resposta = item.field_resposta || '';
+    const resposta = item.resposta || '';
     const query = searchQuery.toLowerCase();
     return title.toLowerCase().includes(query) || resposta.toLowerCase().includes(query);
   });

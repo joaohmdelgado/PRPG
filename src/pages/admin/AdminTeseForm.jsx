@@ -15,12 +15,15 @@ const AdminTeseForm = () => {
 
   const [formData, setFormData] = useState({
     title: '',
-    field_ano: '',
-    field_arquivo: '',
-    field_autor: '',
-    field_tipo_td: '',
+    ano: '',
+    arquivoUrl: '',
+    autorId: '',
+    tipo: '',
     programaId: ''
   });
+  // Nome/e-mail exibidos no chip do autor selecionado — vem direto do GET
+  // (data.autor) na edição, ou do item escolhido no autocomplete.
+  const [autorDisplay, setAutorDisplay] = useState(null);
 
   const [alunos, setAlunos] = useState([]);
   const [programas, setProgramas] = useState([]);
@@ -47,12 +50,10 @@ const AdminTeseForm = () => {
       try {
         // Carrega usuários/alunos do sistema
         const usersResponse = await apiFetch('/api/users');
-        
-        let filteredAlunos = [];
+
         if (usersResponse.ok) {
           const users = await usersResponse.json();
-          filteredAlunos = users.filter(u => u.roles && u.roles.includes('Aluno'));
-          setAlunos(filteredAlunos);
+          setAlunos(users.filter(u => u.roles && u.roles.includes('Aluno')));
         } else if (usersResponse.status === 401 || usersResponse.status === 403) {
           navigate('/admin/login');
           return;
@@ -66,18 +67,13 @@ const AdminTeseForm = () => {
             setAudit(data);
             setFormData({
               title: data.title || '',
-              field_ano: data.field_ano || '',
-              field_arquivo: data.field_arquivo || '',
-              field_autor: data.field_autor || '',
-              field_tipo_td: data.field_tipo_td || '',
+              ano: data.ano || '',
+              arquivoUrl: data.arquivoUrl || '',
+              autorId: data.autorPessoaId || '',
+              tipo: data.tipo || '',
               programaId: data.programaId || ''
             });
-
-            // Se o autor estiver preenchido, inicializa o autocomplete
-            const selectedAluno = filteredAlunos.find(aluno => aluno.id === data.field_autor);
-            if (selectedAluno) {
-              setSearchQuery(selectedAluno.perfil_geral?.nome || selectedAluno.email);
-            }
+            if (data.autor) setAutorDisplay({ nome: data.autor.nome, email: data.autor.email });
           } else {
             setError('Tese/Dissertação não encontrada');
           }
@@ -120,7 +116,7 @@ const AdminTeseForm = () => {
         const data = await response.json();
         setFormData(prev => ({
           ...prev,
-          field_arquivo: data.url
+          arquivoUrl: data.url
         }));
       } else {
         const errData = await response.json();
@@ -135,17 +131,17 @@ const AdminTeseForm = () => {
   };
 
   const handleSelectAluno = (aluno) => {
-    setFormData(prev => ({ ...prev, field_autor: aluno.id }));
+    setFormData(prev => ({ ...prev, autorId: aluno.id }));
+    setAutorDisplay({ nome: aluno.perfil_geral?.nome, email: aluno.email });
     setSearchQuery(aluno.perfil_geral?.nome || aluno.email);
     setShowDropdown(false);
   };
 
   const handleRemoveAluno = () => {
-    setFormData(prev => ({ ...prev, field_autor: '' }));
+    setFormData(prev => ({ ...prev, autorId: '' }));
+    setAutorDisplay(null);
     setSearchQuery('');
   };
-
-  const selectedAlunoObj = alunos.find(a => a.id === formData.field_autor);
 
   const filteredAlunos = alunos.filter(aluno => {
     const nome = aluno.perfil_geral?.nome || '';
@@ -156,24 +152,24 @@ const AdminTeseForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title.trim()) {
       setError('O título é obrigatório.');
       return;
     }
-    if (!formData.field_ano) {
+    if (!formData.ano) {
       setError('A data do ano é obrigatória.');
       return;
     }
-    if (!formData.field_tipo_td) {
+    if (!formData.tipo) {
       setError('O tipo (Tese ou Dissertação) é obrigatório.');
       return;
     }
-    if (!formData.field_autor) {
+    if (!formData.autorId) {
       setError('O autor (Aluno) é obrigatório.');
       return;
     }
-    if (!formData.field_arquivo) {
+    if (!formData.arquivoUrl) {
       setError('O arquivo PDF do trabalho é obrigatório.');
       return;
     }
@@ -259,8 +255,8 @@ const AdminTeseForm = () => {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
             <select
-              name="field_tipo_td"
-              value={formData.field_tipo_td}
+              name="tipo"
+              value={formData.tipo}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm bg-white"
@@ -276,8 +272,8 @@ const AdminTeseForm = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Data / Ano *</label>
             <input
               type="date"
-              name="field_ano"
-              value={formData.field_ano}
+              name="ano"
+              value={formData.ano}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
@@ -287,16 +283,16 @@ const AdminTeseForm = () => {
           {/* Autor (Aluno) Autocomplete */}
           <div ref={dropdownRef} className="relative md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Autor (Aluno) *</label>
-            
-            {formData.field_autor ? (
+
+            {formData.autorId ? (
               // Aluno Selecionado
               <div className="flex items-center justify-between bg-ufrpe-blue/5 border border-ufrpe-blue/20 text-ufrpe-blue rounded-md px-4 py-2.5">
                 <div>
                   <p className="font-semibold text-sm">
-                    {selectedAlunoObj?.perfil_geral?.nome || 'Usuário carregando...'}
+                    {autorDisplay?.nome || 'Usuário carregando...'}
                   </p>
                   <p className="text-xs text-ufrpe-blue">
-                    {selectedAlunoObj?.email}
+                    {autorDisplay?.email}
                   </p>
                 </div>
                 <button
@@ -361,22 +357,22 @@ const AdminTeseForm = () => {
           {/* Arquivo PDF */}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">PDF da Dissertação/Tese *</label>
-            
-            {formData.field_arquivo ? (
+
+            {formData.arquivoUrl ? (
               // Arquivo já enviado
               <div className="flex items-center gap-3 bg-gray-50 p-3 border border-gray-300 rounded-md">
                 <FileText className="text-red-500 shrink-0" size={24} />
-                <a 
-                  href={formData.field_arquivo.startsWith('http') ? formData.field_arquivo : `${API_URL}${formData.field_arquivo}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href={formData.arquivoUrl.startsWith('http') ? formData.arquivoUrl : `${API_URL}${formData.arquivoUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-sm text-ufrpe-blue hover:underline flex-grow truncate font-medium"
                 >
                   Visualizar PDF da Dissertação / Tese
                 </a>
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, field_arquivo: '' }))}
+                  onClick={() => setFormData(prev => ({ ...prev, arquivoUrl: '' }))}
                   className="text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors"
                   title="Remover documento"
                 >
@@ -419,13 +415,13 @@ const AdminTeseForm = () => {
 
         {/* Botões do Formulário */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <Link 
+          <Link
             to="/admin/teses-dissertacoes"
             className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Cancelar
           </Link>
-          <button 
+          <button
             type="submit"
             disabled={loading || uploading}
             className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium text-sm disabled:opacity-50"

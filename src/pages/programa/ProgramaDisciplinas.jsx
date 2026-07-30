@@ -21,12 +21,12 @@ export default function ProgramaDisciplinas() {
   }, [slug]);
 
   const filtradas = disciplinas.filter((d) => {
-    const ok = !busca || d.title?.toLowerCase().includes(busca.toLowerCase()) || d.field_docente?.toLowerCase().includes(busca.toLowerCase());
-    const okTipo = !tipo || d.field_tipo_disciplina === tipo;
+    const ok = !busca || d.title?.toLowerCase().includes(busca.toLowerCase()) || d.docente?.nome?.toLowerCase().includes(busca.toLowerCase());
+    const okTipo = !tipo || d.tipoDisciplina === tipo;
     return ok && okTipo;
   });
 
-  const tipos = [...new Set(disciplinas.map((d) => d.field_tipo_disciplina).filter(Boolean))];
+  const tipos = [...new Set(disciplinas.map((d) => d.tipoDisciplina).filter(Boolean))];
 
   return (
     <div>
@@ -62,24 +62,24 @@ export default function ProgramaDisciplinas() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <h3 className="font-semibold text-gray-900 text-sm mb-1">{d.title}</h3>
-                    {d.field_docente_resolved?.nome && (
+                    {d.docente?.nome && (
                       <p className="text-xs text-gray-500 flex items-center gap-1.5">
                         <i className="fa-solid fa-chalkboard-teacher text-[var(--prog-primary)]"></i>
-                        {d.field_docente_resolved.nome}
+                        {d.docente.nome}
                       </p>
                     )}
-                    {d.field_ementa && (
-                      <p className="text-xs text-gray-600 mt-2 line-clamp-2 leading-relaxed">{d.field_ementa}</p>
+                    {d.ementaUrl && (
+                      <p className="text-xs text-gray-600 mt-2 line-clamp-2 leading-relaxed">{d.ementaUrl}</p>
                     )}
                   </div>
                   <div className="shrink-0 flex flex-col items-end gap-2">
-                    {d.field_tipo_disciplina && (
+                    {d.tipoDisciplina && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[var(--prog-primary)]/10 text-[var(--prog-primary)]">
-                        {TIPOS[d.field_tipo_disciplina] || d.field_tipo_disciplina}
+                        {TIPOS[d.tipoDisciplina] || d.tipoDisciplina}
                       </span>
                     )}
-                    {d.field_carga_horaria && (
-                      <span className="text-xs text-gray-400">{d.field_carga_horaria}h</span>
+                    {d.cargaHoraria && (
+                      <span className="text-xs text-gray-400">{d.cargaHoraria}h</span>
                     )}
                   </div>
                 </div>

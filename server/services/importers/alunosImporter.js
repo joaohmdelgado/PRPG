@@ -33,12 +33,29 @@ const nivelCanonico = (nivelRaw, egresso) => {
 const papelDiscente = (nivelRaw) =>
   String(nivelRaw || '').toLowerCase().startsWith('dout') ? 'DISCENTE_DOUTORADO' : 'DISCENTE_MESTRADO';
 
+// Slug simples para compor e-mails sintéticos (sem acentos/espaços).
+const slugify = (s) =>
+  String(s || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
 // Converte um registro bruto do arquivo no formato normalizado do importador.
 const map = (raw) => {
   const nome = first(raw.name);
-  const email = first(raw.mail);
-  if (!nome && !email) throw new Error('Registro sem nome e sem e-mail.');
-  if (!email) throw new Error(`"${nome}" não possui e-mail — ignorado.`);
+  const emailRaw = first(raw.mail);
+  if (!nome && !emailRaw) throw new Error('Registro sem nome e sem e-mail.');
+
+  // Aluno sem e-mail no export ainda é importado: gera um e-mail sintético
+  // estável (a partir do uid legado, ou do nome) para satisfazer a coluna
+  // UNIQUE NOT NULL e permitir reimportações idempotentes.
+  const semEmail = !emailRaw;
+  const uidLegado = first(raw.uid);
+  const email = emailRaw
+    ? emailRaw.toLowerCase()
+    : `sem-email-${uidLegado || slugify(nome)}@import.prpg.local`;
 
   const linhas_target_ids = Array.isArray(raw.field_linhas_pesquisa)
     ? raw.field_linhas_pesquisa.map((x) => String(x?.target_id ?? '').trim()).filter(Boolean)
@@ -46,7 +63,8 @@ const map = (raw) => {
 
   return {
     nome,
-    email: email.toLowerCase(),
+    email,
+    semEmail,
     nivel_raw: first(raw.field_nivel) || 'Mestrado',
     sexo: first(raw.field_sexo),
     foto_url: first(raw.user_picture, 'url'),
@@ -177,6 +195,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
   if (orientadorId) detalhes.push('orientador vinculado');
   else if (m.orientador_uid) detalhes.push('orientador não encontrado');
   if (linhaIds.length > 0) detalhes.push(`${linhaIds.length} linha(s)`);
+  if (m.semEmail) detalhes.push('sem e-mail (sintético)');
   const det = detalhes.join(', ');
 
   if (dryRun) {

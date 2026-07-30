@@ -60,10 +60,9 @@ const AdminBolsasList = () => {
     return dateStr;
   };
 
-  const formatPeriod = (periodo) => {
-    if (!periodo) return '-';
-    const inicio = formatDate(periodo.data_inicio);
-    const fim = formatDate(periodo.data_fim);
+  const formatPeriod = (dataInicio, dataFim) => {
+    const inicio = formatDate(dataInicio);
+    const fim = formatDate(dataFim);
     if (inicio && fim) {
       return `${inicio} até ${fim}`;
     }
@@ -72,8 +71,8 @@ const AdminBolsasList = () => {
 
   const filteredBolsas = bolsas.filter(item => {
     const title = item.title || '';
-    const aluno = item.field_aluno_resolved?.nome || '';
-    const tipo = item.field_tipo_bolsa || '';
+    const aluno = item.aluno?.nome || '';
+    const tipo = item.tipoBolsa || '';
     const query = searchQuery.toLowerCase();
     return title.toLowerCase().includes(query) || 
            aluno.toLowerCase().includes(query) || 
@@ -161,19 +160,19 @@ const AdminBolsasList = () => {
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                    {item.field_tipo_bolsa || 'Não especificado'}
+                    {item.tipoBolsa || 'Não especificado'}
                   </span>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   <div>
-                    <p className="font-medium">{item.field_aluno_resolved?.nome}</p>
-                    <p className="text-xs text-gray-500">{item.field_aluno_resolved?.email}</p>
+                    <p className="font-medium">{item.aluno?.nome}</p>
+                    <p className="text-xs text-gray-500">{item.aluno?.email}</p>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   <div className="flex items-center gap-1.5 text-gray-600 font-medium">
                     <Calendar size={14} className="text-gray-400" />
-                    <span>{formatPeriod(item.field_periodo_bolsa)}</span>
+                    <span>{formatPeriod(item.dataInicio, item.dataFim)}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-right">

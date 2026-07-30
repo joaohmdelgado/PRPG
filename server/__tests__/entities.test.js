@@ -56,31 +56,31 @@ describe('resolucoes', () => {
 });
 
 describe('grupos de pesquisa', () => {
-  it('resolve os líderes (field_lideres) em nomes', async () => {
+  it('resolve os líderes (vinculos, Fase D) em nomes', async () => {
     await seedUser({ id: 'lider-1', email: 'lider@test.com', roles: ['Professor'], perfil_geral: { nome: 'Dra. Líder' } });
     await auth(request(app).post('/api/grupos-pesquisa')).send({
       title: 'Grupo X',
       body: { value: '<p>desc</p>', summary: '' },
-      field_lideres: ['lider-1'],
+      liderIds: ['lider-1'],
     });
 
     const res = await auth(request(app).get('/api/grupos-pesquisa'));
     expect(res.status).toBe(200);
-    expect(res.body[0].field_lideres_resolved[0].nome).toBe('Dra. Líder');
+    expect(res.body[0].lideres[0].nome).toBe('Dra. Líder');
   });
 });
 
 describe('teses/dissertações', () => {
-  it('resolve o autor (field_autor) em nome', async () => {
+  it('resolve o autor (autor_pessoa_id, Fase D) em nome', async () => {
     await seedUser({ id: 'autor-1', email: 'autor@test.com', roles: ['Aluno'], perfil_geral: { nome: 'Autor Teste' } });
     await auth(request(app).post('/api/teses-dissertacoes')).send({
       title: 'Dissertação Y',
-      field_autor: 'autor-1',
-      field_tipo_td: 'DISSERTACAO',
+      autorId: 'autor-1',
+      tipo: 'DISSERTACAO',
     });
 
     const res = await request(app).get('/api/teses-dissertacoes');
-    expect(res.body[0].field_autor_resolved.nome).toBe('Autor Teste');
+    expect(res.body[0].autor.nome).toBe('Autor Teste');
   });
 });
 
