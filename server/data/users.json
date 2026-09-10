@@ -1,33 +1,5 @@
 [
   {
-    "id": "e87281fb-5620-4101-be3f-93ce5c4886d0",
-    "email": "admin@ufrpe.br",
-    "password_hash": "$2b$10$8j2gP1R3Z0fpC88zz1m1fu9cU2G0NSRq2lwWKCwTxeIQrRRTpG4aC",
-    "roles": [
-      "Administrator"
-    ],
-    "privacidade": {
-      "mostrar_email": false,
-      "mostrar_telefone": false
-    },
-    "perfil_geral": {
-      "nome": "Administrador do Sistema",
-      "cpf": "",
-      "siape": "",
-      "foto_url": "",
-      "telefones": []
-    },
-    "dados_academicos": {
-      "lattes": "",
-      "orcid": "",
-      "google_scholar": "",
-      "publons": "",
-      "linhas_pesquisa": []
-    },
-    "criado_em": "2026-06-12T13:50:12.587Z",
-    "atualizado_em": "2026-06-12T13:50:12.620Z"
-  },
-  {
     "id": "9d2d48ef-3770-429d-b52c-016c7d483797",
     "email": "professor@gmail.com",
     "password_hash": "$2b$10$PtpAdWY9HnIYIWXyGj6sG.jjXmT6dXXPtCD1DXnS2gycEjE8pIXr2",

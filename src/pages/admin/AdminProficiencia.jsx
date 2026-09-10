@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL, apiFetch } from '../../api';
+import { apiFetch } from '../../api';
 import { Languages, FileText, Loader2, CheckCircle2, AlertCircle, ExternalLink, Trash2 } from 'lucide-react';
 import { useConfirm } from '../../components/admin/ConfirmModal';
 
@@ -83,6 +83,15 @@ const AdminProficiencia = () => {
     } catch { setErro('Erro de conexão ao gerar a declaração.'); }
   };
 
+  const abrirComprovante = async (id, tipo) => {
+    setErro('');
+    try {
+      const res = await apiFetch(`/api/proficiencia/inscricoes/${id}/comprovantes/${tipo}`);
+      if (!res.ok) { const d = await res.json().catch(() => ({})); setErro(d.message || 'Erro ao abrir o comprovante.'); return; }
+      window.open(URL.createObjectURL(await res.blob()), '_blank', 'noopener,noreferrer');
+    } catch { setErro('Erro de conexão ao abrir o comprovante.'); }
+  };
+
   if (carregando) {
     return <div className="flex items-center gap-2 text-gray-500"><Loader2 className="animate-spin" size={18} /> Carregando…</div>;
   }
@@ -144,16 +153,16 @@ const AdminProficiencia = () => {
                       <td className="py-2 pr-3">{(i.linguas || []).join(', ')}</td>
                       <td className="py-2 pr-3 space-y-0.5">
                         {i.comprovanteResidenciaUrl && (
-                          <a href={`${API_URL}${i.comprovanteResidenciaUrl}`} target="_blank" rel="noopener noreferrer"
+                          <button type="button" onClick={() => abrirComprovante(i.id, 'residencia')}
                             className="flex items-center gap-1 text-ufrpe-blue underline text-xs">
                             <ExternalLink size={10} /> Residência
-                          </a>
+                          </button>
                         )}
                         {i.comprovanteVinculoUrl && (
-                          <a href={`${API_URL}${i.comprovanteVinculoUrl}`} target="_blank" rel="noopener noreferrer"
+                          <button type="button" onClick={() => abrirComprovante(i.id, 'vinculo')}
                             className="flex items-center gap-1 text-ufrpe-blue underline text-xs">
                             <ExternalLink size={10} /> Vínculo
-                          </a>
+                          </button>
                         )}
                       </td>
                       <td className="py-2 pr-3">

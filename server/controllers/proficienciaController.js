@@ -10,6 +10,8 @@ import { emitir, verificar } from '../services/declaracoes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS_DIR = path.join(__dirname, '../assets');
+const PRIVATE_UPLOAD_DIR = path.join(__dirname, '../private-uploads');
+const PRIVATE_UPLOAD_PREFIX = '/private-uploads/';
 
 // Origem pública do site (onde mora a página de verificação). Em produção,
 // definir PUBLIC_SITE_URL (ex.: https://prpg.ufrpe.br); em dev cai no Vite local.
@@ -195,6 +197,44 @@ export const getInscricaoById = async (req, res) => {
   const i = await inscricoesProficienciaRepo.getById(req.params.id);
   if (i) res.json(i);
   else res.status(404).json({ message: 'Inscrição não encontrada.' });
+};
+
+// A rota já exige Administrator/Gestor. Ainda assim, a URL persistida é
+// validada e reduzida ao basename antes de chegar ao filesystem, para não
+// transformar um campo do banco em caminho arbitrário no servidor.
+export const baixarComprovante = async (req, res) => {
+  const campoPorTipo = {
+    residencia: 'comprovanteResidenciaUrl',
+    vinculo: 'comprovanteVinculoUrl',
+  };
+  const campo = campoPorTipo[req.params.tipo];
+  if (!campo) return res.status(404).json({ message: 'Tipo de comprovante não encontrado.' });
+
+  const inscricao = await inscricoesProficienciaRepo.getById(req.params.id);
+  if (!inscricao) return res.status(404).json({ message: 'Inscrição não encontrada.' });
+
+  const url = inscricao[campo];
+  if (typeof url !== 'string' || !url.startsWith(PRIVATE_UPLOAD_PREFIX)) {
+    return res.status(404).json({ message: 'Comprovante não encontrado.' });
+  }
+  const filename = url.slice(PRIVATE_UPLOAD_PREFIX.length);
+  if (!filename || path.basename(filename) !== filename) {
+    return res.status(404).json({ message: 'Comprovante não encontrado.' });
+  }
+
+  return res.sendFile(filename, {
+    root: PRIVATE_UPLOAD_DIR,
+    dotfiles: 'deny',
+    headers: {
+      'Cache-Control': 'private, no-store',
+      'Content-Disposition': 'inline',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  }, (err) => {
+    if (!err) return;
+    if (err.statusCode === 404) return res.status(404).json({ message: 'Comprovante não encontrado.' });
+    return res.status(500).json({ message: 'Não foi possível abrir o comprovante.' });
+  });
 };
 
 export const lancarNota = async (req, res) => {

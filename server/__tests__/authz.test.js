@@ -47,4 +47,31 @@ describe('autorização por papel', () => {
       .send({ entradas: ['x'] });
     expect(res.status).toBe(403);
   });
+
+  it('bloqueia usuário comum de criar conteúdo e programas institucionais', async () => {
+    const news = await request(app).post('/api/news')
+      .set('Authorization', `Bearer ${alunoToken}`)
+      .send({ title: 'Notícia que aluno não pode criar' });
+    expect(news.status).toBe(403);
+
+    const programa = await request(app).post('/api/programas')
+      .set('Authorization', `Bearer ${alunoToken}`)
+      .send({ nome: 'Programa que aluno não pode criar' });
+    expect(programa.status).toBe(403);
+  });
+
+  it('bloqueia usuário comum das listas administrativas de programas', async () => {
+    const adminPaths = [
+      '/api/programas/programa-inexistente/docentes',
+      '/api/programas/programa-inexistente/comissoes',
+      '/api/programas/programa-inexistente/discentes',
+      '/api/programas/programa-inexistente/linhas',
+    ];
+
+    for (const path of adminPaths) {
+      const res = await request(app).get(path)
+        .set('Authorization', `Bearer ${alunoToken}`);
+      expect(res.status, path).toBe(403);
+    }
+  });
 });

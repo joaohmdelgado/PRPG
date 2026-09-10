@@ -44,6 +44,14 @@ export const requireRole = (roles) => {
   };
 };
 
+// Escrita de conteúdo institucional exige um papel de gestão. Escopos de
+// programa são aplicados pelos middlewares específicos das rotas seguintes.
+export const requireInstitutionalWriter = requireRole([
+  'Administrator',
+  'Gestor',
+  'GestorPrograma',
+]);
+
 // ===================== Escopo de Gestor de Programa =====================
 // Um "Gestor de Programa" administra exclusivamente o conteúdo do seu próprio
 // programa. Diferente de Administrator/Gestor (que têm alcance global na PRPG),

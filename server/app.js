@@ -2,10 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
+import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
 import adminRoutes from './routes/adminRoutes.js';
 import { apiLimiter } from './middleware/rateLimit.js';
 import { IS_PRODUCTION, CORS_ORIGINS } from './config.js';
+import { logUnexpectedError } from './utils/logger.js';
+import { pool } from './db/pool.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,19 +19,32 @@ export const app = express();
 // express-rate-limit enxergue o IP real do cliente (X-Forwarded-For).
 if (IS_PRODUCTION) app.set('trust proxy', 1);
 
-// Cabeçalhos de segurança (helmet). Este servidor expõe apenas a API (JSON) e
-// os arquivos estáticos em /uploads — o SPA é servido à parte. Por isso:
-//  - CSP desativada (não há HTML de app aqui; evita conflitar com o SPA externo);
-//  - CORP cross-origin para o SPA conseguir embutir imagens/PDFs de /uploads;
-//  - frameguard desativado para permitir o preview de PDFs do /uploads em iframe.
-// O essencial — X-Content-Type-Options: nosniff — permanece e reforça a defesa
-// do /uploads contra interpretação de arquivos como HTML/script.
+// Este servidor expõe API e ativos públicos; o SPA tem política própria no
+// servidor que o hospeda. Ainda assim, toda resposta da API deve impedir
+// framing e reduzir permissões do navegador não usadas pelo sistema.
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'none'"],
+      baseUri: ["'none'"],
+      formAction: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   crossOriginEmbedderPolicy: false,
-  frameguard: false,
+  frameguard: { action: 'deny' },
+  referrerPolicy: { policy: 'no-referrer' },
 }));
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', 'camera=(), geolocation=(), microphone=(), payment=(), usb=()');
+  next();
+});
+app.use((req, res, next) => {
+  req.requestId = randomUUID();
+  res.setHeader('X-Request-Id', req.requestId);
+  next();
+});
 
 // CORS: em produção, libera apenas as origens da allowlist (CORS_ORIGINS).
 // Em desenvolvimento, libera qualquer origem para facilitar o trabalho local.
@@ -56,6 +72,27 @@ app.get('/api/status', (req, res) => {
   res.json({ status: 'online', service: 'PRPG UFRPE API', version: '1.0.0' });
 });
 
+// Liveness não consulta dependências: Kubernetes só deve reiniciar o pod se o
+// próprio processo não responder. A dependência do banco é verificada em /ready.
+app.get('/api/live', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ status: 'live' });
+});
+
+// Readiness é diferente de liveness: só responde pronto se a dependência
+// crítica (PostgreSQL) também estiver disponível para atender requisições.
+app.get('/api/ready', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ status: 'ready', database: 'connected' });
+  } catch (error) {
+    logUnexpectedError({ requestId: req.requestId, error });
+    res.setHeader('Cache-Control', 'no-store');
+    res.status(503).json({ status: 'not_ready', database: 'unavailable' });
+  }
+});
+
 // Rotas da API e Painel Admin (com limite de taxa geral por IP).
 app.use('/api', apiLimiter, adminRoutes);
 
@@ -73,7 +110,7 @@ app.use((err, req, res, next) => {
   if (err?.type === 'entity.parse.failed' || err instanceof SyntaxError) {
     return res.status(400).json({ message: 'JSON inválido no corpo da requisição.' });
   }
-  console.error('[Erro não tratado]', err);
+  logUnexpectedError({ requestId: req.requestId, error: err });
   const status = err?.status || err?.statusCode || 500;
   res.status(status).json({
     message: 'Erro interno do servidor.',

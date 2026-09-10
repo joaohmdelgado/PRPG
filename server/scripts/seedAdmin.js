@@ -3,6 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { fileURLToPath } from 'url';
+import { getSeedAdminCredentials } from './seedAdminPolicy.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,13 +11,13 @@ const dataDir = path.join(__dirname, '../data');
 
 async function seedAdmin() {
   try {
-    const password = 'admin';
+    const { email, password } = getSeedAdminCredentials();
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
     const adminUser = {
       id: crypto.randomUUID(),
-      email: 'admin@ufrpe.br',
+      email,
       password_hash,
       roles: ['Administrator'],
       privacidade: {
@@ -38,9 +39,10 @@ async function seedAdmin() {
     };
 
     await fs.writeFile(path.join(dataDir, 'users.json'), JSON.stringify([adminUser], null, 2));
-    console.log('Seed: Usuário Admin criado com sucesso. (email: admin@ufrpe.br, senha: admin)');
+    console.log(`Seed: usuário administrador criado para ${email}.`);
   } catch (error) {
     console.error('Erro ao criar admin:', error);
+    process.exitCode = 1;
   }
 }
 

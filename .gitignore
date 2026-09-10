@@ -11,4 +11,6 @@ coverage/
 # (LGPD) e não devem ir para o versionamento. A pasta é recriada em runtime.
 server/uploads/*
 !server/uploads/.gitkeep
+server/private-uploads/*
+!server/private-uploads/.gitkeep
 backup-dados-vivos.sql

@@ -43,6 +43,10 @@ const migrateRepo = async (label, file, repo) => {
 };
 
 async function main() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('O seed destrutivo não pode ser executado em produção.');
+  }
+
   console.log('Limpando tabelas...');
   // unidades NAO entra aqui: seed proprio (schema.sql, ON CONFLICT DO NOTHING),
   // sem JSON equivalente - truncar apagaria os 19 registros sem reseed.

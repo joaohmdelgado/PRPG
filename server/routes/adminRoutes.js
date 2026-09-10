@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
 
 import { getNews, getNewsById, createNews, updateNews, deleteNews } from '../controllers/newsController.js';
@@ -21,7 +22,7 @@ import { getMetricas, getMetricaById, createMetrica, updateMetrica, deleteMetric
 import {
   getPeriodoAberto, createInscricao, getMinhasInscricoes, getInscricoes,
   getInscricaoById, lancarNota, deleteInscricao, gerarDeclaracao, verificarAluno,
-  verificarDeclaracao,
+  verificarDeclaracao, baixarComprovante,
 } from '../controllers/proficienciaController.js';
 import { verificarPublica } from '../controllers/declaracoesController.js';
 import { getVocabularios as getVocabulariosGenerico } from '../controllers/vocabulariosController.js';
@@ -68,7 +69,7 @@ import { getTaxonomias, updateTaxonomias } from '../controllers/taxonomiasContro
 
 import {
   protect, optionalProtect, requireRole, scopeProgramaWrite, requireProgramaOwnership,
-  requireSelfPrograma, blockProgramaScoped,
+  requireSelfPrograma, blockProgramaScoped, requireInstitutionalWriter,
 } from '../middleware/authMiddleware.js';
 import { loginLimiter, uploadLimiter } from '../middleware/rateLimit.js';
 import {
@@ -108,19 +109,30 @@ const ALLOWED_UPLOAD = {
   '.webp': ['image/webp'],
 };
 
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    const ext = path.extname(file.originalname || '').toLowerCase();
-    const allowedMimes = ALLOWED_UPLOAD[ext];
-    if (allowedMimes && allowedMimes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Tipo de arquivo não permitido. Envie PDF, PNG, JPG, GIF ou WEBP.'));
-    }
+const uploadFileFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  const allowedMimes = ALLOWED_UPLOAD[ext];
+  if (allowedMimes && allowedMimes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Tipo de arquivo não permitido. Envie PDF, PNG, JPG, GIF ou WEBP.'));
+  }
+};
+
+const upload = multer({ storage, fileFilter: uploadFileFilter, limits: { fileSize: 15 * 1024 * 1024 } });
+
+// Comprovantes de proficiência possuem dados pessoais e não podem ser
+// publicados pelo middleware estático de /uploads. O diretório é exposto
+// apenas pelo endpoint autenticado abaixo.
+const privateStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const privateUploadDir = path.join(__dirname, '../private-uploads');
+    if (!fs.existsSync(privateUploadDir)) fs.mkdirSync(privateUploadDir, { recursive: true });
+    cb(null, privateUploadDir);
   },
-  limits: { fileSize: 15 * 1024 * 1024 }
+  filename: (req, file, cb) => cb(null, `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
 });
+const privateUpload = multer({ storage: privateStorage, fileFilter: uploadFileFilter, limits: { fileSize: 15 * 1024 * 1024 } });
 
 // Upload em memória para arquivos de importação (JSON do site antigo). Não vai
 // para disco — o conteúdo é parseado e descartado após a importação.
@@ -153,17 +165,17 @@ router.get('/programas/slug/:slug/metricas', getProgramaMetricasPublic);
 router.get('/programas/slug/:slug/discentes', getProgramaDiscentesPublic);
 // Rotas específicas ANTES da rota genérica /:id
 // Gestor de programa só gerencia vínculos do SEU programa (requireSelfPrograma).
-router.get('/programas/:id/docentes', protect, requireSelfPrograma, getDocentesAdmin);
-router.post('/programas/:id/docentes', protect, requireSelfPrograma, addDocente);
-router.delete('/programas/:id/docentes/:vinculoId', protect, requireSelfPrograma, removeDocente);
-router.get('/programas/:id/comissoes', protect, requireSelfPrograma, getComissoesAdmin);
-router.post('/programas/:id/comissoes', protect, requireSelfPrograma, addComissaoMembro);
-router.delete('/programas/:id/comissoes/:vinculoId', protect, requireSelfPrograma, removeComissaoMembro);
-router.get('/programas/:id/discentes', protect, requireSelfPrograma, getDiscentesAdmin);
-router.post('/programas/:id/discentes', protect, requireSelfPrograma, addDiscente);
-router.delete('/programas/:id/discentes/:vinculoId', protect, requireSelfPrograma, removeDiscente);
-router.get('/programas/:id/linhas', protect, requireSelfPrograma, getProgramaLinhas);
-router.put('/programas/:id/linhas', protect, requireSelfPrograma, updateProgramaLinhas);
+router.get('/programas/:id/docentes', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireSelfPrograma, getDocentesAdmin);
+router.post('/programas/:id/docentes', protect, requireInstitutionalWriter, requireSelfPrograma, addDocente);
+router.delete('/programas/:id/docentes/:vinculoId', protect, requireInstitutionalWriter, requireSelfPrograma, removeDocente);
+router.get('/programas/:id/comissoes', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireSelfPrograma, getComissoesAdmin);
+router.post('/programas/:id/comissoes', protect, requireInstitutionalWriter, requireSelfPrograma, addComissaoMembro);
+router.delete('/programas/:id/comissoes/:vinculoId', protect, requireInstitutionalWriter, requireSelfPrograma, removeComissaoMembro);
+router.get('/programas/:id/discentes', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireSelfPrograma, getDiscentesAdmin);
+router.post('/programas/:id/discentes', protect, requireInstitutionalWriter, requireSelfPrograma, addDiscente);
+router.delete('/programas/:id/discentes/:vinculoId', protect, requireInstitutionalWriter, requireSelfPrograma, removeDiscente);
+router.get('/programas/:id/linhas', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireSelfPrograma, getProgramaLinhas);
+router.put('/programas/:id/linhas', protect, requireInstitutionalWriter, requireSelfPrograma, updateProgramaLinhas);
 // Rota genérica DEPOIS das específicas
 router.get('/programas/:id', getProgramaById);
 router.get('/calendarios', getCalendarios);
@@ -258,46 +270,46 @@ router.put('/users/:id', protect, updateUser);
 // Conteúdo vinculável a programa: o Gestor de Programa pode criar/editar/excluir,
 // mas tudo é forçado ao SEU programa (scopeProgramaWrite) e só pode tocar itens
 // do próprio programa (requireProgramaOwnership). Admin/Gestor têm acesso global.
-router.post('/news', protect, scopeProgramaWrite, createNews);
-router.put('/news/:id', protect, requireProgramaOwnership((id) => newsRepo.getById(id)), scopeProgramaWrite, updateNews);
-router.delete('/news/:id', protect, requireProgramaOwnership((id) => newsRepo.getById(id)), deleteNews);
-router.post('/editais', protect, scopeProgramaWrite, createEdital);
-router.put('/editais/:id', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, updateEdital);
-router.delete('/editais/:id', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), deleteEdital);
+router.post('/news', protect, requireInstitutionalWriter, scopeProgramaWrite, createNews);
+router.put('/news/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => newsRepo.getById(id)), scopeProgramaWrite, updateNews);
+router.delete('/news/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => newsRepo.getById(id)), deleteNews);
+router.post('/editais', protect, requireInstitutionalWriter, scopeProgramaWrite, createEdital);
+router.put('/editais/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, updateEdital);
+router.delete('/editais/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => editaisRepo.getById(id)), deleteEdital);
 // Fase D: erratas/resultado parcial/final agora são eventos (append-only).
-router.post('/editais/:id/erratas', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, addErrata);
-router.delete('/editais/:id/erratas/:eventoId', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, removeErrata);
-router.put('/editais/:id/resultado-parcial', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, setResultadoParcial);
-router.put('/editais/:id/resultado-final', protect, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, setResultadoFinal);
-router.post('/resolucoes', protect, scopeProgramaWrite, createResolucao);
-router.put('/resolucoes/:id', protect, requireProgramaOwnership((id) => resolucoesRepo.getById(id)), scopeProgramaWrite, updateResolucao);
-router.delete('/resolucoes/:id', protect, requireProgramaOwnership((id) => resolucoesRepo.getById(id)), deleteResolucao);
-router.post('/formularios', protect, scopeProgramaWrite, createFormulario);
-router.put('/formularios/:id', protect, requireProgramaOwnership((id) => formulariosRepo.getById(id)), scopeProgramaWrite, updateFormulario);
-router.delete('/formularios/:id', protect, requireProgramaOwnership((id) => formulariosRepo.getById(id)), deleteFormulario);
+router.post('/editais/:id/erratas', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, addErrata);
+router.delete('/editais/:id/erratas/:eventoId', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, removeErrata);
+router.put('/editais/:id/resultado-parcial', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, setResultadoParcial);
+router.put('/editais/:id/resultado-final', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => editaisRepo.getById(id)), scopeProgramaWrite, setResultadoFinal);
+router.post('/resolucoes', protect, requireInstitutionalWriter, scopeProgramaWrite, createResolucao);
+router.put('/resolucoes/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => resolucoesRepo.getById(id)), scopeProgramaWrite, updateResolucao);
+router.delete('/resolucoes/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => resolucoesRepo.getById(id)), deleteResolucao);
+router.post('/formularios', protect, requireInstitutionalWriter, scopeProgramaWrite, createFormulario);
+router.put('/formularios/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => formulariosRepo.getById(id)), scopeProgramaWrite, updateFormulario);
+router.delete('/formularios/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => formulariosRepo.getById(id)), deleteFormulario);
 // Programas: só Admin/Gestor criam ou excluem. Gestor de Programa edita o SEU.
-router.post('/programas', protect, blockProgramaScoped, createPrograma);
-router.put('/programas/:id', protect, requireSelfPrograma, updatePrograma);
-router.delete('/programas/:id', protect, blockProgramaScoped, deletePrograma);
+router.post('/programas', protect, requireInstitutionalWriter, blockProgramaScoped, createPrograma);
+router.put('/programas/:id', protect, requireInstitutionalWriter, requireSelfPrograma, updatePrograma);
+router.delete('/programas/:id', protect, requireInstitutionalWriter, blockProgramaScoped, deletePrograma);
 // Calendários e Bolsas são globais da PRPG (sem programa_id): bloqueados ao gestor.
-router.post('/calendarios', protect, blockProgramaScoped, createCalendario);
-router.put('/calendarios/:id', protect, blockProgramaScoped, updateCalendario);
-router.delete('/calendarios/:id', protect, blockProgramaScoped, deleteCalendario);
-router.post('/teses-dissertacoes', protect, scopeProgramaWrite, createTese);
-router.put('/teses-dissertacoes/:id', protect, requireProgramaOwnership((id) => tesesRepo.getById(id)), scopeProgramaWrite, updateTese);
-router.delete('/teses-dissertacoes/:id', protect, requireProgramaOwnership((id) => tesesRepo.getById(id)), deleteTese);
-router.post('/faq', protect, scopeProgramaWrite, createFaq);
-router.put('/faq/:id', protect, requireProgramaOwnership((id) => faqRepo.getById(id)), scopeProgramaWrite, updateFaq);
-router.delete('/faq/:id', protect, requireProgramaOwnership((id) => faqRepo.getById(id)), deleteFaq);
-router.post('/disciplinas', protect, scopeProgramaWrite, createDisciplina);
-router.put('/disciplinas/:id', protect, requireProgramaOwnership((id) => disciplinasRepo.getById(id)), scopeProgramaWrite, updateDisciplina);
-router.delete('/disciplinas/:id', protect, requireProgramaOwnership((id) => disciplinasRepo.getById(id)), deleteDisciplina);
-router.post('/bolsas', protect, blockProgramaScoped, createBolsa);
-router.put('/bolsas/:id', protect, blockProgramaScoped, updateBolsa);
-router.delete('/bolsas/:id', protect, blockProgramaScoped, deleteBolsa);
-router.post('/pages', protect, scopeProgramaWrite, createPage);
-router.put('/pages/:id', protect, requireProgramaOwnership((id) => pagesRepo.getById(id)), scopeProgramaWrite, updatePage);
-router.delete('/pages/:id', protect, requireProgramaOwnership((id) => pagesRepo.getById(id)), deletePage);
+router.post('/calendarios', protect, requireInstitutionalWriter, blockProgramaScoped, createCalendario);
+router.put('/calendarios/:id', protect, requireInstitutionalWriter, blockProgramaScoped, updateCalendario);
+router.delete('/calendarios/:id', protect, requireInstitutionalWriter, blockProgramaScoped, deleteCalendario);
+router.post('/teses-dissertacoes', protect, requireInstitutionalWriter, scopeProgramaWrite, createTese);
+router.put('/teses-dissertacoes/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => tesesRepo.getById(id)), scopeProgramaWrite, updateTese);
+router.delete('/teses-dissertacoes/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => tesesRepo.getById(id)), deleteTese);
+router.post('/faq', protect, requireInstitutionalWriter, scopeProgramaWrite, createFaq);
+router.put('/faq/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => faqRepo.getById(id)), scopeProgramaWrite, updateFaq);
+router.delete('/faq/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => faqRepo.getById(id)), deleteFaq);
+router.post('/disciplinas', protect, requireInstitutionalWriter, scopeProgramaWrite, createDisciplina);
+router.put('/disciplinas/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => disciplinasRepo.getById(id)), scopeProgramaWrite, updateDisciplina);
+router.delete('/disciplinas/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => disciplinasRepo.getById(id)), deleteDisciplina);
+router.post('/bolsas', protect, requireInstitutionalWriter, blockProgramaScoped, createBolsa);
+router.put('/bolsas/:id', protect, requireInstitutionalWriter, blockProgramaScoped, updateBolsa);
+router.delete('/bolsas/:id', protect, requireInstitutionalWriter, blockProgramaScoped, deleteBolsa);
+router.post('/pages', protect, requireInstitutionalWriter, scopeProgramaWrite, createPage);
+router.put('/pages/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => pagesRepo.getById(id)), scopeProgramaWrite, updatePage);
+router.delete('/pages/:id', protect, requireInstitutionalWriter, requireProgramaOwnership((id) => pagesRepo.getById(id)), deletePage);
 
 // ===================== Proficiência em Línguas =====================
 // O período de inscrição é controlado por um edital com proficiencia=TRUE.
@@ -312,13 +324,13 @@ router.get('/declaracoes/:codigo', verificarPublica); // Fase B.2: rota pública
 // prefixar nome/CPF do cadastro e vincular a inscrição (alunoId); anônimos
 // ainda podem se inscrever informando os dados no corpo.
 router.post('/proficiencia/inscricoes', optionalProtect, createInscricao);
-// Upload público dos comprovantes da inscrição (mesmas regras do /upload, com
-// limite de taxa por IP — é uma rota anônima, alvo fácil de abuso de storage).
+// Upload anônimo, mas armazenamento privado: comprovantes contêm dados
+// pessoais. A equipe gestora os acessa somente pela rota autenticada abaixo.
 router.post('/proficiencia/upload', uploadLimiter, (req, res) => {
-  upload.single('file')(req, res, async (err) => {
+  privateUpload.single('file')(req, res, async (err) => {
     if (err) return res.status(400).json({ message: err.message });
     if (!req.file) return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
-    const fileUrl = `/uploads/${req.file.filename}`;
+    const fileUrl = `/private-uploads/${req.file.filename}`;
     const arquivo = await arquivosRepo.create({
       url: fileUrl, nomeOriginal: req.file.originalname, mime: req.file.mimetype,
       tamanhoBytes: req.file.size,
@@ -328,6 +340,7 @@ router.post('/proficiencia/upload', uploadLimiter, (req, res) => {
 });
 router.get('/proficiencia/inscricoes/minhas', protect, getMinhasInscricoes);
 router.get('/proficiencia/inscricoes', protect, requireRole(['Administrator', 'Gestor']), getInscricoes);
+router.get('/proficiencia/inscricoes/:id/comprovantes/:tipo', protect, requireRole(['Administrator', 'Gestor']), baixarComprovante);
 router.get('/proficiencia/inscricoes/:id', protect, requireRole(['Administrator', 'Gestor']), getInscricaoById);
 router.put('/proficiencia/inscricoes/:id/nota', protect, requireRole(['Administrator', 'Gestor']), lancarNota);
 router.delete('/proficiencia/inscricoes/:id', protect, requireRole(['Administrator']), deleteInscricao);
