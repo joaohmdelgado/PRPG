@@ -227,10 +227,11 @@ const AdminPageForm = () => {
           />
           {formData.title && (
             <p className="mt-1.5 text-xs text-gray-500">
-              Link público da página: <span className="font-semibold text-ufrpe-blue">/p/{currentSlug}</span>
-              {selectedPrograma && (
-                <> · também na aba "Sobre" do programa: <span className="font-semibold text-ufrpe-blue">/{selectedPrograma.slug}/sobre</span></>
-              )}
+              Endereço público:{' '}
+              <span className="font-semibold text-ufrpe-blue">
+                {selectedPrograma ? `/${selectedPrograma.slug}/${currentSlug}` : `/${currentSlug}`}
+              </span>
+              {selectedPrograma && <> · também aparece na aba "Sobre" do programa</>}
             </p>
           )}
         </div>

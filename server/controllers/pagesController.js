@@ -1,5 +1,6 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { pagesRepo } from '../db/repositories.js';
+import { query } from '../db/pool.js';
 
 const slugify = (text) =>
   (text || '')
@@ -12,11 +13,37 @@ const slugify = (text) =>
     .replace(/[^\w-]+/g, '')
     .replace(/--+/g, '-');
 
-const generateUniqueSlug = (title, pages, currentId = null) => {
+// Páginas ganham endereço próprio em /<slug> (sem programa) ou
+// /<slug-do-programa>/<slug> (vinculada a um programa) — ver App.jsx e
+// ProgramaSite.jsx. Nenhum dos dois pode colidir com uma rota fixa do site
+// (institucional ou dentro do microsite) nem com o slug de outro programa,
+// senão a página vira inacessível (a rota fixa sempre vence no roteador).
+const RESERVED_SLUGS = new Set([
+  // Rotas estáticas do site institucional (App.jsx, dentro de PublicLayout).
+  'sobre', 'missao-visao-valores', 'historico', 'estrutura-organizacional',
+  'equipe', 'financeiro', 'proext-pg', 'programas', 'calendario-academico',
+  'editais', 'resolucoes', 'formularios', 'proficiencia', 'declaracoes',
+  'verificar', 'relatorios-autoavaliacao', 'especializacao',
+  'residencia-profissional', 'sobre-internacionalizacao', 'alunos-estrangeiros',
+  'capes-print', 'mobilidade-estudantil', 'reconhecimento', 'noticias',
+  'noticia', 'p', 'admin',
+  // Sub-rotas fixas dentro de um microsite de programa (ProgramaSite.jsx).
+  'busca', 'comissoes', 'discentes', 'pessoas', 'disciplinas', 'teses',
+  'faq', 'grupos-pesquisa', 'documentos', 'contato',
+]);
+
+const generateUniqueSlug = async (title, pages, currentId = null) => {
+  const { rows: programaSlugs } = await query('SELECT slug FROM programas WHERE slug IS NOT NULL');
+  const taken = new Set([
+    ...RESERVED_SLUGS,
+    ...programaSlugs.map((r) => r.slug),
+    ...pages.filter((p) => p.id !== currentId).map((p) => p.slug),
+  ]);
+
   const baseSlug = slugify(title) || 'pagina';
   let slug = baseSlug;
   let count = 1;
-  while (pages.some((p) => p.slug === slug && p.id !== currentId)) {
+  while (taken.has(slug)) {
     slug = `${baseSlug}-${count}`;
     count++;
   }
@@ -28,7 +55,6 @@ export const getPages = async (req, res) => {
   const { programa } = req.query;
   if (programa) {
     // aceita id direto ou slug (resolve via join simples)
-    const { query } = await import('../db/pool.js');
     const prog = (await query(
       'SELECT id FROM programas WHERE id=$1 OR slug=$1', [programa]
     )).rows[0];
@@ -62,7 +88,7 @@ export const createPage = async (req, res) => {
 
     const pages = await pagesRepo.getAll();
     data.id = Date.now().toString();
-    data.slug = generateUniqueSlug(data.title, pages);
+    data.slug = await generateUniqueSlug(data.title, pages);
 
     res.status(201).json(await pagesRepo.create(data, req.user?.id));
   } catch (e) {
@@ -86,7 +112,7 @@ export const updatePage = async (req, res) => {
     // Recalcula o slug se o título mudou.
     if (data.title && data.title !== existing.title) {
       const pages = await pagesRepo.getAll();
-      data.slug = generateUniqueSlug(data.title, pages, req.params.id);
+      data.slug = await generateUniqueSlug(data.title, pages, req.params.id);
     }
 
     res.json(await pagesRepo.update(req.params.id, data, req.user?.id));

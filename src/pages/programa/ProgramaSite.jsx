@@ -3,6 +3,9 @@ import { Routes, Route, useParams, Link } from 'react-router-dom';
 import { apiFetch } from '../../api';
 import { ProgramaContext } from '../../components/programa/ProgramaContext';
 import ProgramaLayout from '../../components/programa/ProgramaLayout';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
+import InstitutionalPageContent from '../../components/InstitutionalPageContent';
 import ProgramaHome from './ProgramaHome';
 import ProgramaSobre from './ProgramaSobre';
 import ProgramaNoticias from './ProgramaNoticias';
@@ -18,6 +21,7 @@ import ProgramaPessoas from './ProgramaPessoas';
 import ProgramaBusca from './ProgramaBusca';
 import ProgramaComissoes from './ProgramaComissoes';
 import ProgramaDiscentes from './ProgramaDiscentes';
+import ProgramaPagina from './ProgramaPagina';
 
 function FullScreen({ children }) {
   return (
@@ -28,10 +32,14 @@ function FullScreen({ children }) {
 }
 
 export default function ProgramaSite() {
-  const { programaSlug } = useParams();
+  const { programaSlug, '*': restPath } = useParams();
   const [programa, setPrograma] = useState(null);
-  const [status, setStatus] = useState('loading'); // loading | ok | notfound | error
+  const [paginaGeral, setPaginaGeral] = useState(null);
+  const [status, setStatus] = useState('loading'); // loading | ok | pagina | notfound | error
 
+  // Quando o primeiro segmento não é o slug de nenhum programa, ele pode ser
+  // o slug de uma página institucional geral (/<slug>, sem programa — ver
+  // AdminPageForm.jsx). Só faz sentido quando não há mais nada depois dele.
   useEffect(() => {
     let active = true;
     setStatus('loading');
@@ -41,9 +49,27 @@ export default function ProgramaSite() {
         return r.json();
       })
       .then((data) => { if (active) { setPrograma(data); setStatus('ok'); } })
-      .catch((e) => { if (active) setStatus(e.message === '404' ? 'notfound' : 'error'); });
+      .catch((e) => {
+        if (!active) return;
+        if (e.message === '404' && !restPath) {
+          apiFetch(`/api/pages/slug/${encodeURIComponent(programaSlug)}`, { auth: false })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((page) => {
+              if (!active) return;
+              if (page && !page.programaId) {
+                setPaginaGeral(page);
+                setStatus('pagina');
+              } else {
+                setStatus('notfound');
+              }
+            })
+            .catch(() => { if (active) setStatus('notfound'); });
+        } else {
+          setStatus(e.message === '404' ? 'notfound' : 'error');
+        }
+      });
     return () => { active = false; };
-  }, [programaSlug]);
+  }, [programaSlug, restPath]);
 
   useEffect(() => {
     if (!programa) return;
@@ -81,15 +107,29 @@ export default function ProgramaSite() {
     );
   }
 
+  // Segmento não é um programa, mas é o slug de uma página institucional
+  // geral (sem programa) — ver /<slug> em App.jsx/RESERVED_SLUGS.
+  if (status === 'pagina') {
+    return (
+      <div className="flex flex-col min-h-screen w-full">
+        <Navbar />
+        <main className="flex-1">
+          <InstitutionalPageContent page={paginaGeral} />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   if (status === 'notfound' || status === 'error') {
     return (
       <FullScreen>
         <i className="fa-solid fa-compass text-gray-300 text-6xl mb-5"></i>
-        <h1 className="font-heading font-bold text-3xl text-ufrpe-blue mb-3">Programa não encontrado</h1>
+        <h1 className="font-heading font-bold text-3xl text-ufrpe-blue mb-3">Página não encontrada</h1>
         <p className="text-gray-600 max-w-md mb-8">
           {status === 'error'
-            ? 'Não foi possível carregar este programa. Tente novamente em instantes.'
-            : 'Não existe um programa de pós-graduação publicado neste endereço.'}
+            ? 'Não foi possível carregar este endereço. Tente novamente em instantes.'
+            : 'Este endereço não existe no portal da PRPG.'}
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
           <Link to="/programas" className="px-6 py-3 bg-ufrpe-blue hover:bg-ufrpe-yellow hover:text-ufrpe-blue text-white font-bold rounded-xl transition-all">
@@ -122,6 +162,10 @@ export default function ProgramaSite() {
           <Route path="grupos-pesquisa" element={<ProgramaGrupos />} />
           <Route path="documentos" element={<ProgramaDocumentos />} />
           <Route path="contato" element={<ProgramaContato />} />
+          {/* Endereço próprio de uma página institucional vinculada a este
+              programa (/<programaSlug>/<pageSlug>) — precisa vir depois das
+              rotas fixas acima para não "roubar" seus nomes. */}
+          <Route path=":pageSlug" element={<ProgramaPagina />} />
           <Route path="*" element={<ProgramaHome />} />
         </Routes>
       </ProgramaLayout>

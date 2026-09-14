@@ -138,7 +138,10 @@ const AdminPagesList = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredPages.map((item) => (
+            {filteredPages.map((item) => {
+              const programa = item.programaId ? programaById(item.programaId) : null;
+              const canonicalPath = programa?.slug ? `/${programa.slug}/${item.slug}` : `/${item.slug}`;
+              return (
               <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${isSelected(item.id) ? 'bg-ufrpe-blue/5' : ''}`}>
                 <td className="px-6 py-4">
                   <RowCheckbox checked={isSelected(item.id)} onToggle={() => toggle(item.id)} label={`Selecionar ${item.title}`} />
@@ -150,11 +153,7 @@ const AdminPagesList = () => {
                 <td className="px-6 py-4 text-sm text-gray-500">
                   {item.programaId ? (
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-ufrpe-blue/10 text-ufrpe-blue">
-                      {(() => {
-                        const p = programaById(item.programaId);
-                        if (!p) return 'Programa';
-                        return p.sigla && p.sigla !== 'S/SIGLA' ? p.sigla : p.nome;
-                      })()}
+                      {programa ? (programa.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : programa.nome) : 'Programa'}
                     </span>
                   ) : (
                     <span className="text-gray-400">— Geral —</span>
@@ -162,22 +161,22 @@ const AdminPagesList = () => {
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
                   <a
-                    href={`/p/${item.slug}`}
+                    href={canonicalPath}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-ufrpe-blue hover:underline inline-flex items-center gap-1.5 font-medium"
                   >
-                    /p/{item.slug}
+                    {canonicalPath}
                     <ExternalLink size={14} />
                   </a>
-                  {item.programaId && programaById(item.programaId)?.slug && (
+                  {programa?.slug && (
                     <a
-                      href={`/${programaById(item.programaId).slug}/sobre`}
+                      href={`/${programa.slug}/sobre`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-gray-500 hover:underline inline-flex items-center gap-1.5 mt-1"
                     >
-                      /{programaById(item.programaId).slug}/sobre
+                      /{programa.slug}/sobre
                       <ExternalLink size={12} />
                     </a>
                   )}
@@ -201,7 +200,8 @@ const AdminPagesList = () => {
                   </div>
                 </td>
               </tr>
-            ))}
+              );
+            })}
             {filteredPages.length === 0 && (
               <EmptyRow colSpan={5} message="Nenhuma página institucional encontrada." />
             )}
