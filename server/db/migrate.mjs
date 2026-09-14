@@ -1,3 +1,5 @@
+// Deve ser o primeiro import: a trava de produção roda antes de pool.js/config.js.
+import './guardNotProduction.mjs';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -45,10 +47,6 @@ const migrateRepo = async (label, file, repo) => {
 };
 
 async function main() {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('O seed destrutivo não pode ser executado em produção.');
-  }
-
   console.log('Limpando tabelas...');
   // unidades NAO entra aqui: seed proprio (schema.sql, ON CONFLICT DO NOTHING),
   // sem JSON equivalente - truncar apagaria os 19 registros sem reseed.
