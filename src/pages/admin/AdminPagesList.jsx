@@ -11,12 +11,21 @@ import useUsers from '../../hooks/useUsers';
 
 const AdminPagesList = () => {
   const [pages, setPages] = useState([]);
+  const [programas, setProgramas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
   const users = useUsers();
   const { confirm, ConfirmModal } = useConfirm();
+
+  useEffect(() => {
+    apiFetch('/api/programas')
+      .then((r) => r.ok ? r.json() : [])
+      .then((d) => setProgramas(Array.isArray(d) ? d : []));
+  }, []);
+
+  const programaById = (id) => programas.find((p) => p.id === id);
 
   const fetchPages = async () => {
     try {
@@ -122,8 +131,9 @@ const AdminPagesList = () => {
               <th className="px-6 py-3 w-px">
                 <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={filteredPages.length === 0} />
               </th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500 w-2/5">Título</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500 w-2/5">Link Público</th>
+              <th className="px-6 py-3 text-sm font-medium text-gray-500 w-1/3">Título</th>
+              <th className="px-6 py-3 text-sm font-medium text-gray-500">Programa</th>
+              <th className="px-6 py-3 text-sm font-medium text-gray-500 w-1/3">Link Público</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500 text-right w-1/5">Ações</th>
             </tr>
           </thead>
@@ -138,15 +148,39 @@ const AdminPagesList = () => {
                   <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
-                  <a 
-                    href={`/p/${item.slug}`} 
-                    target="_blank" 
+                  {item.programaId ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-ufrpe-blue/10 text-ufrpe-blue">
+                      {(() => {
+                        const p = programaById(item.programaId);
+                        if (!p) return 'Programa';
+                        return p.sigla && p.sigla !== 'S/SIGLA' ? p.sigla : p.nome;
+                      })()}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">— Geral —</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-500">
+                  <a
+                    href={`/p/${item.slug}`}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="text-ufrpe-blue hover:underline inline-flex items-center gap-1.5 font-medium"
                   >
                     /p/{item.slug}
                     <ExternalLink size={14} />
                   </a>
+                  {item.programaId && programaById(item.programaId)?.slug && (
+                    <a
+                      href={`/${programaById(item.programaId).slug}/sobre`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-gray-500 hover:underline inline-flex items-center gap-1.5 mt-1"
+                    >
+                      /{programaById(item.programaId).slug}/sobre
+                      <ExternalLink size={12} />
+                    </a>
+                  )}
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-right">
                   <div className="flex justify-end gap-3">
@@ -169,7 +203,7 @@ const AdminPagesList = () => {
               </tr>
             ))}
             {filteredPages.length === 0 && (
-              <EmptyRow colSpan={4} message="Nenhuma página institucional encontrada." />
+              <EmptyRow colSpan={5} message="Nenhuma página institucional encontrada." />
             )}
           </tbody>
         </table>

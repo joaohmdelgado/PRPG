@@ -192,6 +192,7 @@ const AdminPageForm = () => {
   }
 
   const currentSlug = slugifyPreview(formData.title);
+  const selectedPrograma = programas.find((p) => p.id === formData.programaId);
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 max-w-4xl mx-auto">
@@ -227,6 +228,9 @@ const AdminPageForm = () => {
           {formData.title && (
             <p className="mt-1.5 text-xs text-gray-500">
               Link público da página: <span className="font-semibold text-ufrpe-blue">/p/{currentSlug}</span>
+              {selectedPrograma && (
+                <> · também na aba "Sobre" do programa: <span className="font-semibold text-ufrpe-blue">/{selectedPrograma.slug}/sobre</span></>
+              )}
             </p>
           )}
         </div>
