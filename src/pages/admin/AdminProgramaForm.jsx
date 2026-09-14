@@ -900,11 +900,12 @@ const AdminProgramaForm = () => {
       {isEditing && (
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
           <p className="text-sm font-semibold text-ufrpe-blue mb-1 flex items-center gap-2">
-            <i className="fa-solid fa-file-lines"></i> Conteúdo da aba "Sobre"
+            <i className="fa-solid fa-file-lines"></i> Páginas institucionais
           </p>
           <p className="text-xs text-blue-700 mb-3">
-            As páginas de conteúdo (Sobre, Histórico, Objetivos, Linhas de Pesquisa…) são gerenciadas em{' '}
-            <strong>Páginas</strong>. Crie uma página e vincule-a a este programa para que apareça no microsite.
+            Páginas de conteúdo (Histórico, Objetivos, Linhas de Pesquisa…) são gerenciadas em{' '}
+            <strong>Páginas</strong>. Crie uma página e vincule-a a este programa para que ela ganhe
+            endereço próprio dentro do microsite (a aba "Sobre" mostra só o histórico de coordenação).
           </p>
           <a
             href={`/admin/paginas/nova`}

@@ -169,17 +169,6 @@ const AdminPagesList = () => {
                     {canonicalPath}
                     <ExternalLink size={14} />
                   </a>
-                  {programa?.slug && (
-                    <a
-                      href={`/${programa.slug}/sobre`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-gray-500 hover:underline inline-flex items-center gap-1.5 mt-1"
-                    >
-                      /{programa.slug}/sobre
-                      <ExternalLink size={12} />
-                    </a>
-                  )}
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-right">
                   <div className="flex justify-end gap-3">

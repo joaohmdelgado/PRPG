@@ -231,7 +231,6 @@ const AdminPageForm = () => {
               <span className="font-semibold text-ufrpe-blue">
                 {selectedPrograma ? `/${selectedPrograma.slug}/${currentSlug}` : `/${currentSlug}`}
               </span>
-              {selectedPrograma && <> · também aparece na aba "Sobre" do programa</>}
             </p>
           )}
         </div>
@@ -252,7 +251,7 @@ const AdminPageForm = () => {
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-gray-500">Ao vincular, a página aparece também no microsite do programa (aba Sobre).</p>
+          <p className="mt-1 text-xs text-gray-500">Ao vincular, a página ganha endereço próprio dentro do microsite do programa.</p>
         </div>
 
         {/* Resumo */}
