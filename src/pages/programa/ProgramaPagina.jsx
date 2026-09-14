@@ -17,11 +17,14 @@ export default function ProgramaPagina() {
   useEffect(() => {
     let active = true;
     setStatus('loading');
-    apiFetch(`/api/pages/slug/${encodeURIComponent(pageSlug)}`, { auth: false })
+    // ?programa= escopa a busca (o slug só é único dentro do programa — ver
+    // pagesController.js), senão duas páginas de programas diferentes com o
+    // mesmo nome (ex.: "Regimento") poderiam colidir.
+    apiFetch(`/api/pages/slug/${encodeURIComponent(pageSlug)}?programa=${encodeURIComponent(programa.id)}`, { auth: false })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!active) return;
-        if (data && data.programaId === programa.id) {
+        if (data) {
           setPagina(data);
           setStatus('ok');
         } else {

@@ -142,19 +142,51 @@ export const bolsasRepo = createRepository({
 });
 
 // ============================= Paginas ============================
+const pagesFromRow = (r) => ({
+  id: r.id, title: r.title, slug: r.slug, chave: r.chave || null,
+  body: { value: r.body_value, summary: r.body_summary },
+  programaId: r.programa_id || null,
+  criado_por: r.criado_por ?? null,
+  atualizado_por: r.atualizado_por ?? null,
+});
+
 export const pagesRepo = createRepository({
   table: 'pages',
-  fromRow: (r) => ({
-    id: r.id, title: r.title, slug: r.slug,
-    body: { value: r.body_value, summary: r.body_summary },
-    programaId: r.programa_id || null,
-  }),
+  fromRow: pagesFromRow,
   toRow: (o) => ({
-    id: o.id, title: o.title, slug: o.slug,
+    id: o.id, title: o.title, slug: o.slug, chave: o.chave || null,
     body_value: o.body?.value ?? null, body_summary: o.body?.summary ?? null,
     programa_id: o.programaId || null,
   }),
 });
+
+// Pagina fixa do template do microsite (hoje so chave='sobre') vinculada a
+// um programa. Busca direta por (programa_id, chave) — mais barata que
+// filtrar getAll() e usada tanto pelo publico (getProgramaBySlug) quanto
+// pelo admin.
+pagesRepo.getFixed = async (programaId, chave) => {
+  const { rows } = await query(
+    'SELECT * FROM pages WHERE programa_id = $1 AND chave = $2',
+    [programaId, chave]
+  );
+  return rows[0] ? pagesFromRow(rows[0]) : null;
+};
+
+// Garante que o programa tenha sua pagina fixa "Sobre" (idempotente — chamada
+// tanto na criacao de um programa novo quanto no backfill de migrate.mjs para
+// os ja existentes). Nasce vazia; o admin preenche o conteudo depois.
+pagesRepo.ensureFixedSobre = async (programaId, actor) => {
+  const existing = await pagesRepo.getFixed(programaId, 'sobre');
+  if (existing) return existing;
+  return pagesRepo.create({
+    id: crypto.randomUUID(),
+    title: 'Sobre o Programa',
+    slug: 'sobre',
+    chave: 'sobre',
+    programaId,
+    body: { value: '', summary: '' },
+  }, actor);
+};
 
 // ======================= Grupos de Pesquisa =======================
 // Fase D: field_lideres (JSONB) saiu daqui — líderes agora são linhas de
@@ -362,70 +394,9 @@ export const metricasRepo = {
   },
 };
 
-// ===================== Paginas do microsite =======================
-// Texto livre (rich-text) por secao do microsite de cada programa.
-// Upsert por chave natural (programa_id, secao).
-const ppFromRow = (r) => ({
-  id: r.id, programaId: r.programa_id, secao: r.secao, titulo: r.titulo,
-  body: { value: r.body_value, summary: r.body_summary },
-  ord: r.ord, visivel: r.visivel,
-  criado_por: r.criado_por ?? null, atualizado_por: r.atualizado_por ?? null,
-});
-export const programaPaginasRepo = {
-  async getByPrograma(programaId, { includeHidden = false } = {}) {
-    const cond = includeHidden ? '' : ' AND visivel = TRUE';
-    const { rows } = await query(
-      `SELECT * FROM programa_paginas WHERE programa_id = $1${cond} ORDER BY ord ASC, secao ASC`,
-      [programaId]
-    );
-    return rows.map(ppFromRow);
-  },
-  async getSecao(programaId, secao) {
-    const { rows } = await query(
-      'SELECT * FROM programa_paginas WHERE programa_id = $1 AND secao = $2',
-      [programaId, secao]
-    );
-    return rows[0] ? ppFromRow(rows[0]) : null;
-  },
-  async upsert(programaId, secao, data, actor) {
-    const existing = await this.getSecao(programaId, secao);
-    const now = new Date().toISOString();
-    if (existing) {
-      const { rows } = await query(
-        `UPDATE programa_paginas SET titulo=$1, body_value=$2, body_summary=$3, ord=$4, visivel=$5,
-           atualizado_em=$6, atualizado_por=COALESCE($7, atualizado_por)
-         WHERE programa_id=$8 AND secao=$9 RETURNING *`,
-        [
-          data.titulo ?? existing.titulo ?? null,
-          data.body?.value ?? null,
-          data.body?.summary ?? null,
-          intOrNull(data.ord) ?? existing.ord ?? 0,
-          data.visivel != null ? !!data.visivel : existing.visivel,
-          now, actor ?? null, programaId, secao,
-        ]
-      );
-      return ppFromRow(rows[0]);
-    }
-    const { rows } = await query(
-      `INSERT INTO programa_paginas
-         (id, programa_id, secao, titulo, body_value, body_summary, ord, visivel, criado_por, atualizado_por)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$9) RETURNING *`,
-      [
-        crypto.randomUUID(), programaId, secao,
-        data.titulo ?? null, data.body?.value ?? null, data.body?.summary ?? null,
-        intOrNull(data.ord) ?? 0, data.visivel != null ? !!data.visivel : true, actor ?? null,
-      ]
-    );
-    return ppFromRow(rows[0]);
-  },
-  async remove(programaId, secao) {
-    const { rowCount } = await query(
-      'DELETE FROM programa_paginas WHERE programa_id = $1 AND secao = $2',
-      [programaId, secao]
-    );
-    return rowCount > 0;
-  },
-};
+// programa_paginas (secoes rich-text 'sobre'/'historico'/'objetivos'/'linhas')
+// foi substituida por `pages` com `programa_id`/`chave` — ver pagesRepo acima
+// e a migracao 2026-09-14_pages_programa_scoped.sql.
 
 // ===================== Proficiência em Línguas ====================
 const inscricaoProfFromRow = (r) => ({

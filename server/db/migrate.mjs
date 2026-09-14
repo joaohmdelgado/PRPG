@@ -54,7 +54,7 @@ async function main() {
     news, editais, resolucoes, formularios, portarias, teses_dissertacoes,
     faq, disciplinas, bolsas, pages, users, taxonomias, grupos_pesquisa,
     calendarios, calendario_milestones,
-    programas, programa_paginas, pessoas, modalidades, vinculos, metricas_anuais,
+    programas, pessoas, modalidades, vinculos, metricas_anuais,
     processos, camara_reunioes, camara_pauta_itens,
     camara_relatorias, camara_atos,
     arquivos, anexos, contatos, eventos,
@@ -89,18 +89,6 @@ async function main() {
     );
   }
   console.log(`  programas: ${programas.length}`);
-
-  const programaPaginas = read('programa_paginas.json') || [];
-  for (const pp of programaPaginas) {
-    await query(
-      `INSERT INTO programa_paginas
-        (id,programa_id,secao,titulo,body_value,body_summary,ord,visivel)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-      [pp.id, pp.programa_id, pp.secao, pp.titulo || null, pp.body_value || null,
-       pp.body_summary || null, intOrNull(pp.ord) ?? 0, pp.visivel !== false]
-    );
-  }
-  console.log(`  programa_paginas: ${programaPaginas.length}`);
 
   const pessoas = read('pessoas.json') || [];
   for (const p of pessoas) {
@@ -148,6 +136,18 @@ async function main() {
   await migrateRepo('grupos_pesquisa', 'grupos_pesquisa.json', gruposRepo);
   await migrateRepo('users', 'users.json', usersRepo);
   await migrateRepo('calendarios', 'calendarios.json', calendariosRepo);
+
+  // Todo programa tem uma página fixa "Sobre" (chave='sobre'), editável no
+  // admin. pages.json já traz a do PGH com conteúdo migrado de
+  // programa_paginas (ver 2026-09-14_pages_programa_scoped.sql); os demais
+  // programas ganham aqui uma versão vazia (ensureFixedSobre é idempotente).
+  console.log('Garantindo página fixa "Sobre" para cada programa...');
+  let sobreCriadas = 0;
+  for (const p of programas) {
+    if (!(await pagesRepo.getFixed(p.id, 'sobre'))) sobreCriadas++;
+    await pagesRepo.ensureFixedSobre(p.id);
+  }
+  console.log(`  sobre (fixa): ${sobreCriadas}/${programas.length} criada(s) agora`);
 
   console.log('Migrando taxonomias...');
   const tax = read('taxonomias.json');

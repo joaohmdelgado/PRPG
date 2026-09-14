@@ -2,8 +2,7 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
-import { usersRepo, programaPaginasRepo, linhasPesquisaRepo } from '../db/repositories.js';
-import { sanitizeHtml } from '../utils/sanitize.js';
+import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
 const strOrNull = (v) => (v === '' || v == null ? null : v);
@@ -195,10 +194,10 @@ export const getProgramaById = async (req, res) => {
     const histKey = (x) => String(x.data_inicio_mandato || x.criado_em || '').slice(0, 10);
     historico_coordenadores.sort((a, b) => histKey(b).localeCompare(histKey(a)));
 
-    const paginas = await programaPaginasRepo.getByPrograma(prog.id, { includeHidden: isAdmin });
+    const pagina_sobre = await pagesRepo.getFixed(prog.id, 'sobre');
     const linhas = await linhasPesquisaRepo.getByPrograma(prog.id);
 
-    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, historico_coordenadores, paginas, linhas });
+    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, historico_coordenadores, pagina_sobre, linhas });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar programa', error: error.message });
   }
@@ -224,7 +223,7 @@ export const getProgramaBySlug = async (req, res) => {
       if (v.papel === 'TAE') secretaria = filterSensitivePessoa(combined, isAdmin);
     });
 
-    const paginas = await programaPaginasRepo.getByPrograma(prog.id, { includeHidden: isAdmin });
+    const pagina_sobre = await pagesRepo.getFixed(prog.id, 'sobre');
     const linhas = await linhasPesquisaRepo.getByPrograma(prog.id);
 
     // Conta itens por módulo para o menu dinâmico do microsite.
@@ -273,7 +272,7 @@ export const getProgramaBySlug = async (req, res) => {
     );
     const metrica_recente = metricasRows[0] || null;
 
-    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, paginas, linhas,
+    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, pagina_sobre, linhas,
                modulos, historico_coordenadores, comissoes, metrica_recente });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar programa', error: error.message });
@@ -330,16 +329,6 @@ const insertVinculo = (programa_id, pessoaId, papel, props) =>
      props.data_vencimento, props.email_funcao, props.endereco, props.data_inicio_mandato || null, new Date().toISOString()]
   );
 
-// Upsert das paginas de texto livre do microsite (sanitiza o HTML antes de gravar).
-const savePaginas = async (programa_id, paginas, actor) => {
-  if (!Array.isArray(paginas)) return;
-  for (const p of paginas) {
-    if (!p || !p.secao) continue;
-    const body = p.body ? { value: sanitizeHtml(p.body.value), summary: p.body.summary } : undefined;
-    await programaPaginasRepo.upsert(programa_id, p.secao, { ...p, body }, actor);
-  }
-};
-
 const replaceModalidades = async (programa_id, modalidades) => {
   if (!Array.isArray(modalidades)) return;
   await query('DELETE FROM modalidades WHERE programa_id = $1', [programa_id]);
@@ -395,7 +384,7 @@ export const createPrograma = async (req, res) => {
     await handlePessoaVinculo(data.coordenador_atual, 'COORDENADOR_ATUAL', progId);
     await handlePessoaVinculo(data.substituto, 'SUBSTITUTO', progId);
     await handlePessoaVinculo(data.secretaria, 'TAE', progId);
-    await savePaginas(progId, data.paginas, actor);
+    await pagesRepo.ensureFixedSobre(progId, actor);
 
     res.status(201).json({ message: 'Programa criado com sucesso', id: progId, slug });
   } catch (error) {
@@ -468,7 +457,7 @@ export const updatePrograma = async (req, res) => {
     await handlePessoaVinculo(data.coordenador_atual, 'COORDENADOR_ATUAL', progId);
     await handlePessoaVinculo(data.substituto, 'SUBSTITUTO', progId);
     await handlePessoaVinculo(data.secretaria, 'TAE', progId);
-    await savePaginas(progId, data.paginas, actor);
+    await pagesRepo.ensureFixedSobre(progId, actor); // auto-cura: garante a pagina fixa mesmo p/ programas antigos
 
     res.json({ message: 'Programa atualizado com sucesso', slug });
   } catch (error) {
@@ -478,6 +467,11 @@ export const updatePrograma = async (req, res) => {
 
 export const deletePrograma = async (req, res) => {
   try {
+    // Páginas comuns do programa sobrevivem como páginas gerais (FK
+    // ON DELETE SET NULL — comportamento preexistente, intencional). A
+    // página FIXA precisa ser removida à parte: virar geral com slug/chave
+    // 'sobre' colidiria para sempre com a rota institucional /sobre da PRPG.
+    await query('DELETE FROM pages WHERE programa_id = $1 AND chave IS NOT NULL', [req.params.id]);
     // Modalidades e vínculos saem em cascata (FK ON DELETE CASCADE).
     const { rowCount } = await query('DELETE FROM programas WHERE id = $1', [req.params.id]);
     if (rowCount > 0) res.json({ message: 'Programa removido com sucesso' });

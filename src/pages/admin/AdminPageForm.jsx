@@ -13,6 +13,8 @@ const AdminPageForm = () => {
   const [formData, setFormData] = useState({
     title: '',
     programaId: '',
+    chave: null,
+    slug: '',
     body: { value: '', summary: '' },
   });
 
@@ -104,6 +106,8 @@ const AdminPageForm = () => {
             setFormData({
               title: data.title || '',
               programaId: data.programaId || '',
+              chave: data.chave || null,
+              slug: data.slug || '',
               body: { value: bodyVal, summary: data.body?.summary || '' },
             });
 
@@ -229,8 +233,15 @@ const AdminPageForm = () => {
             <p className="mt-1.5 text-xs text-gray-500">
               Endereço público:{' '}
               <span className="font-semibold text-ufrpe-blue">
-                {selectedPrograma ? `/${selectedPrograma.slug}/${currentSlug}` : `/${currentSlug}`}
+                {isEditing && formData.chave
+                  ? (selectedPrograma ? `/${selectedPrograma.slug}/${formData.slug}` : `/${formData.slug}`)
+                  : (selectedPrograma ? `/${selectedPrograma.slug}/${currentSlug}` : `/${currentSlug}`)}
               </span>
+              {isEditing && formData.chave && (
+                <span className="block mt-1 text-gray-400">
+                  Página fixa deste programa — o endereço não muda quando o título muda.
+                </span>
+              )}
             </p>
           )}
         </div>
@@ -238,20 +249,31 @@ const AdminPageForm = () => {
         {/* Programa */}
         <div className={isProgramaGestor() ? 'hidden' : undefined}>
           <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>
-          <select
-            name="programaId"
-            value={formData.programaId}
-            onChange={handleChange}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white text-sm"
-          >
-            <option value="">— Página geral da PRPG (sem programa) —</option>
-            {programas.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.sigla && p.sigla !== 'S/SIGLA' ? `${p.sigla} — ${p.nome}` : p.nome}
-              </option>
-            ))}
-          </select>
-          <p className="mt-1 text-xs text-gray-500">Ao vincular, a página ganha endereço próprio dentro do microsite do programa.</p>
+          {isEditing && formData.chave ? (
+            <p className="w-full px-4 py-2 border border-gray-200 rounded-md bg-gray-50 text-sm text-gray-600">
+              {selectedPrograma
+                ? (selectedPrograma.sigla && selectedPrograma.sigla !== 'S/SIGLA' ? `${selectedPrograma.sigla} — ${selectedPrograma.nome}` : selectedPrograma.nome)
+                : '—'}
+              <span className="block text-xs text-gray-400 mt-0.5">Página fixa: o vínculo com o programa não pode ser alterado.</span>
+            </p>
+          ) : (
+            <>
+              <select
+                name="programaId"
+                value={formData.programaId}
+                onChange={handleChange}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white text-sm"
+              >
+                <option value="">— Página geral da PRPG (sem programa) —</option>
+                {programas.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.sigla && p.sigla !== 'S/SIGLA' ? `${p.sigla} — ${p.nome}` : p.nome}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500">Ao vincular, a página ganha endereço próprio dentro do microsite do programa.</p>
+            </>
+          )}
         </div>
 
         {/* Resumo */}

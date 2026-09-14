@@ -6,7 +6,7 @@ import { usersRepo } from '../db/repositories.js';
 
 const TABLES = `news, editais, resolucoes, formularios, portarias, teses_dissertacoes,
   faq, disciplinas, bolsas, pages, users, taxonomias, grupos_pesquisa,
-  calendarios, calendario_milestones, programas, programa_paginas, pessoas,
+  calendarios, calendario_milestones, programas, pessoas,
   modalidades, vinculos, metricas_anuais,
   inscricoes_proficiencia,
   processos, camara_reunioes, camara_pauta_itens,

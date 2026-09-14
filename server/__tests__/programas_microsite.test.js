@@ -55,39 +55,100 @@ describe('microsite — slug', () => {
   });
 });
 
-describe('microsite — páginas (rich-text)', () => {
-  it('salva seções, sanitiza HTML e expõe só as visíveis ao público', async () => {
-    const { slug } = await criar({
-      slug: 'pgh',
-      paginas: [
-        { secao: 'sobre', titulo: 'Sobre', body: { value: '<p>Olá</p><script>alert(1)</script>' }, visivel: true },
-        { secao: 'historico', titulo: 'Histórico', body: { value: '<p>Origem</p>' }, visivel: false },
-      ],
-    });
+describe('microsite — página fixa "Sobre"', () => {
+  it('cria automaticamente a página fixa ao criar o programa, sem sufixo -1', async () => {
+    const { id, slug } = await criar({ slug: 'pgh' });
 
     const pub = await request(app).get(`/api/programas/slug/${slug}`);
     expect(pub.status).toBe(200);
-    const secoesPub = pub.body.paginas.map((p) => p.secao);
-    expect(secoesPub).toContain('sobre');
-    expect(secoesPub).not.toContain('historico'); // oculta para o público
+    expect(pub.body.pagina_sobre).toMatchObject({ slug: 'sobre', chave: 'sobre', programaId: id });
 
-    const sobre = pub.body.paginas.find((p) => p.secao === 'sobre');
-    expect(sobre.body.value).toContain('<p>Olá</p>');
-    expect(sobre.body.value).not.toContain('<script>');
+    // Endereço próprio dentro do microsite (ver ProgramaSite.jsx/pagesController);
+    // ?programa= escopa a busca (slug só é único dentro do programa).
+    const bySlug = await request(app).get(`/api/pages/slug/sobre?programa=${slug}`);
+    expect(bySlug.status).toBe(200);
+    expect(bySlug.body.programaId).toBe(id);
 
-    const adm = await auth(request(app).get(`/api/programas/slug/${slug}`));
-    expect(adm.body.paginas.map((p) => p.secao)).toContain('historico'); // admin vê ocultas
+    // Sem escopo, "sobre" não é uma página geral (é a fixa do programa) → 404.
+    const semEscopo = await request(app).get('/api/pages/slug/sobre');
+    expect(semEscopo.status).toBe(404);
   });
 
-  it('atualiza (upsert) a seção sem duplicar', async () => {
-    const created = await criar({ slug: 'pgh', paginas: [{ secao: 'sobre', body: { value: '<p>v1</p>' }, visivel: true }] });
-    await auth(request(app).put(`/api/programas/${created.id}`)).send({
-      paginas: [{ secao: 'sobre', body: { value: '<p>v2</p>' }, visivel: true }],
+  it('dois programas diferentes têm cada um sua própria página "sobre" (escopo por programa_id)', async () => {
+    const a = await criar({ slug: 'pgh' });
+    const b = await criar({ nome: 'PPG Letras', sigla: 'ppgl', slug: 'ppgl' });
+
+    const pubA = await request(app).get(`/api/programas/slug/${a.slug}`);
+    const pubB = await request(app).get(`/api/programas/slug/${b.slug}`);
+    expect(pubA.body.pagina_sobre.slug).toBe('sobre');
+    expect(pubB.body.pagina_sobre.slug).toBe('sobre'); // não vira "sobre-1"
+    expect(pubA.body.pagina_sobre.id).not.toBe(pubB.body.pagina_sobre.id);
+  });
+
+  it('edita o conteúdo (sanitizado) sem mudar slug/programa mesmo se o cliente tentar', async () => {
+    const { id, slug } = await criar({ slug: 'pgh' });
+    const pagina = (await request(app).get(`/api/pages/slug/sobre?programa=${slug}`)).body;
+
+    const upd = await auth(request(app).put(`/api/pages/${pagina.id}`)).send({
+      title: 'Sobre o PGH',
+      slug: 'outra-coisa',
+      programaId: null,
+      body: { value: '<p>Texto novo</p><script>alert(1)</script>' },
     });
-    const res = await request(app).get('/api/programas/slug/pgh');
-    const sobre = res.body.paginas.filter((p) => p.secao === 'sobre');
-    expect(sobre).toHaveLength(1);
-    expect(sobre[0].body.value).toContain('v2');
+    expect(upd.status).toBe(200);
+    expect(upd.body.slug).toBe('sobre'); // travado
+    expect(upd.body.programaId).toBe(id); // travado
+    expect(upd.body.title).toBe('Sobre o PGH'); // título livre
+    expect(upd.body.body.value).toContain('<p>Texto novo</p>');
+    expect(upd.body.body.value).not.toContain('<script>');
+  });
+
+  it('recusa excluir a página fixa', async () => {
+    const { slug } = await criar({ slug: 'pgh' });
+    const pagina = (await request(app).get(`/api/pages/slug/sobre?programa=${slug}`)).body;
+
+    const del = await auth(request(app).delete(`/api/pages/${pagina.id}`));
+    expect(del.status).toBe(400);
+
+    const stillThere = await request(app).get(`/api/pages/slug/sobre?programa=${slug}`);
+    expect(stillThere.status).toBe(200);
+  });
+});
+
+describe('microsite — páginas comuns por programa (slug escopado)', () => {
+  it('permite o mesmo slug em programas diferentes (antes era único globalmente)', async () => {
+    const a = await criar({ slug: 'pgh' });
+    const b = await criar({ nome: 'PPG Letras', sigla: 'ppgl', slug: 'ppgl' });
+
+    const pa = await auth(request(app).post('/api/pages')).send({
+      title: 'Regimento', programaId: a.id, body: { value: '<p>x</p>' },
+    });
+    const pb = await auth(request(app).post('/api/pages')).send({
+      title: 'Regimento', programaId: b.id, body: { value: '<p>y</p>' },
+    });
+    expect(pa.body.slug).toBe('regimento');
+    expect(pb.body.slug).toBe('regimento'); // não "regimento-1"
+  });
+
+  it('ainda evita colidir com as sub-rotas fixas do microsite (ex.: "noticias")', async () => {
+    const { id } = await criar({ slug: 'pgh' });
+    const p = await auth(request(app).post('/api/pages')).send({
+      title: 'Notícias', programaId: id, body: { value: '<p>x</p>' },
+    });
+    expect(p.body.slug).toBe('noticias-1');
+  });
+
+  it('página geral ainda evita as rotas institucionais da PRPG e o slug de programas', async () => {
+    await criar({ slug: 'pgh' });
+    const geral = await auth(request(app).post('/api/pages')).send({
+      title: 'Sobre', body: { value: '<p>x</p>' }, // sem programaId
+    });
+    expect(geral.body.slug).toBe('sobre-1'); // "sobre" é rota fixa da PRPG
+
+    const colidePrograma = await auth(request(app).post('/api/pages')).send({
+      title: 'pgh', body: { value: '<p>x</p>' },
+    });
+    expect(colidePrograma.body.slug).toBe('pgh-1'); // "pgh" já é slug de programa
   });
 });
 

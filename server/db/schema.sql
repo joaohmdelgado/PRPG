@@ -334,23 +334,9 @@ BEGIN
   END IF;
 END$$;
 
--- Paginas de texto livre (rich-text) por secao do microsite de cada programa.
--- Uma linha por (programa, secao): 'sobre', 'historico', 'objetivos', 'linhas', etc.
-CREATE TABLE IF NOT EXISTS programa_paginas (
-  id            TEXT PRIMARY KEY,
-  programa_id   TEXT REFERENCES programas(id) ON DELETE CASCADE,
-  secao         TEXT NOT NULL,
-  titulo        TEXT,
-  body_value    TEXT,
-  body_summary  TEXT,
-  ord           INTEGER DEFAULT 0,
-  visivel       BOOLEAN DEFAULT TRUE,
-  criado_em     TIMESTAMPTZ DEFAULT now(),
-  atualizado_em TIMESTAMPTZ DEFAULT now(),
-  criado_por    TEXT,
-  atualizado_por TEXT,
-  UNIQUE (programa_id, secao)
-);
+-- programa_paginas (secoes fixas 'sobre'/'historico'/'objetivos'/'linhas' em
+-- rich-text) foi substituida por `pages` com `programa_id`/`chave` — ver bloco
+-- "Paginas" abaixo e a migracao 2026-09-14_pages_programa_scoped.sql.
 
 -- Fase A.2 (G1, PLANO.md): pessoas passa a ser a identidade de quem tem login
 -- (users.pessoa_id abaixo) e de quem nao tem (vinculos.pessoa_id legado,
@@ -757,10 +743,16 @@ CREATE TABLE IF NOT EXISTS bolsas (
 );
 
 -- ============================= Paginas ============================
+-- Slug unico por ESCOPO (geral vs. por programa), nao mais global — ver
+-- indices parciais abaixo. `chave` marca uma pagina fixa do template do
+-- microsite (hoje so 'sobre'): criada automaticamente para cada programa
+-- (ensureFixedSobre em repositories.js, chamado por createPrograma), nunca
+-- pode ser excluida nem trocar de slug/programa (ver pagesController.js).
 CREATE TABLE IF NOT EXISTS pages (
   id             TEXT PRIMARY KEY,
   title          TEXT NOT NULL,
-  slug           TEXT UNIQUE,
+  slug           TEXT,
+  chave          TEXT,
   body_value     TEXT,
   body_summary   TEXT,
   programa_id    TEXT REFERENCES programas(id) ON DELETE SET NULL,
@@ -768,6 +760,12 @@ CREATE TABLE IF NOT EXISTS pages (
   atualizado_por TEXT
 );
 CREATE INDEX IF NOT EXISTS pages_programa_id_idx ON pages(programa_id);
+CREATE UNIQUE INDEX IF NOT EXISTS pages_slug_geral_uniq
+  ON pages (slug) WHERE programa_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS pages_slug_programa_uniq
+  ON pages (programa_id, slug) WHERE programa_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS pages_chave_programa_uniq
+  ON pages (programa_id, chave) WHERE chave IS NOT NULL;
 
 -- =========================== Taxonomias ===========================
 -- Configuracao chave -> lista de valores (entradas, linhas_pesquisa, etc.).
