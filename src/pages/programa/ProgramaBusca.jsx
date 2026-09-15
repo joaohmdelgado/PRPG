@@ -10,15 +10,18 @@ const TIPO_META = {
   tese:       { label: 'Tese/Diss.', icon: 'fa-graduation-cap',  color: 'text-orange-600', bg: 'bg-orange-50' },
   faq:        { label: 'FAQ',        icon: 'fa-circle-question',  color: 'text-teal-600',   bg: 'bg-teal-50' },
   grupo:      { label: 'Grupo',      icon: 'fa-microscope',       color: 'text-pink-600',   bg: 'bg-pink-50' },
+  pagina:     { label: 'Página',     icon: 'fa-file-alt',         color: 'text-indigo-600', bg: 'bg-indigo-50' },
 };
 
+// Recebe o resultado inteiro (não só o id) porque "pagina" precisa do slug.
 const TIPO_SUB = {
-  noticia: (id) => `noticias/${id}`,
-  edital:  (id) => `editais`,
+  noticia:    (r) => `noticias/${r.id}`,
+  edital:     () => `editais`,
   disciplina: () => 'disciplinas',
-  tese:    () => 'teses',
-  faq:     () => 'faq',
-  grupo:   () => 'grupos-pesquisa',
+  tese:       () => 'teses',
+  faq:        () => 'faq',
+  grupo:      () => 'grupos-pesquisa',
+  pagina:     (r) => r.slug,
 };
 
 function highlight(text, q) {
@@ -100,7 +103,7 @@ export default function ProgramaBusca() {
         <ul className="space-y-3">
           {results.map((r, i) => {
             const meta = TIPO_META[r.tipo] || TIPO_META.noticia;
-            const subPath = TIPO_SUB[r.tipo]?.(r.id) || '';
+            const subPath = TIPO_SUB[r.tipo]?.(r) || '';
             return (
               <li key={i}>
                 <Link to={programaPath(slug, subPath)}

@@ -52,6 +52,7 @@ const AdminProgramas = lazy(() => import('./pages/admin/AdminProgramas'));
 const AdminProgramaForm = lazy(() => import('./pages/admin/AdminProgramaForm'));
 const AdminProgramaComissoes = lazy(() => import('./pages/admin/AdminProgramaComissoes'));
 const AdminProgramaMetricas = lazy(() => import('./pages/admin/AdminProgramaMetricas'));
+const AdminProgramaSite = lazy(() => import('./pages/admin/AdminProgramaSite'));
 const AdminProgramaLinhas = lazy(() => import('./pages/admin/AdminProgramaLinhas'));
 const AdminProgramaGestorLinhas = lazy(() => import('./pages/admin/AdminProgramaGestorLinhas'));
 const AdminLinhasPesquisa = lazy(() => import('./pages/admin/AdminLinhasPesquisa'));
@@ -161,6 +162,7 @@ function App() {
             <Route path="programas/:id/docentes" element={<AdminProgramaDocentes />} />
             <Route path="programas/:id/comissoes" element={<AdminProgramaComissoes />} />
             <Route path="programas/:id/metricas" element={<AdminProgramaMetricas />} />
+            <Route path="programas/:id/site" element={<AdminProgramaSite />} />
             <Route path="programas/:id/linhas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
               <Route index element={<ProgramaLinhasRouter />} />
             </Route>

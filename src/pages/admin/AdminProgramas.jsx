@@ -2,7 +2,7 @@ import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
 import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Globe, BarChart2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Globe, BarChart2, Layers } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
@@ -130,6 +130,9 @@ const AdminProgramas = () => {
                       <Globe size={18} />
                     </a>
                   )}
+                  <Link to={`/admin/programas/${item.id}/site`} className="text-gray-400 hover:text-ufrpe-blue" title="Site do programa (páginas, conteúdos)">
+                    <Layers size={16} />
+                  </Link>
                   <Link to={`/admin/programas/${item.id}/metricas`} className="text-gray-400 hover:text-ufrpe-blue" title="Métricas anuais">
                     <BarChart2 size={16} />
                   </Link>

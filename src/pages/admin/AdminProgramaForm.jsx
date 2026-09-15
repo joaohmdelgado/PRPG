@@ -904,19 +904,17 @@ const AdminProgramaForm = () => {
           </p>
           <p className="text-xs text-blue-700 mb-3">
             A aba "Sobre" deste microsite já tem uma página fixa e editável (criada
-            automaticamente com o programa). Edite-a em <strong>Páginas</strong> — ela aparece
-            com a marca "Fixa" e não pode ser excluída nem trocar de endereço. Crie páginas
-            adicionais (Histórico, Regimento…) e vincule a este programa para que ganhem
-            endereço próprio dentro do microsite.
+            automaticamente com o programa) — ela aparece com a marca "Fixa" e não pode ser
+            excluída nem trocar de endereço. Crie páginas adicionais (Histórico, Regimento…) para
+            que ganhem endereço próprio dentro do microsite. Gerencie tudo em <strong>Site do
+            Programa</strong>, junto com Notícias, Editais e os demais conteúdos.
           </p>
-          <a
-            href={`/admin/paginas`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to={`/admin/programas/${id}/site`}
             className="inline-flex items-center gap-2 text-sm font-medium text-ufrpe-blue bg-white border border-ufrpe-blue/30 px-4 py-2 rounded-lg hover:bg-ufrpe-blue/5 transition-colors"
           >
-            <i className="fa-solid fa-list text-xs"></i> Ver páginas deste programa
-          </a>
+            <i className="fa-solid fa-layer-group text-xs"></i> Ir para o Site do Programa
+          </Link>
         </div>
       )}
     </div>

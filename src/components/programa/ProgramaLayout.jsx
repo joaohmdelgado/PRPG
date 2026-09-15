@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePrograma, programaPath } from './ProgramaContext';
 
 // Itens fixos (sempre visíveis) e itens dinâmicos (aparecem quando o programa tem conteúdo).
+// "O Programa" é um grupo (dropdown no desktop, seção no mobile): reúne a página fixa
+// "Sobre" + as páginas que o próprio programa criar (ver AdminProgramaSite.jsx).
+const NAV_INICIO = { type: 'link', label: 'Início', sub: '', icon: 'fa-house' };
 const NAV_FIXOS = [
-  { label: 'Início',   sub: '',        icon: 'fa-house' },
-  { label: 'Sobre',    sub: 'sobre',   icon: 'fa-circle-info' },
-  { label: 'Notícias', sub: 'noticias', icon: 'fa-newspaper' },
-  { label: 'Editais',  sub: 'editais', icon: 'fa-file-lines' },
+  { type: 'link', label: 'Notícias', sub: 'noticias', icon: 'fa-newspaper' },
+  { type: 'link', label: 'Editais',  sub: 'editais',  icon: 'fa-file-lines' },
 ];
 const NAV_DINAMICOS = [
   { label: 'Corpo Docente',   sub: 'pessoas',    icon: 'fa-users',         modulo: 'pessoas' },
@@ -20,7 +21,7 @@ const NAV_DINAMICOS = [
   { label: 'Documentos',     sub: 'documentos',     icon: 'fa-folder-open',  modulo: 'resolucoes' },
 ];
 const NAV_FIXOS_FIM = [
-  { label: 'Contato', sub: 'contato', icon: 'fa-envelope' },
+  { type: 'link', label: 'Contato', sub: 'contato', icon: 'fa-envelope' },
 ];
 
 const SOCIALS = [
@@ -38,6 +39,8 @@ export default function ProgramaLayout({ children }) {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState('');
+  const [oProgramaOpen, setOProgramaOpen] = useState(false);
+  const oProgramaRef = useRef(null);
 
   const sigla = programa.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : null;
   const base = `/${slug}`;
@@ -45,8 +48,24 @@ export default function ProgramaLayout({ children }) {
   const activeSub = rest.split('/')[0];
 
   const modulos = programa.modulos || {};
-  const navDinamicos = NAV_DINAMICOS.filter((item) => (modulos[item.modulo] ?? 0) > 0);
-  const NAV = [...NAV_FIXOS, ...navDinamicos, ...NAV_FIXOS_FIM];
+  const navDinamicos = NAV_DINAMICOS
+    .filter((item) => (modulos[item.modulo] ?? 0) > 0)
+    .map((item) => ({ type: 'link', ...item }));
+
+  // Grupo "O Programa": Sobre (fixa) + páginas que o programa criou.
+  const oPrograma = {
+    type: 'group',
+    label: 'O Programa',
+    icon: 'fa-circle-info',
+    items: [
+      { label: 'Sobre', sub: 'sobre' },
+      ...(Array.isArray(programa.paginas) ? programa.paginas.map((p) => ({ label: p.title, sub: p.slug })) : []),
+    ],
+  };
+
+  const NAV = [NAV_INICIO, oPrograma, ...NAV_FIXOS, ...navDinamicos, ...NAV_FIXOS_FIM];
+  // Versão "achatada" (sem grupos) para o rodapé, que é só uma lista de links.
+  const NAV_FLAT = NAV.flatMap((item) => (item.type === 'group' ? item.items : [item]));
 
   const themeStyle = {
     '--prog-primary': programa.cor_primaria || '#1e2b4f',
@@ -54,6 +73,18 @@ export default function ProgramaLayout({ children }) {
   };
 
   const isActive = (sub) => activeSub === sub;
+  const isGroupActive = (group) => group.items.some((i) => isActive(i.sub));
+
+  // Fecha o dropdown ao clicar fora ou ao navegar.
+  useEffect(() => {
+    if (!oProgramaOpen) return;
+    const onClickOutside = (e) => {
+      if (oProgramaRef.current && !oProgramaRef.current.contains(e.target)) setOProgramaOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [oProgramaOpen]);
+  useEffect(() => { setOProgramaOpen(false); }, [location.pathname]);
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-gray-50" style={themeStyle}>
@@ -99,21 +130,60 @@ export default function ProgramaLayout({ children }) {
       <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
         <div className="container mx-auto px-4 flex items-center justify-between">
           <ul className="hidden md:flex items-center">
-            {NAV.map((item) => (
-              <li key={item.sub}>
-                <Link
-                  to={programaPath(slug, item.sub)}
-                  className={`flex items-center gap-2 px-4 py-4 text-sm font-medium border-b-[3px] transition-colors ${
-                    isActive(item.sub)
-                      ? 'border-[var(--prog-accent)] text-[var(--prog-primary)]'
-                      : 'border-transparent text-gray-600 hover:text-[var(--prog-primary)] hover:border-gray-200'
-                  }`}
-                >
-                  <i className={`fa-solid ${item.icon} text-xs opacity-70`}></i>
-                  {item.label}
-                </Link>
-              </li>
-            ))}
+            {NAV.map((item) => {
+              if (item.type === 'group') {
+                const groupActive = isGroupActive(item);
+                return (
+                  <li key={item.label} className="relative" ref={oProgramaRef}>
+                    <button
+                      type="button"
+                      onClick={() => setOProgramaOpen((v) => !v)}
+                      aria-expanded={oProgramaOpen}
+                      className={`flex items-center gap-2 px-4 py-4 text-sm font-medium border-b-[3px] transition-colors ${
+                        groupActive
+                          ? 'border-[var(--prog-accent)] text-[var(--prog-primary)]'
+                          : 'border-transparent text-gray-600 hover:text-[var(--prog-primary)] hover:border-gray-200'
+                      }`}
+                    >
+                      <i className={`fa-solid ${item.icon} text-xs opacity-70`}></i>
+                      {item.label}
+                      <i className={`fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform ${oProgramaOpen ? 'rotate-180' : ''}`}></i>
+                    </button>
+                    {oProgramaOpen && (
+                      <ul className="absolute left-0 top-full bg-white rounded-b-lg shadow-lg border border-gray-100 border-t-0 py-2 min-w-[220px] z-50">
+                        {item.items.map((sub) => (
+                          <li key={sub.sub}>
+                            <Link
+                              to={programaPath(slug, sub.sub)}
+                              className={`block px-4 py-2 text-sm truncate ${
+                                isActive(sub.sub) ? 'text-[var(--prog-primary)] font-semibold bg-gray-50' : 'text-gray-600 hover:bg-gray-50'
+                              }`}
+                            >
+                              {sub.label}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                );
+              }
+              return (
+                <li key={item.sub}>
+                  <Link
+                    to={programaPath(slug, item.sub)}
+                    className={`flex items-center gap-2 px-4 py-4 text-sm font-medium border-b-[3px] transition-colors ${
+                      isActive(item.sub)
+                        ? 'border-[var(--prog-accent)] text-[var(--prog-primary)]'
+                        : 'border-transparent text-gray-600 hover:text-[var(--prog-primary)] hover:border-gray-200'
+                    }`}
+                  >
+                    <i className={`fa-solid ${item.icon} text-xs opacity-70`}></i>
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
           {/* Busca */}
           <div className="flex items-center gap-2">
@@ -147,20 +217,47 @@ export default function ProgramaLayout({ children }) {
         </div>
         {open && (
           <ul className="md:hidden border-t border-gray-100 bg-white">
-            {NAV.map((item) => (
-              <li key={item.sub} className="border-b border-gray-50 last:border-0">
-                <Link
-                  to={programaPath(slug, item.sub)}
-                  onClick={() => setOpen(false)}
-                  className={`flex items-center gap-3 px-5 py-3 text-sm ${
-                    isActive(item.sub) ? 'text-[var(--prog-primary)] font-semibold bg-gray-50' : 'text-gray-600'
-                  }`}
-                >
-                  <i className={`fa-solid ${item.icon} text-xs opacity-70 w-4`}></i>
-                  {item.label}
-                </Link>
-              </li>
-            ))}
+            {NAV.map((item) => {
+              if (item.type === 'group') {
+                return (
+                  <li key={item.label} className="border-b border-gray-50 last:border-0">
+                    <p className="flex items-center gap-3 px-5 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                      <i className={`fa-solid ${item.icon} text-xs opacity-70 w-4`}></i>
+                      {item.label}
+                    </p>
+                    <ul>
+                      {item.items.map((sub) => (
+                        <li key={sub.sub}>
+                          <Link
+                            to={programaPath(slug, sub.sub)}
+                            onClick={() => setOpen(false)}
+                            className={`flex items-center gap-3 pl-11 pr-5 py-2.5 text-sm ${
+                              isActive(sub.sub) ? 'text-[var(--prog-primary)] font-semibold bg-gray-50' : 'text-gray-600'
+                            }`}
+                          >
+                            {sub.label}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                );
+              }
+              return (
+                <li key={item.sub} className="border-b border-gray-50 last:border-0">
+                  <Link
+                    to={programaPath(slug, item.sub)}
+                    onClick={() => setOpen(false)}
+                    className={`flex items-center gap-3 px-5 py-3 text-sm ${
+                      isActive(item.sub) ? 'text-[var(--prog-primary)] font-semibold bg-gray-50' : 'text-gray-600'
+                    }`}
+                  >
+                    <i className={`fa-solid ${item.icon} text-xs opacity-70 w-4`}></i>
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </nav>
@@ -209,7 +306,7 @@ export default function ProgramaLayout({ children }) {
           <div>
             <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wider">Navegação</h4>
             <ul className="space-y-2 text-sm text-white/70">
-              {NAV.map((item) => (
+              {NAV_FLAT.map((item) => (
                 <li key={item.sub}>
                   <Link to={programaPath(slug, item.sub)} className="hover:text-white transition-colors flex items-center gap-2">
                     <i className="fa-solid fa-angle-right text-[10px] text-[var(--prog-accent)]"></i>{item.label}

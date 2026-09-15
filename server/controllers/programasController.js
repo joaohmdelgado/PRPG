@@ -224,6 +224,9 @@ export const getProgramaBySlug = async (req, res) => {
     });
 
     const pagina_sobre = await pagesRepo.getFixed(prog.id, 'sobre');
+    // Páginas criadas pelo programa (não a fixa) — alimentam o submenu
+    // "O Programa" do microsite (ProgramaLayout.jsx).
+    const paginas = await pagesRepo.getByPrograma(prog.id);
     const linhas = await linhasPesquisaRepo.getByPrograma(prog.id);
 
     // Conta itens por módulo para o menu dinâmico do microsite.
@@ -272,7 +275,7 @@ export const getProgramaBySlug = async (req, res) => {
     );
     const metrica_recente = metricasRows[0] || null;
 
-    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, pagina_sobre, linhas,
+    res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, pagina_sobre, paginas, linhas,
                modulos, historico_coordenadores, comissoes, metrica_recente });
   } catch (error) {
     res.status(500).json({ message: 'Erro ao buscar programa', error: error.message });
@@ -496,7 +499,7 @@ export const buscaPrograma = async (req, res) => {
     const like = `%${q}%`;
     const pid = prog.id;
 
-    const [news, editais, disciplinas, teses, faq, grupos] = await Promise.all([
+    const [news, editais, disciplinas, teses, faq, grupos, paginas] = await Promise.all([
       query(
         `SELECT id, title AS titulo, excerpt AS resumo, 'noticia' AS tipo FROM news
          WHERE programa_id = $1 AND (title ILIKE $2 OR excerpt ILIKE $2 OR content::text ILIKE $2) LIMIT 5`,
@@ -527,11 +530,16 @@ export const buscaPrograma = async (req, res) => {
          WHERE programa_id = $1 AND title ILIKE $2 LIMIT 5`,
         [pid, like]
       ),
+      query(
+        `SELECT id, slug, title AS titulo, body_summary AS resumo, 'pagina' AS tipo FROM pages
+         WHERE programa_id = $1 AND (title ILIKE $2 OR body_value ILIKE $2 OR body_summary ILIKE $2) LIMIT 5`,
+        [pid, like]
+      ),
     ]);
 
     const results = [
       ...news.rows, ...editais.rows, ...disciplinas.rows,
-      ...teses.rows, ...faq.rows, ...grupos.rows,
+      ...teses.rows, ...faq.rows, ...grupos.rows, ...paginas.rows,
     ].map((r) => ({ ...r, resumo: r.resumo || '' }));
 
     res.json(results);

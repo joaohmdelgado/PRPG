@@ -150,6 +150,35 @@ describe('microsite — páginas comuns por programa (slug escopado)', () => {
     });
     expect(colidePrograma.body.slug).toBe('pgh-1'); // "pgh" já é slug de programa
   });
+
+  it('GET /api/programas/slug/:slug traz as páginas criadas (não a fixa) para o menu "O Programa"', async () => {
+    const { id, slug } = await criar({ slug: 'pgh' });
+    await auth(request(app).post('/api/pages')).send({
+      title: 'Regimento', programaId: id, body: { value: '<p>x</p>' },
+    });
+
+    const pub = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(pub.body.paginas).toHaveLength(1);
+    expect(pub.body.paginas[0]).toMatchObject({ title: 'Regimento', slug: 'regimento', chave: null });
+    // a página fixa não aparece aqui — ela já vem em pagina_sobre.
+    expect(pub.body.paginas.some((p) => p.chave === 'sobre')).toBe(false);
+  });
+});
+
+describe('microsite — busca inclui páginas do programa', () => {
+  it('encontra uma página pelo título e aponta para o slug certo', async () => {
+    const { id, slug } = await criar({ slug: 'pgh' });
+    await auth(request(app).post('/api/pages')).send({
+      title: 'Infraestrutura e Laboratórios', programaId: id, body: { value: '<p>Texto</p>' },
+    });
+
+    const res = await request(app).get(`/api/programas/slug/${slug}/busca?q=Infraestrutura`);
+    expect(res.status).toBe(200);
+    const pagina = res.body.find((r) => r.tipo === 'pagina');
+    expect(pagina).toBeTruthy();
+    expect(pagina.slug).toBe('infraestrutura-e-laboratorios');
+    expect(pagina.titulo).toBe('Infraestrutura e Laboratórios');
+  });
 });
 
 describe('microsite — conteúdo vinculado ao programa', () => {

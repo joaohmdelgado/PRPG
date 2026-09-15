@@ -1,6 +1,6 @@
 import { FormSkeleton } from '../../components/admin/AdminUI';
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, File } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
@@ -9,10 +9,17 @@ const AdminPageForm = () => {
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
+  // Vindo de "Site do Programa" (Nova página), pré-seleciona o programa —
+  // só importa na criação; ao editar, o valor real da página manda. Também
+  // define para onde voltar (Cancelar/Salvar), fechando o fluxo no hub do
+  // programa em vez da lista geral.
+  const [searchParams] = useSearchParams();
+  const programaFromQuery = searchParams.get('programa') || '';
+  const backTo = programaFromQuery ? `/admin/programas/${programaFromQuery}/site` : '/admin/paginas';
 
   const [formData, setFormData] = useState({
     title: '',
-    programaId: '',
+    programaId: programaFromQuery,
     chave: null,
     slug: '',
     body: { value: '', summary: '' },
@@ -164,7 +171,7 @@ const AdminPageForm = () => {
       const response = await apiFetch(path, { method: isEditing ? 'PUT' : 'POST', json: formData });
 
       if (response.ok) {
-        navigate('/admin/paginas');
+        navigate(backTo);
       } else {
         const data = await response.json();
         setError(data.message || 'Erro ao salvar página');
@@ -201,7 +208,7 @@ const AdminPageForm = () => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
-        <Link to="/admin/paginas" className="text-gray-500 hover:text-gray-700 transition-colors">
+        <Link to={backTo} className="text-gray-500 hover:text-gray-700 transition-colors">
           <ArrowLeft size={24} />
         </Link>
         <h2 className="font-heading text-2xl font-semibold text-ufrpe-blue flex items-center gap-2">
@@ -304,8 +311,8 @@ const AdminPageForm = () => {
 
         {/* Botões */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-          <Link 
-            to="/admin/paginas"
+          <Link
+            to={backTo}
             className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             Cancelar

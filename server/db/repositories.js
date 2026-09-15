@@ -172,6 +172,17 @@ pagesRepo.getFixed = async (programaId, chave) => {
   return rows[0] ? pagesFromRow(rows[0]) : null;
 };
 
+// Paginas CRIADAS pelo programa (exclui a fixa) — usadas no submenu "O
+// Programa" do microsite (ProgramaLayout.jsx) e na tela "Site do Programa"
+// do admin (AdminProgramaSite.jsx).
+pagesRepo.getByPrograma = async (programaId) => {
+  const { rows } = await query(
+    'SELECT * FROM pages WHERE programa_id = $1 AND chave IS NULL ORDER BY title ASC',
+    [programaId]
+  );
+  return rows.map(pagesFromRow);
+};
+
 // Garante que o programa tenha sua pagina fixa "Sobre" (idempotente — chamada
 // tanto na criacao de um programa novo quanto no backfill de migrate.mjs para
 // os ja existentes). Nasce vazia; o admin preenche o conteudo depois.
