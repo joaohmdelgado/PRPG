@@ -15,4 +15,12 @@ describe('filterAdminPages', () => {
   it('filtra por título, slug ou conteúdo', () => {
     expect(filterAdminPages(pages, 'conteúdo b', '')).toEqual([pages[2]]);
   });
+
+  it('mantém somente as páginas do programa selecionado', () => {
+    expect(filterAdminPages(pages, '', 'ppg-a')).toEqual([pages[1]]);
+  });
+
+  it('retorna uma lista vazia quando o programa escolhido não possui páginas', () => {
+    expect(filterAdminPages(pages, '', 'ppg-sem-paginas')).toEqual([]);
+  });
 });

@@ -8,6 +8,7 @@ import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
+import { filterAdminPages } from './adminPagesFilter';
 
 const AdminPagesList = () => {
   const [pages, setPages] = useState([]);
@@ -15,6 +16,7 @@ const AdminPagesList = () => {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProgramaId, setSelectedProgramaId] = useState('');
   const navigate = useNavigate();
   const users = useUsers();
   const { confirm, ConfirmModal } = useConfirm();
@@ -61,13 +63,7 @@ const AdminPagesList = () => {
     }
   };
 
-  const filteredPages = pages.filter(item => {
-    const title = item.title || '';
-    const slug = item.slug || '';
-    const bodyText = item.body?.value || '';
-    const query = searchQuery.toLowerCase();
-    return title.toLowerCase().includes(query) || slug.toLowerCase().includes(query) || bodyText.toLowerCase().includes(query);
-  });
+  const filteredPages = filterAdminPages(pages, searchQuery, selectedProgramaId);
 
   // Páginas fixas (chave definida, ex.: "Sobre") não podem ser excluídas —
   // ver pagesController.js — então ficam fora da seleção em massa.
@@ -109,6 +105,25 @@ const AdminPagesList = () => {
           <Plus size={18} />
           Nova Página
         </Link>
+      </div>
+
+      <div className="mb-4 max-w-md">
+        <label htmlFor="programa-filter" className="block text-sm font-medium text-gray-700 mb-1.5">
+          Filtrar por programa
+        </label>
+        <select
+          id="programa-filter"
+          value={selectedProgramaId}
+          onChange={(event) => setSelectedProgramaId(event.target.value)}
+          className="w-full px-3 py-2.5 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm"
+        >
+          <option value="">Todos os programas</option>
+          {programas.map((programa) => (
+            <option key={programa.id} value={programa.id}>
+              {programa.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : programa.nome}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Barra de Pesquisa */}

@@ -1,4 +1,4 @@
-export function filterAdminPages(pages, searchQuery) {
+export function filterAdminPages(pages, searchQuery, selectedProgramaId = '') {
   const query = searchQuery.toLowerCase();
 
   return pages.filter((item) => {
@@ -6,8 +6,11 @@ export function filterAdminPages(pages, searchQuery) {
     const slug = item.slug || '';
     const bodyText = item.body?.value || '';
 
-    return title.toLowerCase().includes(query)
+    const matchesSearch = title.toLowerCase().includes(query)
       || slug.toLowerCase().includes(query)
       || bodyText.toLowerCase().includes(query);
+    const matchesPrograma = !selectedProgramaId || item.programaId === selectedProgramaId;
+
+    return matchesSearch && matchesPrograma;
   });
 }
