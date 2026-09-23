@@ -210,8 +210,11 @@ Access at `/admin/login`. Main sections in sidebar:
   `listen`), and `server/index.js` does the DB boot check + `listen`. Tests
   import `app.js` directly via supertest.
 - `globalSetup.js` drops/recreates an isolated `prpg_test` database and applies
-  `schema.sql`; `helpers.js` truncates tables and seeds an admin before each test.
-  The dev database (`prpg`) is never touched.
+  `schema.sql`; `helpers.js` empties the tables (`DELETE` over `RESET_TABLES`, not
+  `TRUNCATE` — the comment in `resetDb()` explains why) and seeds an admin before
+  each test. A new table or sequence must be added to `RESET_TABLES` /
+  `RESET_SEQUENCES` in `helpers.js`; `resetDb.test.js` fails otherwise. The dev
+  database (`prpg`) is never touched.
 - Coverage: auth, input validation, HTML sanitization (unit + integration),
   news CRUD, editais status calc, pages slug generation, taxonomias,
   programas (coordinator resolution, sensitive-field filtering, coordinator

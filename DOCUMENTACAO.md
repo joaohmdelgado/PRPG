@@ -557,8 +557,11 @@ Painel `Importação` (Admin/Gestor) recebe o JSON do Drupal antigo e importa
 - **Vitest + supertest**; testes em `server/__tests__/`.
 - O app é importado de `server/app.js` (sem `listen`), permitindo testes HTTP diretos.
 - `globalSetup.js` recria um banco isolado `prpg_test` e aplica o `schema.sql`;
-  `helpers.js` trunca tabelas e cria um admin antes de cada teste. **O banco de
-  desenvolvimento (`prpg`) nunca é tocado.**
+  `helpers.js` esvazia as tabelas (`DELETE` sobre `RESET_TABLES`, não `TRUNCATE` —
+  o comentário de `resetDb()` explica o porquê) e cria um admin antes de cada
+  teste. Tabela ou sequence nova precisa entrar em `RESET_TABLES` /
+  `RESET_SEQUENCES` no `helpers.js`; o `resetDb.test.js` falha se faltar. **O banco
+  de desenvolvimento (`prpg`) nunca é tocado.**
 - Requer o PostgreSQL do Docker rodando (`npm run db:up`).
 
 Cobertura (~41 testes): autenticação, validação de entrada, sanitização de HTML,
