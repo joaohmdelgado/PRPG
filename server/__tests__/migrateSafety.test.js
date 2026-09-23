@@ -13,6 +13,8 @@ describe('seed destrutivo de desenvolvimento', () => {
         NODE_ENV: 'production',
         JWT_SECRET: 'test-secret-test-secret-1234567890',
         DATABASE_URL: 'postgres://prpg:prpg@127.0.0.1:1/prpg_test',
+        CORS_ORIGINS: 'https://example.com',
+        PUBLIC_SITE_URL: 'https://example.com',
       },
     });
 
