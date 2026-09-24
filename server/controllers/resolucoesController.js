@@ -1,6 +1,7 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { resolucoesRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
+import { serverError } from '../utils/httpError.js';
 
 const resolveProgramaId = async (param) => {
   if (!param) return null;
@@ -33,7 +34,7 @@ export const createResolucao = async (req, res) => {
   try {
     res.status(201).json(await resolucoesRepo.create(data, req.user?.id));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar resolução.', error: e.message });
+    serverError(res, 'Erro ao criar resolução.', e);
   }
 };
 

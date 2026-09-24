@@ -2,6 +2,7 @@ import { isPlainObject } from '../utils/sanitize.js';
 import { bolsasRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
 import { resolverOuCriarPessoa } from '../db/pessoasRepo.js';
+import { serverError } from '../utils/httpError.js';
 
 // Fase D: pessoa_id é pessoas.id de verdade — resolve em lote.
 const resolvePessoas = async (ids) => {
@@ -44,7 +45,7 @@ export const createBolsa = async (req, res) => {
     Object.assign(data, await resolverIds(data));
     res.status(201).json(await bolsasRepo.create(data, req.user?.id));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar bolsa.', error: e.message });
+    serverError(res, 'Erro ao criar bolsa.', e);
   }
 };
 
@@ -57,7 +58,7 @@ export const updateBolsa = async (req, res) => {
     if (updated) res.json(updated);
     else res.status(404).json({ message: 'Bolsa não encontrada' });
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao atualizar bolsa.', error: e.message });
+    serverError(res, 'Erro ao atualizar bolsa.', e);
   }
 };
 

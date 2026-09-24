@@ -8,6 +8,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import { apiLimiter } from './middleware/rateLimit.js';
 import { IS_PRODUCTION, CORS_ORIGINS } from './config.js';
 import { logUnexpectedError } from './utils/logger.js';
+import { pgClientError } from './utils/httpError.js';
 import { pool } from './db/pool.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -106,10 +107,14 @@ app.use('/api', (req, res) => {
 // erros do multer e quaisquer exceções não tratadas nas rotas.
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
+  // Resposta já começou a ser enviada: só o Express consegue encerrar a conexão.
+  if (res.headersSent) return next(err);
   // Corpo JSON inválido é erro do cliente (400), não do servidor (500).
   if (err?.type === 'entity.parse.failed' || err instanceof SyntaxError) {
     return res.status(400).json({ message: 'JSON inválido no corpo da requisição.' });
   }
+  const clientError = pgClientError(err);
+  if (clientError) return res.status(clientError.status).json({ message: clientError.message });
   logUnexpectedError({ requestId: req.requestId, error: err });
   const status = err?.status || err?.statusCode || 500;
   res.status(status).json({

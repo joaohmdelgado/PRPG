@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { gruposRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
+import { serverError } from '../utils/httpError.js';
 
 const resolveProgramaId = async (param) => {
   if (!param) return null;
@@ -67,7 +68,7 @@ export const getGruposPesquisa = async (req, res) => {
     }));
     res.json(resolved);
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao buscar grupos de pesquisa', error: e.message });
+    serverError(res, 'Erro ao buscar grupos de pesquisa', e);
   }
 };
 
@@ -93,7 +94,7 @@ export const createGrupoPesquisa = async (req, res) => {
     const lideresByGrupo = await listarLideres([criado.id]);
     res.status(201).json({ ...criado, lideres: lideresByGrupo.get(criado.id) || [] });
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar grupo de pesquisa', error: e.message });
+    serverError(res, 'Erro ao criar grupo de pesquisa', e);
   }
 };
 

@@ -1,6 +1,7 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { pagesRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
+import { serverError } from '../utils/httpError.js';
 
 const slugify = (text) =>
   (text || '')
@@ -127,7 +128,7 @@ export const createPage = async (req, res) => {
 
     res.status(201).json(await pagesRepo.create(data, req.user?.id));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar página.', error: e.message });
+    serverError(res, 'Erro ao criar página.', e);
   }
 };
 
@@ -162,7 +163,7 @@ export const updatePage = async (req, res) => {
 
     res.json(await pagesRepo.update(req.params.id, data, req.user?.id));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao atualizar página.', error: e.message });
+    serverError(res, 'Erro ao atualizar página.', e);
   }
 };
 

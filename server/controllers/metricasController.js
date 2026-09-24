@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { isPlainObject } from '../utils/sanitize.js';
 import { metricasRepo } from '../db/repositories.js';
+import { serverError } from '../utils/httpError.js';
 
 // GET /api/metricas         -> todas
 // GET /api/metricas?programa=<id> -> só de um programa
@@ -10,7 +11,7 @@ export const getMetricas = async (req, res) => {
     const data = programa ? await metricasRepo.getByPrograma(programa) : await metricasRepo.getAll();
     res.json(data);
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao buscar métricas', error: e.message });
+    serverError(res, 'Erro ao buscar métricas', e);
   }
 };
 
@@ -36,7 +37,7 @@ export const createMetrica = async (req, res) => {
     const created = await metricasRepo.create(data, req.user?.id);
     res.status(201).json(created);
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar métrica', error: e.message });
+    serverError(res, 'Erro ao criar métrica', e);
   }
 };
 
@@ -50,7 +51,7 @@ export const updateMetrica = async (req, res) => {
     if (e.code === '23505') {
       return res.status(409).json({ message: 'Já existe um registro para este programa neste ano.' });
     }
-    res.status(500).json({ message: 'Erro ao atualizar métrica', error: e.message });
+    serverError(res, 'Erro ao atualizar métrica', e);
   }
 };
 

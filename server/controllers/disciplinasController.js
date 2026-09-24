@@ -2,6 +2,7 @@ import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { disciplinasRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
 import { resolverOuCriarPessoa } from '../db/pessoasRepo.js';
+import { serverError } from '../utils/httpError.js';
 
 const resolveProgramaId = async (param) => {
   if (!param) return null;
@@ -55,7 +56,7 @@ export const createDisciplina = async (req, res) => {
     Object.assign(data, await resolverIds(data));
     res.status(201).json(await disciplinasRepo.create(data, req.user?.id));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar disciplina.', error: e.message });
+    serverError(res, 'Erro ao criar disciplina.', e);
   }
 };
 
@@ -69,7 +70,7 @@ export const updateDisciplina = async (req, res) => {
     if (updated) res.json(updated);
     else res.status(404).json({ message: 'Disciplina não encontrada' });
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao atualizar disciplina.', error: e.message });
+    serverError(res, 'Erro ao atualizar disciplina.', e);
   }
 };
 

@@ -1,5 +1,6 @@
 import { isPlainObject } from '../utils/sanitize.js';
 import { portariasRepo } from '../db/repositories.js';
+import { serverError } from '../utils/httpError.js';
 
 export const getPortarias = async (req, res) => {
   res.json(await portariasRepo.getAll());
@@ -23,7 +24,7 @@ export const createPortaria = async (req, res) => {
   try {
     res.status(201).json(await portariasRepo.create(data, req.user?.id));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar portaria.', error: e.message });
+    serverError(res, 'Erro ao criar portaria.', e);
   }
 };
 

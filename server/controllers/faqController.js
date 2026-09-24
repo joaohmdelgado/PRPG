@@ -1,6 +1,7 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { faqRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
+import { serverError } from '../utils/httpError.js';
 
 const resolveProgramaId = async (param) => {
   if (!param) return null;
@@ -32,7 +33,7 @@ export const createFaq = async (req, res) => {
   try {
     res.status(201).json(await faqRepo.create(data, req.user?.id));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar FAQ.', error: e.message });
+    serverError(res, 'Erro ao criar FAQ.', e);
   }
 };
 

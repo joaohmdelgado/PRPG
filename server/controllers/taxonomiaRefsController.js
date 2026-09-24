@@ -1,4 +1,5 @@
 import { taxonomiaRefsRepo } from '../db/repositories.js';
+import { serverError } from '../utils/httpError.js';
 
 const isPrpgAdmin = (user) => user?.roles?.includes('Administrator') || user?.roles?.includes('Gestor');
 const isProgramaScoped = (user) => user?.roles?.includes('GestorPrograma') && !isPrpgAdmin(user);
@@ -16,7 +17,7 @@ export const getTaxonomiaRefs = async (req, res) => {
     const rows = await taxonomiaRefsRepo.getAll({ campo, programaId });
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar referências de taxonomia', error: error.message });
+    serverError(res, 'Erro ao buscar referências de taxonomia', error);
   }
 };
 
@@ -30,7 +31,7 @@ export const getTaxonomiaRefById = async (req, res) => {
     }
     res.json(row);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar referência', error: error.message });
+    serverError(res, 'Erro ao buscar referência', error);
   }
 };
 
@@ -54,7 +55,7 @@ export const createTaxonomiaRef = async (req, res) => {
     if (error.code === '23505') {
       return res.status(409).json({ message: 'Já existe uma referência com esse target_id neste campo/programa.' });
     }
-    res.status(500).json({ message: 'Erro ao criar referência', error: error.message });
+    serverError(res, 'Erro ao criar referência', error);
   }
 };
 
@@ -84,7 +85,7 @@ export const updateTaxonomiaRef = async (req, res) => {
     if (error.code === '23505') {
       return res.status(409).json({ message: 'Já existe uma referência com esse target_id neste campo/programa.' });
     }
-    res.status(500).json({ message: 'Erro ao atualizar referência', error: error.message });
+    serverError(res, 'Erro ao atualizar referência', error);
   }
 };
 
@@ -102,6 +103,6 @@ export const deleteTaxonomiaRef = async (req, res) => {
     if (!ok) return res.status(404).json({ message: 'Referência não encontrada' });
     res.json({ message: 'Referência removida.' });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao remover referência', error: error.message });
+    serverError(res, 'Erro ao remover referência', error);
   }
 };

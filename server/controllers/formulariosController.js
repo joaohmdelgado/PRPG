@@ -1,6 +1,7 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { formulariosRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
+import { serverError } from '../utils/httpError.js';
 
 const resolveProgramaId = async (param) => {
   if (!param) return null;
@@ -33,7 +34,7 @@ export const createFormulario = async (req, res) => {
   try {
     res.status(201).json(await formulariosRepo.create(data, req.user?.id));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar formulário.', error: e.message });
+    serverError(res, 'Erro ao criar formulário.', e);
   }
 };
 

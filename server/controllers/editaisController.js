@@ -3,6 +3,7 @@ import { editaisRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
 import { eventosRepo } from '../db/eventosRepo.js';
 import { hojeISO } from '../utils/datas.js';
+import { serverError } from '../utils/httpError.js';
 
 // Resolve um parametro `programa` (id OU slug) para o id real do programa.
 const resolveProgramaId = async (param) => {
@@ -109,7 +110,7 @@ export const createEdital = async (req, res) => {
   try {
     res.status(201).json(await editaisRepo.create(data, req.user?.id));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar edital.', error: e.message });
+    serverError(res, 'Erro ao criar edital.', e);
   }
 };
 

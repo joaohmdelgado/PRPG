@@ -15,6 +15,7 @@ import { emitir } from '../services/declaracoes.js';
 import { enviarEmail } from '../services/email.js';
 import { resolverEmail } from '../services/prazos.js';
 import QRCode from 'qrcode';
+import { serverError } from '../utils/httpError.js';
 
 // ============================ Vocabulários ============================
 // Listas sugeridas ao frontend (selects). Não bloqueiam o servidor: o campo
@@ -51,7 +52,7 @@ export const createUnidade = async (req, res) => {
   try {
     res.status(201).json(await unidadesRepo.create(data));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar unidade.', error: e.message });
+    serverError(res, 'Erro ao criar unidade.', e);
   }
 };
 
@@ -212,7 +213,7 @@ export const createProcesso = async (req, res) => {
     res.status(201).json(created);
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ message: 'Já existe um processo cadastrado com este número.' });
-    res.status(500).json({ message: 'Erro ao criar processo.', error: e.message });
+    serverError(res, 'Erro ao criar processo.', e);
   }
 };
 
@@ -228,7 +229,7 @@ export const updateProcesso = async (req, res) => {
     res.json(updated);
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ message: 'Já existe um processo cadastrado com este número.' });
-    res.status(500).json({ message: 'Erro ao atualizar processo.', error: e.message });
+    serverError(res, 'Erro ao atualizar processo.', e);
   }
 };
 

@@ -5,6 +5,7 @@ import { camaraReunioesRepo, processosRepo } from '../db/repositories.js';
 import { camaraPautaItensRepo } from '../db/camaraRepo.js';
 import { eventosRepo } from '../db/eventosRepo.js';
 import { gerarPautaPdf, gerarMinutaAtaPdf } from '../services/camaraPdf.js';
+import { serverError } from '../utils/httpError.js';
 
 export const getReunioes = async (req, res) => {
   res.json(await camaraReunioesRepo.getAll());
@@ -22,7 +23,7 @@ export const createReuniao = async (req, res) => {
   try {
     res.status(201).json(await camaraReunioesRepo.create(data, req.user?.id));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar reunião.', error: e.message });
+    serverError(res, 'Erro ao criar reunião.', e);
   }
 };
 

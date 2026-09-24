@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
 import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js';
+import { serverError } from '../utils/httpError.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
 const strOrNull = (v) => (v === '' || v == null ? null : v);
@@ -161,7 +162,7 @@ export const getProgramas = async (req, res) => {
 
     res.json(result);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar programas', error: error.message });
+    serverError(res, 'Erro ao buscar programas', error);
   }
 };
 
@@ -199,7 +200,7 @@ export const getProgramaById = async (req, res) => {
 
     res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, historico_coordenadores, pagina_sobre, linhas });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar programa', error: error.message });
+    serverError(res, 'Erro ao buscar programa', error);
   }
 };
 
@@ -278,7 +279,7 @@ export const getProgramaBySlug = async (req, res) => {
     res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, pagina_sobre, paginas, linhas,
                modulos, historico_coordenadores, comissoes, metrica_recente });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar programa', error: error.message });
+    serverError(res, 'Erro ao buscar programa', error);
   }
 };
 
@@ -391,7 +392,7 @@ export const createPrograma = async (req, res) => {
 
     res.status(201).json({ message: 'Programa criado com sucesso', id: progId, slug });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao criar programa', error: error.message });
+    serverError(res, 'Erro ao criar programa', error);
   }
 };
 
@@ -464,7 +465,7 @@ export const updatePrograma = async (req, res) => {
 
     res.json({ message: 'Programa atualizado com sucesso', slug });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao atualizar programa', error: error.message });
+    serverError(res, 'Erro ao atualizar programa', error);
   }
 };
 
@@ -480,7 +481,7 @@ export const deletePrograma = async (req, res) => {
     if (rowCount > 0) res.json({ message: 'Programa removido com sucesso' });
     else res.status(404).json({ message: 'Programa não encontrado' });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao remover programa', error: error.message });
+    serverError(res, 'Erro ao remover programa', error);
   }
 };
 
@@ -544,7 +545,7 @@ export const buscaPrograma = async (req, res) => {
 
     res.json(results);
   } catch (error) {
-    res.status(500).json({ message: 'Erro na busca', error: error.message });
+    serverError(res, 'Erro na busca', error);
   }
 };
 
@@ -597,7 +598,7 @@ export const getProgramaDocentesPublic = async (req, res) => {
 
     res.json(docentes);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar docentes', error: error.message });
+    serverError(res, 'Erro ao buscar docentes', error);
   }
 };
 
@@ -629,7 +630,7 @@ export const getDocentesAdmin = async (req, res) => {
       })
     );
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao listar docentes', error: error.message });
+    serverError(res, 'Erro ao listar docentes', error);
   }
 };
 
@@ -656,7 +657,7 @@ export const addDocente = async (req, res) => {
     );
     res.status(201).json({ message: 'Docente adicionado', id });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao adicionar docente', error: error.message });
+    serverError(res, 'Erro ao adicionar docente', error);
   }
 };
 
@@ -688,7 +689,7 @@ export const removeDocente = async (req, res) => {
     }
     res.json({ message: 'Docente removido' });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao remover docente', error: error.message });
+    serverError(res, 'Erro ao remover docente', error);
   }
 };
 
@@ -743,7 +744,7 @@ export const getProgramaDiscentesPublic = async (req, res) => {
       }).filter(Boolean)
     );
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar discentes', error: error.message });
+    serverError(res, 'Erro ao buscar discentes', error);
   }
 };
 
@@ -769,7 +770,7 @@ export const getDiscentesAdmin = async (req, res) => {
                programa_id: u.programa_id || null };
     }));
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao listar discentes', error: error.message });
+    serverError(res, 'Erro ao listar discentes', error);
   }
 };
 
@@ -790,7 +791,7 @@ export const addDiscente = async (req, res) => {
     );
     res.status(201).json({ message: 'Discente adicionado', id });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao adicionar discente', error: error.message });
+    serverError(res, 'Erro ao adicionar discente', error);
   }
 };
 
@@ -803,7 +804,7 @@ export const removeDiscente = async (req, res) => {
     if (rowCount > 0) res.json({ message: 'Discente removido' });
     else res.status(404).json({ message: 'Vínculo não encontrado' });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao remover discente', error: error.message });
+    serverError(res, 'Erro ao remover discente', error);
   }
 };
 
@@ -839,7 +840,7 @@ export const getComissoesAdmin = async (req, res) => {
                nome: u.perfil_nome || u.email || v.pessoa_id, foto_url: u.perfil_foto_url || null };
     }));
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao listar comissões', error: error.message });
+    serverError(res, 'Erro ao listar comissões', error);
   }
 };
 
@@ -860,7 +861,7 @@ export const addComissaoMembro = async (req, res) => {
     );
     res.status(201).json({ message: 'Membro adicionado', id });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao adicionar membro', error: error.message });
+    serverError(res, 'Erro ao adicionar membro', error);
   }
 };
 
@@ -873,7 +874,7 @@ export const removeComissaoMembro = async (req, res) => {
     if (rowCount > 0) res.json({ message: 'Membro removido' });
     else res.status(404).json({ message: 'Vínculo não encontrado' });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao remover membro', error: error.message });
+    serverError(res, 'Erro ao remover membro', error);
   }
 };
 
@@ -890,7 +891,7 @@ export const getProgramaMetricasPublic = async (req, res) => {
     );
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar métricas', error: error.message });
+    serverError(res, 'Erro ao buscar métricas', error);
   }
 };
 
@@ -903,7 +904,7 @@ export const getProgramaLinhas = async (req, res) => {
     const rows = await linhasPesquisaRepo.getByPrograma(req.params.id);
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar linhas', error: error.message });
+    serverError(res, 'Erro ao buscar linhas', error);
   }
 };
 
@@ -915,6 +916,6 @@ export const updateProgramaLinhas = async (req, res) => {
     const rows = await linhasPesquisaRepo.setForPrograma(req.params.id, ids);
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao atualizar linhas', error: error.message });
+    serverError(res, 'Erro ao atualizar linhas', error);
   }
 };

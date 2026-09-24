@@ -77,6 +77,7 @@ import {
   tesesRepo, faqRepo, gruposRepo, pagesRepo, usersRepo,
 } from '../db/repositories.js';
 import { arquivosRepo } from '../db/anexosRepo.js';
+import { asyncRouter } from '../utils/asyncRouter.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -146,7 +147,9 @@ const importUpload = multer({
   limits: { fileSize: 15 * 1024 * 1024 },
 });
 
-const router = express.Router();
+// asyncRouter: rejeição de handler async vai para o tratador de erros global
+// (server/app.js) em vez de virar unhandledRejection e derrubar o processo.
+const router = asyncRouter(express.Router());
 
 // Rotas públicas
 router.get('/news', getNews);

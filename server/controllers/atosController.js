@@ -8,6 +8,7 @@ import { query } from '../db/pool.js';
 import { eventosRepo } from '../db/eventosRepo.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { NUP_REGEX, validarNumeroProcesso } from '../utils/nup.js';
+import { serverError } from '../utils/httpError.js';
 
 export const SITUACOES = ['RESERVADO', 'EMITIDO', 'PUBLICADO', 'CANCELADO', 'SEM_EFEITO', 'RETIFICADO'];
 export const TIPOS_REFERENCIA = ['REVOGA', 'TORNA_SEM_EFEITO', 'RETIFICA', 'PUBLICA', 'ENCAMINHA', 'COMPLEMENTA', 'FUNDAMENTA'];
@@ -26,7 +27,7 @@ export const createSerie = async (req, res) => {
     res.status(201).json(await atoSeriesRepo.create(req.body));
   } catch (e) {
     if (e.code === '23505') return res.status(409).json({ message: 'Já existe uma série com este identificador.' });
-    res.status(500).json({ message: 'Erro ao criar série.', error: e.message });
+    serverError(res, 'Erro ao criar série.', e);
   }
 };
 
@@ -44,7 +45,7 @@ export const deleteSerie = async (req, res) => {
     else res.status(404).json({ message: 'Série não encontrada.' });
   } catch (e) {
     if (e.code === '23503') return res.status(409).json({ message: 'Há atos emitidos nesta série; desative-a em vez de remover.' });
-    res.status(500).json({ message: 'Erro ao remover série.', error: e.message });
+    serverError(res, 'Erro ao remover série.', e);
   }
 };
 
@@ -103,7 +104,7 @@ export const reservar = async (req, res) => {
     }, req.user?.id);
     res.status(201).json(ato);
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao reservar número.', error: e.message });
+    serverError(res, 'Erro ao reservar número.', e);
   }
 };
 
@@ -128,7 +129,7 @@ export const createAto = async (req, res) => {
     }, req.user?.id);
     res.status(201).json(ato);
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar ato.', error: e.message });
+    serverError(res, 'Erro ao criar ato.', e);
   }
 };
 
@@ -264,7 +265,7 @@ export const createDiplomasLote = async (req, res) => {
     }, req.user?.id);
     res.status(201).json({ ...ato, diplomas });
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar ofício de diplomas em lote.', error: e.message });
+    serverError(res, 'Erro ao criar ofício de diplomas em lote.', e);
   }
 };
 

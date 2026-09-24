@@ -1,5 +1,6 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { calendariosRepo } from '../db/repositories.js';
+import { serverError } from '../utils/httpError.js';
 
 export const getCalendarios = async (req, res) => {
   res.json(await calendariosRepo.getAll());
@@ -22,7 +23,7 @@ export const createCalendario = async (req, res) => {
     if (created.isCurrent) await calendariosRepo.unsetCurrentExcept(created.id);
     res.status(201).json(created);
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar calendário.', error: e.message });
+    serverError(res, 'Erro ao criar calendário.', e);
   }
 };
 

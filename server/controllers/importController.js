@@ -1,5 +1,6 @@
 import { getImporter, listTipos } from '../services/importers/index.js';
 import { query } from '../db/pool.js';
+import { serverError } from '../utils/httpError.js';
 
 // Lista os tipos de conteúdo disponíveis para importação (e os planejados).
 export const getTiposImportacao = async (_req, res) => {
@@ -51,6 +52,6 @@ export const runImportacao = async (req, res) => {
 
     res.json({ dryRun, tipo: importer.id, resumo, resultados });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao processar importação', error: error.message });
+    serverError(res, 'Erro ao processar importação', error);
   }
 };

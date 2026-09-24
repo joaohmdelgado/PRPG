@@ -2,6 +2,7 @@ import { isPlainObject } from '../utils/sanitize.js';
 import { tesesRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
 import { resolverOuCriarPessoa } from '../db/pessoasRepo.js';
+import { serverError } from '../utils/httpError.js';
 
 const resolveProgramaId = async (param) => {
   if (!param) return null;
@@ -57,7 +58,7 @@ export const createTese = async (req, res) => {
     Object.assign(data, await resolverIds(data));
     res.status(201).json(await tesesRepo.create(data, req.user?.id));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar tese/dissertação.', error: e.message });
+    serverError(res, 'Erro ao criar tese/dissertação.', e);
   }
 };
 
@@ -70,7 +71,7 @@ export const updateTese = async (req, res) => {
     if (updated) res.json(updated);
     else res.status(404).json({ message: 'Tese/Dissertação não encontrada' });
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao atualizar tese/dissertação.', error: e.message });
+    serverError(res, 'Erro ao atualizar tese/dissertação.', e);
   }
 };
 

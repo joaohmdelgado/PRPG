@@ -14,6 +14,7 @@ import { emitir } from '../services/declaracoes.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { validarNumeroProcesso } from '../utils/nup.js';
 import { gerarOficioCobrancaPdf, gerarRelacaoVigentesPdf, gerarRelatorioAnualPosdocPdf } from '../services/posdocPdf.js';
+import { serverError } from '../utils/httpError.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS_DIR = path.join(__dirname, '../assets');
@@ -105,7 +106,7 @@ export const createPosDoutorado = async (req, res) => {
     }, req.user?.id);
     res.status(201).json(pd);
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao cadastrar o estágio pós-doutoral.', error: e.message });
+    serverError(res, 'Erro ao cadastrar o estágio pós-doutoral.', e);
   }
 };
 

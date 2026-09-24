@@ -1,4 +1,5 @@
 import { linhasPesquisaRepo } from '../db/repositories.js';
+import { serverError } from '../utils/httpError.js';
 
 const isPrpgAdmin = (user) => user?.roles?.includes('Administrator') || user?.roles?.includes('Gestor');
 const isProgramaScoped = (user) => user?.roles?.includes('GestorPrograma') && !isPrpgAdmin(user);
@@ -12,7 +13,7 @@ export const getLinhas = async (req, res) => {
     const rows = await linhasPesquisaRepo.getAll(programa_id);
     res.json(rows);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar linhas de pesquisa', error: error.message });
+    serverError(res, 'Erro ao buscar linhas de pesquisa', error);
   }
 };
 
@@ -25,7 +26,7 @@ export const getLinhaById = async (req, res) => {
     }
     res.json(row);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao buscar linha', error: error.message });
+    serverError(res, 'Erro ao buscar linha', error);
   }
 };
 
@@ -42,7 +43,7 @@ export const createLinha = async (req, res) => {
     const row = await linhasPesquisaRepo.create({ nome, programa_id, target_id });
     res.status(201).json(row);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao criar linha', error: error.message });
+    serverError(res, 'Erro ao criar linha', error);
   }
 };
 
@@ -65,7 +66,7 @@ export const updateLinha = async (req, res) => {
     const row = await linhasPesquisaRepo.update(req.params.id, { nome, programa_id, target_id });
     res.json(row);
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao atualizar linha', error: error.message });
+    serverError(res, 'Erro ao atualizar linha', error);
   }
 };
 
@@ -82,6 +83,6 @@ export const deleteLinha = async (req, res) => {
     if (!ok) return res.status(404).json({ message: 'Linha não encontrada' });
     res.json({ message: 'Linha removida.' });
   } catch (error) {
-    res.status(500).json({ message: 'Erro ao remover linha', error: error.message });
+    serverError(res, 'Erro ao remover linha', error);
   }
 };

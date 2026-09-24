@@ -7,6 +7,7 @@ import { isPlainObject } from '../utils/sanitize.js';
 import { inscricoesProficienciaRepo, editaisRepo, usersRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
 import { emitir, verificar } from '../services/declaracoes.js';
+import { serverError } from '../utils/httpError.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS_DIR = path.join(__dirname, '../assets');
@@ -141,8 +142,9 @@ export const createInscricao = async (req, res) => {
   const alunoId = req.user?.id;
   const aluno = alunoId ? await usersRepo.getById(alunoId) : null;
 
-  const nome = (body.nome || aluno?.perfil_geral?.nome || '').trim();
-  const cpf = (body.cpf || aluno?.perfil_geral?.cpf || '').trim();
+  // String(): o corpo é JSON livre — um número aqui quebraria o .trim().
+  const nome = String(body.nome || aluno?.perfil_geral?.nome || '').trim();
+  const cpf = String(body.cpf || aluno?.perfil_geral?.cpf || '').trim();
   const nivel = body.nivel || nivelDoCadastro(aluno) || null;
   const estrangeiro = body.estrangeiro != null ? !!body.estrangeiro : !!aluno?.perfil_aluno?.estrangeiro;
 
@@ -180,7 +182,7 @@ export const createInscricao = async (req, res) => {
   try {
     res.status(201).json(await inscricoesProficienciaRepo.create(data, alunoId));
   } catch (e) {
-    res.status(500).json({ message: 'Erro ao criar inscrição.', error: e.message });
+    serverError(res, 'Erro ao criar inscrição.', e);
   }
 };
 
