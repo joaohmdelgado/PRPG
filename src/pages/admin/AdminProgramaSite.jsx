@@ -124,7 +124,7 @@ const AdminProgramaSite = () => {
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-ufrpe-blue transition-colors shrink-0"
               >
-                Ver microsite <ExternalLink size={14} />
+                {programa.microsite_ativo ? 'Ver microsite' : 'Pré-visualizar'} <ExternalLink size={14} />
               </a>
             </>
           )}

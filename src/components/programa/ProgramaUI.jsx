@@ -31,7 +31,12 @@ export function PageHero({ icon, eyebrow, title, subtitle }) {
 }
 
 // Estado vazio padrão das listagens do microsite.
-export function EmptyState({ icon = 'fa-inbox', title, hint }) {
+// Aceita `titulo`/`descricao` além de `title`/`hint`: várias páginas do
+// microsite usam os nomes em português, e antes o texto sumia (só o ícone
+// aparecia).
+export function EmptyState({ icon = 'fa-inbox', title, hint, titulo, descricao }) {
+  title = title ?? titulo;
+  hint = hint ?? descricao;
   return (
     <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
       <i className={`fa-solid ${icon} text-gray-300 text-5xl mb-4`}></i>

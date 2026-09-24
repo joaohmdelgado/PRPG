@@ -72,6 +72,23 @@ export const getGruposPesquisa = async (req, res) => {
   }
 };
 
+// Leitura pública para o microsite (GET /programas/slug/:slug/grupos): a
+// listagem administrativa exige login, e o microsite chamava ela sem token —
+// o 401 aparecia ao visitante como "Nenhum grupo cadastrado". Só campos
+// públicos: líderes saem com nome, sem e-mail.
+export const getGruposPublicos = async (req, res) => {
+  const { rows } = await query('SELECT id FROM programas WHERE slug = $1', [req.params.slug]);
+  if (!rows[0]) return res.status(404).json({ message: 'Programa não encontrado' });
+  const grupos = (await gruposRepo.getAll()).filter((g) => g.programaId === rows[0].id);
+  const lideresByGrupo = await listarLideres(grupos.map((g) => g.id));
+  res.json(grupos.map((g) => ({
+    id: g.id,
+    title: g.title,
+    body: g.body,
+    lideres: (lideresByGrupo.get(g.id) || []).map(({ id, nome }) => ({ id, nome })),
+  })));
+};
+
 export const getGrupoPesquisaById = async (req, res) => {
   const g = await gruposRepo.getById(req.params.id);
   if (!g) return res.status(404).json({ message: 'Grupo de pesquisa não encontrado' });

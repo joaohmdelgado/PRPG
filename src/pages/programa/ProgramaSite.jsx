@@ -43,7 +43,9 @@ export default function ProgramaSite() {
   useEffect(() => {
     let active = true;
     setStatus('loading');
-    apiFetch(`/api/programas/slug/${encodeURIComponent(programaSlug)}`, { auth: false })
+    // Com token (quando há sessão): quem edita o programa vê o microsite em
+    // rascunho; para o público o rascunho responde 404.
+    apiFetch(`/api/programas/slug/${encodeURIComponent(programaSlug)}`)
       .then((r) => {
         if (!r.ok) throw new Error(String(r.status));
         return r.json();
@@ -145,6 +147,12 @@ export default function ProgramaSite() {
 
   return (
     <ProgramaContext.Provider value={{ programa, slug: programaSlug }}>
+      {!programa.microsite_ativo && (
+        <div role="status" className="bg-amber-100 text-amber-900 text-sm text-center px-4 py-2 border-b border-amber-200">
+          <i className="fa-solid fa-eye mr-2" aria-hidden="true"></i>
+          Pré-visualização: este microsite ainda não está publicado e só é visível para quem o administra.
+        </div>
+      )}
       <ProgramaLayout>
         <Routes>
           <Route index element={<ProgramaHome />} />

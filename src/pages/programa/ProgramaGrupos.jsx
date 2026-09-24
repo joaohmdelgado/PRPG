@@ -7,12 +7,18 @@ export default function ProgramaGrupos() {
   const { programa, slug } = usePrograma();
   const [grupos, setGrupos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
 
   useEffect(() => {
-    apiFetch(`/api/grupos-pesquisa?programa=${encodeURIComponent(slug)}`, { auth: false })
-      .then((r) => (r.ok ? r.json() : []))
+    // Rota pública do microsite (a listagem /api/grupos-pesquisa exige login).
+    // Falha de rede/servidor não pode aparecer como "nenhum grupo cadastrado".
+    apiFetch(`/api/programas/slug/${encodeURIComponent(slug)}/grupos`, { auth: false })
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.json();
+      })
       .then((d) => setGrupos(Array.isArray(d) ? d : []))
-      .catch(() => setGrupos([]))
+      .catch(() => setErro(true))
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -21,7 +27,9 @@ export default function ProgramaGrupos() {
       <PageHero icon="fa-microscope" eyebrow={programa.sigla} title="Grupos de Pesquisa" subtitle="Núcleos de investigação do programa" />
 
       <div className="container mx-auto px-4 py-10">
-        {loading ? <Spinner /> : grupos.length === 0 ? (
+        {loading ? <Spinner /> : erro ? (
+          <EmptyState icon="fa-triangle-exclamation" titulo="Não foi possível carregar os grupos" descricao="Tente novamente em alguns instantes." />
+        ) : grupos.length === 0 ? (
           <EmptyState icon="fa-microscope" titulo="Nenhum grupo cadastrado" descricao="Os grupos de pesquisa deste programa serão listados aqui em breve." />
         ) : (
           <div className="grid md:grid-cols-2 gap-6">

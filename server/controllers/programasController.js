@@ -205,10 +205,23 @@ export const getProgramaById = async (req, res) => {
 };
 
 // Busca pública do microsite por slug: programa + dirigentes + páginas (rich-text).
+// Admin/Gestor da PRPG, ou o Gestor do próprio programa.
+const podeVerRascunho = (user, programaId) => {
+  const roles = user?.roles || [];
+  if (roles.includes('Administrator') || roles.includes('Gestor')) return true;
+  return roles.includes('GestorPrograma') && user.programaId === programaId;
+};
+
 export const getProgramaBySlug = async (req, res) => {
   try {
     const prog = (await query('SELECT * FROM programas WHERE slug = $1', [req.params.slug])).rows[0];
     if (!prog) return res.status(404).json({ message: 'Programa não encontrado' });
+    // Microsite em rascunho (microsite_ativo=false) só aparece para quem pode
+    // editá-lo — é a pré-visualização prometida pelo selo "Rascunho" do painel.
+    // Para o público responde como inexistente.
+    if (!prog.microsite_ativo && !podeVerRascunho(req.user, prog.id)) {
+      return res.status(404).json({ message: 'Programa não encontrado' });
+    }
 
     const progModalidades = (await query('SELECT * FROM modalidades WHERE programa_id = $1', [prog.id])).rows;
     const { rows: todosVinculos } = await query(`${VINCULOS_JOIN_SELECT} WHERE v.programa_id = $1`, [prog.id]);

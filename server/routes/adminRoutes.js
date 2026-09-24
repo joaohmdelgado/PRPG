@@ -12,7 +12,7 @@ import { getFormularios, getFormularioById, createFormulario, updateFormulario, 
 import { getProgramas, getProgramaById, getProgramaBySlug, createPrograma, updatePrograma, deletePrograma, getProgramaDocentesPublic, getDocentesAdmin, addDocente, removeDocente, buscaPrograma, getComissoesAdmin, addComissaoMembro, removeComissaoMembro, getProgramaMetricasPublic, getProgramaDiscentesPublic, getDiscentesAdmin, addDiscente, removeDiscente, getProgramaLinhas, updateProgramaLinhas } from '../controllers/programasController.js';
 import { getCalendarios, getCalendarioById, createCalendario, updateCalendario, deleteCalendario } from '../controllers/calendariosController.js';
 import { getPortarias, getPortariaById, createPortaria, updatePortaria, deletePortaria } from '../controllers/portariasController.js';
-import { getGruposPesquisa, getGrupoPesquisaById, createGrupoPesquisa, updateGrupoPesquisa, deleteGrupoPesquisa } from '../controllers/gruposPesquisaController.js';
+import { getGruposPesquisa, getGruposPublicos, getGrupoPesquisaById, createGrupoPesquisa, updateGrupoPesquisa, deleteGrupoPesquisa } from '../controllers/gruposPesquisaController.js';
 import { getTeses, getTeseById, createTese, updateTese, deleteTese } from '../controllers/tesesController.js';
 import { getFaqs, getFaqById, createFaq, updateFaq, deleteFaq } from '../controllers/faqController.js';
 import { getDisciplinas, getDisciplinaById, createDisciplina, updateDisciplina, deleteDisciplina } from '../controllers/disciplinasController.js';
@@ -161,11 +161,14 @@ router.get('/resolucoes/:id', getResolucaoById);
 router.get('/formularios', getFormularios);
 router.get('/formularios/:id', getFormularioById);
 router.get('/programas', getProgramas);
-router.get('/programas/slug/:slug', getProgramaBySlug);
+// optionalProtect: com token de quem edita o programa, o microsite em
+// rascunho responde (pré-visualização); anônimo recebe 404.
+router.get('/programas/slug/:slug', optionalProtect, getProgramaBySlug);
 router.get('/programas/slug/:slug/pessoas', getProgramaDocentesPublic);
 router.get('/programas/slug/:slug/busca', buscaPrograma);
 router.get('/programas/slug/:slug/metricas', getProgramaMetricasPublic);
 router.get('/programas/slug/:slug/discentes', getProgramaDiscentesPublic);
+router.get('/programas/slug/:slug/grupos', getGruposPublicos);
 // Rotas específicas ANTES da rota genérica /:id
 // Gestor de programa só gerencia vínculos do SEU programa (requireSelfPrograma).
 router.get('/programas/:id/docentes', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireSelfPrograma, getDocentesAdmin);

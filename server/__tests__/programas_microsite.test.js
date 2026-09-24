@@ -22,6 +22,9 @@ const novoPrograma = (over = {}) => ({
   nome: 'PPG História',
   sigla: 'pgh',
   modalidades: [{ tipo: 'M', ano_inicio: 2006, nota_capes: '4' }],
+  // Publicado: estes testes leem o microsite como visitante anônimo, e o
+  // rascunho (microsite_ativo=false) responde 404 ao público (Fase R.4).
+  microsite_ativo: true,
   ...over,
 });
 
@@ -51,6 +54,49 @@ describe('microsite — slug', () => {
 
   it('retorna 404 para slug inexistente', async () => {
     const res = await request(app).get('/api/programas/slug/nao-existe');
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('microsite — rascunho (Fase R.4)', () => {
+  it('rascunho responde 404 ao público e aparece para o admin (pré-visualização)', async () => {
+    const { slug } = await criar({ slug: 'rasc', microsite_ativo: false });
+
+    const anon = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(anon.status).toBe(404);
+
+    const admin = await auth(request(app).get(`/api/programas/slug/${slug}`));
+    expect(admin.status).toBe(200);
+    expect(admin.body.microsite_ativo).toBe(false);
+  });
+
+  it('token inválido é tratado como anônimo', async () => {
+    const { slug } = await criar({ slug: 'rasc2', microsite_ativo: false });
+    const res = await request(app).get(`/api/programas/slug/${slug}`).set('Authorization', 'Bearer lixo');
+    expect(res.status).toBe(404);
+  });
+});
+
+describe('microsite — grupos de pesquisa públicos (Fase R.3)', () => {
+  it('lista os grupos do programa sem login e sem e-mail dos líderes', async () => {
+    const { id, slug } = await criar({ slug: 'pgh' });
+    const lider = await pool.query(
+      `INSERT INTO pessoas (id, nome, email_institucional) VALUES ('pes-lider', 'Líder X', 'lider@x.br') RETURNING id`
+    );
+    const grupo = await auth(request(app).post('/api/grupos-pesquisa')).send({
+      title: 'Grupo Y', programaId: id, liderIds: [lider.rows[0].id],
+    });
+    expect(grupo.status).toBe(201);
+
+    const res = await request(app).get(`/api/programas/slug/${slug}/grupos`);
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].title).toBe('Grupo Y');
+    expect(res.body[0].lideres).toEqual([{ id: 'pes-lider', nome: 'Líder X' }]);
+  });
+
+  it('404 para programa inexistente', async () => {
+    const res = await request(app).get('/api/programas/slug/nao-existe/grupos');
     expect(res.status).toBe(404);
   });
 });
