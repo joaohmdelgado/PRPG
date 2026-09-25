@@ -5,6 +5,7 @@ import { apiFetch } from '../../api';
 import { FormSkeleton } from '../../components/admin/AdminUI';
 import { useToast } from '../../components/admin/Toast';
 import { useConfirm } from '../../components/admin/ConfirmModal';
+import OrigemPlanilha from '../../components/admin/OrigemPlanilha';
 import { situacaoInfo, SITUACOES_MANUAIS } from '../../constants/posDoutorado';
 
 const fmtData = (iso, aprox) => {
@@ -112,6 +113,8 @@ export default function AdminPosDoutoradoFicha() {
           </button>
         </div>
       </div>
+
+      <div className="mb-5"><OrigemPlanilha entidade="pos_doutorado" id={id} /></div>
 
       <div className="grid grid-cols-2 gap-6 mb-6 text-sm">
         <div>

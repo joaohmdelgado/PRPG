@@ -28,6 +28,8 @@ export const STATUS_PROCESSO = [
   'RETIRADO_DE_PAUTA', 'EM_DILIGENCIA', 'PEDIDO_VISTA', 'SOBRESTADO', 'ADIADO',
   'AD_REFERENDUM', 'APENSADO', 'ENCAMINHADO_INSTANCIA_SUPERIOR',
   'EM_MANIFESTACAO_JURIDICA', 'EM_RECURSO',
+  // Fase O.2: importado da planilha; a situação real depende da cor da linha (D-B1).
+  'A_CLASSIFICAR',
 ];
 export const STATUS_RESOLVIDOS = ['RESOLVIDO', 'ARQUIVADO', 'PUBLICADO'];
 

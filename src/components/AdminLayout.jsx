@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet,
   GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle,
-  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Gavel, Contact, Inbox, Microscope, Mail, ClipboardList, Layers, Images, Menu, Network
+  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Gavel, Contact, Inbox, Microscope, Mail, ClipboardList, Layers, Images, Menu, Network, ClipboardCheck
 } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../auth';
 
@@ -38,6 +38,7 @@ const ADMINISTRACAO = [
   { to: '/admin/pos-doutorado', label: 'Pós-Doutorado', icon: Microscope },
   { to: '/admin/notificacoes', label: 'Notificações', icon: Mail },
   { to: '/admin/importacao', label: 'Importação', icon: Upload },
+  { to: '/admin/planilhas/revisao', label: 'Revisão da importação', icon: ClipboardCheck },
 ];
 
 // Navegação do Gestor de Programa: só conteúdo vinculável ao seu programa.

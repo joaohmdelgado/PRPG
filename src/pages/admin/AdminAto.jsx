@@ -5,6 +5,7 @@ import { apiFetch } from '../../api';
 import { FormSkeleton } from '../../components/admin/AdminUI';
 import { useToast } from '../../components/admin/Toast';
 import { useConfirm } from '../../components/admin/ConfirmModal';
+import OrigemPlanilha from '../../components/admin/OrigemPlanilha';
 import { situacaoInfo, SITUACOES, TIPOS_REFERENCIA } from '../../constants/atos';
 
 const fmtData = (iso) => {
@@ -104,6 +105,8 @@ export default function AdminAto() {
           )}
         </div>
       </div>
+
+      <div className="mb-5"><OrigemPlanilha entidade="ato" id={id} /></div>
 
       <div className="grid grid-cols-2 gap-6 mb-6 text-sm">
         <div>

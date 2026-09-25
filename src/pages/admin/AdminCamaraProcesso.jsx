@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { useToast } from '../../components/admin/Toast';
+import OrigemPlanilha from '../../components/admin/OrigemPlanilha';
 import { statusLabel, statusClasses, fmtData, TIPO_EVENTO_LABELS } from '../../constants/camara';
 
 const Field = ({ label, children }) => (
@@ -117,6 +118,8 @@ const AdminCamaraProcesso = () => {
           <Edit2 size={20} />
         </Link>
       </div>
+
+      <OrigemPlanilha entidade="processo" id={processo.id} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Coluna larga: assunto + linha do tempo */}

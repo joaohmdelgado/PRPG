@@ -64,6 +64,9 @@ import { buscaGlobal } from '../controllers/buscaController.js';
 import { getLinhas, getLinhaById, createLinha, updateLinha, deleteLinha } from '../controllers/linhasPesquisaController.js';
 import { getTaxonomiaRefs, getTaxonomiaRefById, createTaxonomiaRef, updateTaxonomiaRef, deleteTaxonomiaRef } from '../controllers/taxonomiaRefsController.js';
 import { getTiposImportacao, runImportacao } from '../controllers/importController.js';
+import {
+  getPendencias, resolverPendencia, resolverLote, getOpcoes, getOrigem, getImportacoes, getImportacao,
+} from '../controllers/importacoesController.js';
 
 import { login } from '../controllers/authController.js';
 import { getUsers, getUsersResumo, getUserById, createUser, updateUser, deleteUser } from '../controllers/usersController.js';
@@ -555,6 +558,18 @@ router.get('/pos-doutorado/:id/oficio-cobranca.pdf', protect, requireRole(POSDOC
 router.get('/notificacoes', protect, requireRole(['Administrator']), getNotificacoes);
 router.post('/notificacoes/teste', protect, requireRole(['Administrator']), enviarTeste);
 router.post('/notificacoes/:id/reenviar', protect, requireRole(['Administrator']), reenviarNotificacao);
+
+// ===================== Planilhas: importação e revisão (Fase O) =====================
+// Ver server/services/planilhas/. A revisão é onde se interpreta o que a
+// planilha não diz (pendências com a decisão D-xx que as responde).
+const PLANILHAS = ['Administrator', 'Gestor'];
+router.get('/importacoes/pendencias', protect, requireRole(PLANILHAS), getPendencias);
+router.post('/importacoes/pendencias/lote', protect, requireRole(PLANILHAS), resolverLote);
+router.post('/importacoes/pendencias/:id/resolver', protect, requireRole(PLANILHAS), resolverPendencia);
+router.get('/importacoes/opcoes', protect, requireRole(PLANILHAS), getOpcoes);
+router.get('/importacoes/origem/:entidade/:entidadeId', protect, requireRole(PLANILHAS), getOrigem);
+router.get('/importacoes', protect, requireRole(PLANILHAS), getImportacoes);
+router.get('/importacoes/:id', protect, requireRole(PLANILHAS), getImportacao);
 
 // ===================== Busca global (Fase L.10) =====================
 router.get('/busca', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), buscaGlobal);

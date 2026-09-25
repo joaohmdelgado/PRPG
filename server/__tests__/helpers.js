@@ -32,6 +32,8 @@ export const RESET_TABLES = [
   'pos_doutorados', 'notificacoes', 'ato_diplomas',
   'revisoes', 'menu_itens', 'menus', 'configuracoes', 'referencias',
   'programa_menu_itens',
+  // Fase O.2: importação das planilhas (origens/pendências/de-para antes da execução).
+  'importacao_origens', 'importacao_pendencias', 'importacao_depara', 'importacoes',
 ];
 
 // Tabelas do schema que o resetDb deliberadamente NÃO toca: `unidades` é seed

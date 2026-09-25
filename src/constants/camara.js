@@ -23,6 +23,8 @@ export const STATUS_INFO = {
   ENCAMINHADO_INSTANCIA_SUPERIOR: { label: 'Encaminhado (CEPE/CONSU)', classes: 'bg-violet-100 text-violet-800' },
   EM_MANIFESTACAO_JURIDICA: { label: 'Manifestação jurídica', classes: 'bg-rose-100 text-rose-800' },
   EM_RECURSO: { label: 'Em recurso', classes: 'bg-rose-100 text-rose-800' },
+  // Fase O.2: importado da planilha; a situação real depende da cor da linha (D-B1).
+  A_CLASSIFICAR: { label: 'A classificar (importado)', classes: 'bg-yellow-100 text-yellow-800' },
 };
 
 export const STATUS_OPTIONS = Object.keys(STATUS_INFO);
