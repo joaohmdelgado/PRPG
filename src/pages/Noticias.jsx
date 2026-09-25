@@ -190,7 +190,7 @@ export default function Noticias() {
                   <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-200">
                     <img
                       src={item.image?.startsWith('http') ? item.image : `${API_URL}${item.image}`}
-                      alt={item.title}
+                      alt={item.imagemAlt || ""}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                     />
                     {item.category && (

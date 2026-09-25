@@ -186,7 +186,7 @@ export default function Noticia() {
           <figure className="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
             <img
               src={newsItem.image?.startsWith('http') ? newsItem.image : `${API_URL}${newsItem.image}`}
-              alt={newsItem.title}
+              alt={newsItem.imagemAlt || newsItem.title}
               className="w-full h-auto object-cover max-h-[500px]"
             />
             {newsItem.imageCaption && (
@@ -250,7 +250,7 @@ export default function Noticia() {
                 <div className="aspect-video overflow-hidden bg-gray-200 relative">
                   <img
                     src={related.image?.startsWith('http') ? related.image : `${API_URL}${related.image}`}
-                    alt={related.title}
+                    alt={related.imagemAlt || ""}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                   />
                   <div className={`absolute top-2 left-2 text-[8px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${corDe(categorias, related.categorySlug)}`}>

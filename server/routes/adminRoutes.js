@@ -79,6 +79,7 @@ import {
   tesesRepo, faqRepo, gruposRepo, pagesRepo, usersRepo,
 } from '../db/repositories.js';
 import { arquivosRepo } from '../db/anexosRepo.js';
+import { registrarUploadPublico, getArquivos, getUsosArquivo, substituirArquivo, deleteArquivo } from '../controllers/arquivosController.js';
 import { asyncRouter } from '../utils/asyncRouter.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -210,20 +211,37 @@ router.get('/pages/slug/:slug', optionalProtect, getPageBySlug);
 router.post('/login', loginLimiter, login);
 
 // Uploads (qualquer usuário logado)
-router.post('/upload', uploadLimiter, protect, (req, res) => {
+router.post('/upload', uploadLimiter, protect, (req, res, next) => {
   upload.single('file')(req, res, async (err) => {
     if (err) return res.status(400).json({ message: err.message });
     if (!req.file) return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
-    const fileUrl = `/uploads/${req.file.filename}`;
     // Fase A.5 (G5): registra o upload em `arquivos`; a resposta ganha `id`
     // sem remover url/originalName (contrato existente preservado).
-    const arquivo = await arquivosRepo.create({
-      url: fileUrl, nomeOriginal: req.file.originalname, mime: req.file.mimetype,
-      tamanhoBytes: req.file.size, enviadoPor: req.user?.id,
-    });
-    res.json({ id: arquivo.id, url: fileUrl, originalName: req.file.originalname });
+    // Fase F.5: SHA-256 + deduplicação — arquivo igual a um já enviado
+    // reaproveita o existente em vez de gravar outra cópia.
+    // try/catch: este callback roda fora da promessa do handler, então o
+    // asyncRouter não o alcança.
+    try {
+      const { arquivo, reaproveitado } = await registrarUploadPublico(req.file, req.user?.id);
+      res.json({ id: arquivo.id, url: arquivo.url, originalName: req.file.originalname, reaproveitado });
+    } catch (e) {
+      next(e);
+    }
   });
 });
+
+// ===================== Biblioteca de mídia (Fase F.5) =====================
+// Leitura para quem edita conteúdo; trocar/excluir só Admin/Gestor (afeta
+// todos os lugares que usam o arquivo).
+router.get('/arquivos', protect, requireInstitutionalWriter, getArquivos);
+router.get('/arquivos/:id/usos', protect, requireInstitutionalWriter, getUsosArquivo);
+router.post('/arquivos/:id/substituir', uploadLimiter, protect, requireRole(['Administrator', 'Gestor']), (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err) return res.status(400).json({ message: err.message });
+    substituirArquivo(req, res).catch(next);
+  });
+});
+router.delete('/arquivos/:id', protect, requireRole(['Administrator', 'Gestor']), deleteArquivo);
 
 // Rotas exclusivas para Administrator e Gestor
 router.post('/taxonomias', protect, requireRole(['Administrator', 'Gestor']), updateTaxonomias);

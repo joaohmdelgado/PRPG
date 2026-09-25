@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet,
   GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle,
-  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Gavel, Contact, Inbox, Microscope, Mail, ClipboardList, Layers
+  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Gavel, Contact, Inbox, Microscope, Mail, ClipboardList, Layers, Images
 } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../auth';
 
@@ -19,6 +19,7 @@ const CONTEUDO = [
   { to: '/admin/disciplinas', label: 'Disciplinas', icon: Book },
   { to: '/admin/bolsas', label: 'Bolsas', icon: Award },
   { to: '/admin/paginas', label: 'Páginas', icon: File },
+  { to: '/admin/midia', label: 'Biblioteca de Mídia', icon: Images },
 ];
 
 const ADMINISTRACAO = [
@@ -26,7 +27,7 @@ const ADMINISTRACAO = [
   { to: '/admin/portarias', label: 'Portarias', icon: FileCheck },
   { to: '/admin/grupos-pesquisa', label: 'Grupos de Pesquisa', icon: Users },
   { to: '/admin/linhas-pesquisa', label: 'Linhas de Pesquisa', icon: FlaskConical },
-  { to: '/admin/taxonomias', label: 'Taxonomias', icon: Tags },
+  { to: '/admin/taxonomias', label: 'Classificações', icon: Tags },
   { to: '/admin/users', label: 'Usuários', icon: UserCog },
   { to: '/admin/proficiencia', label: 'Proficiência', icon: Languages },
   { to: '/admin/camara', label: 'Câmara de Pós-Graduação', icon: Gavel },

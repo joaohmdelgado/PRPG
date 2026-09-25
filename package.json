@@ -16,7 +16,8 @@
     "db:migrate": "node server/db/migrate.mjs",
     "db:migrate:apply": "node server/db/migrateRunner.mjs",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "arquivos": "node server/scripts/arquivos.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

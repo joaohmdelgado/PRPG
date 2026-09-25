@@ -7,6 +7,7 @@ import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
 import useVocabulario, { rotuloDe } from '../../hooks/useVocabulario';
+import MediaPicker from '../../components/admin/MediaPicker';
 
 const AdminNoticiaForm = () => {
   const { id } = useParams();
@@ -20,6 +21,8 @@ const AdminNoticiaForm = () => {
     date: '',
     image: '',
     imageCaption: '',
+    imagemAlt: '',
+    destaque: false,
     excerpt: '',
     content: '', // No form trataremos como string para facilitar, no JSON é array
     author: '',
@@ -154,6 +157,8 @@ const AdminNoticiaForm = () => {
               date: parseDateToISO(data.date),
               image: data.image || '',
               imageCaption: data.imageCaption || '',
+              imagemAlt: data.imagemAlt || '',
+              destaque: !!data.destaque,
               excerpt: data.excerpt || '',
               content: contentHTML,
               author: data.author || '',
@@ -177,8 +182,8 @@ const AdminNoticiaForm = () => {
   }, [id, isEditing]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleFileUpload = async (file) => {
@@ -391,8 +396,34 @@ const AdminNoticiaForm = () => {
                     />
                   </label>
                 )}
+                {/* Reaproveitar uma imagem já enviada (Fase F.5). */}
+                <MediaPicker tipo="imagem" onEscolher={(a) => setFormData((prev) => ({ ...prev, image: a.url }))} />
               </div>
             )}
+          </div>
+
+          <div className="md:col-span-2">
+            <label htmlFor="noticia-imagem-alt" className="block text-sm font-medium text-gray-700 mb-1">
+              Descrição da imagem (texto alternativo)
+            </label>
+            <input
+              id="noticia-imagem-alt"
+              type="text"
+              name="imagemAlt"
+              value={formData.imagemAlt}
+              onChange={handleChange}
+              placeholder="Ex.: Participantes do workshop no auditório da PRPG"
+              aria-describedby="noticia-imagem-alt-ajuda"
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
+            />
+            <p id="noticia-imagem-alt-ajuda" className="text-xs text-gray-400 mt-1">Lido por leitores de tela para quem não enxerga a imagem. Descreva o que ela mostra.</p>
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" name="destaque" checked={!!formData.destaque} onChange={handleChange} />
+              Destacar esta notícia na página inicial
+            </label>
           </div>
 
           <div className="md:col-span-2">

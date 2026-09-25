@@ -76,6 +76,7 @@ const AdminDisciplinaForm = lazy(() => import('./pages/admin/AdminDisciplinaForm
 const AdminBolsasList = lazy(() => import('./pages/admin/AdminBolsasList'));
 const AdminBolsaForm = lazy(() => import('./pages/admin/AdminBolsaForm'));
 const AdminPagesList = lazy(() => import('./pages/admin/AdminPagesList'));
+const AdminMidia = lazy(() => import('./pages/admin/AdminMidia'));
 const AdminPageForm = lazy(() => import('./pages/admin/AdminPageForm'));
 const AdminMetricas = lazy(() => import('./pages/admin/AdminMetricas'));
 const AdminImportacao = lazy(() => import('./pages/admin/AdminImportacao'));
@@ -184,6 +185,11 @@ function App() {
             <Route path="paginas" element={<AdminPagesList />} />
             <Route path="paginas/nova" element={<AdminPageForm />} />
             <Route path="paginas/editar/:id" element={<AdminPageForm />} />
+            {/* Biblioteca de mídia (Fase F.5): leitura para quem edita conteúdo;
+                trocar/excluir só Admin/Gestor (checado também no backend). */}
+            <Route path="midia" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
+              <Route index element={<AdminMidia />} />
+            </Route>
             <Route path="taxonomias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
               <Route index element={<AdminTaxonomias />} />
             </Route>
