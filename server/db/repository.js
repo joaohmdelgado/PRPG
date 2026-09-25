@@ -1,5 +1,6 @@
 import { query } from './pool.js';
 import { STATUS_PUBLICACAO } from '../utils/publicacao.js';
+import { registrarRevisao, apagarRevisoes } from './revisoesRepo.js';
 
 // Conflito de edição (Fase F.2): outra pessoa salvou o registro depois que
 // este cliente o carregou. O tratador global responde 409 com a mensagem.
@@ -16,7 +17,8 @@ export class ConflitoEdicao extends Error {
 // - toRow:   converte o JSON do app no objeto de colunas para o banco
 // - publicavel: a tabela tem o envelope de publicação (Fase F.1 — status,
 //   publicado_em, criado_em, atualizado_em); a fábrica mapeia essas colunas
-//   sem que cada fromRow/toRow precise repeti-las.
+//   sem que cada fromRow/toRow precise repeti-las, e guarda a versão anterior
+//   a cada update (histórico — Fase F.7, ver revisoesRepo.js).
 // O update faz merge com o registro existente, preservando o comportamento
 // antigo ({ ...existente, ...req.body }) dos controllers baseados em JSON.
 export function createRepository({ table, fromRow, toRow, orderBy = 'id ASC', publicavel = false }) {
@@ -89,11 +91,15 @@ export function createRepository({ table, fromRow, toRow, orderBy = 'id ASC', pu
       }
       const { rows } = await query(`UPDATE ${table} SET ${set.join(', ')} WHERE ${where} RETURNING *`, params);
       if (!rows[0] && publicavel && versao) throw new ConflitoEdicao();
-      return rows[0] ? decorate(rows[0]) : null;
+      if (!rows[0]) return null;
+      const atualizado = decorate(rows[0]);
+      if (publicavel) await registrarRevisao(table, existing, atualizado);
+      return atualizado;
     },
 
     async remove(id) {
       const { rowCount } = await query(`DELETE FROM ${table} WHERE id = $1`, [id]);
+      if (rowCount > 0 && publicavel) await apagarRevisoes(table, id);
       return rowCount > 0;
     },
 

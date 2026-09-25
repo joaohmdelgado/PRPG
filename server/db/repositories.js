@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { createRepository, ConflitoEdicao } from './repository.js';
+import { registrarRevisao, apagarRevisoes } from './revisoesRepo.js';
 import { STATUS_PUBLICACAO } from '../utils/publicacao.js';
 import { query } from './pool.js';
 import { parseDataPt } from '../utils/datas.js';
@@ -384,10 +385,13 @@ export const calendariosRepo = {
     );
     if (rowCount === 0) throw new ConflitoEdicao();
     await saveMilestones(id, o.milestones);
-    return calendariosRepo.getById(id);
+    const atualizado = await calendariosRepo.getById(id);
+    await registrarRevisao('calendarios', existing, atualizado);
+    return atualizado;
   },
   async remove(id) {
     const { rowCount } = await query('DELETE FROM calendarios WHERE id = $1', [id]);
+    if (rowCount > 0) await apagarRevisoes('calendarios', id);
     return rowCount > 0;
   },
   async unsetCurrentExcept(id) {

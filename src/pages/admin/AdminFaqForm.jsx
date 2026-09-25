@@ -201,6 +201,7 @@ const AdminFaqForm = () => {
           onChange={(pub) => setFormData((prev) => ({ ...prev, ...pub }))}
           previewUrl={null}
           sujo={sujo}
+          historico={isEditing ? { entidade: 'faq', id, versao: formData._versao } : null}
         />
         {/* Programa */}
         <div className={isProgramaGestor() ? 'hidden' : undefined}>

@@ -272,6 +272,7 @@ const AdminGrupoPesquisaForm = () => {
           onChange={(pub) => setFormData((prev) => ({ ...prev, ...pub }))}
           previewUrl={null}
           sujo={sujo}
+          historico={isEditing ? { entidade: 'grupos_pesquisa', id, versao: formData._versao } : null}
         />
         <div className={isProgramaGestor() ? 'hidden' : undefined}>
           <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>

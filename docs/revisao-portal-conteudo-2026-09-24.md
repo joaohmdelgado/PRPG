@@ -287,16 +287,49 @@ cronológica, o microsite em rascunho não é público e `/api/news` trafega com
 
 | | # | Ação | Onde |
 |---|---|---|---|
-| `[ ]` | F.1 | Campos comuns nas 11 tabelas de conteúdo: `status` (RASCUNHO/PUBLICADO/ARQUIVADO), `publicado_em` (permite agendar) e `criado_em`/`atualizado_em` com trigger. Na notícia, `destaque` e `imagem_alt`; `ordem` onde a lista é curada. As linhas existentes viram PUBLICADO, sem mudança visível. Endpoints públicos filtram `status='PUBLICADO' AND publicado_em <= now()` | migração, `schema.sql` |
-| `[ ]` | F.2 | Repositório: `list()` com filtros permitidos, ordenação, paginação e versão de listagem sem o corpo; `update` que confere `atualizado_em` e devolve 409 se alguém editou antes | `server/db/repository.js` |
-| `[ ]` | F.3 | Contrato de listagem pública `{items,total,page}` com filtros por programa, categoria, ano, busca e status; notícia individual por `/api/news/:id` e "relacionadas" por consulta | controllers e páginas públicas |
-| `[ ]` | F.4 | Classificação única em `vocabularios` (`noticia.categoria`, `edital.categoria`, `documento.secao`, com ordem e cor), editável no painel; `taxonomias` é absorvida; `taxonomia_refs` fica só para importação | `vocabulariosRepo.js`, formulários, `Editais.jsx`, `Resolucoes.jsx` |
-| `[ ]` | F.5 | Biblioteca de mídia sobre `arquivos`/`anexos`: listar, buscar, reutilizar, "onde é usado", substituir o arquivo mantendo as referências, preencher `sha256`. Rotina para trazer os arquivos de prpg.ufrpe.br e do Drive antes do desligamento do site antigo | `server/db/anexosRepo.js`, novo `MediaPicker` |
-| `[ ]` | F.6 | Formulário editorial comum: status e agendamento, pré-visualização, aviso de alterações não salvas, "editado por X em Y"; um único CKEditor (`RichTextEditor`) com upload de imagem para a biblioteca | `src/components/admin/` |
-| `[ ]` | F.7 | Histórico de versões leve (tabela `revisoes`: entidade, id, snapshot JSONB, autor, data) e opção de restaurar — cobre, para conteúdo, a metade de L.10 que ficou aberta | nova tabela + repositório |
+| `[x]` | F.1 | Campos comuns nas 11 tabelas de conteúdo: `status` (RASCUNHO/PUBLICADO/ARQUIVADO), `publicado_em` (permite agendar) e `criado_em`/`atualizado_em` com trigger. Na notícia, `destaque` e `imagem_alt`; `ordem` onde a lista é curada. As linhas existentes viram PUBLICADO, sem mudança visível. Endpoints públicos filtram `status='PUBLICADO' AND publicado_em <= now()` | migração, `schema.sql` |
+| `[x]` | F.2 | Repositório: `list()` com filtros permitidos, ordenação, paginação e versão de listagem sem o corpo; `update` que confere `atualizado_em` e devolve 409 se alguém editou antes | `server/db/repository.js` |
+| `[x]` | F.3 | Contrato de listagem pública `{items,total,page}` com filtros por programa, categoria, ano, busca e status; notícia individual por `/api/news/:id` e "relacionadas" por consulta | controllers e páginas públicas |
+| `[x]` | F.4 | Classificação única em `vocabularios` (`noticia.categoria`, `edital.categoria`, `documento.secao`, com ordem e cor), editável no painel; `taxonomias` é absorvida; `taxonomia_refs` fica só para importação | `vocabulariosRepo.js`, formulários, `Editais.jsx`, `Resolucoes.jsx` |
+| `[x]` | F.5 | Biblioteca de mídia sobre `arquivos`/`anexos`: listar, buscar, reutilizar, "onde é usado", substituir o arquivo mantendo as referências, preencher `sha256`. Rotina para trazer os arquivos de prpg.ufrpe.br e do Drive antes do desligamento do site antigo | `server/db/anexosRepo.js`, novo `MediaPicker` |
+| `[x]` | F.6 | Formulário editorial comum: status e agendamento, pré-visualização, aviso de alterações não salvas, "editado por X em Y"; um único CKEditor (`RichTextEditor`) com upload de imagem para a biblioteca | `src/components/admin/` |
+| `[x]` | F.7 | Histórico de versões leve (tabela `revisoes`: entidade, id, snapshot JSONB, autor, data) e opção de restaurar — cobre, para conteúdo, a metade de L.10 que ficou aberta | nova tabela + repositório |
 
 **Pronto quando:** dá para salvar um rascunho invisível ao público, agendar uma notícia, restaurar
 uma versão anterior, e toda lista pública e do painel é paginada no servidor.
+
+> **Nota de execução (25/09/2026)** — os 7 itens aplicados, um commit por item (F.1+F.2 juntos),
+> com testes em `publicacao.test.js`, `vocabularios.test.js`, `arquivos.test.js` e
+> `revisoes.test.js` (suíte: 292 testes verdes). Migrações `2026-09-25_envelope_publicacao`,
+> `_vocabularios_conteudo` e `_revisoes` aplicadas no banco de desenvolvimento.
+> **Decisão assumida:** D-R3 como recomendado — sem motor de aprovação; o Gestor de Programa
+> publica direto e vê rascunhos só do próprio programa. **Como ficou:**
+> - F.1/F.2: envelope nas 11 tabelas (linhas antigas = PUBLICADO, `criado_em` NULL por não
+>   se saber a data real); visibilidade em `server/utils/publicacao.js`; edição concorrente
+>   pelo `_versao` (= `atualizado_em` carregado) no próprio `WHERE` do UPDATE → 409.
+> - F.3: contrato `?page/&limit` → `{items,total,page,limit,pages}` (sem eles, array — os
+>   consumidores antigos não mudam) e `?resumo=1` em todas as listagens de conteúdo. **Só a
+>   página pública de Notícias consome a paginação no servidor**; as demais listas (públicas e
+>   do painel) ainda pedem tudo — volumes pequenos hoje; migram na Fase U/P.
+> - F.4: `vocabularios` com 5 domínios editáveis no painel ("Classificações", ex-Taxonomias):
+>   renomear propaga para o conteúdo, excluir o que está em uso só desativa. `taxonomias`
+>   **não** foi absorvida — continua servindo às listas do perfil de usuário (fora do escopo).
+> - F.5: biblioteca em `/admin/midia` (buscar, "onde é usado" em 21 colunas, substituir
+>   reescrevendo as referências, excluir só o que não é usado); `sha256` + deduplicação. O
+>   `MediaPicker` está só na capa da notícia; os outros campos de arquivo seguem com upload
+>   direto. `npm run arquivos -- --registrar-locais --externos` rodado (6 locais registrados;
+>   288 URLs externas: 66 prpg.ufrpe.br, 219 profiap.ufrpe.br, 2 unsplash, 1 Drive). **O
+>   download (`--executar`) não foi rodado** — depende de autorização.
+> - F.6: `PublicacaoCampos` + `useAvisoAlteracoes` nos 11 formulários; CKEditor com configuração
+>   única (`components/admin/ckeditor.js`) e upload de imagem pela biblioteca. **Limitação:** o
+>   aviso de alterações só cobre fechar/recarregar a aba — a navegação interna do painel não é
+>   interceptada (o app usa `BrowserRouter`, e o bloqueio de rota exige data router).
+> - F.7: tabela `revisoes` (últimas 30 versões por item, apagadas junto com o item); painel
+>   "Histórico de versões" nos 11 formulários. Restaurar devolve o conteúdo, mas mantém
+>   situação, data de publicação, programa, endereço (slug) e ordem atuais, e é desfazível.
+> **Não verificado no navegador:** as telas do painel (exigem login) — conferidas por build,
+> typecheck e testes de API; a configuração do CKEditor e o proxy `/uploads` foram conferidos
+> no navegador.
 
 ### Fase H — Portal dirigido por dados (~2 semanas, depende de F)
 
@@ -424,7 +457,7 @@ pendências no sistema, não na planilha.
 | Fase | Itens | Decisões antes | Início | Fim | Estado |
 |---|---|---|---|---|---|
 | R — Robustez imediata | 11 | — | 24/09/2026 | 24/09/2026 | ✅ concluída (ver nota da Fase R) |
-| F — Fundação editorial | 7 | D-R3 | | | ⬜ não iniciada |
+| F — Fundação editorial | 7 | D-R3 | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase F) |
 | H — Portal dirigido por dados | 7 | D-R1 | | | ⬜ não iniciada |
 | N — Conexões entre conteúdos | 9 | D-R1, D-R2 | | | ⬜ não iniciada |
 | S — Microsites em 4 grupos | 6 | — | | | ⬜ não iniciada |

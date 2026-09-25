@@ -219,7 +219,8 @@ Access at `/admin/login`. Main sections in sidebar:
 - Portarias (Admin only)
 - Grupos de Pesquisa (Admin only)
 - Usuários (User management, Admin only)
-- Taxonomias (Category management, Admin only)
+- Classificações (editable categories/sections — `vocabularios`; ex-Taxonomias)
+- Biblioteca de Mídia (`/admin/midia` — reuse, "where used", replace a file everywhere)
 
 ## Testing
 
@@ -241,8 +242,9 @@ Access at `/admin/login`. Main sections in sidebar:
   milestones child table), grupos/teses reference resolution, Câmara, atos,
   pós-doc, contatos, prazos, notificações, indicadores, and `robustez.test.js`
   (async errors never crash the process, pg data errors -> 400/409, news
-  dates, origin filter, users/resumo, compression/cache). ~260 tests in 35
-  files — the exact number drifts; check with `npx vitest run`.
+  dates, origin filter, users/resumo, compression/cache), and the editorial
+  foundation (`publicacao`, `vocabularios`, `arquivos`, `revisoes`). ~290 tests
+  in 38 files — the exact number drifts; check with `npx vitest run`.
 - Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes
@@ -324,6 +326,16 @@ curl -X POST http://localhost:5000/api/news \
   -H "Content-Type: application/json" \
   -d '{"title":"Test","content":"..."}'
 ```
+
+**Publishable content (Fase F, `docs/revisao-portal-conteudo-2026-09-24.md`)**:
+the 11 content tables share a publication envelope (`status`
+RASCUNHO/PUBLICADO/ARQUIVADO, `publicado_em`, `criado_em`/`atualizado_em`) —
+`createRepository({ publicavel: true })` maps it; public visibility rules live
+in `server/utils/publicacao.js`. Sending `_versao` (the loaded `atualizado_em`)
+on update makes a concurrent edit fail with 409. Every update of such content
+keeps the previous version in `revisoes` (`server/db/revisoesRepo.js`,
+`/api/revisoes/:entidade/:id`). Listings accept `?page=&limit=` →
+`{items,total,page,limit,pages}` (see `server/utils/listagem.js`).
 
 **Checking User Roles**:
 - Admin users are defined in `server/data/users.json`

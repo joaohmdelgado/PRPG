@@ -1,5 +1,6 @@
 import React from 'react';
 import { Eye } from 'lucide-react';
+import HistoricoVersoes from './HistoricoVersoes';
 
 // Bloco "Publicação" dos formulários de conteúdo (Fase F.6): status,
 // agendamento e pré-visualização. O servidor só mostra ao público o que está
@@ -16,11 +17,14 @@ const paraLocal = (iso) => {
 const paraIso = (local) => (local ? new Date(local).toISOString() : '');
 
 // `sujo`: há alterações não salvas (ver hooks/useAvisoAlteracoes).
-export default function PublicacaoCampos({ status = 'PUBLICADO', publicadoEm = '', onChange, previewUrl, sujo = false }) {
+// `historico`: { entidade, id, versao } de um item já salvo — mostra o
+// histórico de versões (Fase F.7) logo abaixo.
+export default function PublicacaoCampos({ status = 'PUBLICADO', publicadoEm = '', onChange, previewUrl, sujo = false, historico = null }) {
   const agendado = status === 'PUBLICADO' && publicadoEm && new Date(publicadoEm) > new Date();
   const set = (campo, valor) => onChange({ status, publicadoEm, [campo]: valor });
 
   return (
+    <>
     <fieldset className="md:col-span-2 border border-gray-200 rounded-lg p-4 bg-gray-50/60">
       <legend className="px-1 text-sm font-semibold text-gray-700">Publicação</legend>
       <div className="flex flex-wrap items-end gap-4">
@@ -58,5 +62,7 @@ export default function PublicacaoCampos({ status = 'PUBLICADO', publicadoEm = '
           : 'Visível no site assim que for salvo. Deixe a data vazia para publicar imediatamente.')}
       </p>
     </fieldset>
+    {historico?.id && <HistoricoVersoes {...historico} sujo={sujo} />}
+    </>
   );
 }

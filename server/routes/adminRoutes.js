@@ -80,6 +80,7 @@ import {
 } from '../db/repositories.js';
 import { arquivosRepo } from '../db/anexosRepo.js';
 import { registrarUploadPublico, getArquivos, getUsosArquivo, substituirArquivo, deleteArquivo } from '../controllers/arquivosController.js';
+import { autorizarRevisao, getRevisoes, getRevisao, restaurarRevisao } from '../controllers/revisoesController.js';
 import { asyncRouter } from '../utils/asyncRouter.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -242,6 +243,12 @@ router.post('/arquivos/:id/substituir', uploadLimiter, protect, requireRole(['Ad
   });
 });
 router.delete('/arquivos/:id', protect, requireRole(['Administrator', 'Gestor']), deleteArquivo);
+
+// Histórico de versões do conteúdo publicável (Fase F.7): quem pode editar o
+// item vê as versões anteriores e restaura uma delas.
+router.get('/revisoes/:entidade/:id', protect, requireInstitutionalWriter, autorizarRevisao, getRevisoes);
+router.get('/revisoes/:entidade/:id/:revisaoId', protect, requireInstitutionalWriter, autorizarRevisao, getRevisao);
+router.post('/revisoes/:entidade/:id/:revisaoId/restaurar', protect, requireInstitutionalWriter, autorizarRevisao, restaurarRevisao);
 
 // Rotas exclusivas para Administrator e Gestor
 router.post('/taxonomias', protect, requireRole(['Administrator', 'Gestor']), updateTaxonomias);

@@ -202,6 +202,7 @@ const AdminBolsaForm = () => {
           onChange={(pub) => setFormData((prev) => ({ ...prev, ...pub }))}
           previewUrl={null}
           sujo={sujo}
+          historico={isEditing ? { entidade: 'bolsas', id, versao: formData._versao } : null}
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Título */}

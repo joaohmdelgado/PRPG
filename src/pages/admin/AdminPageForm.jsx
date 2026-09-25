@@ -235,6 +235,7 @@ const AdminPageForm = () => {
           onChange={(pub) => setFormData((prev) => ({ ...prev, ...pub }))}
           previewUrl={isEditing && formData.slug ? (selectedPrograma ? `/${selectedPrograma.slug}/${formData.slug}` : `/${formData.slug}`) : null}
           sujo={sujo}
+          historico={isEditing ? { entidade: 'pages', id, versao: formData._versao } : null}
         />
         {/* Título */}
         <div>
