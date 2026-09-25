@@ -5,6 +5,9 @@ import { ArrowLeft } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
+import { configEditor, CKEDITOR_CDN } from '../../components/admin/ckeditor';
+import PublicacaoCampos from '../../components/admin/PublicacaoCampos';
+import useAvisoAlteracoes from '../../hooks/useAvisoAlteracoes';
 
 const AdminCalendarioForm = () => {
   const { id } = useParams();
@@ -12,6 +15,10 @@ const AdminCalendarioForm = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    // Envelope de publicação + versão carregada (edição concorrente) — Fase F.6.
+    status: 'PUBLICADO',
+    publicadoEm: '',
+    _versao: null,
     title: '',
     ano: new Date().getFullYear(),
     isCurrent: false,
@@ -22,6 +29,7 @@ const AdminCalendarioForm = () => {
 
   const [milestonesInput, setMilestonesInput] = useState('');
   const [loading, setLoading] = useState(isEditing);
+  const { sujo } = useAvisoAlteracoes(formData, !loading);
   const [error, setError] = useState('');
   const [audit, setAudit] = useState(null);
   const users = useUsers();
@@ -35,13 +43,7 @@ const AdminCalendarioForm = () => {
     let script;
     const initEditor = () => {
       if (window.ClassicEditor && editorRef.current && !editorInstanceRef.current) {
-        window.ClassicEditor.create(editorRef.current, {
-          toolbar: [
-            'heading', '|',
-            'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
-            'blockQuote', 'insertTable', 'undo', 'redo'
-          ]
-        })
+        window.ClassicEditor.create(editorRef.current, configEditor())
           .then(editor => {
             editorInstanceRef.current = editor;
             if (descriptionRef.current) {
@@ -64,7 +66,7 @@ const AdminCalendarioForm = () => {
         initEditor();
       } else {
         script = document.createElement('script');
-        script.src = 'https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js';
+        script.src = CKEDITOR_CDN;
         script.async = true;
         script.onload = initEditor;
         document.body.appendChild(script);
@@ -97,6 +99,9 @@ const AdminCalendarioForm = () => {
             descriptionRef.current = descHTML;
 
             setFormData({
+              status: data.status || 'PUBLICADO',
+              publicadoEm: data.publicadoEm || '',
+              _versao: data.atualizado_em || null,
               title: data.title || '',
               ano: data.ano || new Date().getFullYear(),
               isCurrent: Boolean(data.isCurrent),
@@ -203,6 +208,13 @@ const AdminCalendarioForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <PublicacaoCampos
+          status={formData.status}
+          publicadoEm={formData.publicadoEm}
+          onChange={(pub) => setFormData((prev) => ({ ...prev, ...pub }))}
+          previewUrl={null}
+          sujo={sujo}
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Título do Calendário</label>

@@ -7,6 +7,8 @@ import { API_URL, apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
+import PublicacaoCampos from '../../components/admin/PublicacaoCampos';
+import useAvisoAlteracoes from '../../hooks/useAvisoAlteracoes';
 
 const AdminTeseForm = () => {
   const { id } = useParams();
@@ -14,6 +16,10 @@ const AdminTeseForm = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    // Envelope de publicação + versão carregada (edição concorrente) — Fase F.6.
+    status: 'PUBLICADO',
+    publicadoEm: '',
+    _versao: null,
     title: '',
     ano: '',
     arquivoUrl: '',
@@ -29,6 +35,7 @@ const AdminTeseForm = () => {
   const [programas, setProgramas] = useState([]);
   const { toast, Toasts } = useToast();
   const [loading, setLoading] = useState(isEditing);
+  const { sujo } = useAvisoAlteracoes(formData, !loading);
 
   useEffect(() => {
     apiFetch('/api/programas')
@@ -66,6 +73,9 @@ const AdminTeseForm = () => {
             const data = await response.json();
             setAudit(data);
             setFormData({
+              status: data.status || 'PUBLICADO',
+              publicadoEm: data.publicadoEm || '',
+              _versao: data.atualizado_em || null,
               title: data.title || '',
               ano: data.ano || '',
               arquivoUrl: data.arquivoUrl || '',
@@ -224,6 +234,13 @@ const AdminTeseForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <PublicacaoCampos
+          status={formData.status}
+          publicadoEm={formData.publicadoEm}
+          onChange={(pub) => setFormData((prev) => ({ ...prev, ...pub }))}
+          previewUrl={null}
+          sujo={sujo}
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Título */}
           <div className="md:col-span-2">

@@ -8,6 +8,9 @@ import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
 import useVocabulario, { rotuloDe } from '../../hooks/useVocabulario';
+import { configEditor, CKEDITOR_CDN } from '../../components/admin/ckeditor';
+import PublicacaoCampos from '../../components/admin/PublicacaoCampos';
+import useAvisoAlteracoes from '../../hooks/useAvisoAlteracoes';
 
 // Categorias vêm de vocabularios ('edital.categoria' — Fase F.4), editáveis
 // em Classificações; antes eram fixas aqui e na página pública.
@@ -18,6 +21,10 @@ const AdminEditalForm = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    // Envelope de publicação + versão carregada (edição concorrente) — Fase F.6.
+    status: 'PUBLICADO',
+    publicadoEm: '',
+    _versao: null,
     categoryId: '',
     categoryTitle: '',
     title: '',
@@ -45,6 +52,7 @@ const AdminEditalForm = () => {
 
   const { toast, Toasts } = useToast();
   const [loading, setLoading] = useState(isEditing);
+  const { sujo } = useAvisoAlteracoes(formData, !loading);
   const [error, setError] = useState('');
   const [uploadingFields, setUploadingFields] = useState({});
   const [audit, setAudit] = useState(null);
@@ -67,13 +75,7 @@ const AdminEditalForm = () => {
     let script;
     const initEditor = () => {
       if (window.ClassicEditor && editorRef.current && !editorInstanceRef.current) {
-        window.ClassicEditor.create(editorRef.current, {
-          toolbar: [
-            'heading', '|',
-            'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
-            'blockQuote', 'insertTable', 'undo', 'redo'
-          ]
-        })
+        window.ClassicEditor.create(editorRef.current, configEditor())
           .then(editor => {
             editorInstanceRef.current = editor;
             if (descriptionRef.current) {
@@ -96,7 +98,7 @@ const AdminEditalForm = () => {
         initEditor();
       } else {
         script = document.createElement('script');
-        script.src = 'https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js';
+        script.src = CKEDITOR_CDN;
         script.async = true;
         script.onload = initEditor;
         document.body.appendChild(script);
@@ -128,6 +130,9 @@ const AdminEditalForm = () => {
             descriptionRef.current = desc;
 
             setFormData({
+              status: data.status || 'PUBLICADO',
+              publicadoEm: data.publicadoEm || '',
+              _versao: data.atualizado_em || null,
               categoryId: data.categoryId || '',
               categoryTitle: data.categoryTitle || '',
               title: data.title || '',
@@ -357,6 +362,13 @@ const AdminEditalForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <PublicacaoCampos
+          status={formData.status}
+          publicadoEm={formData.publicadoEm}
+          onChange={(pub) => setFormData((prev) => ({ ...prev, ...pub }))}
+          previewUrl={isEditing ? `/editais/${id}` : null}
+          sujo={sujo}
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>

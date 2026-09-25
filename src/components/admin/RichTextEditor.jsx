@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { configEditor, CKEDITOR_CDN } from './ckeditor';
 
 // Carrega o CKEditor (CDN) uma única vez e reaproveita entre instâncias.
 let ckLoading = null;
@@ -7,7 +8,7 @@ const loadCK = () => {
   if (ckLoading) return ckLoading;
   ckLoading = new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = 'https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js';
+    script.src = CKEDITOR_CDN;
     script.async = true;
     script.onload = resolve;
     script.onerror = reject;
@@ -30,10 +31,7 @@ export default function RichTextEditor({ value, onChange, minHeight = 220 }) {
     let destroyed = false;
     loadCK().then(() => {
       if (destroyed || !elRef.current || instRef.current) return;
-      window.ClassicEditor.create(elRef.current, {
-        toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
-          'blockQuote', 'insertTable', 'undo', 'redo'],
-      }).then((editor) => {
+      window.ClassicEditor.create(elRef.current, configEditor()).then((editor) => {
         if (destroyed) { editor.destroy().catch(() => {}); return; }
         instRef.current = editor;
         if (valueRef.current) editor.setData(valueRef.current);

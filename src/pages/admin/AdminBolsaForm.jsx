@@ -5,6 +5,8 @@ import { ArrowLeft, Save, Search, X, Award, Calendar } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { AuditHeader } from '../../components/AuditInfo';
 import useVocabulario from '../../hooks/useVocabulario';
+import PublicacaoCampos from '../../components/admin/PublicacaoCampos';
+import useAvisoAlteracoes from '../../hooks/useAvisoAlteracoes';
 
 const AdminBolsaForm = () => {
   const { id } = useParams();
@@ -12,6 +14,10 @@ const AdminBolsaForm = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    // Envelope de publicação + versão carregada (edição concorrente) — Fase F.6.
+    status: 'PUBLICADO',
+    publicadoEm: '',
+    _versao: null,
     title: '',
     alunoId: '',
     dataInicio: '',
@@ -26,6 +32,7 @@ const AdminBolsaForm = () => {
   const { itens: tiposVocab } = useVocabulario('bolsa.tipo');
   const tiposBolsa = tiposVocab.map((v) => v.rotulo);
   const [loading, setLoading] = useState(isEditing);
+  const { sujo } = useAvisoAlteracoes(formData, !loading);
   const [error, setError] = useState('');
   const [audit, setAudit] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,6 +60,9 @@ const AdminBolsaForm = () => {
             const data = await response.json();
             setAudit(data);
             setFormData({
+              status: data.status || 'PUBLICADO',
+              publicadoEm: data.publicadoEm || '',
+              _versao: data.atualizado_em || null,
               title: data.title || '',
               alunoId: data.pessoaId || '',
               dataInicio: data.dataInicio || '',
@@ -186,6 +196,13 @@ const AdminBolsaForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <PublicacaoCampos
+          status={formData.status}
+          publicadoEm={formData.publicadoEm}
+          onChange={(pub) => setFormData((prev) => ({ ...prev, ...pub }))}
+          previewUrl={null}
+          sujo={sujo}
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Título */}
           <div className="md:col-span-2">

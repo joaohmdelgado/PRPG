@@ -6,6 +6,9 @@ import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
+import { configEditor, CKEDITOR_CDN } from '../../components/admin/ckeditor';
+import PublicacaoCampos from '../../components/admin/PublicacaoCampos';
+import useAvisoAlteracoes from '../../hooks/useAvisoAlteracoes';
 
 const AdminFaqForm = () => {
   const { id } = useParams();
@@ -13,12 +16,17 @@ const AdminFaqForm = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    // Envelope de publicação + versão carregada (edição concorrente) — Fase F.6.
+    status: 'PUBLICADO',
+    publicadoEm: '',
+    _versao: null,
     title: '',
     resposta: '',
     programaId: ''
   });
 
   const [loading, setLoading] = useState(isEditing);
+  const { sujo } = useAvisoAlteracoes(formData, !loading);
   const [error, setError] = useState('');
   const [audit, setAudit] = useState(null);
   const [programas, setProgramas] = useState([]);
@@ -40,13 +48,7 @@ const AdminFaqForm = () => {
     let script;
     const initEditor = () => {
       if (window.ClassicEditor && editorRef.current && !editorInstanceRef.current) {
-        window.ClassicEditor.create(editorRef.current, {
-          toolbar: [
-            'heading', '|',
-            'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
-            'blockQuote', 'insertTable', 'undo', 'redo'
-          ]
-        })
+        window.ClassicEditor.create(editorRef.current, configEditor())
           .then(editor => {
             editorInstanceRef.current = editor;
             if (contentRef.current) {
@@ -69,7 +71,7 @@ const AdminFaqForm = () => {
         initEditor();
       } else {
         script = document.createElement('script');
-        script.src = 'https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js';
+        script.src = CKEDITOR_CDN;
         script.async = true;
         script.onload = initEditor;
         document.body.appendChild(script);
@@ -102,6 +104,9 @@ const AdminFaqForm = () => {
             contentRef.current = resp;
 
             setFormData({
+              status: data.status || 'PUBLICADO',
+              publicadoEm: data.publicadoEm || '',
+              _versao: data.atualizado_em || null,
               title: data.title || '',
               resposta: resp,
               programaId: data.programaId || ''
@@ -190,6 +195,13 @@ const AdminFaqForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <PublicacaoCampos
+          status={formData.status}
+          publicadoEm={formData.publicadoEm}
+          onChange={(pub) => setFormData((prev) => ({ ...prev, ...pub }))}
+          previewUrl={null}
+          sujo={sujo}
+        />
         {/* Programa */}
         <div className={isProgramaGestor() ? 'hidden' : undefined}>
           <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>

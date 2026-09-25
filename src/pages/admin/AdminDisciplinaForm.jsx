@@ -7,6 +7,8 @@ import { API_URL, apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
+import PublicacaoCampos from '../../components/admin/PublicacaoCampos';
+import useAvisoAlteracoes from '../../hooks/useAvisoAlteracoes';
 
 const AdminDisciplinaForm = () => {
   const { id } = useParams();
@@ -14,6 +16,10 @@ const AdminDisciplinaForm = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    // Envelope de publicação + versão carregada (edição concorrente) — Fase F.6.
+    status: 'PUBLICADO',
+    publicadoEm: '',
+    _versao: null,
     title: '',
     cargaHoraria: '',
     docenteId: '',
@@ -29,6 +35,7 @@ const AdminDisciplinaForm = () => {
   const [programas, setProgramas] = useState([]);
   const { toast, Toasts } = useToast();
   const [loading, setLoading] = useState(isEditing);
+  const { sujo } = useAvisoAlteracoes(formData, !loading);
   const [error, setError] = useState('');
   const [audit, setAudit] = useState(null);
   const auditUsers = useUsers();
@@ -66,6 +73,9 @@ const AdminDisciplinaForm = () => {
             const data = await response.json();
             setAudit(data);
             setFormData({
+              status: data.status || 'PUBLICADO',
+              publicadoEm: data.publicadoEm || '',
+              _versao: data.atualizado_em || null,
               title: data.title || '',
               cargaHoraria: data.cargaHoraria || '',
               docenteId: data.docentePessoaId || '',
@@ -224,6 +234,13 @@ const AdminDisciplinaForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <PublicacaoCampos
+          status={formData.status}
+          publicadoEm={formData.publicadoEm}
+          onChange={(pub) => setFormData((prev) => ({ ...prev, ...pub }))}
+          previewUrl={null}
+          sujo={sujo}
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Título */}
           <div className="md:col-span-2">

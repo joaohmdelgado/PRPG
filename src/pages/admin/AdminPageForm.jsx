@@ -4,6 +4,9 @@ import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom'
 import { ArrowLeft, Save, File } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
+import { configEditor, CKEDITOR_CDN } from '../../components/admin/ckeditor';
+import PublicacaoCampos from '../../components/admin/PublicacaoCampos';
+import useAvisoAlteracoes from '../../hooks/useAvisoAlteracoes';
 
 const AdminPageForm = () => {
   const { id } = useParams();
@@ -18,6 +21,10 @@ const AdminPageForm = () => {
   const backTo = programaFromQuery ? `/admin/programas/${programaFromQuery}/site` : '/admin/paginas';
 
   const [formData, setFormData] = useState({
+    // Envelope de publicação + versão carregada (edição concorrente) — Fase F.6.
+    status: 'PUBLICADO',
+    publicadoEm: '',
+    _versao: null,
     title: '',
     programaId: programaFromQuery,
     chave: null,
@@ -27,6 +34,7 @@ const AdminPageForm = () => {
 
   const [programas, setProgramas] = useState([]);
   const [loading, setLoading] = useState(isEditing);
+  const { sujo } = useAvisoAlteracoes(formData, !loading);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -44,13 +52,7 @@ const AdminPageForm = () => {
     let script;
     const initEditor = () => {
       if (window.ClassicEditor && editorRef.current && !editorInstanceRef.current) {
-        window.ClassicEditor.create(editorRef.current, {
-          toolbar: [
-            'heading', '|',
-            'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
-            'blockQuote', 'insertTable', 'undo', 'redo'
-          ]
-        })
+        window.ClassicEditor.create(editorRef.current, configEditor())
           .then(editor => {
             editorInstanceRef.current = editor;
             if (contentRef.current) {
@@ -79,7 +81,7 @@ const AdminPageForm = () => {
         initEditor();
       } else {
         script = document.createElement('script');
-        script.src = 'https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js';
+        script.src = CKEDITOR_CDN;
         script.async = true;
         script.onload = initEditor;
         document.body.appendChild(script);
@@ -111,6 +113,9 @@ const AdminPageForm = () => {
             contentRef.current = bodyVal;
 
             setFormData({
+              status: data.status || 'PUBLICADO',
+              publicadoEm: data.publicadoEm || '',
+              _versao: data.atualizado_em || null,
               title: data.title || '',
               programaId: data.programaId || '',
               chave: data.chave || null,
@@ -224,6 +229,13 @@ const AdminPageForm = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        <PublicacaoCampos
+          status={formData.status}
+          publicadoEm={formData.publicadoEm}
+          onChange={(pub) => setFormData((prev) => ({ ...prev, ...pub }))}
+          previewUrl={isEditing && formData.slug ? (selectedPrograma ? `/${selectedPrograma.slug}/${formData.slug}` : `/${formData.slug}`) : null}
+          sujo={sujo}
+        />
         {/* Título */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
