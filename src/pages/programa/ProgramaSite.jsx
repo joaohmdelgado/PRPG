@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useParams, Link } from 'react-router-dom';
+import { Routes, Route, useParams, Link, Navigate } from 'react-router-dom';
 import { apiFetch } from '../../api';
 import { ProgramaContext } from '../../components/programa/ProgramaContext';
 import ProgramaLayout from '../../components/programa/ProgramaLayout';
@@ -36,7 +36,7 @@ export default function ProgramaSite() {
   const { programaSlug, '*': restPath } = useParams();
   const [programa, setPrograma] = useState(null);
   const [paginaGeral, setPaginaGeral] = useState(null);
-  const [status, setStatus] = useState('loading'); // loading | ok | pagina | notfound | error
+  const [status, setStatus] = useState('loading'); // loading | ok | pagina | automatica | notfound | error
 
   // Quando o primeiro segmento não é o slug de nenhum programa, ele pode ser
   // o slug de uma página institucional geral (/<slug>, sem programa — ver
@@ -44,6 +44,21 @@ export default function ProgramaSite() {
   useEffect(() => {
     let active = true;
     setStatus('loading');
+
+    const buscarPaginaGeral = () =>
+      apiFetch(`/api/pages/slug/${encodeURIComponent(programaSlug)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((page) => {
+          if (!active) return;
+          if (page && !page.programaId) {
+            setPaginaGeral(page);
+            setStatus('pagina');
+          } else {
+            setStatus('notfound');
+          }
+        })
+        .catch(() => { if (active) setStatus('notfound'); });
+
     // Com token (quando há sessão): quem edita o programa vê o microsite em
     // rascunho; para o público o rascunho responde 404.
     apiFetch(`/api/programas/slug/${encodeURIComponent(programaSlug)}`)
@@ -54,22 +69,21 @@ export default function ProgramaSite() {
       .then((data) => { if (active) { setPrograma(data); setStatus('ok'); } })
       .catch((e) => {
         if (!active) return;
-        if (e.message === '404' && !restPath) {
-          apiFetch(`/api/pages/slug/${encodeURIComponent(programaSlug)}`)
-            .then((r) => (r.ok ? r.json() : null))
-            .then((page) => {
-              if (!active) return;
-              if (page && !page.programaId) {
-                setPaginaGeral(page);
-                setStatus('pagina');
-              } else {
-                setStatus('notfound');
-              }
-            })
-            .catch(() => { if (active) setStatus('notfound'); });
-        } else {
-          setStatus(e.message === '404' ? 'notfound' : 'error');
-        }
+        if (e.message !== '404') { setStatus('error'); return; }
+        // Programa existe mas o microsite não está publicado: leva à página
+        // automática (/programas/<slug>, Fase N.2), qualquer que seja a
+        // subpágina pedida. Assim /<slug> serve de destino fixo para o
+        // redirecionamento dos domínios antigos (Fase S.6,
+        // docs/redirecionamentos-dominios-programas.md), antes e depois de o
+        // microsite ser publicado.
+        apiFetch(`/api/programas/slug/${encodeURIComponent(programaSlug)}/publico`, { auth: false })
+          .then((r) => {
+            if (!active) return;
+            if (r.ok) setStatus('automatica');
+            else if (!restPath) buscarPaginaGeral();
+            else setStatus('notfound');
+          })
+          .catch(() => { if (active) setStatus('notfound'); });
       });
     return () => { active = false; };
   }, [programaSlug, restPath]);
@@ -108,6 +122,10 @@ export default function ProgramaSite() {
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ufrpe-blue"></div>
       </FullScreen>
     );
+  }
+
+  if (status === 'automatica') {
+    return <Navigate to={`/programas/${programaSlug}`} replace />;
   }
 
   // Segmento não é um programa, mas é o slug de uma página institucional
