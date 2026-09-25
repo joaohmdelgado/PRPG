@@ -335,16 +335,62 @@ uma versão anterior, e toda lista pública e do painel é paginada no servidor.
 
 | | # | Ação |
 |---|---|---|
-| `[ ]` | H.1 | Menus no banco (`menus`/`menu_itens`: principal, rodapé, topo, acesso rápido; destino = rota, página ou URL) com editor de ordem; Navbar, Footer e Home leem da API |
-| `[ ]` | H.2 | Home montada a partir dos dados: destaques, últimas notícias (PRPG + programas rotulados), editais abertos de todos os programas, próximos prazos, números calculados (programas, docentes, discentes, teses), parceiros configuráveis |
-| `[ ]` | H.3 | As 16 páginas institucionais passam para `pages` com uma `chave` fixa (mesmo padrão da "Sobre" do microsite), mantendo as URLs atuais; um script copia o texto uma única vez |
-| `[ ]` | H.4 | Equipe e Estrutura Organizacional geradas de `unidades` (árvore por `unidade_pai_id`) + `vinculos` (com novo `unidade_id` para servidores da PRPG) + contatos públicos — a mesma fonte da Agenda de Contatos |
-| `[ ]` | H.5 | Busca pública com índice full-text em português (`tsvector` + `unaccent`, GIN) sobre notícias, editais, páginas, documentos, programas e teses publicados; página `/busca` agrupada por tipo, também no mobile |
-| `[ ]` | H.6 | Um componente único de cabeçalho e breadcrumb, derivado da árvore de menus, eliminando a cópia nas páginas institucionais |
-| `[ ]` | H.7 | Política de Privacidade (LGPD — o site coleta comprovantes) e revisão dos links para o site antigo |
+| `[x]` | H.1 | Menus no banco (`menus`/`menu_itens`: principal, rodapé, topo, acesso rápido; destino = rota, página ou URL) com editor de ordem; Navbar, Footer e Home leem da API |
+| `[x]` | H.2 | Home montada a partir dos dados: destaques, últimas notícias (PRPG + programas rotulados), editais abertos de todos os programas, próximos prazos, números calculados (programas, docentes, discentes, teses), parceiros configuráveis |
+| `[x]` | H.3 | As 16 páginas institucionais passam para `pages` com uma `chave` fixa (mesmo padrão da "Sobre" do microsite), mantendo as URLs atuais; um script copia o texto uma única vez |
+| `[x]` | H.4 | Equipe e Estrutura Organizacional geradas de `unidades` (árvore por `unidade_pai_id`) + `vinculos` (com novo `unidade_id` para servidores da PRPG) + contatos públicos — a mesma fonte da Agenda de Contatos |
+| `[x]` | H.5 | Busca pública com índice full-text em português (`tsvector` + `unaccent`, GIN) sobre notícias, editais, páginas, documentos, programas e teses publicados; página `/busca` agrupada por tipo, também no mobile |
+| `[x]` | H.6 | Um componente único de cabeçalho e breadcrumb, derivado da árvore de menus, eliminando a cópia nas páginas institucionais |
+| `[x]` | H.7 | Política de Privacidade (LGPD — o site coleta comprovantes) e revisão dos links para o site antigo |
 
 **Pronto quando:** nenhuma mudança de texto, menu ou atalho exige deploy, e a home não tem nenhum
 item fictício.
+
+> **Nota de execução (25/09/2026)** — os 7 itens aplicados (commits 5b4caa2 H.1+H.2, 833f8b3
+> H.3, a91d257 H.6, f095fd8 H.4, ea9558b H.5, 8a96388 H.7), com testes em `portal.test.js` e
+> `estrutura.test.js` (suíte: 312 testes verdes). Migrações `2026-09-25_menus_portal`,
+> `_paginas_institucionais`, `_estrutura_prpg`, `_busca_publica` e `_busca_trechos`
+> aplicadas no banco de desenvolvimento. **Decisão assumida:** D-R1 como recomendado — o portal
+> agrega editais de programa sempre (com selo) e notícias de programa só quando marcadas
+> (`?escopo=portal`, usado na home, em `/noticias` e nas relacionadas). **Mudança visível:**
+> `/noticias` passou de 62 para 6 notícias — as 54 do PROFIAP e 2 do PGH continuam nos
+> microsites; para trazer uma ao portal, marque "Mostrar também no portal da PRPG".
+> **Como ficou:**
+> - H.1: `menus`/`menu_itens` (8 listas: principal, topo, rodapé, redes sociais, acesso rápido,
+>   jornada, cursos, parceiros) e `configuracoes` (contato, banner da home, logo), semeados com o
+>   que o código mostrava; editor em "Menus e portal". O site guarda a última versão no
+>   navegador para o menu aparecer na hora.
+> - H.2: `/api/portal/home` (destaque, notícias, editais abertos com selo, próximos prazos do
+>   calendário vigente, números). **Docentes/discentes ficaram fora dos números**: só uma parte dos
+>   programas tem vínculos cadastrados (16 docentes) — entram depois da importação (Fase O).
+>   Seguem fixos no código só os dois botões do banner ("Conheça os Cursos"/"Editais abertos").
+> - H.3: 13 páginas (a lista do item, menos Equipe e Estrutura, que são H.4) viraram `pages` com
+>   chave fixa. O texto foi extraído uma vez do JSX para `server/data/paginas-institucionais.json`
+>   e é criado na subida do servidor/seed de dev, sem sobrescrever. **Perda de forma, não de
+>   conteúdo:** cartões e grades viraram texto corrido; a busca interna de Especialização e de
+>   Relatórios e o carrossel de Mobilidade viraram listas/imagens simples. O HTML do editor não
+>   tinha estilo nenhum no site (o projeto não tem o plugin de tipografia): criado `.html-content`.
+> - H.4: `unidades` (descrição, ordem, exibir no site) + `vinculos.unidade_id`/`funcao` +
+>   `contatos`; tela "Equipe e estrutura"; carga inicial de 11 setores e 14 pessoas
+>   (`server/data/estrutura-prpg.json`). **Divergências encontradas entre as páginas antigas —
+>   conferir:** coordenador de Internacionalização (Equipe: Yuri Jacques Agra Bezerra da Silva;
+>   Estrutura e Sobre a Internacionalização: Edivan Rodrigues de Souza — ficou Edivan); e-mail do
+>   Lato Sensu (`latosensu@` × `latosensu.prpg@` — ficou o segundo); e-mail da secretaria
+>   (`sec.prpg@` no setor × `secretaria.prpg@` no topo do site). Celulares/WhatsApp de servidores
+>   continuam publicados como antes — vale revisar à luz da LGPD (dá para desmarcar "No site").
+> - H.5: `/busca` com full-text em português sem acento (extensão `unaccent` — **exige
+>   permissão para criar extensão no banco de produção**), índices GIN conferidos com EXPLAIN.
+> - H.6: todas as páginas com cabeçalho copiado usam `CabecalhoPagina` (breadcrumb do menu e
+>   título da aba).
+> - H.7: **a Política de Privacidade é uma minuta** — descreve o que o sistema faz, mas prazo de
+>   guarda e contato do encarregado estão genéricos: precisa da validação do encarregado de dados
+>   da UFRPE antes de ir ao ar. Nenhum link para o site antigo sobrou no código; os que estão nos
+>   dados (351 URLs, contando menus, banner e logo) entram no `npm run arquivos -- --externos`,
+>   cujo `--executar` (download) **continua não rodado**.
+> **Não verificado no navegador:** as telas novas do painel ("Menus e portal", "Equipe e
+> estrutura"), que exigem login — conferidas por build, typecheck e testes de API. As páginas
+> públicas (home, menus, institucionais, Equipe, Estrutura, busca pelo topo) foram conferidas no
+> navegador.
 
 ### Fase N — Conexões entre conteúdos (~2 semanas, depende de F)
 
@@ -458,7 +504,7 @@ pendências no sistema, não na planilha.
 |---|---|---|---|---|---|
 | R — Robustez imediata | 11 | — | 24/09/2026 | 24/09/2026 | ✅ concluída (ver nota da Fase R) |
 | F — Fundação editorial | 7 | D-R3 | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase F) |
-| H — Portal dirigido por dados | 7 | D-R1 | | | ⬜ não iniciada |
+| H — Portal dirigido por dados | 7 | D-R1 | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase H) |
 | N — Conexões entre conteúdos | 9 | D-R1, D-R2 | | | ⬜ não iniciada |
 | S — Microsites em 4 grupos | 6 | — | | | ⬜ não iniciada |
 | O — Virada das planilhas | 7 | D-R5 + `PLANO.md` §4 | | | ⬜ não iniciada |

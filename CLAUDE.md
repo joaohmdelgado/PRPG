@@ -219,6 +219,8 @@ Access at `/admin/login`. Main sections in sidebar:
 - Portarias (Admin only)
 - Grupos de Pesquisa (Admin only)
 - Usuários (User management, Admin only)
+- Menus e portal (`/admin/portal` — menus, footer, home shortcuts, contact, banner; tables `menus`/`menu_itens`/`configuracoes`)
+- Equipe e estrutura (`/admin/estrutura` — PRPG units/people/contacts behind /equipe and /estrutura-organizacional)
 - Classificações (editable categories/sections — `vocabularios`; ex-Taxonomias)
 - Biblioteca de Mídia (`/admin/midia` — reuse, "where used", replace a file everywhere)
 
@@ -243,8 +245,8 @@ Access at `/admin/login`. Main sections in sidebar:
   pós-doc, contatos, prazos, notificações, indicadores, and `robustez.test.js`
   (async errors never crash the process, pg data errors -> 400/409, news
   dates, origin filter, users/resumo, compression/cache), and the editorial
-  foundation (`publicacao`, `vocabularios`, `arquivos`, `revisoes`). ~290 tests
-  in 38 files — the exact number drifts; check with `npx vitest run`.
+  foundation (`publicacao`, `vocabularios`, `arquivos`, `revisoes`) and the
+  data-driven portal (`portal`, `estrutura`). ~310 tests in 40 files — the exact number drifts; check with `npx vitest run`.
 - Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes
@@ -336,6 +338,17 @@ on update makes a concurrent edit fail with 409. Every update of such content
 keeps the previous version in `revisoes` (`server/db/revisoesRepo.js`,
 `/api/revisoes/:entidade/:id`). Listings accept `?page=&limit=` →
 `{items,total,page,limit,pages}` (see `server/utils/listagem.js`).
+
+**Data-driven portal (Fase H)**: Navbar/Footer/Home read `/api/menus`,
+`/api/configuracoes` and `/api/portal/home` (hook `src/hooks/usePortal.js`).
+The institutional pages (/sobre, /historico...) are `pages` rows with a fixed
+`chave`, rendered by `src/pages/PaginaInstitucional.jsx`; Equipe/Estrutura come
+from `/api/estrutura` (unidades + vinculos.unidade_id + contatos). Their initial
+content lives in `server/data/paginas-institucionais.json` and
+`server/data/estrutura-prpg.json` and is created at server boot (and by
+`npm run db:migrate`) only when missing — never overwrites edits. Public search:
+`/busca` → `/api/portal/busca` (Postgres full-text, `unaccent`). Page headers use
+`src/components/CabecalhoPagina.jsx` (breadcrumb derived from the main menu).
 
 **Checking User Roles**:
 - Admin users are defined in `server/data/users.json`
