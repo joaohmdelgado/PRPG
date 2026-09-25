@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { apiFetch } from '../api';
+import CabecalhoPagina from '../components/CabecalhoPagina';
 
 const getCampusId = (campusName) => {
   return campusName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -139,37 +139,11 @@ export default function ProgramasStrictoSensu() {
 
   return (
     <>
-      {/* Page Header / Breadcrumbs */}
-      <div className="bg-ufrpe-blue text-white py-16 relative overflow-hidden">
-        <i className="fa-solid fa-graduation-cap text-[20rem] text-white/5 -bottom-20 -right-20 absolute rotate-12 pointer-events-none"></i>
-        <div className="container mx-auto px-4">
-          <nav className="flex text-white/60 text-sm mb-4" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-3">
-              <li className="inline-flex items-center">
-                <Link to="/" className="hover:text-ufrpe-yellow transition-colors">Início</Link>
-              </li>
-              <li>
-                <div className="flex items-center">
-                  <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                  <span className="text-white">Mestrado e Doutorado</span>
-                </div>
-              </li>
-              <li aria-current="page">
-                <div className="flex items-center">
-                  <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                  <span className="text-ufrpe-yellow font-medium">Programas Stricto Sensu</span>
-                </div>
-              </li>
-            </ol>
-          </nav>
-          <h1 className="text-4xl md:text-5xl font-heading font-extrabold">
-            Programas de Pós-graduação Stricto Sensu
-          </h1>
-          <p className="text-white/70 mt-4 text-lg">
-            Conheça nossos mestrados e doutorados oferecidos nas diversas unidades da UFRPE.
-          </p>
-        </div>
-      </div>
+      <CabecalhoPagina
+        icone="fa-solid fa-graduation-cap"
+        titulo="Programas de Pós-graduação Stricto Sensu"
+        subtitulo="Conheça nossos mestrados e doutorados oferecidos nas diversas unidades da UFRPE."
+      />
 
       {/* Main Content */}
       <main className="flex-grow py-12 bg-gray-50">

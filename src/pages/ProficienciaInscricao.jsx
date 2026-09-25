@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
 import { Languages, Upload, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import CabecalhoPagina from '../components/CabecalhoPagina';
 
 const LINGUAS = ['Português', 'Inglês', 'Espanhol'];
 const NIVEIS = ['Mestrado', 'Doutorado'];
@@ -152,27 +153,11 @@ export default function ProficienciaInscricao() {
 
   return (
     <>
-      {/* Cabeçalho da página */}
-      <div className="bg-ufrpe-blue text-white py-16 relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <nav className="flex text-white/60 text-sm mb-4" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-3">
-              <li className="inline-flex items-center">
-                <Link to="/" className="hover:text-ufrpe-yellow transition-colors">Início</Link>
-              </li>
-              <li aria-current="page">
-                <div className="flex items-center">
-                  <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                  <span className="text-ufrpe-yellow font-medium">Inscrição — Proficiência</span>
-                </div>
-              </li>
-            </ol>
-          </nav>
-          <h1 className="font-heading text-3xl md:text-4xl font-bold flex items-center gap-3">
-            <Languages size={32} /> Inscrição — Proficiência em Línguas
-          </h1>
-        </div>
-      </div>
+      <CabecalhoPagina
+        titulo={<span className="flex items-center gap-3"><Languages size={36} aria-hidden="true" /> Inscrição — Proficiência em Línguas</span>}
+        atual="Inscrição — Proficiência"
+        trilha={[]}
+      />
 
       <div className="container mx-auto px-4 py-10">
         <div className="max-w-3xl">

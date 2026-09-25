@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
+import CabecalhoPagina from '../components/CabecalhoPagina';
 
 export default function CalendarioAcademico() {
   const [calendariosData, setCalendariosData] = useState([]);
@@ -35,35 +35,11 @@ export default function CalendarioAcademico() {
 
   return (
     <>
-      {/* Page Header / Breadcrumbs */}
-      <div className="bg-ufrpe-blue text-white py-16 relative overflow-hidden">
-        <i className="fa-solid fa-calendar-days text-[20rem] text-white/5 -bottom-20 -right-20 absolute rotate-12 pointer-events-none"></i>
-        <div className="container mx-auto px-4">
-          <nav className="flex text-white/60 text-sm mb-4" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-3">
-              <li className="inline-flex items-center">
-                <Link to="/" className="hover:text-ufrpe-yellow transition-colors">Início</Link>
-              </li>
-              <li>
-                <div className="flex items-center">
-                  <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                  <span className="text-white">Mestrado e Doutorado</span>
-                </div>
-              </li>
-              <li aria-current="page">
-                <div className="flex items-center">
-                  <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                  <span className="text-ufrpe-yellow font-medium">Calendário Acadêmico</span>
-                </div>
-              </li>
-            </ol>
-          </nav>
-          <h1 className="text-4xl md:text-5xl font-heading font-extrabold">Calendário Acadêmico</h1>
-          <p className="text-white/70 mt-4 text-lg">
-            Acompanhe prazos, períodos de matrícula, início de aulas e demais eventos da Pós-Graduação.
-          </p>
-        </div>
-      </div>
+      <CabecalhoPagina
+        icone="fa-solid fa-calendar-days"
+        titulo="Calendário Acadêmico"
+        subtitulo="Acompanhe prazos, períodos de matrícula, início de aulas e demais eventos da Pós-Graduação."
+      />
 
       {/* Main Content */}
       <main className="flex-grow py-12">

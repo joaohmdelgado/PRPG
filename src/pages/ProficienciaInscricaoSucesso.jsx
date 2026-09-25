@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation, Navigate } from 'react-router-dom';
 import { Languages, CheckCircle2, Mail, Home } from 'lucide-react';
+import CabecalhoPagina from '../components/CabecalhoPagina';
 
 // Página de confirmação exibida após o envio de uma inscrição de proficiência.
 // É acessada via redirecionamento do formulário (state.fromInscricao); o acesso
@@ -62,35 +63,11 @@ export default function ProficienciaInscricaoSucesso() {
 
   return (
     <>
-      {/* Cabeçalho da página */}
-      <div className="bg-ufrpe-blue text-white py-16 relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <nav className="flex text-white/60 text-sm mb-4" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-3">
-              <li className="inline-flex items-center">
-                <Link to="/" className="hover:text-ufrpe-yellow transition-colors">Início</Link>
-              </li>
-              <li>
-                <div className="flex items-center">
-                  <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                  <Link to="/proficiencia/inscricao" className="hover:text-ufrpe-yellow transition-colors">
-                    Inscrição — Proficiência
-                  </Link>
-                </div>
-              </li>
-              <li aria-current="page">
-                <div className="flex items-center">
-                  <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                  <span className="text-ufrpe-yellow font-medium">Confirmação</span>
-                </div>
-              </li>
-            </ol>
-          </nav>
-          <h1 className="font-heading text-3xl md:text-4xl font-bold flex items-center gap-3">
-            <Languages size={32} /> Inscrição enviada
-          </h1>
-        </div>
-      </div>
+      <CabecalhoPagina
+        titulo={<span className="flex items-center gap-3"><Languages size={36} aria-hidden="true" /> Inscrição enviada</span>}
+        atual="Confirmação"
+        trilha={[{ rotulo: 'Inscrição — Proficiência', destino: '/proficiencia/inscricao' }]}
+      />
 
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-2xl">

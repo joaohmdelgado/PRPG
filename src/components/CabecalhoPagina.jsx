@@ -8,10 +8,12 @@ import { useMenu } from '../hooks/usePortal';
 // reorganiza o menu no painel reorganiza os breadcrumbs junto).
 //
 // titulo    texto (ou nó) do <h1>
-// atual     rótulo da página no breadcrumb (padrão: titulo, se for texto)
+// atual     rótulo da página no breadcrumb (padrão: o rótulo dela no menu;
+//           fora do menu, o titulo, se for texto)
 // trilha    [{ rotulo, destino }] entre "Início" e a página — só quando a
 //           página não está no menu (ex.: uma notícia: Notícias > título)
 // icone     classe Font Awesome do ícone decorativo grande
+// acima     conteúdo entre o breadcrumb e o título (selos de situação)
 // children  conteúdo extra abaixo do subtítulo (botões, filtros)
 
 const normalizar = (d) => (d || '').split('#')[0].replace(/\/+$/, '') || '/';
@@ -39,24 +41,20 @@ export function trilhaDoMenu(menu, path) {
   return { itens: melhor.itens.map((i) => ({ rotulo: i.rotulo, destino: i.destino })), prefixo: !!melhor.prefixo };
 }
 
-export default function CabecalhoPagina({ titulo, atual, subtitulo, trilha, icone, children }) {
+export default function CabecalhoPagina({ titulo, atual, subtitulo, trilha, icone, acima, children }) {
   const { pathname } = useLocation();
   const menu = useMenu('principal');
-  const rotuloAtual = atual || (typeof titulo === 'string' ? titulo : '');
+  const achado = trilha ? null : trilhaDoMenu(menu, pathname);
+  // Página exata do menu: o último item é a própria página.
+  const noMenu = achado && !achado.prefixo ? achado.itens[achado.itens.length - 1] : null;
+  const passos = trilha || (achado ? (achado.prefixo ? achado.itens : achado.itens.slice(0, -1)) : []);
+  const rotuloAtual = atual || noMenu?.rotulo || (typeof titulo === 'string' ? titulo : '');
+  const tituloAba = typeof titulo === 'string' ? titulo : rotuloAtual;
 
   // Título da aba do navegador (antes, genérico em quase todas as rotas).
   useEffect(() => {
-    if (rotuloAtual) document.title = `${rotuloAtual} | PRPG UFRPE`;
-  }, [rotuloAtual]);
-
-  let passos;
-  if (trilha) {
-    passos = trilha;
-  } else {
-    const achado = trilhaDoMenu(menu, pathname);
-    // Página exata do menu: o último item é a própria página.
-    passos = achado ? (achado.prefixo ? achado.itens : achado.itens.slice(0, -1)) : [];
-  }
+    if (tituloAba) document.title = `${tituloAba} | PRPG UFRPE`;
+  }, [tituloAba]);
 
   return (
     <div className="bg-ufrpe-blue text-white py-16 relative overflow-hidden">
@@ -83,6 +81,7 @@ export default function CabecalhoPagina({ titulo, atual, subtitulo, trilha, icon
             )}
           </ol>
         </nav>
+        {acima}
         <h1 className="text-4xl md:text-5xl font-heading font-extrabold leading-tight">{titulo}</h1>
         {subtitulo && <p className="text-white/70 mt-4 text-lg max-w-4xl leading-relaxed">{subtitulo}</p>}
         {children}

@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
+import CabecalhoPagina from '../components/CabecalhoPagina';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -90,30 +91,10 @@ export default function Edital() {
   return (
     <>
       <AvisoPreVisualizacao item={edital} />
-      {/* Page Header / Breadcrumbs */}
-      <div className="bg-ufrpe-blue text-white py-16 relative overflow-hidden">
-        <i className="fa-solid fa-scroll text-[20rem] text-white/5 -bottom-20 -right-20 absolute rotate-12 pointer-events-none"></i>
-        <div className="container mx-auto px-4">
-          <nav className="flex text-white/60 text-sm mb-4" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-3">
-              <li className="inline-flex items-center">
-                <Link to="/" className="hover:text-ufrpe-yellow transition-colors">Início</Link>
-              </li>
-              <li>
-                <div className="flex items-center">
-                  <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                  <Link to="/editais" className="hover:text-ufrpe-yellow transition-colors text-white/60">Editais</Link>
-                </div>
-              </li>
-              <li aria-current="page">
-                <div className="flex items-center">
-                  <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                  <span className="text-ufrpe-yellow font-medium truncate max-w-[200px] md:max-w-xs">{edital.title}</span>
-                </div>
-              </li>
-            </ol>
-          </nav>
-          
+      <CabecalhoPagina
+        icone="fa-solid fa-scroll"
+        titulo={edital.title}
+        acima={(
           <div className="flex flex-wrap items-center gap-3 mb-4">
             <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${getSituationBadge(edital.situation)}`}>
               {getSituationLabel(edital.situation)}
@@ -124,12 +105,8 @@ export default function Edital() {
               </span>
             )}
           </div>
-          
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-heading font-extrabold leading-tight">
-            {edital.title}
-          </h1>
-        </div>
-      </div>
+        )}
+      />
 
       {/* Main Content */}
       <main className="flex-grow py-12 bg-gray-50">

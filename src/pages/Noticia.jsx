@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
+import CabecalhoPagina from '../components/CabecalhoPagina';
 import useVocabulario, { corDe } from '../hooks/useVocabulario';
 
 const formatDate = (dateStr) => {
@@ -89,49 +90,23 @@ export default function Noticia() {
       {/* Main Content */}
       <main className="flex-grow pb-16">
         
-        {/* Post Header */}
-        <div className="bg-ufrpe-blue text-white py-16 relative overflow-hidden mb-10">
-          <i className="fa-solid fa-newspaper text-[20rem] text-white/5 -bottom-20 -right-20 absolute rotate-12 pointer-events-none"></i>
-          <div className="container mx-auto px-4">
-            
-            {/* Breadcrumbs */}
-            <nav className="flex text-white/60 text-sm mb-4" aria-label="Breadcrumb">
-              <ol className="inline-flex items-center space-x-1 md:space-x-3">
-                <li className="inline-flex items-center">
-                  <Link to="/" className="hover:text-ufrpe-yellow transition-colors">Início</Link>
-                </li>
-                <li>
-                  <div className="flex items-center">
-                    <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                    <Link to="/noticias" className="hover:text-ufrpe-yellow transition-colors">Notícias</Link>
-                  </div>
-                </li>
-                <li aria-current="page">
-                  <div className="flex items-center">
-                    <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                    <span className="text-ufrpe-yellow font-medium truncate max-w-[200px] md:max-w-xs">{newsItem.title}</span>
-                  </div>
-                </li>
-              </ol>
-            </nav>
-
-            <div className="flex items-center gap-3 mb-6">
-              <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider bg-ufrpe-yellow text-ufrpe-blue`}>
-                {newsItem.category}
-              </span>
-              <span className="text-white/60 text-sm flex items-center gap-2">
-                <i className="fa-regular fa-calendar"></i> {formatDate(newsItem.date)}
-              </span>
-            </div>
-
-            <h1 className="text-4xl md:text-5xl font-heading font-extrabold leading-tight mb-6">
-              {newsItem.title}
-            </h1>
-            
-            <p className="text-white/70 mt-4 text-lg leading-relaxed">
-              {newsItem.excerpt}
-            </p>
-            
+        <div className="mb-10">
+          <CabecalhoPagina
+            icone="fa-solid fa-newspaper"
+            titulo={newsItem.title}
+            subtitulo={newsItem.excerpt}
+            trilha={[{ rotulo: 'Notícias', destino: '/noticias' }]}
+            acima={(
+                <div className="flex items-center gap-3 mb-6">
+                  <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider bg-ufrpe-yellow text-ufrpe-blue`}>
+                    {newsItem.category}
+                  </span>
+                  <span className="text-white/60 text-sm flex items-center gap-2">
+                    <i className="fa-regular fa-calendar"></i> {formatDate(newsItem.date)}
+                  </span>
+                </div>
+            )}
+          >
             {/* Author & Share */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-8 pt-8 border-t border-white/10">
               {newsItem.author ? (
@@ -151,6 +126,7 @@ export default function Noticia() {
               <div className="flex items-center gap-2">
                 <span className="text-sm text-white/60 mr-2">Compartilhar:</span>
                 <a
+                  aria-label="Compartilhar no WhatsApp"
                   href={`https://api.whatsapp.com/send?text=${encodeURIComponent(newsItem.title + ' - ' + window.location.href)}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -159,6 +135,7 @@ export default function Noticia() {
                   <i className="fa-brands fa-whatsapp"></i>
                 </a>
                 <a
+                  aria-label="Compartilhar no LinkedIn"
                   href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -167,6 +144,7 @@ export default function Noticia() {
                   <i className="fa-brands fa-linkedin-in"></i>
                 </a>
                 <a
+                  aria-label="Compartilhar no X (Twitter)"
                   href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(newsItem.title)}&url=${encodeURIComponent(window.location.href)}`}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -176,8 +154,7 @@ export default function Noticia() {
                 </a>
               </div>
             </div>
-
-          </div>
+          </CabecalhoPagina>
         </div>
 
         <div className="container mx-auto px-4">

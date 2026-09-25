@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ShieldCheck, ShieldX, Loader2, FileCheck2, Home } from 'lucide-react';
 import { apiFetch } from '../api';
+import CabecalhoPagina from '../components/CabecalhoPagina';
 
 const MESES = [
   'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
@@ -67,27 +68,12 @@ export default function VerificarDeclaracao() {
 
   return (
     <>
-      <div className="bg-ufrpe-blue text-white py-16 relative overflow-hidden">
-        <div className="container mx-auto px-4">
-          <nav className="flex text-white/60 text-sm mb-4" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-3">
-              <li className="inline-flex items-center">
-                <Link to="/" className="hover:text-ufrpe-yellow transition-colors">Início</Link>
-              </li>
-              <li aria-current="page">
-                <div className="flex items-center">
-                  <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50"></i>
-                  <span className="text-ufrpe-yellow font-medium">Verificação de Declaração</span>
-                </div>
-              </li>
-            </ol>
-          </nav>
-          <h1 className="font-heading text-3xl md:text-4xl font-bold flex items-center gap-3">
-            <FileCheck2 size={32} /> Verificação de Autenticidade
-          </h1>
-          <p className="text-white/70 mt-2">Pró-Reitoria de Pós-Graduação / UFRPE</p>
-        </div>
-      </div>
+      <CabecalhoPagina
+        titulo={<span className="flex items-center gap-3"><FileCheck2 size={36} aria-hidden="true" /> Verificação de Autenticidade</span>}
+        atual="Verificação de Declaração"
+        subtitulo="Pró-Reitoria de Pós-Graduação / UFRPE"
+        trilha={[]}
+      />
 
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-2xl">
