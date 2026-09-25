@@ -84,6 +84,7 @@ import { getMenus, getMenu, updateMenu, getConfiguracoes, updateConfiguracao, ge
 import {
   getEstrutura, updateUnidadeEstrutura, createUnidadeEstrutura, addMembroEstrutura, updateMembroEstrutura, endMembroEstrutura,
 } from '../controllers/estruturaController.js';
+import { buscaPublica } from '../controllers/buscaPublicaController.js';
 import { autorizarRevisao, getRevisoes, getRevisao, restaurarRevisao } from '../controllers/revisoesController.js';
 import { asyncRouter } from '../utils/asyncRouter.js';
 
@@ -407,6 +408,7 @@ router.get('/menus/:chave', getMenu);
 router.put('/menus/:chave', protect, requireRole(['Administrator', 'Gestor']), updateMenu);
 router.get('/configuracoes', getConfiguracoes);
 router.get('/portal/home', getHome);
+router.get('/portal/busca', buscaPublica); // Fase H.5 — pública (a de /busca é a interna do painel)
 
 // Equipe e Estrutura Organizacional (Fase H.4): leitura pública; edição Admin/Gestor.
 router.get('/estrutura', optionalProtect, getEstrutura);

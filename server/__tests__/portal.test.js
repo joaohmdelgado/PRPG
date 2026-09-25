@@ -162,3 +162,35 @@ describe('H.3 — páginas institucionais em `pages`', () => {
     expect(rows).toEqual([{ id: 'minha', chave: null }]);
   });
 });
+
+describe('H.5 — busca pública', () => {
+  const buscar = (q, extra = '') => request(app).get(`/api/portal/busca?q=${encodeURIComponent(q)}${extra}`);
+  const grupo = (res, tipo) => res.body.grupos.find((g) => g.tipo === tipo);
+
+  it('acha sem acento, em título e corpo, e agrupa por tipo', async () => {
+    await auth(request(app).post('/api/news')).send({ id: 'n1', title: 'Exame de Proficiência', content: ['<p>Inscrições abertas</p>'] });
+    await auth(request(app).post('/api/editais')).send({ id: 'e1', title: 'Seleção 2026', description: '<p>Prova de <strong>proficiência</strong> em inglês</p>' });
+    const res = await buscar('proficiencia');
+    expect(res.status).toBe(200);
+    expect(grupo(res, 'noticias').itens[0]).toMatchObject({ id: 'n1', destino: '/noticia/n1' });
+    expect(grupo(res, 'editais').itens[0].trecho).toContain('<mark>');
+    expect(res.body.total).toBe(2);
+    // Palavra incompleta cai no trecho do título.
+    expect(grupo(await buscar('profic'), 'noticias').total).toBe(1);
+  });
+
+  it('não mostra rascunho nem agendado; busca curta não devolve nada', async () => {
+    await auth(request(app).post('/api/news')).send({ id: 'r', title: 'Rascunho secreto', status: 'RASCUNHO' });
+    await auth(request(app).post('/api/news')).send({ id: 'a', title: 'Agendada secreta', publicadoEm: new Date(Date.now() + 86400000).toISOString() });
+    expect((await buscar('secreto')).body.total).toBe(0);
+    expect((await buscar('secreta')).body.total).toBe(0);
+    expect((await buscar('a')).body).toEqual({ q: 'a', total: 0, grupos: [] });
+  });
+
+  it('?tipo= restringe a um grupo', async () => {
+    await auth(request(app).post('/api/news')).send({ id: 'n1', title: 'Pesquisa em solos' });
+    await auth(request(app).post('/api/editais')).send({ id: 'e1', title: 'Pesquisa de campo' });
+    const res = await buscar('pesquisa', '&tipo=editais');
+    expect(res.body.grupos.map((g) => g.tipo)).toEqual(['editais']);
+  });
+});

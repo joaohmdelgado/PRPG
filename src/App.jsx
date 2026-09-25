@@ -92,6 +92,7 @@ const ProficienciaInscricaoSucesso = lazy(() => import('./pages/ProficienciaInsc
 // Páginas institucionais (Fase H.3): conteúdo vem do painel ("Páginas"),
 // o endereço continua o mesmo.
 const PaginaInstitucional = lazy(() => import('./pages/PaginaInstitucional'));
+const Busca = lazy(() => import('./pages/Busca'));
 
 function NotFoundPublic() {
   return (
@@ -303,6 +304,7 @@ function App() {
           <Route path="/capes-print" element={<PaginaInstitucional slug="capes-print" />} />
           <Route path="/mobilidade-estudantil" element={<PaginaInstitucional slug="mobilidade-estudantil" />} />
           <Route path="/reconhecimento" element={<PaginaInstitucional slug="reconhecimento" />} />
+          <Route path="/busca" element={<Busca />} />
           <Route path="/noticias" element={<Noticias />} />
           <Route path="/noticia/:id" element={<Noticia />} />
           <Route path="/p/:slug" element={<PaginaInstitucional />} />

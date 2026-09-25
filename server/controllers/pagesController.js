@@ -27,7 +27,7 @@ const PRPG_ROUTES = new Set([
   'verificar', 'relatorios-autoavaliacao', 'especializacao',
   'residencia-profissional', 'sobre-internacionalizacao', 'alunos-estrangeiros',
   'capes-print', 'mobilidade-estudantil', 'reconhecimento', 'noticias',
-  'noticia', 'p', 'admin',
+  'noticia', 'p', 'admin', 'busca', 'privacidade',
 ]);
 const MICROSITE_SUBROTAS = new Set([
   'sobre', 'noticias', 'editais', 'busca', 'comissoes', 'discentes',

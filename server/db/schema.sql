@@ -1643,3 +1643,73 @@ INSERT INTO vocabularios (dominio, valor, rotulo, ordem) VALUES
   ('vinculo.papel', 'PRO_REITOR', 'Pró-Reitor(a)', 100),
   ('vinculo.papel', 'SERVIDOR', 'Servidor(a)', 101)
 ON CONFLICT (dominio, valor, COALESCE(programa_id, '')) DO NOTHING;
+
+-- =====================================================================
+-- Fase H.5 (docs/revisao-portal-conteudo-2026-09-24.md): busca pública com
+-- índice full-text em português, sem acento (ex.: "proficiencia" acha
+-- "Proficiência"), sobre notícias, editais, páginas, resoluções,
+-- formulários, programas e teses. A consulta (server/controllers/
+-- buscaPublicaController.js) usa exatamente as mesmas expressões dos índices.
+--
+-- As funções são IMMUTABLE para poderem entrar em índice: unaccent() e
+-- array_to_string() são STABLE no catálogo só porque dependem de
+-- configuração (dicionário/saída de tipo), que aqui é fixa — o padrão
+-- documentado do Postgres para indexar texto sem acento.
+-- =====================================================================
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
+-- Texto de busca: sem tags HTML (o conteúdo vem do editor) e sem acento.
+CREATE OR REPLACE FUNCTION busca_limpar(t text) RETURNS text
+  LANGUAGE sql IMMUTABLE PARALLEL SAFE AS
+$$ SELECT public.unaccent('public.unaccent'::regdictionary, regexp_replace(coalesce(t, ''), '<[^>]*>', ' ', 'g')) $$;
+
+CREATE OR REPLACE FUNCTION busca_juntar(t text[]) RETURNS text
+  LANGUAGE sql IMMUTABLE PARALLEL SAFE AS
+$$ SELECT array_to_string(t, ' ') $$;
+
+-- Documento com pesos: a (título) > b (resumo) > c (corpo).
+CREATE OR REPLACE FUNCTION busca_tsv(a text, b text, c text) RETURNS tsvector
+  LANGUAGE sql IMMUTABLE PARALLEL SAFE AS
+$$ SELECT setweight(to_tsvector('portuguese'::regconfig, busca_limpar(a)), 'A')
+       || setweight(to_tsvector('portuguese'::regconfig, busca_limpar(b)), 'B')
+       || setweight(to_tsvector('portuguese'::regconfig, busca_limpar(c)), 'C') $$;
+
+CREATE OR REPLACE FUNCTION busca_consulta(q text) RETURNS tsquery
+  LANGUAGE sql IMMUTABLE PARALLEL SAFE AS
+$$ SELECT websearch_to_tsquery('portuguese'::regconfig, busca_limpar(q)) $$;
+
+CREATE INDEX IF NOT EXISTS idx_busca_news ON news
+  USING gin (busca_tsv(title, excerpt, busca_juntar(content)));
+CREATE INDEX IF NOT EXISTS idx_busca_editais ON editais
+  USING gin (busca_tsv(title, numero, description));
+CREATE INDEX IF NOT EXISTS idx_busca_pages ON pages
+  USING gin (busca_tsv(title, body_summary, body_value));
+CREATE INDEX IF NOT EXISTS idx_busca_resolucoes ON resolucoes
+  USING gin (busca_tsv(title, descricao, coalesce(section_title, '') || ' ' || coalesce(category_title, '')));
+CREATE INDEX IF NOT EXISTS idx_busca_formularios ON formularios
+  USING gin (busca_tsv(title, descricao, coalesce(section_title, '') || ' ' || coalesce(category_title, '')));
+CREATE INDEX IF NOT EXISTS idx_busca_programas ON programas
+  USING gin (busca_tsv(nome || ' ' || coalesce(sigla, ''), descricao_curta,
+    coalesce(grande_area, '') || ' ' || coalesce(area_conhecimento, '') || ' ' || busca_juntar(palavras_chave)));
+CREATE INDEX IF NOT EXISTS idx_busca_teses ON teses_dissertacoes
+  USING gin (busca_tsv(title, tipo, ''));
+
+-- =====================================================================
+-- Fase H.5: trechos da busca com o texto original (acentos preservados).
+-- ts_headline compara o texto com a consulta usando esta configuração —
+-- unaccent + radical em português, o mesmo caminho de busca_tsv() —, então
+-- "Veterinária" no texto casa com "veterinaria" na consulta e é destacado
+-- sem perder o acento na exibição.
+-- =====================================================================
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_ts_config WHERE cfgname = 'pt_sem_acento') THEN
+    CREATE TEXT SEARCH CONFIGURATION pt_sem_acento (COPY = portuguese);
+    ALTER TEXT SEARCH CONFIGURATION pt_sem_acento
+      ALTER MAPPING FOR hword, hword_part, word WITH unaccent, portuguese_stem;
+  END IF;
+END$$;
+
+CREATE OR REPLACE FUNCTION busca_sem_tags(t text) RETURNS text
+  LANGUAGE sql IMMUTABLE PARALLEL SAFE AS
+$$ SELECT regexp_replace(coalesce(t, ''), '<[^>]*>', ' ', 'g') $$;

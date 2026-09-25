@@ -93,8 +93,10 @@ export default function Navbar() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/noticias?search=${encodeURIComponent(searchQuery.trim())}`);
+      // Busca do portal (Fase H.5): antes ia sempre para /noticias?search=.
+      navigate(`/busca?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchOpen(false);
+      setMobileOpen(false);
       setSearchQuery('');
     }
   };
@@ -168,6 +170,9 @@ export default function Navbar() {
             <div className="relative">
               <button
                 id="search-toggle"
+                type="button"
+                aria-label="Buscar no portal"
+                aria-expanded={searchOpen}
                 onClick={() => setSearchOpen(!searchOpen)}
                 className="hidden lg:flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full hover:bg-ufrpe-yellow hover:text-white transition text-ufrpe-blue cursor-pointer"
               >
@@ -184,6 +189,7 @@ export default function Navbar() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="O que você procura?"
+                      aria-label="O que você procura?"
                       autoFocus
                       className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow outline-none text-sm transition-all"
                     />
@@ -196,7 +202,10 @@ export default function Navbar() {
               )}
             </div>
             <button
+              type="button"
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label={mobileOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-expanded={mobileOpen}
               className="lg:hidden text-2xl text-ufrpe-blue"
             >
               <i className={`fa-solid ${mobileOpen ? 'fa-xmark' : 'fa-bars'}`}></i>
@@ -207,6 +216,18 @@ export default function Navbar() {
         {/* Mobile menu */}
         {mobileOpen && (
           <div className="lg:hidden bg-white border-t border-gray-100 shadow-lg">
+            {/* A busca também no celular (antes só aparecia a partir de 1024 px). */}
+            <form role="search" onSubmit={handleSearchSubmit} className="p-4 flex gap-2 border-b border-gray-100">
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar no portal"
+                aria-label="Buscar no portal"
+                className="flex-1 min-w-0 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+              />
+              <button type="submit" aria-label="Buscar" className="px-3 bg-ufrpe-blue text-white rounded-lg"><i className="fa-solid fa-search" aria-hidden="true"></i></button>
+            </form>
             <ul className="flex flex-col text-ufrpe-blue font-medium text-sm">
               {principal.map((item) => {
                 const filhos = item.filhos || [];
