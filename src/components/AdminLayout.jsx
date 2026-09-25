@@ -38,7 +38,7 @@ const ADMINISTRACAO = [
   { to: '/admin/pos-doutorado', label: 'Pós-Doutorado', icon: Microscope },
   { to: '/admin/notificacoes', label: 'Notificações', icon: Mail },
   { to: '/admin/importacao', label: 'Importação', icon: Upload },
-  { to: '/admin/planilhas/revisao', label: 'Revisão da importação', icon: ClipboardCheck },
+  { to: '/admin/planilhas', label: 'Planilhas (importação)', icon: ClipboardCheck },
 ];
 
 // Navegação do Gestor de Programa: só conteúdo vinculável ao seu programa.

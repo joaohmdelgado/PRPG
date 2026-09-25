@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { CheckCircle2, ClipboardCheck, ExternalLink, XCircle } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { TableSkeleton } from '../../components/admin/AdminUI';
@@ -124,7 +124,8 @@ function Grupo({ grupo, tipo, onResolver, aberto }) {
 
 export default function AdminRevisaoImportacao() {
   const [dados, setDados] = useState({ itens: [], contagem: [], tipos: {} });
-  const [fonte, setFonte] = useState('');
+  const [params] = useSearchParams();
+  const [fonte, setFonte] = useState(params.get('fonte') || '');
   const [situacao, setSituacao] = useState('ABERTA');
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(null);

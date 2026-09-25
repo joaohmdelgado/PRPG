@@ -79,16 +79,23 @@ export const indiceColunas = (cabecalho, nomes) => {
 // ------------------------------------------------------------ contexto -------
 const criarContexto = ({ client, fonte, importacaoId, simulacao, actor }) => {
   const relatorio = [];
-  const resumo = { criado: 0, inalterado: 0, divergente: 0, conflito: 0, ignorado: 0, erro: 0, pendencias: 0 };
+  const resumo = {
+    criado: 0, existente: 0, inalterado: 0, divergente: 0, conflito: 0, ignorado: 0, erro: 0,
+    pendencias: 0, porTipo: {},
+  };
+  const pendencias = [];
   const avisos = [];
   const cacheDepara = new Map();
 
   const ctx = {
     fonte, importacaoId, simulacao, actor,
-    relatorio, resumo, avisos,
+    relatorio, resumo, avisos, pendencias,
     q: (sql, params) => client.query(sql, params),
 
-    // Um item do relatório. acao: criado|inalterado|divergente|conflito|ignorado|erro.
+    // Um item do relatório. acao: criado | existente (a chave natural já está no
+    // sistema, criada lá — ligada à linha, não duplicada) | inalterado |
+    // divergente | conflito (chave natural no sistema com conteúdo diferente —
+    // nada é sobrescrito) | ignorado | erro.
     item(it) {
       relatorio.push(it);
       resumo[it.acao] = (resumo[it.acao] || 0) + 1;
@@ -146,6 +153,8 @@ const criarContexto = ({ client, fonte, importacaoId, simulacao, actor }) => {
          def.decisao || null, mensagem, importacaoId]
       );
       resumo.pendencias += 1;
+      resumo.porTipo[tipo] = (resumo.porTipo[tipo] || 0) + 1;
+      pendencias.push({ chave, tipo, campo, entidade, entidadeId, valorOriginal, decisao: def.decisao || null, mensagem });
     },
 
     // De-para já respondido na revisão (ex.: 'ECOLOGIA' -> programa).
@@ -175,23 +184,50 @@ const guardarArquivo = async (buffer, sha) => {
 
 export const lerArquivoGuardado = (caminho) => fs.readFile(caminho);
 
+// Simula várias importações em sequência numa transação só (desfeita no fim):
+// mostra o efeito combinado da ordem Contatos → Expedientes → Câmara → PNPD
+// (ex.: ofícios que só se ligam ao processo depois que a Câmara entra).
+// Não deixa histórico. etapas: [{ importador, buffer }].
+export async function simularSequencia(etapas, actor = null) {
+  const client = await pool.connect();
+  const resultados = [];
+  try {
+    await client.query('BEGIN');
+    for (const { importador, buffer } of etapas) {
+      const ctx = criarContexto({ client, fonte: importador.fonte, importacaoId: null, simulacao: true, actor });
+      await importador.importar(ctx, lerPlanilha(buffer));
+      resultados.push({ fonte: importador.fonte, resumo: ctx.resumo, avisos: ctx.avisos, relatorio: ctx.relatorio, pendencias: ctx.pendencias });
+    }
+  } finally {
+    await client.query('ROLLBACK').catch(() => {});
+    client.release();
+  }
+  return resultados;
+}
+
 // Roda um importador ({ fonte, importar(ctx, workbook) }) sobre o arquivo.
 // Devolve { id, fonte, simulacao, resumo, relatorio, avisos }.
-export async function executarImportacao({ importador, buffer, arquivoNome = null, simulacao = true, actor = null, guardar = true }) {
+// registrar=false (só para simulação de linha de comando) não deixa histórico.
+export async function executarImportacao({
+  importador, buffer, arquivoNome = null, simulacao = true, actor = null, guardar = true, registrar = true,
+}) {
+  const comHistorico = registrar || !simulacao;
   const workbook = lerPlanilha(buffer);
   const sha = crypto.createHash('sha256').update(buffer).digest('hex');
-  const caminho = guardar ? await guardarArquivo(buffer, sha) : null;
-  const id = crypto.randomUUID();
+  const caminho = guardar && comHistorico ? await guardarArquivo(buffer, sha) : null;
+  const id = comHistorico ? crypto.randomUUID() : null;
   const fonte = importador.fonte;
 
   // A linha da execução fica fora da transação: existe mesmo na simulação
   // (histórico das conferências do ciclo em paralelo, O.4) e é a FK das
   // origens/pendências gravadas dentro dela.
-  await pool.query(
-    `INSERT INTO importacoes (id, fonte, simulacao, arquivo_nome, arquivo_sha256, arquivo_caminho, executado_por)
-     VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-    [id, fonte, simulacao, arquivoNome, sha, caminho, actor]
-  );
+  if (comHistorico) {
+    await pool.query(
+      `INSERT INTO importacoes (id, fonte, simulacao, arquivo_nome, arquivo_sha256, arquivo_caminho, executado_por)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+      [id, fonte, simulacao, arquivoNome, sha, caminho, actor]
+    );
+  }
 
   const client = await pool.connect();
   const ctx = criarContexto({ client, fonte, importacaoId: id, simulacao, actor });
@@ -207,11 +243,16 @@ export async function executarImportacao({ importador, buffer, arquivoNome = nul
     client.release();
   }
 
-  const resultado = { id, fonte, simulacao, resumo: ctx.resumo, relatorio: ctx.relatorio, avisos: ctx.avisos };
-  await pool.query(
-    'UPDATE importacoes SET resumo = $2, relatorio = $3, erro = $4 WHERE id = $1',
-    [id, { ...ctx.resumo, avisos: ctx.avisos }, JSON.stringify(ctx.relatorio), erro ? erro.message : null]
-  );
+  const resultado = {
+    id, fonte, simulacao, resumo: ctx.resumo, relatorio: ctx.relatorio, avisos: ctx.avisos, pendencias: ctx.pendencias,
+  };
+  if (comHistorico) {
+    await pool.query(
+      'UPDATE importacoes SET resumo = $2, relatorio = $3, erro = $4 WHERE id = $1',
+      [id, { ...ctx.resumo, avisos: ctx.avisos }, JSON.stringify({ itens: ctx.relatorio, pendencias: ctx.pendencias }),
+       erro ? erro.message : null]
+    );
+  }
   if (erro) throw erro;
   return resultado;
 }

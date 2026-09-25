@@ -70,6 +70,7 @@ const AdminPageForm = lazy(() => import('./pages/admin/AdminPageForm'));
 const AdminMetricas = lazy(() => import('./pages/admin/AdminMetricas'));
 const AdminImportacao = lazy(() => import('./pages/admin/AdminImportacao'));
 const AdminRevisaoImportacao = lazy(() => import('./pages/admin/AdminRevisaoImportacao'));
+const AdminPlanilhas = lazy(() => import('./pages/admin/AdminPlanilhas'));
 const AdminProficiencia = lazy(() => import('./pages/admin/AdminProficiencia'));
 const AdminCamara = lazy(() => import('./pages/admin/AdminCamara'));
 const AdminCamaraForm = lazy(() => import('./pages/admin/AdminCamaraForm'));
@@ -220,6 +221,7 @@ function App() {
             </Route>
             {/* Planilhas (Fase O): importação fiel + revisão do que depende de decisão. */}
             <Route path="planilhas" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+              <Route index element={<AdminPlanilhas />} />
               <Route path="revisao" element={<AdminRevisaoImportacao />} />
             </Route>
             {/* Gestão/avaliação: Admin/Gestor. */}

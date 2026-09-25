@@ -52,7 +52,7 @@ export const TIPOS_PENDENCIA = {
   SERIE_INCOMPLETA: { rotulo: 'Série com sub-registro aparente', decisao: 'D-E2', destino: null },
   DESTINATARIO_SEM_UNIDADE: {
     rotulo: 'Destinatário sem unidade no cadastro', decisao: null, destino: 'unidade',
-    ajuda: 'Aplicar liga os atos à unidade e guarda a grafia como apelido dela.',
+    ajuda: 'Aplicar liga os atos à unidade e guarda a grafia como apelido dela. Unidade que não existe se cadastra em Câmara → Unidades. O texto original do destinatário continua no ato.',
   },
   SETOR_SEM_UNIDADE: {
     rotulo: 'Setor de origem sem unidade no cadastro', decisao: null, destino: 'unidade',
@@ -60,7 +60,10 @@ export const TIPOS_PENDENCIA = {
   USUARIO_SEM_PESSOA: {
     rotulo: 'Quem expediu: nome da planilha sem pessoa', decisao: 'D-E6', destino: 'pessoa',
   },
-  REFERENCIA_NAO_RESOLVIDA: { rotulo: 'Referência a documento não encontrado', decisao: null, destino: null },
+  NUMERO_REPETIDO: {
+    rotulo: 'Mesmo número duas vezes na planilha', decisao: null, destino: null,
+    ajuda: 'A primeira linha foi importada; esta não. Se for outro documento (ex.: outra série), cadastre-o em Expedientes.',
+  },
   EDITAL_A_CONCILIAR: {
     rotulo: 'Edital do livro sem página correspondente no site', decisao: 'D-E5', destino: null,
   },
@@ -86,7 +89,6 @@ export const TIPOS_PENDENCIA = {
     rotulo: 'Programa do estágio sem correspondência', decisao: 'D-C3', destino: 'programa',
     ajuda: 'Aplicar liga todos os estágios com esta grafia ao programa escolhido.',
   },
-  SUPERVISOR_SEM_CADASTRO: { rotulo: 'Supervisor(a) sem cadastro', decisao: null, destino: null },
   PERIODO_SOBREPOSTO: { rotulo: 'Períodos sobrepostos da mesma pessoa', decisao: 'D-C9', destino: null },
   RENOVACAO_SUGERIDA: {
     rotulo: 'Possível renovação de estágio anterior', decisao: 'D-C9', destino: 'confirmar',
@@ -96,7 +98,6 @@ export const TIPOS_PENDENCIA = {
     rotulo: 'Coluna "Ativo?" diverge das datas', decisao: null, destino: null,
     ajuda: 'Prevalecem as datas. Se a coluna estava certa, registre a situação manual no estágio.',
   },
-  PROCESSO_NAO_ENCONTRADO: { rotulo: 'Processo citado não está cadastrado', decisao: null, destino: null },
 };
 
 export const SITUACOES = ['ABERTA', 'RESOLVIDA', 'DESCARTADA'];

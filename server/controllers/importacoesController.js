@@ -3,7 +3,8 @@
 // diz acontece aqui (tela "Revisão da importação"), não no importador.
 import { pool, query } from '../db/pool.js';
 import { TIPOS_PENDENCIA, HANDLERS, DOMINIO_DEPARA, SITUACOES } from '../services/planilhas/pendencias.js';
-import { chaveTexto } from '../services/planilhas/nucleo.js';
+import { chaveTexto, executarImportacao, lerArquivoGuardado } from '../services/planilhas/nucleo.js';
+import { getImportadorPlanilha, IMPORTADORES, ORDEM, ARQUIVOS_PADRAO } from '../services/planilhas/index.js';
 import { STATUS_PROCESSO } from './camaraController.js';
 
 const pendenciaFromRow = (r) => ({
@@ -188,4 +189,65 @@ export const getImportacao = async (req, res) => {
     arquivoSha256: r.arquivo_sha256, resumo: r.resumo, relatorio: r.relatorio, erro: r.erro,
     executadoEm: r.executado_em,
   });
+};
+
+// ============================ Execução (O.3) ============================
+const resumirResultado = (r) => ({
+  id: r.id, fonte: r.fonte, simulacao: r.simulacao, resumo: r.resumo, avisos: r.avisos,
+  // O relatório completo fica em GET /api/importacoes/:id; aqui só o que
+  // pede atenção (conflito, divergência, erro, ignorado) e as pendências.
+  itens: r.relatorio.filter((i) => ['conflito', 'divergente', 'erro', 'ignorado'].includes(i.acao)),
+  pendencias: r.pendencias,
+});
+
+// POST /api/importacoes/planilhas/:fonte   multipart: file, simulacao ('true' padrão)
+export const importarPlanilha = async (req, res) => {
+  const importador = getImportadorPlanilha(req.params.fonte);
+  if (!importador) return res.status(404).json({ message: 'Planilha desconhecida.' });
+  if (!req.file) return res.status(400).json({ message: 'Envie o arquivo .xlsx.' });
+  const r = await executarImportacao({
+    importador, buffer: req.file.buffer, arquivoNome: req.file.originalname,
+    simulacao: String(req.body?.simulacao ?? 'true') !== 'false', actor: req.user?.id,
+  });
+  res.json(resumirResultado(r));
+};
+
+// POST /api/importacoes/planilhas/:fonte/reexecutar  { simulacao }
+// Roda de novo o último arquivo guardado desta planilha (depois de responder
+// um de-para na revisão, por exemplo).
+export const reexecutarPlanilha = async (req, res) => {
+  const importador = getImportadorPlanilha(req.params.fonte);
+  if (!importador) return res.status(404).json({ message: 'Planilha desconhecida.' });
+  const { rows } = await query(
+    `SELECT arquivo_nome, arquivo_caminho FROM importacoes
+     WHERE fonte = $1 AND arquivo_caminho IS NOT NULL ORDER BY executado_em DESC LIMIT 1`, [req.params.fonte]);
+  if (!rows[0]) return res.status(404).json({ message: 'Nenhum arquivo desta planilha foi enviado ainda.' });
+  let buffer;
+  try { buffer = await lerArquivoGuardado(rows[0].arquivo_caminho); } catch {
+    return res.status(410).json({ message: 'O arquivo guardado não está mais disponível no servidor. Envie de novo.' });
+  }
+  const r = await executarImportacao({
+    importador, buffer, arquivoNome: rows[0].arquivo_nome,
+    simulacao: req.body?.simulacao !== false && req.body?.simulacao !== 'false', actor: req.user?.id,
+  });
+  res.json(resumirResultado(r));
+};
+
+// GET /api/importacoes/planilhas — uma linha por planilha, na ordem de importação.
+export const getPlanilhas = async (_req, res) => {
+  const { rows: ultimas } = await query(`
+    SELECT DISTINCT ON (fonte, simulacao) fonte, simulacao, id, arquivo_nome, resumo, erro, executado_em
+      FROM importacoes ORDER BY fonte, simulacao, executado_em DESC`);
+  const { rows: pend } = await query(
+    `SELECT fonte, count(*) FILTER (WHERE situacao = 'ABERTA')::int AS abertas, count(*)::int AS total
+       FROM importacao_pendencias GROUP BY fonte`);
+  const { rows: origens } = await query('SELECT fonte, count(*)::int AS n FROM importacao_origens GROUP BY fonte');
+  const execucao = (r) => (r ? { id: r.id, arquivoNome: r.arquivo_nome, resumo: r.resumo, erro: r.erro, executadoEm: r.executado_em } : null);
+  res.json(ORDEM.map((fonte) => ({
+    fonte, rotulo: IMPORTADORES[fonte].rotulo, arquivoPadrao: ARQUIVOS_PADRAO[fonte],
+    ultimaSimulacao: execucao(ultimas.find((u) => u.fonte === fonte && u.simulacao)),
+    ultimaImportacao: execucao(ultimas.find((u) => u.fonte === fonte && !u.simulacao)),
+    registrosImportados: origens.find((o) => o.fonte === fonte)?.n || 0,
+    pendenciasAbertas: pend.find((p) => p.fonte === fonte)?.abertas || 0,
+  })));
 };

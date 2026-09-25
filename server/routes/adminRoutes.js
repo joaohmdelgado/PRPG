@@ -66,6 +66,7 @@ import { getTaxonomiaRefs, getTaxonomiaRefById, createTaxonomiaRef, updateTaxono
 import { getTiposImportacao, runImportacao } from '../controllers/importController.js';
 import {
   getPendencias, resolverPendencia, resolverLote, getOpcoes, getOrigem, getImportacoes, getImportacao,
+  importarPlanilha, reexecutarPlanilha, getPlanilhas,
 } from '../controllers/importacoesController.js';
 
 import { login } from '../controllers/authController.js';
@@ -158,6 +159,17 @@ const importUpload = multer({
     const ok = file.mimetype === 'application/json' || file.mimetype === 'text/plain' ||
       /\.(json|txt)$/i.test(file.originalname);
     cb(ok ? null : new Error('Apenas arquivos JSON ou TXT são permitidos!'), ok);
+  },
+  limits: { fileSize: 15 * 1024 * 1024 },
+});
+
+// Planilhas da Fase O (.xlsx), também em memória — o núcleo guarda uma cópia
+// imutável em server/private-uploads/importacoes/ (fora de /uploads).
+const planilhaUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    const ok = /\.xlsx$/i.test(file.originalname);
+    cb(ok ? null : new Error('Envie a planilha em .xlsx.'), ok);
   },
   limits: { fileSize: 15 * 1024 * 1024 },
 });
@@ -567,6 +579,11 @@ router.get('/importacoes/pendencias', protect, requireRole(PLANILHAS), getPenden
 router.post('/importacoes/pendencias/lote', protect, requireRole(PLANILHAS), resolverLote);
 router.post('/importacoes/pendencias/:id/resolver', protect, requireRole(PLANILHAS), resolverPendencia);
 router.get('/importacoes/opcoes', protect, requireRole(PLANILHAS), getOpcoes);
+router.get('/importacoes/planilhas', protect, requireRole(PLANILHAS), getPlanilhas);
+router.post('/importacoes/planilhas/:fonte', protect, requireRole(PLANILHAS),
+  (req, res, next) => planilhaUpload.single('file')(req, res, (err) => (err ? res.status(400).json({ message: err.message }) : next())),
+  importarPlanilha);
+router.post('/importacoes/planilhas/:fonte/reexecutar', protect, requireRole(PLANILHAS), reexecutarPlanilha);
 router.get('/importacoes/origem/:entidade/:entidadeId', protect, requireRole(PLANILHAS), getOrigem);
 router.get('/importacoes', protect, requireRole(PLANILHAS), getImportacoes);
 router.get('/importacoes/:id', protect, requireRole(PLANILHAS), getImportacao);
