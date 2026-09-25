@@ -3,9 +3,43 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Check, ChevronRight, ChevronLeft, Globe } from 'lucide-react';
 import { apiFetch } from '../../api';
+import { avaliarCores, normalizarHex, COR_PRIMARIA_PADRAO, COR_DESTAQUE_PADRAO } from '../../../server/utils/contraste.js';
 import AuditInfo, { AuditHeader } from '../../components/AuditInfo';
 import { Link as LinkIcon } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../../auth';
+
+// Aviso ao vivo do contraste das cores do microsite (Fase S.5). A regra é a
+// mesma que o servidor aplica ao salvar (server/utils/contraste.js).
+function ContrasteCores({ cor_primaria, cor_secundaria }) {
+  const { ok, pares, erros } = avaliarCores({ cor_primaria, cor_secundaria });
+  const primaria = normalizarHex(cor_primaria) || COR_PRIMARIA_PADRAO;
+  const destaque = normalizarHex(cor_secundaria) || COR_DESTAQUE_PADRAO;
+  return (
+    <div className={`rounded-lg border p-3 text-sm ${ok ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`} role="status">
+      <div className="flex flex-wrap items-center gap-3 mb-2">
+        <span className="rounded px-3 py-1.5 font-semibold" style={{ background: primaria, color: '#fff' }}>
+          Texto branco <span style={{ color: destaque }}>· destaque</span>
+        </span>
+        <span className="rounded px-3 py-1.5 font-semibold" style={{ background: destaque, color: primaria }}>Botão</span>
+        <span className="font-semibold" style={{ color: primaria }}>Título na cor primária</span>
+      </div>
+      {pares.length > 0 && (
+        <ul className="text-xs space-y-0.5 mb-1">
+          {pares.map((p) => (
+            <li key={p.chave} className={p.ok ? 'text-green-800' : 'text-red-700'}>
+              {p.ok ? '✓' : '✗'} {p.rotulo}: {p.razao.toFixed(2).replace('.', ',')}:1 (mínimo {p.minimo.toString().replace('.', ',')}:1)
+            </li>
+          ))}
+        </ul>
+      )}
+      {!ok && (
+        <p className="text-xs text-red-700">
+          {erros.filter((e) => !e.startsWith('Contraste insuficiente')).join(' ')} Com estas cores o programa não pode ser salvo.
+        </p>
+      )}
+    </div>
+  );
+}
 
 const TOTAL_STEPS = 8;
 
@@ -866,6 +900,9 @@ const AdminProgramaForm = () => {
             <input type="color" name="cor_secundaria" value={formData.cor_secundaria || '#febd11'} onChange={handleChange} className="h-10 w-14 border rounded" />
             <input type="text" name="cor_secundaria" value={formData.cor_secundaria} onChange={handleChange} className="flex-1 border p-2 rounded font-mono" placeholder="#febd11" />
           </div>
+        </div>
+        <div className="md:col-span-2">
+          <ContrasteCores cor_primaria={formData.cor_primaria} cor_secundaria={formData.cor_secundaria} />
         </div>
       </div>
 

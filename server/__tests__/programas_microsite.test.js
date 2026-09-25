@@ -519,3 +519,47 @@ describe('microsite — checklist de publicação (Fase S.4)', () => {
     expect((await auth(request(app).get('/api/programas/nao-existe/checklist'))).status).toBe(404);
   });
 });
+
+describe('microsite — contraste das cores (Fase S.5)', () => {
+  it('aceita cores com contraste suficiente e grava normalizado (#abc -> #aabbcc)', async () => {
+    const res = await auth(request(app).post('/api/programas')).send(novoPrograma({ slug: 'cor-ok', cor_primaria: '#5A1A2B', cor_secundaria: '#fc0' }));
+    expect(res.status).toBe(201);
+    const { body } = await request(app).get('/api/programas/slug/cor-ok');
+    expect(body.cor_primaria).toBe('#5a1a2b');
+    expect(body.cor_secundaria).toBe('#ffcc00');
+  });
+
+  it('recusa primária clara demais e destaque sem contraste com a primária (400)', async () => {
+    const clara = await auth(request(app).post('/api/programas')).send(novoPrograma({ slug: 'cor-clara', cor_primaria: '#febd11' }));
+    expect(clara.status).toBe(400);
+    expect(clara.body.message).toMatch(/Contraste insuficiente/);
+    expect(clara.body.campo).toBe('cores');
+
+    const { id } = await criar({ slug: 'cor-upd' });
+    const escura = await auth(request(app).put(`/api/programas/${id}`)).send({ cor_primaria: '#1e2b4f', cor_secundaria: '#333344' });
+    expect(escura.status).toBe(400);
+    expect(escura.body.message).toMatch(/destaque/);
+
+    const invalida = await auth(request(app).put(`/api/programas/${id}`)).send({ cor_primaria: 'azul' });
+    expect(invalida.status).toBe(400);
+    expect(invalida.body.message).toMatch(/formato #RRGGBB/);
+  });
+
+  it('cor vazia volta ao padrão da PRPG (e o padrão é validado junto com a outra cor)', async () => {
+    const { id } = await criar({ slug: 'cor-vazia', cor_primaria: '#5a1a2b', cor_secundaria: '#c9a227' });
+    // Destaque escura + primária padrão (#1e2b4f): contraste baixo.
+    const res = await auth(request(app).put(`/api/programas/${id}`)).send({ cor_primaria: '', cor_secundaria: '#2a2a2a' });
+    expect(res.status).toBe(400);
+    const ok = await auth(request(app).put(`/api/programas/${id}`)).send({ cor_primaria: '', cor_secundaria: '' });
+    expect(ok.status).toBe(200);
+    const { body } = await request(app).get('/api/programas/slug/cor-vazia');
+    expect(body.cor_primaria).toBeNull();
+  });
+
+  it('programa com cores antigas ruins ainda edita outros campos sem mexer nas cores', async () => {
+    const { id } = await criar({ slug: 'cor-legado' });
+    await pool.query("UPDATE programas SET cor_primaria = '#ffff00', cor_secundaria = '#ffffff' WHERE id = $1", [id]);
+    const res = await auth(request(app).put(`/api/programas/${id}`)).send({ descricao_curta: 'Nova', cor_primaria: '#ffff00', cor_secundaria: '#ffffff' });
+    expect(res.status).toBe(200);
+  });
+});

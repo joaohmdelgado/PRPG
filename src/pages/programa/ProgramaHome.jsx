@@ -78,7 +78,7 @@ export default function ProgramaHome() {
         <section>
           <div className="flex items-end justify-between mb-6">
             <div>
-              <p className="text-[var(--prog-accent)] font-semibold uppercase tracking-wider text-xs mb-1">Fique por dentro</p>
+              <p className="text-gray-500 font-semibold uppercase tracking-wider text-xs mb-1">Fique por dentro</p>
               <h2 className="font-heading font-black text-2xl md:text-3xl text-[var(--prog-primary)]">Últimas Notícias</h2>
             </div>
             <Link to={programaPath(slug, 'noticias')} className="text-sm font-semibold text-[var(--prog-primary)] hover:opacity-70 transition-opacity whitespace-nowrap">
@@ -118,7 +118,7 @@ export default function ProgramaHome() {
         {/* Linhas de pesquisa */}
         {linhas.length > 0 && (
           <section>
-            <p className="text-[var(--prog-accent)] font-semibold uppercase tracking-wider text-xs mb-1">Pesquisa</p>
+            <p className="text-gray-500 font-semibold uppercase tracking-wider text-xs mb-1">Pesquisa</p>
             <h2 className="font-heading font-black text-2xl md:text-3xl text-[var(--prog-primary)] mb-6">Linhas de Pesquisa</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {linhas.map((linha, i) => (
@@ -151,7 +151,7 @@ export default function ProgramaHome() {
           const cols = stats.length <= 3 ? stats.length : stats.length <= 4 ? 4 : stats.length <= 6 ? 3 : 4;
           return (
             <section>
-              <p className="text-[var(--prog-accent)] font-semibold uppercase tracking-wider text-xs mb-1">
+              <p className="text-gray-500 font-semibold uppercase tracking-wider text-xs mb-1">
                 O programa em{m ? ` — Dados de ${m.ano}` : ''}
               </p>
               <h2 className="font-heading font-black text-2xl md:text-3xl text-[var(--prog-primary)] mb-6">Números</h2>

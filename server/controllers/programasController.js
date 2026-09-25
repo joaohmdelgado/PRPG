@@ -7,6 +7,7 @@ import { indicadoresDoPrograma } from '../db/indicadoresRepo.js';
 import { serverError } from '../utils/httpError.js';
 import { slugify } from '../utils/slug.js';
 import { sqlPaginaComTexto, validarAjustes } from '../utils/micrositeMenu.js';
+import { avaliarCores, normalizarHex } from '../utils/contraste.js';
 import { contarModulos, menuDoPrograma, salvarAjustes, checklistDoPrograma } from '../db/micrositeRepo.js';
 import { visivelPara, sqlPublicado } from '../utils/publicacao.js';
 
@@ -43,6 +44,30 @@ const resolveSlug = async (rawSlug, nome, currentId = null) => {
     slug = `${base}-${count++}`;
   }
   return slug;
+};
+
+// Fase S.5: confere o contraste das cores do microsite antes de gravar.
+// `atuais` = as cores já gravadas (update); só valida quando alguma cor muda,
+// para um programa antigo com cores ruins ainda poder editar outros campos.
+// Normaliza para '#rrggbb' (vazio -> null = padrão da PRPG). Devolve a
+// mensagem de erro, ou null.
+const validarCoresPrograma = (data, atuais = {}) => {
+  const enviou = (c) => data[c] !== undefined;
+  if (!enviou('cor_primaria') && !enviou('cor_secundaria')) return null;
+  for (const c of ['cor_primaria', 'cor_secundaria']) {
+    if (!enviou(c)) continue;
+    const v = data[c];
+    data[c] = v == null || String(v).trim() === '' ? null : (normalizarHex(v) || v);
+  }
+  const efetivas = {
+    cor_primaria: enviou('cor_primaria') ? data.cor_primaria : atuais.cor_primaria,
+    cor_secundaria: enviou('cor_secundaria') ? data.cor_secundaria : atuais.cor_secundaria,
+  };
+  const mudou = (efetivas.cor_primaria ?? null) !== (atuais.cor_primaria ?? null)
+    || (efetivas.cor_secundaria ?? null) !== (atuais.cor_secundaria ?? null);
+  if (!mudou) return null;
+  const { ok, erros } = avaliarCores(efetivas);
+  return ok ? null : erros.join(' ');
 };
 
 const checkAdmin = (req) => {
@@ -339,6 +364,8 @@ const replaceModalidades = async (programa_id, modalidades) => {
 export const createPrograma = async (req, res) => {
   try {
     const data = req.body || {};
+    const erroCores = validarCoresPrograma(data);
+    if (erroCores) return res.status(400).json({ message: erroCores, campo: 'cores' });
     const progId = crypto.randomUUID();
     const now = new Date().toISOString();
     const actor = req.user?.id || null;
@@ -395,6 +422,8 @@ export const updatePrograma = async (req, res) => {
     if (!existing) return res.status(404).json({ message: 'Programa não encontrado' });
 
     const data = req.body || {};
+    const erroCores = validarCoresPrograma(data, existing);
+    if (erroCores) return res.status(400).json({ message: erroCores, campo: 'cores' });
     const pick = (val, fallback) => (val !== undefined ? val : fallback);
     const actor = req.user?.id || null;
 
