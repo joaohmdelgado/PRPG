@@ -13,18 +13,17 @@ export default function Resolucoes() {
   useEffect(() => {
     const fetchResolucoes = async () => {
       try {
-        const response = await apiFetch('/api/resolucoes', { auth: false });
+        const [response, secoes] = await Promise.all([
+          apiFetch('/api/resolucoes', { auth: false }),
+          apiFetch('/api/vocabularios?dominio=documento.secao', { auth: false })
+            .then((r) => (r.ok ? r.json() : [])).catch(() => []),
+        ]);
         const data = await response.json();
 
-        // As seções principais com ordem de exibição pré-definida
-        const sectionOrder = ['mestrado-doutorado', 'internacionalizacao', 'lato-sensu', 'apoio-financeiro', 'outras'];
-        const sectionTitles = {
-          'mestrado-doutorado': 'Mestrado e Doutorado',
-          'internacionalizacao': 'Internacionalização',
-          'lato-sensu': 'Lato sensu',
-          'apoio-financeiro': 'Apoio Financeiro',
-          'outras': 'Outras / Institucional'
-        };
+        // Ordem e títulos das seções vêm das Classificações do painel (Fase
+        // F.4); seção fora do vocabulário ainda aparece, depois das demais.
+        const sectionOrder = secoes.map((v) => v.valor);
+        const sectionTitles = Object.fromEntries(secoes.map((v) => [v.valor, v.rotulo]));
 
         const sectionsMap = {};
 
@@ -35,7 +34,7 @@ export default function Resolucoes() {
           if (!sectionsMap[sid]) {
             sectionsMap[sid] = {
               id: sid,
-              title: sectionTitle || sectionTitles[sid] || sid,
+              title: sectionTitles[sid] || sectionTitle || sid,
               categoriesMap: {}
 };
           }

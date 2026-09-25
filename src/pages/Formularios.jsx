@@ -13,16 +13,17 @@ export default function Formularios() {
   useEffect(() => {
     const fetchFormularios = async () => {
       try {
-        const response = await apiFetch('/api/formularios', { auth: false });
+        const [response, secoes] = await Promise.all([
+          apiFetch('/api/formularios', { auth: false }),
+          apiFetch('/api/vocabularios?dominio=documento.secao', { auth: false })
+            .then((r) => (r.ok ? r.json() : [])).catch(() => []),
+        ]);
         const data = await response.json();
 
-        // As seções principais com ordem de exibição pré-definida
-        const sectionOrder = ['mestrado-doutorado', 'lato-sensu', 'apoio-financeiro'];
-        const sectionTitles = {
-          'mestrado-doutorado': 'Mestrado e Doutorado',
-          'lato-sensu': 'Lato sensu',
-          'apoio-financeiro': 'Apoio Financeiro'
-        };
+        // Ordem e títulos das seções vêm das Classificações do painel (Fase
+        // F.4); seção fora do vocabulário ainda aparece, depois das demais.
+        const sectionOrder = secoes.map((v) => v.valor);
+        const sectionTitles = Object.fromEntries(secoes.map((v) => [v.valor, v.rotulo]));
 
         const sectionsMap = {};
 
@@ -33,7 +34,7 @@ export default function Formularios() {
           if (!sectionsMap[sid]) {
             sectionsMap[sid] = {
               id: sid,
-              title: sectionTitle || sectionTitles[sid] || sid,
+              title: sectionTitles[sid] || sectionTitle || sid,
               categoriesMap: {}
             };
           }

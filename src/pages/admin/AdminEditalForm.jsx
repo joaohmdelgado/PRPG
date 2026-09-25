@@ -7,21 +7,19 @@ import { API_URL, apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
+import useVocabulario, { rotuloDe } from '../../hooks/useVocabulario';
 
-const CATEGORIES = {
-  'mestrado-doutorado': 'Mestrado e Doutorado',
-  'especializacao': 'Especialização',
-  'residencia': 'Residência',
-  'internacionalizacao': 'Internacionalização'
-};
-
+// Categorias vêm de vocabularios ('edital.categoria' — Fase F.4), editáveis
+// em Classificações; antes eram fixas aqui e na página pública.
 const AdminEditalForm = () => {
+  const { itens: categorias } = useVocabulario('edital.categoria');
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     categoryId: '',
+    categoryTitle: '',
     title: '',
     publishedAt: '',
     field_periodo: {
@@ -131,6 +129,7 @@ const AdminEditalForm = () => {
 
             setFormData({
               categoryId: data.categoryId || '',
+              categoryTitle: data.categoryTitle || '',
               title: data.title || '',
               publishedAt: data.publishedAt || '',
               field_periodo: data.field_periodo || {
@@ -297,7 +296,7 @@ const AdminEditalForm = () => {
     setLoading(true);
 
     // Calcula os labels e ano
-    const categoryTitle = CATEGORIES[formData.categoryId] || '';
+    const categoryTitle = rotuloDe(categorias, formData.categoryId, formData.categoryTitle);
     const yearVal = formData.year ? parseInt(formData.year, 10) : (formData.publishedAt ? parseInt(formData.publishedAt.split('-')[0], 10) : new Date().getFullYear());
 
     const payload = {
@@ -372,8 +371,9 @@ const AdminEditalForm = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
+            <label htmlFor="edital-categoria" className="block text-sm font-medium text-gray-700 mb-1">Categoria *</label>
             <select
+              id="edital-categoria"
               name="categoryId"
               value={formData.categoryId}
               onChange={handleChange}
@@ -381,9 +381,10 @@ const AdminEditalForm = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white"
             >
               <option value="">Selecione uma categoria</option>
-              {Object.entries(CATEGORIES).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
-              ))}
+              {categorias.map((c) => <option key={c.valor} value={c.valor}>{c.rotulo}</option>)}
+              {formData.categoryId && !categorias.some((c) => c.valor === formData.categoryId) && (
+                <option value={formData.categoryId}>{formData.categoryTitle || formData.categoryId}</option>
+              )}
             </select>
           </div>
 

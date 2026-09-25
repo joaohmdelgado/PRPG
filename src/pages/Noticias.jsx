@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
+import useVocabulario, { corDe } from '../hooks/useVocabulario';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -33,6 +34,8 @@ export default function Noticias() {
   const [resultado, setResultado] = useState({ items: [], pages: 1, total: 0, anos: [] });
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState(false);
+  // Categorias e cores dos selos vêm do painel (Classificações — Fase F.4).
+  const { itens: categorias } = useVocabulario('noticia.categoria');
 
   // Atualiza a URL; qualquer mudança de filtro volta para a página 1.
   const setFiltro = (chave, valor) => setSearchParams((prev) => {
@@ -72,40 +75,6 @@ export default function Noticias() {
     if (page >= 1 && page <= totalPages) {
       setFiltro('pagina', page > 1 ? String(page) : '');
       window.scrollTo({ top: 0 });
-    }
-  };
-
-  const getCategoryBadgeClass = (categorySlug) => {
-    switch (categorySlug) {
-      case 'pesquisa':
-        return 'bg-ufrpe-cyan text-white';
-      case 'editais':
-        return 'bg-ufrpe-yellow text-ufrpe-blue';
-      case 'institucional':
-        return 'bg-blue-600 text-white';
-      case 'internacional':
-        return 'bg-purple-600 text-white';
-      case 'eventos':
-        return 'bg-green-600 text-white';
-      default:
-        return 'bg-gray-600 text-white';
-    }
-  };
-
-  const getCategoryBadgeTextClass = (categorySlug) => {
-    switch (categorySlug) {
-      case 'pesquisa':
-        return 'text-ufrpe-cyan';
-      case 'editais':
-        return 'text-ufrpe-yellow-hover';
-      case 'institucional':
-        return 'text-blue-600';
-      case 'internacional':
-        return 'text-purple-600';
-      case 'eventos':
-        return 'text-green-600';
-      default:
-        return 'text-gray-600';
     }
   };
 
@@ -178,11 +147,7 @@ export default function Noticias() {
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ufrpe-blue focus:border-ufrpe-blue outline-none transition-all appearance-none cursor-pointer text-sm"
                 >
                   <option value="">Todas</option>
-                  <option value="pesquisa">Pesquisa</option>
-                  <option value="institucional">Institucional</option>
-                  <option value="eventos">Eventos</option>
-                  <option value="internacional">Internacional</option>
-                  <option value="editais">Editais</option>
+                  {categorias.map((c) => <option key={c.valor} value={c.valor}>{c.rotulo}</option>)}
                 </select>
                 <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
               </div>
@@ -228,9 +193,11 @@ export default function Noticias() {
                       alt={item.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                     />
-                    <div className={`absolute top-4 left-4 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-md ${getCategoryBadgeClass(item.categorySlug)}`}>
-                      {item.category}
-                    </div>
+                    {item.category && (
+                      <div className={`absolute top-4 left-4 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider shadow-md ${corDe(categorias, item.categorySlug)}`}>
+                        {item.category}
+                      </div>
+                    )}
                   </div>
                   <div className="p-6 flex flex-col flex-grow">
                     <div className="text-xs text-gray-500 mb-3 flex items-center gap-2">
@@ -247,7 +214,7 @@ export default function Noticias() {
                     
                     <Link
                       to={`/noticia/${item.id}`}
-                      className={`mt-auto font-semibold text-sm flex items-center gap-2 group-hover:translate-x-1 transition-transform ${getCategoryBadgeTextClass(item.categorySlug)}`}
+                      className={`mt-auto font-semibold text-sm flex items-center gap-2 group-hover:translate-x-1 transition-transform text-ufrpe-blue`}
                     >
                       Ler notícia <i className="fa-solid fa-arrow-right text-xs"></i>
                     </Link>

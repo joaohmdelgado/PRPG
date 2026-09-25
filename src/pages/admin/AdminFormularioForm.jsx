@@ -6,20 +6,20 @@ import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
+import useVocabulario, { rotuloDe } from '../../hooks/useVocabulario';
 
-const SECTIONS = {
-  'mestrado-doutorado': 'Mestrado e Doutorado',
-  'lato-sensu': 'Lato sensu',
-  'apoio-financeiro': 'Apoio Financeiro'
-};
-
+// Seções vêm de vocabularios ('documento.secao' — Fase F.4), editáveis em
+// Classificações. A subcategoria de formulário continua texto livre com
+// sugestões dos valores já usados.
 const AdminFormularioForm = () => {
+  const { itens: secoes } = useVocabulario('documento.secao');
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     sectionId: '',
+    sectionTitle: '',
     categoryTitle: '',
     title: '',
     desc: '',
@@ -130,6 +130,7 @@ const AdminFormularioForm = () => {
             
             setFormData({
               sectionId: data.sectionId || '',
+              sectionTitle: data.sectionTitle || '',
               categoryTitle: data.categoryTitle || '',
               title: data.title || '',
               desc: description,
@@ -162,7 +163,7 @@ const AdminFormularioForm = () => {
     e.preventDefault();
     setLoading(true);
 
-    const sectionTitle = SECTIONS[formData.sectionId] || '';
+    const sectionTitle = rotuloDe(secoes, formData.sectionId, formData.sectionTitle);
     const payload = {
       ...formData,
       sectionTitle
@@ -248,9 +249,10 @@ const AdminFormularioForm = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white"
             >
               <option value="">Selecione uma seção</option>
-              {Object.entries(SECTIONS).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
-              ))}
+              {secoes.map((v) => <option key={v.valor} value={v.valor}>{v.rotulo}</option>)}
+              {formData.sectionId && !secoes.some((v) => v.valor === formData.sectionId) && (
+                <option value={formData.sectionId}>{formData.sectionTitle || formData.sectionId}</option>
+              )}
             </select>
           </div>
 

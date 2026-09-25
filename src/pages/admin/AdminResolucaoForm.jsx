@@ -6,22 +6,20 @@ import { API_URL, apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
+import useVocabulario, { rotuloDe } from '../../hooks/useVocabulario';
 
-const SECTIONS = {
-  'mestrado-doutorado': 'Mestrado e Doutorado',
-  'internacionalizacao': 'Internacionalização',
-  'lato-sensu': 'Lato sensu',
-  'apoio-financeiro': 'Apoio Financeiro',
-  'outras': 'Outras / Institucional'
-};
-
+// Seções e subcategorias vêm de vocabularios ('documento.secao' e
+// 'resolucao.subcategoria' — Fase F.4), editáveis em Classificações.
 const AdminResolucaoForm = () => {
+  const { itens: secoes } = useVocabulario('documento.secao');
+  const { itens: subcategorias } = useVocabulario('resolucao.subcategoria');
   const { id } = useParams();
   const isEditing = Boolean(id);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     sectionId: '',
+    sectionTitle: '',
     categoryTitle: '',
     title: '',
     desc: '',
@@ -48,21 +46,10 @@ const AdminResolucaoForm = () => {
   const editorInstanceRef = useRef(null);
   const descRef = useRef('');
 
-  // Carregar subcategorias da taxonomia oficial
+  // Subcategorias ativas + a atual do item (se tiver sido desativada depois).
   useEffect(() => {
-    const fetchSubcategories = async () => {
-      try {
-        const response = await apiFetch('/api/taxonomias');
-        if (response.ok) {
-          const data = await response.json();
-          setExistingCategories(data.subcategorias_resolucao || []);
-        }
-      } catch (e) {
-        console.error('Erro ao buscar subcategorias de taxonomia:', e);
-      }
-    };
-    fetchSubcategories();
-  }, []);
+    setExistingCategories(subcategorias.map((v) => v.rotulo));
+  }, [subcategorias]);
 
   // Inicializar CKEditor
   useEffect(() => {
@@ -132,6 +119,7 @@ const AdminResolucaoForm = () => {
             
             setFormData({
               sectionId: data.sectionId || '',
+              sectionTitle: data.sectionTitle || '',
               categoryTitle: data.categoryTitle || '',
               title: data.title || '',
               desc: description,
@@ -192,7 +180,7 @@ const AdminResolucaoForm = () => {
     e.preventDefault();
     setLoading(true);
 
-    const sectionTitle = SECTIONS[formData.sectionId] || '';
+    const sectionTitle = rotuloDe(secoes, formData.sectionId, formData.sectionTitle);
     const payload = {
       ...formData,
       sectionTitle
@@ -278,9 +266,10 @@ const AdminResolucaoForm = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white"
             >
               <option value="">Selecione uma seção</option>
-              {Object.entries(SECTIONS).map(([val, label]) => (
-                <option key={val} value={val}>{label}</option>
-              ))}
+              {secoes.map((v) => <option key={v.valor} value={v.valor}>{v.rotulo}</option>)}
+              {formData.sectionId && !secoes.some((v) => v.valor === formData.sectionId) && (
+                <option value={formData.sectionId}>{formData.sectionTitle || formData.sectionId}</option>
+              )}
             </select>
           </div>
 
@@ -297,6 +286,9 @@ const AdminResolucaoForm = () => {
               {existingCategories.map((cat, idx) => (
                 <option key={idx} value={cat}>{cat}</option>
               ))}
+              {formData.categoryTitle && !existingCategories.includes(formData.categoryTitle) && (
+                <option value={formData.categoryTitle}>{formData.categoryTitle}</option>
+              )}
             </select>
           </div>
 

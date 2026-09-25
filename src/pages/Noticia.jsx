@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
+import useVocabulario, { corDe } from '../hooks/useVocabulario';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -25,6 +26,7 @@ export default function Noticia() {
   // achar uma). Com token, quem edita vê o rascunho — é a pré-visualização.
   const [newsItem, setNewsItem] = useState(null);
   const [relatedNews, setRelatedNews] = useState([]);
+  const { itens: categorias } = useVocabulario('noticia.categoria');
   const [estado, setEstado] = useState('carregando'); // carregando | ok | naoEncontrada | erro
 
   useEffect(() => {
@@ -80,23 +82,6 @@ export default function Noticia() {
       </div>
     );
   }
-
-  const getCategoryBadgeClass = (categorySlug) => {
-    switch (categorySlug) {
-      case 'pesquisa':
-        return 'bg-ufrpe-cyan text-white';
-      case 'editais':
-        return 'bg-ufrpe-yellow text-ufrpe-blue';
-      case 'institucional':
-        return 'bg-blue-600 text-white';
-      case 'internacional':
-        return 'bg-purple-600 text-white';
-      case 'eventos':
-        return 'bg-green-600 text-white';
-      default:
-        return 'bg-gray-600 text-white';
-    }
-  };
 
   return (
     <>
@@ -268,7 +253,7 @@ export default function Noticia() {
                     alt={related.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                   />
-                  <div className={`absolute top-2 left-2 text-[8px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${getCategoryBadgeClass(related.categorySlug)}`}>
+                  <div className={`absolute top-2 left-2 text-[8px] font-bold px-2 py-1 rounded-full uppercase tracking-wider ${corDe(categorias, related.categorySlug)}`}>
                     {related.category}
                   </div>
                 </div>

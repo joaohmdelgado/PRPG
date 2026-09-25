@@ -21,18 +21,22 @@ export default function Editais() {
   useEffect(() => {
     const fetchEditais = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/editais`);
+        const [response, vocab] = await Promise.all([
+          fetch(`${API_URL}/api/editais`),
+          fetch(`${API_URL}/api/vocabularios?dominio=edital.categoria`).then((r) => (r.ok ? r.json() : [])).catch(() => []),
+        ]);
         const data = await response.json();
-        
-        const grouped = {
-          'mestrado-doutorado': { id: 'mestrado-doutorado', title: 'Mestrado e Doutorado', items: [] },
-          'especializacao': { id: 'especializacao', title: 'Especialização', items: [] },
-          'residencia': { id: 'residencia', title: 'Residência', items: [] },
-          'internacionalizacao': { id: 'internacionalizacao', title: 'Internacionalização', items: [] }
-        };
+
+        // Grupos na ordem das Classificações (Fase F.4). Edital com categoria
+        // fora do vocabulário vai para um grupo com o próprio rótulo — antes
+        // ele sumia da página sem aviso.
+        const grouped = {};
+        for (const v of vocab) grouped[v.valor] = { id: v.valor, title: v.rotulo, items: [] };
 
         data.forEach(edital => {
-          if (grouped[edital.categoryId]) {
+          const chave = edital.categoryId || 'outros';
+          if (!grouped[chave]) grouped[chave] = { id: chave, title: edital.categoryTitle || 'Outros editais', items: [] };
+          {
             let borderClass = 'border-l-8 border-gray-300';
             let badgeClass = 'bg-gray-200 text-gray-700';
 
@@ -56,7 +60,7 @@ export default function Editais() {
               data_fim: formatDate(edital.field_periodo.data_fim)
             } : null;
 
-            grouped[edital.categoryId].items.push({
+            grouped[chave].items.push({
               ...edital,
               publishedAt: formatDate(edital.publishedAt),
               deadline: formatDate(edital.deadline),

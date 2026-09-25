@@ -4,6 +4,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Search, X, Award, Calendar } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { AuditHeader } from '../../components/AuditInfo';
+import useVocabulario from '../../hooks/useVocabulario';
 
 const AdminBolsaForm = () => {
   const { id } = useParams();
@@ -21,7 +22,9 @@ const AdminBolsaForm = () => {
   const [alunoDisplay, setAlunoDisplay] = useState(null);
 
   const [users, setUsers] = useState([]);
-  const [tiposBolsa, setTiposBolsa] = useState([]);
+  // Tipos de bolsa vêm de vocabularios ('bolsa.tipo' — Fase F.4), editáveis em Classificações.
+  const { itens: tiposVocab } = useVocabulario('bolsa.tipo');
+  const tiposBolsa = tiposVocab.map((v) => v.rotulo);
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
   const [audit, setAudit] = useState(null);
@@ -41,13 +44,6 @@ const AdminBolsaForm = () => {
         } else if (usersResponse.status === 401 || usersResponse.status === 403) {
           navigate('/admin/login');
           return;
-        }
-
-        // Carrega taxonomias para buscar tipo_bolsa
-        const taxResponse = await apiFetch('/api/taxonomias');
-        if (taxResponse.ok) {
-          const taxData = await taxResponse.json();
-          setTiposBolsa(taxData.tipo_bolsa || []);
         }
 
         // Se estiver editando, busca os dados da bolsa
@@ -219,6 +215,9 @@ const AdminBolsaForm = () => {
               {tiposBolsa.map((tipo, idx) => (
                 <option key={idx} value={tipo}>{tipo}</option>
               ))}
+              {formData.tipoBolsa && !tiposBolsa.includes(formData.tipoBolsa) && (
+                <option value={formData.tipoBolsa}>{formData.tipoBolsa}</option>
+              )}
             </select>
           </div>
 

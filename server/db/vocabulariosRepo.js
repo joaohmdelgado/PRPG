@@ -10,6 +10,7 @@ const fromRow = (r) => ({
 });
 
 export const vocabulariosRepo = {
+  fromRow,
   async getByDominio(dominio, programaId) {
     const { rows } = await query(
       `SELECT * FROM vocabularios

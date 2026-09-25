@@ -6,6 +6,7 @@ import { API_URL, apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
+import useVocabulario, { rotuloDe } from '../../hooks/useVocabulario';
 
 const AdminNoticiaForm = () => {
   const { id } = useParams();
@@ -15,6 +16,7 @@ const AdminNoticiaForm = () => {
   const [formData, setFormData] = useState({
     title: '',
     category: '',
+    categorySlug: '',
     date: '',
     image: '',
     imageCaption: '',
@@ -27,6 +29,7 @@ const AdminNoticiaForm = () => {
   });
 
   const [loading, setLoading] = useState(isEditing);
+  const { itens: categorias } = useVocabulario('noticia.categoria');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [audit, setAudit] = useState(null);
@@ -147,6 +150,7 @@ const AdminNoticiaForm = () => {
             setFormData({
               title: data.title || '',
               category: data.category || '',
+              categorySlug: data.categorySlug || '',
               date: parseDateToISO(data.date),
               image: data.image || '',
               imageCaption: data.imageCaption || '',
@@ -205,31 +209,21 @@ const AdminNoticiaForm = () => {
     }
   };
 
-  const getCategorySlug = (category) => {
-    const mapping = {
-      'Pesquisa': 'pesquisa',
-      'Institucional': 'institucional',
-      'Eventos': 'eventos',
-      'Internacional': 'internacional',
-      'Editais': 'editais',
-      'Premiação': 'eventos'
-    };
-    return mapping[category] || category.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-');
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
     // Calcula o ano e slug de categoria automaticamente
     const yearStr = formData.date ? formData.date.split('-')[0] : new Date().getFullYear().toString();
-    const slug = getCategorySlug(formData.category);
 
     // Tratamento dos dados antes de enviar
     const payload = {
       ...formData,
       year: yearStr,
-      categorySlug: slug,
+      // Categoria vem de vocabularios (Fase F.4): grava a chave estável e uma
+      // cópia do rótulo (o servidor atualiza as cópias se a categoria for renomeada).
+      categorySlug: formData.categorySlug,
+      category: rotuloDe(categorias, formData.categorySlug, formData.category),
       content: formData.content, // Já é string HTML do CKEditor
       tags: formData.tags.split(',').map(t => t.trim()).filter(t => t !== '')
     };
@@ -293,21 +287,21 @@ const AdminNoticiaForm = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+            <label htmlFor="noticia-categoria" className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
             <select
-              name="category"
-              value={formData.category}
+              id="noticia-categoria"
+              name="categorySlug"
+              value={formData.categorySlug}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow bg-white"
             >
               <option value="">Selecione uma categoria</option>
-              <option value="Pesquisa">Pesquisa</option>
-              <option value="Institucional">Institucional</option>
-              <option value="Eventos">Eventos</option>
-              <option value="Internacional">Internacional</option>
-              <option value="Editais">Editais</option>
-              <option value="Premiação">Premiação</option>
+              {categorias.map((c) => <option key={c.valor} value={c.valor}>{c.rotulo}</option>)}
+              {/* categoria antiga, desativada no vocabulário, continua selecionável na edição */}
+              {formData.categorySlug && !categorias.some((c) => c.valor === formData.categorySlug) && (
+                <option value={formData.categorySlug}>{formData.category || formData.categorySlug}</option>
+              )}
             </select>
           </div>
 

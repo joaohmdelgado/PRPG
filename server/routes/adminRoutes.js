@@ -25,7 +25,9 @@ import {
   verificarDeclaracao, baixarComprovante,
 } from '../controllers/proficienciaController.js';
 import { verificarPublica } from '../controllers/declaracoesController.js';
-import { getVocabularios as getVocabulariosGenerico } from '../controllers/vocabulariosController.js';
+import {
+  getVocabularios as getVocabulariosGenerico, createVocabulario, updateVocabulario, deleteVocabulario,
+} from '../controllers/vocabulariosController.js';
 import {
   getAgenda, getContadores, exportAgendaXlsx, getContatosByPessoa, createContatoPessoa,
   getContatosByPrograma, createContatoPrograma, updateContato, deleteContato,
@@ -363,7 +365,12 @@ const CAMARA_LEITURA = ['Administrator', 'Gestor', 'GestorPrograma'];
 const CAMARA_ESCRITA = ['Administrator', 'Gestor'];
 
 router.get('/camara/vocabularios', protect, requireRole(CAMARA_LEITURA), getVocabularios);
-router.get('/vocabularios', getVocabulariosGenerico); // Fase B.5 (G10): leitura pública, só rótulos
+// Fase B.5 (G10): leitura pública, só rótulos ativos. Fase F.4: ?todos=1 (Admin/Gestor)
+// traz inativos e uso; escrita só nos domínios de conteúdo (DOMINIOS_EDITAVEIS).
+router.get('/vocabularios', optionalProtect, getVocabulariosGenerico);
+router.post('/vocabularios', protect, requireRole(['Administrator', 'Gestor']), createVocabulario);
+router.put('/vocabularios/:id', protect, requireRole(['Administrator', 'Gestor']), updateVocabulario);
+router.delete('/vocabularios/:id', protect, requireRole(['Administrator', 'Gestor']), deleteVocabulario);
 router.get('/camara/unidades', protect, requireRole(CAMARA_LEITURA), getUnidades);
 router.post('/camara/unidades', protect, requireRole(CAMARA_ESCRITA), createUnidade);
 router.put('/camara/unidades/:id', protect, requireRole(CAMARA_ESCRITA), updateUnidade);

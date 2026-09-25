@@ -1339,3 +1339,50 @@ ALTER TABLE news ADD COLUMN IF NOT EXISTS imagem_alt TEXT;
 ALTER TABLE resolucoes  ADD COLUMN IF NOT EXISTS ordem INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE formularios ADD COLUMN IF NOT EXISTS ordem INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE faq         ADD COLUMN IF NOT EXISTS ordem INTEGER NOT NULL DEFAULT 0;
+
+-- =================== Vocabularios de conteudo (Fase F.4) ===================
+-- Mesmo bloco de server/db/migrations/2026-09-25_vocabularios_conteudo.sql.
+INSERT INTO vocabularios (dominio, valor, rotulo, cor, ordem) VALUES
+  ('noticia.categoria', 'pesquisa',      'Pesquisa',      'bg-ufrpe-cyan text-white',          0),
+  ('noticia.categoria', 'institucional', 'Institucional', 'bg-blue-600 text-white',            1),
+  ('noticia.categoria', 'eventos',       'Eventos',       'bg-green-600 text-white',           2),
+  ('noticia.categoria', 'internacional', 'Internacional', 'bg-purple-600 text-white',          3),
+  ('noticia.categoria', 'editais',       'Editais',       'bg-ufrpe-yellow text-ufrpe-blue',   4),
+  ('noticia.categoria', 'premiacao',     'Premiação',     'bg-amber-600 text-white',           5),
+  ('edital.categoria', 'mestrado-doutorado',  'Mestrado e Doutorado', NULL, 0),
+  ('edital.categoria', 'especializacao',      'Especialização',       NULL, 1),
+  ('edital.categoria', 'residencia',          'Residência',           NULL, 2),
+  ('edital.categoria', 'internacionalizacao', 'Internacionalização',  NULL, 3),
+  ('documento.secao', 'mestrado-doutorado',  'Mestrado e Doutorado',   NULL, 0),
+  ('documento.secao', 'internacionalizacao', 'Internacionalização',    NULL, 1),
+  ('documento.secao', 'lato-sensu',          'Lato sensu',             NULL, 2),
+  ('documento.secao', 'apoio-financeiro',    'Apoio Financeiro',       NULL, 3),
+  ('documento.secao', 'outras',              'Outras / Institucional', NULL, 4)
+ON CONFLICT (dominio, valor, COALESCE(programa_id, '')) DO NOTHING;
+
+-- "Premiação" era gravada com o slug de "Eventos" (mapeamento fixo do
+-- formulário); passa a ter o próprio.
+UPDATE news SET category_slug = 'premiacao' WHERE category = 'Premiação' AND category_slug = 'eventos';
+
+-- Subcategoria de resolução e tipo de bolsa: o conteúdo grava o rótulo
+-- (category_title / tipo_bolsa), então valor = rótulo sem acento em slug.
+-- Origem: as listas de `taxonomias` e os valores já usados no conteúdo.
+WITH origem AS (
+  SELECT 'resolucao.subcategoria' AS dominio, unnest(valores) AS rotulo
+    FROM taxonomias WHERE chave = 'subcategorias_resolucao'
+  UNION
+  SELECT 'resolucao.subcategoria', category_title FROM resolucoes WHERE coalesce(category_title, '') <> ''
+  UNION
+  SELECT 'bolsa.tipo', unnest(valores) FROM taxonomias WHERE chave = 'tipo_bolsa'
+  UNION
+  SELECT 'bolsa.tipo', tipo_bolsa FROM bolsas WHERE coalesce(tipo_bolsa, '') <> ''
+)
+INSERT INTO vocabularios (dominio, valor, rotulo, ordem)
+SELECT dominio,
+       btrim(regexp_replace(lower(translate(rotulo,
+         'áàâãäéèêëíìîïóòôõöúùûüçÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ',
+         'aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUC')), '[^a-z0-9]+', '-', 'g'), '-'),
+       rotulo,
+       (row_number() OVER (PARTITION BY dominio ORDER BY rotulo))::int - 1
+  FROM origem
+ON CONFLICT (dominio, valor, COALESCE(programa_id, '')) DO NOTHING;
