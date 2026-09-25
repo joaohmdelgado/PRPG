@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import compression from 'compression';
 import path from 'path';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
@@ -60,13 +61,38 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+// gzip/deflate nas respostas (Fase R.9): as listagens JSON são texto
+// repetitivo — /api/news tinha 88 KB trafegando sem compressão.
+app.use(compression());
 app.use(express.json({ limit: '2mb' }));
 
 // Servir a pasta de uploads de forma estática. O nosniff reforça contra a
 // interpretação de um arquivo enviado como HTML/script pelo navegador.
+// Cada upload recebe nome único (timestamp + aleatório) e nunca é
+// sobrescrito, então pode ficar em cache por muito tempo.
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '30d',
   setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'),
 }));
+
+// Cache HTTP padrão da API (o handler pode sobrescrever, como /api/ready):
+// GET anônimo é conteúdo público — cache curto no navegador/proxy, e o ETag
+// do Express responde 304 quando nada mudou. Com token, a resposta é do
+// usuário: nunca compartilhada entre pessoas.
+app.use('/api', (req, res, next) => {
+  if (req.method !== 'GET') {
+    res.setHeader('Cache-Control', 'no-store');
+    return next();
+  }
+  // Mesma URL, resposta diferente com e sem token (ex.: microsite em rascunho).
+  res.vary('Authorization');
+  if (req.headers.authorization) {
+    res.setHeader('Cache-Control', 'private, no-cache');
+  } else {
+    res.setHeader('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
+  }
+  next();
+});
 
 // Rota base de teste
 app.get('/api/status', (req, res) => {

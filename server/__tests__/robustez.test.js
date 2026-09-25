@@ -52,6 +52,31 @@ describe('R.5 — data das notícias', () => {
   });
 });
 
+describe('R.9 — compressão e cache HTTP', () => {
+  it('comprime JSON e marca GET anônimo como público', async () => {
+    for (let i = 0; i < 20; i++) {
+      await auth(request(app).post('/api/news')).send({ title: `Notícia ${i}`, excerpt: 'texto repetido '.repeat(20) });
+    }
+    const res = await request(app).get('/api/news').set('Accept-Encoding', 'gzip');
+    expect(res.status).toBe(200);
+    expect(res.headers['content-encoding']).toBe('gzip');
+    expect(res.headers['cache-control']).toMatch(/^public/);
+    expect(res.headers.vary).toMatch(/Authorization/i);
+  });
+
+  it('GET com token é privado; escrita não é armazenada', async () => {
+    const lido = await auth(request(app).get('/api/news'));
+    expect(lido.headers['cache-control']).toBe('private, no-cache');
+    const escrito = await auth(request(app).post('/api/news')).send({ title: 'Y' });
+    expect(escrito.headers['cache-control']).toBe('no-store');
+  });
+
+  it('readiness continua sem cache', async () => {
+    const res = await request(app).get('/api/ready');
+    expect(res.headers['cache-control']).toBe('no-store');
+  });
+});
+
 describe('R.8 — resumo de usuários para autoria', () => {
   it('traz só id e nome da equipe (sem CPF, sem alunos) e exige login', async () => {
     await pool.query(
