@@ -194,3 +194,24 @@ describe('H.5 — busca pública', () => {
     expect(res.body.grupos.map((g) => g.tipo)).toEqual(['editais']);
   });
 });
+
+describe('H.7 — política de privacidade e arquivos do portal', () => {
+  it('a política é uma página institucional pública em /privacidade', async () => {
+    const { garantirPaginasInstitucionais } = await import('../db/paginasInstitucionais.js');
+    await garantirPaginasInstitucionais();
+    const res = await request(app).get('/api/pages/slug/privacidade');
+    expect(res.status).toBe(200);
+    expect(res.body.body.value).toContain('LGPD');
+  });
+
+  it('trocar um arquivo reescreve também banner/logo e imagens de menu', async () => {
+    const { substituirReferencias, listarUsos } = await import('../db/arquivosUsos.js');
+    await pool.query(`INSERT INTO menu_itens (menu, rotulo, imagem) VALUES ('acesso-rapido', 'CAPES', '/uploads/velho.png')`);
+    await pool.query(`INSERT INTO configuracoes (chave, valor) VALUES ('identidade', '{"logo": "/uploads/velho.png"}')`);
+    expect((await listarUsos({ url: '/uploads/velho.png' })).map((u) => u.tipo).sort())
+      .toEqual(['Menu do portal (imagem)', 'Portal (banner/logo)']);
+    const client = await pool.connect();
+    try { expect(await substituirReferencias(client, '/uploads/velho.png', '/uploads/novo.png')).toBe(2); } finally { client.release(); }
+    expect((await pool.query(`SELECT valor->>'logo' AS logo FROM configuracoes WHERE chave = 'identidade'`)).rows[0].logo).toBe('/uploads/novo.png');
+  });
+});

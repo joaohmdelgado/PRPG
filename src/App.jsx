@@ -304,6 +304,7 @@ function App() {
           <Route path="/capes-print" element={<PaginaInstitucional slug="capes-print" />} />
           <Route path="/mobilidade-estudantil" element={<PaginaInstitucional slug="mobilidade-estudantil" />} />
           <Route path="/reconhecimento" element={<PaginaInstitucional slug="reconhecimento" />} />
+          <Route path="/privacidade" element={<PaginaInstitucional slug="privacidade" />} />
           <Route path="/busca" element={<Busca />} />
           <Route path="/noticias" element={<Noticias />} />
           <Route path="/noticia/:id" element={<Noticia />} />

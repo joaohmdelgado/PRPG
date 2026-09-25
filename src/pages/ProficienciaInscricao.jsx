@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
 import { Languages, Upload, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import CabecalhoPagina from '../components/CabecalhoPagina';
@@ -320,7 +320,12 @@ export default function ProficienciaInscricao() {
                     </div>
                   )}
 
-                  <div className="pt-2 border-t border-gray-100 flex justify-end">
+                  <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+                    {/* Fase H.7: aviso no ponto de coleta (CPF e comprovantes). */}
+                    <p className="text-xs text-gray-500 max-w-md">
+                      Seus dados e comprovantes são usados só para a inscrição, o exame e a declaração, e ficam em área
+                      restrita. Veja a <Link to="/privacidade" target="_blank" className="text-ufrpe-blue underline">Política de Privacidade</Link>.
+                    </p>
                     <button
                       type="submit" disabled={enviando}
                       className="bg-ufrpe-blue text-white px-6 py-2 rounded hover:bg-[#2a3a66] flex items-center gap-2 disabled:opacity-50"

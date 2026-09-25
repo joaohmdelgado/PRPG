@@ -30,7 +30,7 @@ const MIME_POR_EXT = {
   '.pdf': 'application/pdf', '.png': 'image/png', '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp',
 };
-const HOSTS_BAIXAVEIS = ['prpg.ufrpe.br', 'www.prpg.ufrpe.br', 'profiap.ufrpe.br'];
+const HOSTS_BAIXAVEIS = ['prpg.ufrpe.br', 'www.prpg.ufrpe.br', 'prppg.ufrpe.br', 'profiap.ufrpe.br'];
 const HOSTS_INVENTARIO = [...HOSTS_BAIXAVEIS, 'drive.google.com', 'docs.google.com', 'images.unsplash.com'];
 
 const args = new Set(process.argv.slice(2));
@@ -69,8 +69,8 @@ async function inventarioExterno() {
   const achados = new Map(); // url -> [{tipo, id, titulo}]
   for (const u of USOS) {
     if (u.modo === 'id' || u.imutavel) continue;
-    const col = u.modo === 'array' ? `array_to_string(${u.coluna}, ' ')` : u.coluna;
-    const { rows } = await query(`SELECT id, ${u.titulo}::text AS titulo, ${col} AS texto FROM ${u.tabela} WHERE ${col} ~ 'https?://'`);
+    const col = u.modo === 'array' ? `array_to_string(${u.coluna}, ' ')` : u.modo === 'json' ? `${u.coluna}::text` : u.coluna;
+    const { rows } = await query(`SELECT ${u.idColuna || 'id'} AS id, ${u.titulo}::text AS titulo, ${col} AS texto FROM ${u.tabela} WHERE ${col} ~ 'https?://'`);
     for (const r of rows) {
       for (const url of String(r.texto).match(/https?:\/\/[^\s"'<>)]+/g) || []) {
         let host;

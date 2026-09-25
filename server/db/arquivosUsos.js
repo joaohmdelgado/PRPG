@@ -8,6 +8,7 @@
 //   modo 'texto': a URL aparece na coluna (igual ou dentro de HTML)
 //   modo 'array': coluna TEXT[] (corpo da notícia, um parágrafo por item)
 //   modo 'id':    coluna com o id de `arquivos` (atos, anexos)
+//   modo 'json':  coluna JSONB com a URL em algum valor (configuracoes)
 //
 // Eventos (erratas/resultados de edital) também citam arquivos, mas são
 // append-only: aparecem em "onde é usado" e NÃO são reescritos ao substituir
@@ -33,6 +34,10 @@ export const USOS = [
   { tabela: 'programas', coluna: 'regulamento_url', modo: 'texto', tipo: 'Programa (regulamento)', titulo: 'nome', admin: (id) => `/admin/programas/editar/${id}` },
   { tabela: 'users', coluna: 'perfil_foto_url', modo: 'texto', tipo: 'Usuário (foto)', titulo: 'perfil_nome', admin: (id) => `/admin/users/editar/${id}` },
   { tabela: 'pessoas', coluna: 'foto_url', modo: 'texto', tipo: 'Pessoa (foto)', titulo: 'nome', admin: () => null },
+  // Fase H.1/H.4: menus, banner/logo do portal e fotos da equipe (pessoas, acima).
+  { tabela: 'menu_itens', coluna: 'imagem', modo: 'texto', tipo: 'Menu do portal (imagem)', titulo: 'rotulo', admin: () => '/admin/portal' },
+  { tabela: 'menu_itens', coluna: 'destino', modo: 'texto', tipo: 'Menu do portal (link)', titulo: 'rotulo', admin: () => '/admin/portal' },
+  { tabela: 'configuracoes', coluna: 'valor', modo: 'json', tipo: 'Portal (banner/logo)', titulo: 'chave', idColuna: 'chave', admin: () => '/admin/portal' },
   { tabela: 'atos', coluna: 'arquivo_id', modo: 'id', tipo: 'Expediente', titulo: 'numero_exibicao', admin: (id) => `/admin/atos/${id}` },
   { tabela: 'anexos', coluna: 'arquivo_id', modo: 'id', tipo: 'Anexo', titulo: 'descricao', admin: () => null },
   { tabela: 'eventos', coluna: "dados->>'link'", modo: 'texto', tipo: 'Edital (errata/resultado)', titulo: 'tipo', admin: () => null, idColuna: 'entidade_id', imutavel: true },
@@ -41,6 +46,7 @@ export const USOS = [
 const condicao = (u, param) => {
   if (u.modo === 'array') return `EXISTS (SELECT 1 FROM unnest(${u.coluna}) AS parte WHERE position(${param} IN parte) > 0)`;
   if (u.modo === 'id') return `${u.coluna} = ${param}`;
+  if (u.modo === 'json') return `position(${param} IN coalesce(${u.coluna}::text, '')) > 0`;
   return `position(${param} IN coalesce(${u.coluna}, '')) > 0`;
 };
 
@@ -84,7 +90,9 @@ export async function substituirReferencias(client, urlAntiga, urlNova) {
     if (u.imutavel || u.modo === 'id') continue; // colunas por id não mudam: o id do arquivo é o mesmo
     const set = u.modo === 'array'
       ? `${u.coluna} = ARRAY(SELECT replace(parte, $1, $2) FROM unnest(${u.coluna}) AS parte)`
-      : `${u.coluna} = replace(${u.coluna}, $1, $2)`;
+      : u.modo === 'json'
+        ? `${u.coluna} = replace(${u.coluna}::text, $1, $2)::jsonb`
+        : `${u.coluna} = replace(${u.coluna}, $1, $2)`;
     const { rowCount } = await client.query(
       `UPDATE ${u.tabela} SET ${set} WHERE ${condicao(u, '$1')}`,
       [urlAntiga, urlNova]

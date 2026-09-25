@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useMenu, useConfig, linkTelefone } from '../hooks/usePortal';
 import LinkDestino from './LinkDestino';
 
@@ -89,6 +90,7 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
           <p>© {new Date().getFullYear()} PRPG - Universidade Federal Rural de Pernambuco. Todos os direitos reservados.</p>
+          <Link to="/privacidade" className="hover:text-ufrpe-yellow transition">Política de Privacidade</Link>
         </div>
       </div>
     </footer>
