@@ -1,14 +1,20 @@
 import crypto from 'crypto';
 import { createRepository } from './repository.js';
 import { query } from './pool.js';
+import { parseDataPt } from '../utils/datas.js';
 
 const toArr = (v) => (Array.isArray(v) ? v : v != null && v !== '' ? [v] : []);
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
 const numOrNull = (v) => (v === '' || v == null ? null : Number(v));
 
 // ============================ Noticias ============================
+const anoDe = (iso) => (typeof iso === 'string' && /^\d{4}-/.test(iso) ? iso.slice(0, 4) : null);
+
+// Fase R.5: `date` é DATE e a lista sai da mais recente para a mais antiga
+// (antes: ordem de `id`, isto é, alfabética de slug).
 export const newsRepo = createRepository({
   table: 'news',
+  orderBy: 'date DESC NULLS LAST, id ASC',
   fromRow: (r) => ({
     id: r.id, title: r.title, category: r.category, categorySlug: r.category_slug,
     date: r.date, year: r.year, image: r.image, excerpt: r.excerpt,
@@ -19,7 +25,10 @@ export const newsRepo = createRepository({
   }),
   toRow: (o) => ({
     id: o.id, title: o.title, category: o.category, category_slug: o.categorySlug,
-    date: o.date, year: o.year != null ? String(o.year) : null, image: o.image, excerpt: o.excerpt,
+    date: parseDataPt(o.date),
+    // year acompanha a data quando o cliente não manda (filtro por ano em /noticias).
+    year: o.year != null && o.year !== '' ? String(o.year) : anoDe(parseDataPt(o.date)),
+    image: o.image, excerpt: o.excerpt,
     content: toArr(o.content), author: o.author, author_role: o.authorRole,
     image_caption: o.imageCaption, tags: toArr(o.tags),
     quote_text: o.quote?.text ?? null, quote_author: o.quote?.author ?? null,

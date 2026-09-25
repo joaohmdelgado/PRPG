@@ -56,7 +56,9 @@ CREATE TABLE IF NOT EXISTS news (
   title         TEXT NOT NULL,
   category      TEXT,
   category_slug TEXT,
-  date          TEXT,
+  -- Fase R.5: DATE nativo (era texto "20 de Março, 2026" misturado com ISO);
+  -- migracao em migrations/2026-09-24_news_date.sql.
+  date          DATE,
   year          TEXT,
   image         TEXT,
   excerpt       TEXT,
@@ -72,6 +74,7 @@ CREATE TABLE IF NOT EXISTS news (
   atualizado_por TEXT
 );
 CREATE INDEX IF NOT EXISTS news_programa_id_idx ON news(programa_id);
+CREATE INDEX IF NOT EXISTS news_date_idx ON news (date DESC NULLS LAST);
 
 -- ============================ Editais =============================
 CREATE TABLE IF NOT EXISTS editais (

@@ -23,18 +23,11 @@ const slugify = (s) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-const MESES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
-];
-
-// ISO → 'DD de Mês, YYYY' (padrão de exibição usado nas notícias). Vazio quando ausente.
+// ISO completo → 'YYYY-MM-DD' (news.date é DATE desde a Fase R.5; a exibição
+// por extenso é feita nas telas). Vazio quando ausente.
 const formatarData = (iso) => {
-  if (typeof iso !== 'string' || iso.length < 10) return '';
-  const [ano, mes, dia] = iso.slice(0, 10).split('-');
-  const m = MESES[Number(mes) - 1];
-  if (!m) return '';
-  return `${dia} de ${m}, ${ano}`;
+  if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return '';
+  return iso.slice(0, 10);
 };
 
 const anoDe = (iso) =>

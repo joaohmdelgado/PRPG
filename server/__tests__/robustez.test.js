@@ -3,6 +3,7 @@ import request from 'supertest';
 import { app } from '../app.js';
 import { pool } from '../db/pool.js';
 import { resetDb, seedAdmin, loginAdmin } from './helpers.js';
+import { parseDataPt } from '../utils/datas.js';
 
 // Fase R (docs/revisao-portal-conteudo-2026-09-24.md): um erro dentro de um
 // handler async não pode escapar como rejeição não tratada — no servidor real
@@ -23,6 +24,33 @@ afterAll(async () => {
 });
 
 const auth = (req) => req.set('Authorization', `Bearer ${token}`);
+
+describe('R.5 — data das notícias', () => {
+  it('parseDataPt aceita ISO e o formato por extenso do site antigo', () => {
+    expect(parseDataPt('2026-03-20')).toBe('2026-03-20');
+    expect(parseDataPt('20 de Março, 2026')).toBe('2026-03-20');
+    expect(parseDataPt('2 de março de 2026')).toBe('2026-03-02');
+    expect(parseDataPt('')).toBeNull();
+    expect(parseDataPt('31/12/2026')).toBe('31/12/2026'); // não descarta: a coluna recusa (400)
+  });
+
+  it('grava como DATE, deriva o ano e lista da mais recente para a mais antiga', async () => {
+    await auth(request(app).post('/api/news')).send({ id: 'a-antiga', title: 'Antiga', date: '07 de Agosto, 2024' });
+    await auth(request(app).post('/api/news')).send({ id: 'z-nova', title: 'Nova', date: '2026-05-10' });
+    await auth(request(app).post('/api/news')).send({ id: 'm-meio', title: 'Meio', date: '2025-01-15' });
+
+    const res = await request(app).get('/api/news');
+    expect(res.body.map((n) => n.id)).toEqual(['z-nova', 'm-meio', 'a-antiga']);
+    const antiga = res.body.find((n) => n.id === 'a-antiga');
+    expect(antiga.date).toBe('2024-08-07');
+    expect(antiga.year).toBe('2024');
+  });
+
+  it('data em formato desconhecido devolve 400', async () => {
+    const res = await auth(request(app).post('/api/news')).send({ title: 'X', date: '31/12/2026' });
+    expect(res.status).toBe(400);
+  });
+});
 
 describe('R.1/R.2 — erros em handlers async viram resposta JSON', () => {
   it('data inválida numa coluna DATE devolve 400 (não derruba nem pendura)', async () => {
