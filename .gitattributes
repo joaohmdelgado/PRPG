@@ -1,0 +1,4 @@
+# Migracoes sao verificadas por SHA-256 do arquivo (server/db/migrateRunner.mjs):
+# com core.autocrlf=true um checkout no Windows traria CRLF e mudaria o
+# checksum de uma migracao ja aplicada. SQL sempre em LF.
+*.sql text eol=lf
