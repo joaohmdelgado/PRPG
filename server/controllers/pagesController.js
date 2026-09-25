@@ -163,7 +163,7 @@ export const deletePage = async (req, res) => {
   const existing = await pagesRepo.getById(req.params.id);
   if (!existing) return res.status(404).json({ message: 'Página não encontrada.' });
   if (existing.chave) {
-    return res.status(400).json({ message: 'Página fixa do programa não pode ser excluída.' });
+    return res.status(400).json({ message: 'Página fixa não pode ser excluída (o endereço dela é usado pelo site e pelos menus).' });
   }
   const ok = await pagesRepo.remove(req.params.id);
   if (ok) res.json({ message: 'Página removida com sucesso.' });

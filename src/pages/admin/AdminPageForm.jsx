@@ -259,7 +259,7 @@ const AdminPageForm = () => {
               </span>
               {isEditing && formData.chave && (
                 <span className="block mt-1 text-gray-400">
-                  Página fixa deste programa — o endereço não muda quando o título muda.
+                  {selectedPrograma ? 'Página fixa deste programa' : 'Página fixa do portal da PRPG'} — o endereço não muda quando o título muda.
                 </span>
               )}
             </p>

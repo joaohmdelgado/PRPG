@@ -10,26 +10,13 @@ import RequireAuth from './components/RequireAuth';
 // Páginas carregadas sob demanda (code-splitting): o visitante público não
 // baixa o código do painel admin, e cada rota vira um chunk separado.
 const Home = lazy(() => import('./pages/Home'));
-const Sobre = lazy(() => import('./pages/Sobre'));
-const MissaoVisaoValores = lazy(() => import('./pages/MissaoVisaoValores'));
-const Historico = lazy(() => import('./pages/Historico'));
 const EstruturaOrganizacional = lazy(() => import('./pages/EstruturaOrganizacional'));
 const Equipe = lazy(() => import('./pages/Equipe'));
-const Financeiro = lazy(() => import('./pages/Financeiro'));
-const ProextPg = lazy(() => import('./pages/ProextPg'));
 const ProgramasStrictoSensu = lazy(() => import('./pages/ProgramasStrictoSensu'));
 const CalendarioAcademico = lazy(() => import('./pages/CalendarioAcademico'));
 const Editais = lazy(() => import('./pages/Editais'));
 const Resolucoes = lazy(() => import('./pages/Resolucoes'));
 const Formularios = lazy(() => import('./pages/Formularios'));
-const RelatoriosAutoavaliacao = lazy(() => import('./pages/RelatoriosAutoavaliacao'));
-const Especializacao = lazy(() => import('./pages/Especializacao'));
-const ResidenciaProfissional = lazy(() => import('./pages/ResidenciaProfissional'));
-const SobreInternacionalizacao = lazy(() => import('./pages/SobreInternacionalizacao'));
-const AlunosEstrangeiros = lazy(() => import('./pages/AlunosEstrangeiros'));
-const CapesPrint = lazy(() => import('./pages/CapesPrint'));
-const MobilidadeEstudantil = lazy(() => import('./pages/MobilidadeEstudantil'));
-const Reconhecimento = lazy(() => import('./pages/Reconhecimento'));
 const Noticias = lazy(() => import('./pages/Noticias'));
 const Noticia = lazy(() => import('./pages/Noticia'));
 const Edital = lazy(() => import('./pages/Edital'));
@@ -101,7 +88,9 @@ const AdminNotificacoes = lazy(() => import('./pages/admin/AdminNotificacoes'));
 const AdminMeusProcessos = lazy(() => import('./pages/admin/AdminMeusProcessos'));
 const ProficienciaInscricao = lazy(() => import('./pages/ProficienciaInscricao'));
 const ProficienciaInscricaoSucesso = lazy(() => import('./pages/ProficienciaInscricaoSucesso'));
-const PageView = lazy(() => import('./pages/PageView'));
+// Páginas institucionais (Fase H.3): conteúdo vem do painel ("Páginas"),
+// o endereço continua o mesmo.
+const PaginaInstitucional = lazy(() => import('./pages/PaginaInstitucional'));
 
 function NotFoundPublic() {
   return (
@@ -285,13 +274,13 @@ function App() {
         {/* Site público da PRPG (Navbar + Footer) */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/sobre" element={<Sobre />} />
-          <Route path="/missao-visao-valores" element={<MissaoVisaoValores />} />
-          <Route path="/historico" element={<Historico />} />
+          <Route path="/sobre" element={<PaginaInstitucional slug="sobre" />} />
+          <Route path="/missao-visao-valores" element={<PaginaInstitucional slug="missao-visao-valores" />} />
+          <Route path="/historico" element={<PaginaInstitucional slug="historico" />} />
           <Route path="/estrutura-organizacional" element={<EstruturaOrganizacional />} />
           <Route path="/equipe" element={<Equipe />} />
-          <Route path="/financeiro" element={<Financeiro />} />
-          <Route path="/proext-pg" element={<ProextPg />} />
+          <Route path="/financeiro" element={<PaginaInstitucional slug="financeiro" />} />
+          <Route path="/proext-pg" element={<PaginaInstitucional slug="proext-pg" />} />
           <Route path="/programas" element={<ProgramasStrictoSensu />} />
           <Route path="/calendario-academico" element={<CalendarioAcademico />} />
           <Route path="/editais" element={<Editais />} />
@@ -302,17 +291,17 @@ function App() {
           <Route path="/proficiencia/inscricao/sucesso" element={<ProficienciaInscricaoSucesso />} />
           <Route path="/declaracoes/proficiencia/:codigo" element={<DeclaracaoProficiencia />} />
           <Route path="/verificar/:codigo" element={<VerificarDeclaracao />} />
-          <Route path="/relatorios-autoavaliacao" element={<RelatoriosAutoavaliacao />} />
-          <Route path="/especializacao" element={<Especializacao />} />
-          <Route path="/residencia-profissional" element={<ResidenciaProfissional />} />
-          <Route path="/sobre-internacionalizacao" element={<SobreInternacionalizacao />} />
-          <Route path="/alunos-estrangeiros" element={<AlunosEstrangeiros />} />
-          <Route path="/capes-print" element={<CapesPrint />} />
-          <Route path="/mobilidade-estudantil" element={<MobilidadeEstudantil />} />
-          <Route path="/reconhecimento" element={<Reconhecimento />} />
+          <Route path="/relatorios-autoavaliacao" element={<PaginaInstitucional slug="relatorios-autoavaliacao" />} />
+          <Route path="/especializacao" element={<PaginaInstitucional slug="especializacao" />} />
+          <Route path="/residencia-profissional" element={<PaginaInstitucional slug="residencia-profissional" />} />
+          <Route path="/sobre-internacionalizacao" element={<PaginaInstitucional slug="sobre-internacionalizacao" />} />
+          <Route path="/alunos-estrangeiros" element={<PaginaInstitucional slug="alunos-estrangeiros" />} />
+          <Route path="/capes-print" element={<PaginaInstitucional slug="capes-print" />} />
+          <Route path="/mobilidade-estudantil" element={<PaginaInstitucional slug="mobilidade-estudantil" />} />
+          <Route path="/reconhecimento" element={<PaginaInstitucional slug="reconhecimento" />} />
           <Route path="/noticias" element={<Noticias />} />
           <Route path="/noticia/:id" element={<Noticia />} />
-          <Route path="/p/:slug" element={<PageView />} />
+          <Route path="/p/:slug" element={<PaginaInstitucional />} />
           <Route path="*" element={<NotFoundPublic />} />
         </Route>
       </Routes>

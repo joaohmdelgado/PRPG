@@ -135,3 +135,30 @@ describe('H.2 — home dirigida por dados e escopo do portal (D-R1)', () => {
     expect(res.body.numeros.programas).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('H.3 — páginas institucionais em `pages`', () => {
+  it('são criadas uma vez, com endereço fixo, e não podem ser excluídas', async () => {
+    const { garantirPaginasInstitucionais, lerPaginasInstitucionais } = await import('../db/paginasInstitucionais.js');
+    const total = lerPaginasInstitucionais().length;
+    expect(await garantirPaginasInstitucionais()).toBe(total);
+    expect(await garantirPaginasInstitucionais()).toBe(0); // idempotente
+
+    const sobre = await request(app).get('/api/pages/slug/sobre');
+    expect(sobre.status).toBe(200);
+    expect(sobre.body).toMatchObject({ chave: 'sobre', title: 'Sobre a PRPG', status: 'PUBLICADO' });
+    expect(sobre.body.body.value).toContain('<h2>');
+
+    // Editar o título não muda o endereço; excluir é recusado.
+    const put = await auth(request(app).put(`/api/pages/${sobre.body.id}`)).send({ title: 'Quem somos' });
+    expect(put.body.slug).toBe('sobre');
+    expect((await auth(request(app).delete(`/api/pages/${sobre.body.id}`))).status).toBe(400);
+  });
+
+  it('não sobrescreve uma página comum que já use o endereço', async () => {
+    const { garantirPaginasInstitucionais } = await import('../db/paginasInstitucionais.js');
+    await pool.query(`INSERT INTO pages (id, title, slug, body_value) VALUES ('minha', 'Minha', 'historico', '<p>x</p>')`);
+    await garantirPaginasInstitucionais();
+    const { rows } = await pool.query(`SELECT id, chave FROM pages WHERE slug = 'historico' AND programa_id IS NULL`);
+    expect(rows).toEqual([{ id: 'minha', chave: null }]);
+  });
+});

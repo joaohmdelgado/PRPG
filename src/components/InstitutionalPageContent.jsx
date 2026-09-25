@@ -2,9 +2,9 @@ import React from 'react';
 import SafeHtml from './SafeHtml';
 import AvisoPreVisualizacao from './AvisoPreVisualizacao';
 
-// Hero + corpo de uma página institucional customizada. Compartilhado entre
-// /<slug> (página geral), /p/:slug (endereço legado) e /<programaSlug>/<slug>
-// (página vinculada a um programa) — ver PageView.jsx e ProgramaPagina.jsx.
+// Hero + corpo de uma página vinculada a um programa (/<programaSlug>/<slug>,
+// com a cor do programa — ver ProgramaPagina.jsx). As páginas gerais da PRPG
+// usam pages/PaginaInstitucional.jsx (cabeçalho com breadcrumb do menu).
 export default function InstitutionalPageContent({ page, heroClassName = 'bg-ufrpe-blue', breadcrumb }) {
   return (
     <>
@@ -28,7 +28,7 @@ export default function InstitutionalPageContent({ page, heroClassName = 'bg-ufr
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100">
             <SafeHtml
-              className="text-gray-700 leading-relaxed html-content prose prose-blue max-w-none"
+              className="html-content"
               html={page.body?.value}
             />
           </div>

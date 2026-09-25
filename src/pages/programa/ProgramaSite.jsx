@@ -5,7 +5,7 @@ import { ProgramaContext } from '../../components/programa/ProgramaContext';
 import ProgramaLayout from '../../components/programa/ProgramaLayout';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import InstitutionalPageContent from '../../components/InstitutionalPageContent';
+import PaginaInstitucional from '../PaginaInstitucional';
 import ProgramaHome from './ProgramaHome';
 import ProgramaSobre from './ProgramaSobre';
 import ProgramaNoticias from './ProgramaNoticias';
@@ -116,7 +116,7 @@ export default function ProgramaSite() {
       <div className="flex flex-col min-h-screen w-full">
         <Navbar />
         <main className="flex-1">
-          <InstitutionalPageContent page={paginaGeral} />
+          <PaginaInstitucional slug={paginaGeral.slug} />
         </main>
         <Footer />
       </div>

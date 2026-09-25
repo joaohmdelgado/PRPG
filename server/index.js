@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { app } from './app.js';
 import { pool } from './db/pool.js';
 import { createGracefulShutdown } from './runtime/shutdown.js';
+import { garantirPaginasInstitucionais } from './db/paginasInstitucionais.js';
 
 dotenv.config();
 
@@ -25,7 +26,15 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 // Verifica a conexão com o banco antes de aceitar requisições.
 pool
   .query('SELECT 1')
-  .then(() => {
+  .then(async () => {
+    // Páginas institucionais que faltarem (Fase H.3). Falha aqui não impede
+    // a subida — o site só mostraria "página não encontrada" nelas.
+    try {
+      const criadas = await garantirPaginasInstitucionais();
+      if (criadas) console.log(`[DB] Páginas institucionais criadas: ${criadas}`);
+    } catch (e) {
+      console.error('[DB] Não foi possível criar as páginas institucionais:', e.message);
+    }
     server = app.listen(PORT, () => {
       console.log(`[Server] Rodando na porta ${PORT}`);
     });

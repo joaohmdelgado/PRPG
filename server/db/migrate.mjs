@@ -7,6 +7,7 @@ import {
   tesesRepo, faqRepo, disciplinasRepo, bolsasRepo, pagesRepo, usersRepo,
   calendariosRepo, taxonomiasRepo, gruposRepo,
 } from './repositories.js';
+import { garantirPaginasInstitucionais } from './paginasInstitucionais.js';
 import { backfillPessoas } from './backfill-pessoas.mjs';
 import { backfillDeclaracoesProficiencia } from './backfill-declaracoes-proficiencia.mjs';
 
@@ -148,6 +149,9 @@ async function main() {
     await pagesRepo.ensureFixedSobre(p.id);
   }
   console.log(`  sobre (fixa): ${sobreCriadas}/${programas.length} criada(s) agora`);
+
+  // Páginas institucionais da PRPG (Fase H.3): o TRUNCATE acima as apagou.
+  console.log(`  institucionais: ${await garantirPaginasInstitucionais()} criada(s)`);
 
   console.log('Migrando taxonomias...');
   const tax = read('taxonomias.json');
