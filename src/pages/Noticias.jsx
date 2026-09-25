@@ -55,7 +55,7 @@ export default function Noticias() {
 
   useEffect(() => {
     let vivo = true;
-    const params = new URLSearchParams({ resumo: '1', page: String(currentPage), limit: String(POR_PAGINA) });
+    const params = new URLSearchParams({ resumo: '1', escopo: 'portal', page: String(currentPage), limit: String(POR_PAGINA) });
     if (busca) params.set('q', busca);
     if (category) params.set('categoria', category);
     if (year) params.set('ano', year);

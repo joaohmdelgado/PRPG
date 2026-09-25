@@ -11,13 +11,18 @@ export const resolveProgramaId = async (param) => {
 // Regra única de origem das listagens de conteúdo (Fase R.6):
 //   ?programa=<id|slug> → só o conteúdo daquele programa
 //   ?escopo=prpg        → só o conteúdo geral da PRPG (sem programa)
-//   nenhum dos dois     → tudo (comportamento anterior, mantido até a decisão
-//                         D-R1 sobre o que o portal agrega)
+//   ?escopo=portal      → o que o portal da PRPG agrega (decisão D-R1, Fase
+//                         H.2): o conteúdo geral + o dos programas, exceto,
+//                         nos tipos que têm `destaque` (notícias), os itens
+//                         de programa não marcados para o portal. Editais de
+//                         programa entram sempre (com o selo do programa).
+//   nenhum              → tudo (painel, e consumidores antigos)
 export async function filtrarPorEscopo(items, q = {}) {
   if (q.programa) {
     const pid = await resolveProgramaId(String(q.programa));
     return items.filter((i) => i.programaId === pid);
   }
   if (q.escopo === 'prpg') return items.filter((i) => !i.programaId);
+  if (q.escopo === 'portal') return items.filter((i) => !i.programaId || i.destaque !== false);
   return items;
 }

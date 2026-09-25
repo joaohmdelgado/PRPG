@@ -80,6 +80,7 @@ import {
 } from '../db/repositories.js';
 import { arquivosRepo } from '../db/anexosRepo.js';
 import { registrarUploadPublico, getArquivos, getUsosArquivo, substituirArquivo, deleteArquivo } from '../controllers/arquivosController.js';
+import { getMenus, getMenu, updateMenu, getConfiguracoes, updateConfiguracao, getHome } from '../controllers/portalController.js';
 import { autorizarRevisao, getRevisoes, getRevisao, restaurarRevisao } from '../controllers/revisoesController.js';
 import { asyncRouter } from '../utils/asyncRouter.js';
 
@@ -396,6 +397,14 @@ router.get('/vocabularios', optionalProtect, getVocabulariosGenerico);
 router.post('/vocabularios', protect, requireRole(['Administrator', 'Gestor']), createVocabulario);
 router.put('/vocabularios/:id', protect, requireRole(['Administrator', 'Gestor']), updateVocabulario);
 router.delete('/vocabularios/:id', protect, requireRole(['Administrator', 'Gestor']), deleteVocabulario);
+
+// Menus, atalhos e contato do portal (Fase H.1): leitura pública; edição Admin/Gestor.
+router.get('/menus', optionalProtect, getMenus);
+router.get('/menus/:chave', getMenu);
+router.put('/menus/:chave', protect, requireRole(['Administrator', 'Gestor']), updateMenu);
+router.get('/configuracoes', getConfiguracoes);
+router.get('/portal/home', getHome);
+router.put('/configuracoes/:chave', protect, requireRole(['Administrator', 'Gestor']), updateConfiguracao);
 router.get('/camara/unidades', protect, requireRole(CAMARA_LEITURA), getUnidades);
 router.post('/camara/unidades', protect, requireRole(CAMARA_ESCRITA), createUnidade);
 router.put('/camara/unidades/:id', protect, requireRole(CAMARA_ESCRITA), updateUnidade);

@@ -435,8 +435,11 @@ const AdminNoticiaForm = () => {
           <div className="md:col-span-2">
             <label className="inline-flex items-center gap-2 text-sm text-gray-700">
               <input type="checkbox" name="destaque" checked={!!formData.destaque} onChange={handleChange} />
-              Destacar esta notícia na página inicial
+              {formData.programaId ? 'Mostrar também no portal da PRPG (página inicial e /noticias)' : 'Destacar esta notícia na página inicial'}
             </label>
+            {formData.programaId && (
+              <p className="text-xs text-gray-400 mt-1">Notícias de programa aparecem sempre no site do programa; no portal da PRPG, só as marcadas aqui.</p>
+            )}
           </div>
 
           <div className="md:col-span-2">

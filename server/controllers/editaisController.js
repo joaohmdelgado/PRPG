@@ -21,7 +21,7 @@ const getLocalDateString = () => {
   }
 };
 
-const calculateEditalStatus = (edital) => {
+export const calculateEditalStatus = (edital) => {
   const todayStr = getLocalDateString();
   const publishedAt = edital.publishedAt || '';
   const data_inicio = edital.field_periodo?.data_inicio || edital.publishedAt || '';
@@ -79,7 +79,10 @@ export const getEditais = async (req, res) => {
   // Uma consulta de eventos para todos os editais (antes: uma por edital).
   const eventosPorEdital = await eventosRepo.listByEntidades('edital', editais.map((e) => e.id));
   const comEventos = editais.map((e) => anexarEventos(e, eventosPorEdital.get(e.id) || []));
-  responderLista(res, comEventos.map(calculateEditalStatus), req.query);
+  let lista = comEventos.map(calculateEditalStatus);
+  // ?situacao=abertas|andamento|concluido (home e filtros da página).
+  if (req.query.situacao) lista = lista.filter((e) => e.situation === req.query.situacao);
+  responderLista(res, lista, req.query);
 };
 
 export const getEditalById = async (req, res) => {

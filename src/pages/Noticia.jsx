@@ -43,7 +43,7 @@ export default function Noticia() {
         // Relacionadas: mesma categoria, sem a atual; se a categoria tiver
         // menos de 3, completa com as mais recentes.
         const buscar = async (categoria) => {
-          const params = new URLSearchParams({ resumo: '1', page: '1', limit: '3', excluir: item.id });
+          const params = new URLSearchParams({ resumo: '1', escopo: 'portal', page: '1', limit: '3', excluir: item.id });
           if (categoria) params.set('categoria', categoria);
           const rel = await apiFetch(`/api/news?${params}`, { auth: false });
           return rel.ok ? (await rel.json()).items || [] : [];

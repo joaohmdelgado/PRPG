@@ -38,3 +38,7 @@ export async function apiGet(path, options = {}) {
   if (!res.ok) throw new Error(`GET ${path} falhou (${res.status})`);
   return res.json();
 }
+
+// Endereço exibível de uma mídia: uploads ficam gravados como /uploads/...
+// (relativo) e são servidos pela API; URLs externas passam intactas.
+export const urlMidia = (url) => (url && url.startsWith('/uploads/') ? `${API_URL}${url}` : url);

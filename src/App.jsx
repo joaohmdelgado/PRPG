@@ -77,6 +77,7 @@ const AdminBolsasList = lazy(() => import('./pages/admin/AdminBolsasList'));
 const AdminBolsaForm = lazy(() => import('./pages/admin/AdminBolsaForm'));
 const AdminPagesList = lazy(() => import('./pages/admin/AdminPagesList'));
 const AdminMidia = lazy(() => import('./pages/admin/AdminMidia'));
+const AdminPortal = lazy(() => import('./pages/admin/AdminPortal'));
 const AdminPageForm = lazy(() => import('./pages/admin/AdminPageForm'));
 const AdminMetricas = lazy(() => import('./pages/admin/AdminMetricas'));
 const AdminImportacao = lazy(() => import('./pages/admin/AdminImportacao'));
@@ -189,6 +190,9 @@ function App() {
                 trocar/excluir só Admin/Gestor (checado também no backend). */}
             <Route path="midia" element={<RequireAuth allowedRoles={['Administrator', 'Gestor', 'GestorPrograma']} />}>
               <Route index element={<AdminMidia />} />
+            </Route>
+            <Route path="portal" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+              <Route index element={<AdminPortal />} />
             </Route>
             <Route path="taxonomias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
               <Route index element={<AdminTaxonomias />} />
