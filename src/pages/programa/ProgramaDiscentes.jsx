@@ -70,9 +70,11 @@ const GRUPOS = [
   { papel: 'EGRESSO',               icon: 'fa-star',           cor: 'text-amber-500' },
 ];
 
-export default function ProgramaDiscentes() {
+// Mesma página para "Discentes" (em curso) e "Egressos" — itens separados do
+// grupo "Pessoas" do menu (Fase S.1).
+export default function ProgramaDiscentes({ egressos = false }) {
   const { programa, slug } = usePrograma();
-  const [discentes, setDiscentes] = useState([]);
+  const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState('');
 
@@ -80,10 +82,12 @@ export default function ProgramaDiscentes() {
     setLoading(true);
     apiFetch(`/api/programas/slug/${encodeURIComponent(slug)}/discentes`, { auth: false })
       .then((r) => (r.ok ? r.json() : []))
-      .then((d) => { setDiscentes(Array.isArray(d) ? d : []); setLoading(false); })
+      .then((d) => { setTodos(Array.isArray(d) ? d : []); setLoading(false); })
       .catch(() => setLoading(false));
   }, [slug]);
 
+  const discentes = todos.filter((d) => (d.papel === 'EGRESSO') === egressos);
+  const grupos = GRUPOS.filter((g) => (g.papel === 'EGRESSO') === egressos);
   const filtered = discentes.filter(
     (d) => !busca || d.nome.toLowerCase().includes(busca.toLowerCase())
   );
@@ -98,7 +102,7 @@ export default function ProgramaDiscentes() {
 
   return (
     <section className="py-10 px-4 max-w-5xl mx-auto">
-      <h1 className="font-heading font-bold text-3xl text-[var(--prog-primary)] mb-2">Corpo Discente</h1>
+      <h1 className="font-heading font-bold text-3xl text-[var(--prog-primary)] mb-2">{egressos ? 'Egressos' : 'Corpo Discente'}</h1>
       <p className="text-gray-500 text-sm mb-6">
         {programa.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla + ' · ' : ''}{programa.nome}
       </p>
@@ -108,7 +112,8 @@ export default function ProgramaDiscentes() {
           <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
           <input
             type="text"
-            placeholder="Buscar discente..."
+            placeholder={egressos ? 'Buscar egresso...' : 'Buscar discente...'}
+            aria-label={egressos ? 'Buscar egresso' : 'Buscar discente'}
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--prog-primary)]/30"
@@ -119,11 +124,11 @@ export default function ProgramaDiscentes() {
       {discentes.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
           <i className="fa-solid fa-user-graduate text-5xl mb-4 block"></i>
-          <p>Nenhum discente cadastrado neste programa.</p>
+          <p>{egressos ? 'Nenhum egresso cadastrado neste programa.' : 'Nenhum discente cadastrado neste programa.'}</p>
         </div>
       ) : (
         <div className="space-y-10">
-          {GRUPOS.map(({ papel, icon, cor }) => {
+          {grupos.map(({ papel, icon, cor }) => {
             const grupo = filtered.filter((d) => d.papel === papel);
             if (grupo.length === 0) return null;
             return (
@@ -140,7 +145,7 @@ export default function ProgramaDiscentes() {
             );
           })}
           {filtered.length === 0 && busca && (
-            <p className="text-center text-gray-400 py-10">Nenhum discente encontrado para "{busca}".</p>
+            <p className="text-center text-gray-400 py-10">Ninguém encontrado para "{busca}".</p>
           )}
         </div>
       )}

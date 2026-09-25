@@ -256,3 +256,47 @@ describe('microsite — conteúdo vinculado ao programa', () => {
     expect(porSlug.body[0].title).toBe('Edital PGH');
   });
 });
+
+describe('microsite — menu em 4 grupos (Fase S.1)', () => {
+  const chaves = (menu) => menu.map((e) => e.chave);
+  const grupo = (menu, chave) => menu.find((e) => e.chave === chave);
+
+  it('programa vazio: só Início, O Programa (Sobre), Admissão (Editais), Notícias e Contato', async () => {
+    const { slug } = await criar({ slug: 'vazio' });
+    const { body } = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(chaves(body.menu)).toEqual(['inicio', 'programa', 'admissao', 'noticias', 'contato']);
+    expect(grupo(body.menu, 'programa').itens.map((i) => i.chave)).toEqual(['sobre']);
+    expect(grupo(body.menu, 'admissao').itens).toEqual([{ chave: 'editais', rotulo: 'Editais', sub: 'editais' }]);
+  });
+
+  it('módulos com conteúdo entram no grupo certo; páginas criadas no fim de "O Programa"', async () => {
+    const { id, slug } = await criar({ slug: 'cheio' });
+    await auth(request(app).post('/api/disciplinas')).send({ title: 'Metodologia', programaId: id });
+    await auth(request(app).post('/api/teses-dissertacoes')).send({ title: 'Uma tese', programaId: id });
+    await auth(request(app).post('/api/pages')).send({ title: 'Regimento', programaId: id, body: { value: '<p>x</p>' } });
+    // Só formulário: antes o item "Documentos" dependia apenas de resoluções.
+    await auth(request(app).post('/api/formularios')).send({ title: 'Requerimento', programaId: id });
+
+    const { body } = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(chaves(body.menu)).toEqual(['inicio', 'programa', 'producao', 'admissao', 'noticias', 'documentos', 'contato']);
+    const itens = grupo(body.menu, 'programa').itens;
+    expect(itens.map((i) => i.chave)).toEqual(['sobre', 'disciplinas', expect.stringMatching(/^pagina:/)]);
+    expect(itens[2]).toMatchObject({ rotulo: 'Regimento', sub: 'regimento' });
+    expect(grupo(body.menu, 'producao').itens.map((i) => i.sub)).toEqual(['teses']);
+  });
+
+  it('rascunho não conta: disciplina não publicada não abre item no menu', async () => {
+    const { id, slug } = await criar({ slug: 'rasc-menu' });
+    await auth(request(app).post('/api/disciplinas')).send({ title: 'Em preparo', programaId: id, status: 'RASCUNHO' });
+    const { body } = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(grupo(body.menu, 'programa').itens.map((i) => i.chave)).toEqual(['sobre']);
+  });
+
+  it('página de programa não pode usar as sub-rotas novas (egressos, linhas-de-pesquisa)', async () => {
+    const { id } = await criar({ slug: 'sub' });
+    const a = await auth(request(app).post('/api/pages')).send({ title: 'Egressos', programaId: id });
+    const b = await auth(request(app).post('/api/pages')).send({ title: 'Linhas de Pesquisa', programaId: id });
+    expect(a.body.slug).toBe('egressos-1');
+    expect(b.body.slug).toBe('linhas-de-pesquisa-1');
+  });
+});

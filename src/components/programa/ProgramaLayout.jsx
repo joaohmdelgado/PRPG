@@ -2,27 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePrograma, programaPath } from './ProgramaContext';
 
-// Itens fixos (sempre visíveis) e itens dinâmicos (aparecem quando o programa tem conteúdo).
-// "O Programa" é um grupo (dropdown no desktop, seção no mobile): reúne a página fixa
-// "Sobre" + as páginas que o próprio programa criar (ver AdminProgramaSite.jsx).
-const NAV_INICIO = { type: 'link', label: 'Início', sub: '', icon: 'fa-house' };
-const NAV_FIXOS = [
-  { type: 'link', label: 'Notícias', sub: 'noticias', icon: 'fa-newspaper' },
-  { type: 'link', label: 'Editais',  sub: 'editais',  icon: 'fa-file-lines' },
-];
-const NAV_DINAMICOS = [
-  { label: 'Corpo Docente',   sub: 'pessoas',    icon: 'fa-users',         modulo: 'pessoas' },
-  { label: 'Corpo Discente', sub: 'discentes',  icon: 'fa-user-graduate', modulo: 'discentes' },
-  { label: 'Comissões',      sub: 'comissoes',  icon: 'fa-users-gear',    modulo: 'comissoes' },
-  { label: 'Disciplinas',    sub: 'disciplinas',    icon: 'fa-book-open',    modulo: 'disciplinas' },
-  { label: 'Teses',          sub: 'teses',          icon: 'fa-graduation-cap', modulo: 'teses' },
-  { label: 'FAQ',            sub: 'faq',            icon: 'fa-circle-question', modulo: 'faq' },
-  { label: 'Grupos',         sub: 'grupos-pesquisa', icon: 'fa-microscope',   modulo: 'grupos' },
-  { label: 'Documentos',     sub: 'documentos',     icon: 'fa-folder-open',  modulo: 'resolucoes' },
-];
-const NAV_FIXOS_FIM = [
-  { type: 'link', label: 'Contato', sub: 'contato', icon: 'fa-envelope' },
-];
+// O menu vem montado do servidor (programa.menu — server/utils/micrositeMenu.js,
+// Fase S.1): 4 grupos (O Programa / Pessoas / Produção / Admissão) com
+// submenu, mais links soltos (Início, Notícias, Documentos, Contato). Só
+// chega o que tem conteúdo.
 
 const SOCIALS = [
   { key: 'instagram_url', icon: 'fa-instagram' },
@@ -39,33 +22,17 @@ export default function ProgramaLayout({ children }) {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchVal, setSearchVal] = useState('');
-  const [oProgramaOpen, setOProgramaOpen] = useState(false);
-  const oProgramaRef = useRef(null);
+  const [grupoAberto, setGrupoAberto] = useState(null); // chave do grupo com submenu aberto
+  const navRef = useRef(null);
 
   const sigla = programa.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : null;
   const base = `/${slug}`;
   const rest = location.pathname.replace(base, '').replace(/^\//, '');
   const activeSub = rest.split('/')[0];
 
-  const modulos = programa.modulos || {};
-  const navDinamicos = NAV_DINAMICOS
-    .filter((item) => (modulos[item.modulo] ?? 0) > 0)
-    .map((item) => ({ type: 'link', ...item }));
-
-  // Grupo "O Programa": Sobre (fixa) + páginas que o programa criou.
-  const oPrograma = {
-    type: 'group',
-    label: 'O Programa',
-    icon: 'fa-circle-info',
-    items: [
-      { label: 'Sobre', sub: 'sobre' },
-      ...(Array.isArray(programa.paginas) ? programa.paginas.map((p) => ({ label: p.title, sub: p.slug })) : []),
-    ],
-  };
-
-  const NAV = [NAV_INICIO, oPrograma, ...NAV_FIXOS, ...navDinamicos, ...NAV_FIXOS_FIM];
+  const NAV = Array.isArray(programa.menu) ? programa.menu : [];
   // Versão "achatada" (sem grupos) para o rodapé, que é só uma lista de links.
-  const NAV_FLAT = NAV.flatMap((item) => (item.type === 'group' ? item.items : [item]));
+  const NAV_FLAT = NAV.flatMap((item) => (item.itens ? item.itens : [item]));
 
   const themeStyle = {
     '--prog-primary': programa.cor_primaria || '#1e2b4f',
@@ -73,18 +40,29 @@ export default function ProgramaLayout({ children }) {
   };
 
   const isActive = (sub) => activeSub === sub;
-  const isGroupActive = (group) => group.items.some((i) => isActive(i.sub));
+  const isGroupActive = (group) => group.itens.some((i) => isActive(i.sub));
 
-  // Fecha o dropdown ao clicar fora ou ao navegar.
+  // Fecha o submenu ao clicar fora, com Esc ou ao navegar.
   useEffect(() => {
-    if (!oProgramaOpen) return;
+    if (!grupoAberto) return;
     const onClickOutside = (e) => {
-      if (oProgramaRef.current && !oProgramaRef.current.contains(e.target)) setOProgramaOpen(false);
+      if (navRef.current && !navRef.current.contains(e.target)) setGrupoAberto(null);
     };
+    const onKey = (e) => { if (e.key === 'Escape') setGrupoAberto(null); };
     document.addEventListener('mousedown', onClickOutside);
-    return () => document.removeEventListener('mousedown', onClickOutside);
-  }, [oProgramaOpen]);
-  useEffect(() => { setOProgramaOpen(false); }, [location.pathname]);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClickOutside);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [grupoAberto]);
+  useEffect(() => { setGrupoAberto(null); }, [location.pathname]);
+
+  const linkClasse = (ativo) => `flex items-center gap-2 px-3 xl:px-4 py-4 text-sm font-medium border-b-[3px] transition-colors ${
+    ativo
+      ? 'border-[var(--prog-accent)] text-[var(--prog-primary)]'
+      : 'border-transparent text-gray-600 hover:text-[var(--prog-primary)] hover:border-gray-200'
+  }`;
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-gray-50" style={themeStyle}>
@@ -127,39 +105,36 @@ export default function ProgramaLayout({ children }) {
       </header>
 
       {/* Menu próprio do programa (sticky) */}
-      <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+      <nav className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40" aria-label={`Menu do ${sigla || programa.nome}`}>
         <div className="container mx-auto px-4 flex items-center justify-between">
-          <ul className="hidden md:flex items-center">
+          <ul className="hidden lg:flex items-center" ref={navRef}>
             {NAV.map((item) => {
-              if (item.type === 'group') {
-                const groupActive = isGroupActive(item);
+              if (item.itens) {
+                const aberto = grupoAberto === item.chave;
                 return (
-                  <li key={item.label} className="relative" ref={oProgramaRef}>
+                  <li key={item.chave} className="relative">
                     <button
                       type="button"
-                      onClick={() => setOProgramaOpen((v) => !v)}
-                      aria-expanded={oProgramaOpen}
-                      className={`flex items-center gap-2 px-4 py-4 text-sm font-medium border-b-[3px] transition-colors ${
-                        groupActive
-                          ? 'border-[var(--prog-accent)] text-[var(--prog-primary)]'
-                          : 'border-transparent text-gray-600 hover:text-[var(--prog-primary)] hover:border-gray-200'
-                      }`}
+                      onClick={() => setGrupoAberto((v) => (v === item.chave ? null : item.chave))}
+                      aria-expanded={aberto}
+                      aria-haspopup="true"
+                      className={linkClasse(isGroupActive(item))}
                     >
-                      <i className={`fa-solid ${item.icon} text-xs opacity-70`}></i>
-                      {item.label}
-                      <i className={`fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform ${oProgramaOpen ? 'rotate-180' : ''}`}></i>
+                      <i className={`fa-solid ${item.icone} text-xs opacity-70`} aria-hidden="true"></i>
+                      {item.rotulo}
+                      <i className={`fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform ${aberto ? 'rotate-180' : ''}`} aria-hidden="true"></i>
                     </button>
-                    {oProgramaOpen && (
-                      <ul className="absolute left-0 top-full bg-white rounded-b-lg shadow-lg border border-gray-100 border-t-0 py-2 min-w-[220px] z-50">
-                        {item.items.map((sub) => (
-                          <li key={sub.sub}>
+                    {aberto && (
+                      <ul className="absolute left-0 top-full bg-white rounded-b-lg shadow-lg border border-gray-100 border-t-0 py-2 min-w-[240px] z-50">
+                        {item.itens.map((sub) => (
+                          <li key={sub.chave}>
                             <Link
                               to={programaPath(slug, sub.sub)}
                               className={`block px-4 py-2 text-sm truncate ${
                                 isActive(sub.sub) ? 'text-[var(--prog-primary)] font-semibold bg-gray-50' : 'text-gray-600 hover:bg-gray-50'
                               }`}
                             >
-                              {sub.label}
+                              {sub.rotulo}
                             </Link>
                           </li>
                         ))}
@@ -169,17 +144,10 @@ export default function ProgramaLayout({ children }) {
                 );
               }
               return (
-                <li key={item.sub}>
-                  <Link
-                    to={programaPath(slug, item.sub)}
-                    className={`flex items-center gap-2 px-4 py-4 text-sm font-medium border-b-[3px] transition-colors ${
-                      isActive(item.sub)
-                        ? 'border-[var(--prog-accent)] text-[var(--prog-primary)]'
-                        : 'border-transparent text-gray-600 hover:text-[var(--prog-primary)] hover:border-gray-200'
-                    }`}
-                  >
-                    <i className={`fa-solid ${item.icon} text-xs opacity-70`}></i>
-                    {item.label}
+                <li key={item.chave}>
+                  <Link to={programaPath(slug, item.sub)} className={linkClasse(isActive(item.sub))}>
+                    <i className={`fa-solid ${item.icone} text-xs opacity-70`} aria-hidden="true"></i>
+                    {item.rotulo}
                   </Link>
                 </li>
               );
@@ -196,10 +164,11 @@ export default function ProgramaLayout({ children }) {
                   value={searchVal}
                   onChange={(e) => setSearchVal(e.target.value)}
                   placeholder="Buscar..."
+                  aria-label="Buscar no site do programa"
                   className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-40 md:w-52 focus:outline-none focus:ring-2 focus:ring-[var(--prog-primary)]/20"
                 />
                 <button type="button" onClick={() => { setSearchOpen(false); setSearchVal(''); }}
-                  className="text-gray-400 hover:text-gray-600 p-1">
+                  className="text-gray-400 hover:text-gray-600 p-1" aria-label="Fechar busca">
                   <i className="fa-solid fa-xmark"></i>
                 </button>
               </form>
@@ -210,24 +179,24 @@ export default function ProgramaLayout({ children }) {
               </button>
             )}
             {/* Mobile toggle */}
-            <button onClick={() => setOpen(!open)} className="md:hidden py-3 px-1 text-xl text-[var(--prog-primary)]" aria-label="Menu">
+            <button onClick={() => setOpen(!open)} aria-expanded={open} className="lg:hidden py-3 px-1 text-xl text-[var(--prog-primary)]" aria-label="Menu">
               <i className={`fa-solid ${open ? 'fa-xmark' : 'fa-bars'}`}></i>
             </button>
           </div>
         </div>
         {open && (
-          <ul className="md:hidden border-t border-gray-100 bg-white">
+          <ul className="lg:hidden border-t border-gray-100 bg-white">
             {NAV.map((item) => {
-              if (item.type === 'group') {
+              if (item.itens) {
                 return (
-                  <li key={item.label} className="border-b border-gray-50 last:border-0">
-                    <p className="flex items-center gap-3 px-5 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">
-                      <i className={`fa-solid ${item.icon} text-xs opacity-70 w-4`}></i>
-                      {item.label}
+                  <li key={item.chave} className="border-b border-gray-50 last:border-0">
+                    <p className="flex items-center gap-3 px-5 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                      <i className={`fa-solid ${item.icone} text-xs opacity-70 w-4`} aria-hidden="true"></i>
+                      {item.rotulo}
                     </p>
                     <ul>
-                      {item.items.map((sub) => (
-                        <li key={sub.sub}>
+                      {item.itens.map((sub) => (
+                        <li key={sub.chave}>
                           <Link
                             to={programaPath(slug, sub.sub)}
                             onClick={() => setOpen(false)}
@@ -235,7 +204,7 @@ export default function ProgramaLayout({ children }) {
                               isActive(sub.sub) ? 'text-[var(--prog-primary)] font-semibold bg-gray-50' : 'text-gray-600'
                             }`}
                           >
-                            {sub.label}
+                            {sub.rotulo}
                           </Link>
                         </li>
                       ))}
@@ -244,7 +213,7 @@ export default function ProgramaLayout({ children }) {
                 );
               }
               return (
-                <li key={item.sub} className="border-b border-gray-50 last:border-0">
+                <li key={item.chave} className="border-b border-gray-50 last:border-0">
                   <Link
                     to={programaPath(slug, item.sub)}
                     onClick={() => setOpen(false)}
@@ -252,8 +221,8 @@ export default function ProgramaLayout({ children }) {
                       isActive(item.sub) ? 'text-[var(--prog-primary)] font-semibold bg-gray-50' : 'text-gray-600'
                     }`}
                   >
-                    <i className={`fa-solid ${item.icon} text-xs opacity-70 w-4`}></i>
-                    {item.label}
+                    <i className={`fa-solid ${item.icone} text-xs opacity-70 w-4`} aria-hidden="true"></i>
+                    {item.rotulo}
                   </Link>
                 </li>
               );
@@ -305,11 +274,11 @@ export default function ProgramaLayout({ children }) {
 
           <div>
             <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wider">Navegação</h4>
-            <ul className="space-y-2 text-sm text-white/70">
+            <ul className="space-y-2 text-sm text-white/70 md:columns-2 md:gap-6">
               {NAV_FLAT.map((item) => (
-                <li key={item.sub}>
+                <li key={item.chave} className="break-inside-avoid">
                   <Link to={programaPath(slug, item.sub)} className="hover:text-white transition-colors flex items-center gap-2">
-                    <i className="fa-solid fa-angle-right text-[10px] text-[var(--prog-accent)]"></i>{item.label}
+                    <i className="fa-solid fa-angle-right text-[10px] text-[var(--prog-accent)]"></i>{item.rotulo}
                   </Link>
                 </li>
               ))}

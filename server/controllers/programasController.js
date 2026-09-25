@@ -6,6 +6,7 @@ import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js'
 import { indicadoresDoPrograma } from '../db/indicadoresRepo.js';
 import { serverError } from '../utils/httpError.js';
 import { slugify } from '../utils/slug.js';
+import { montarMenu } from '../utils/micrositeMenu.js';
 import { visivelPara, sqlPublicado } from '../utils/publicacao.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
@@ -253,9 +254,15 @@ export const getProgramaBySlug = async (req, res) => {
     modulos['pessoas'] = progVinculos.filter(
       (v) => ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR'].includes(v.papel)
     ).length;
+    modulos['docentes'] = modulos['pessoas'];
+    // Discentes (em curso) e egressos são itens separados do grupo "Pessoas"
+    // (Fase S.1) — antes os egressos contavam como discentes.
     modulos['discentes'] = progVinculos.filter(
-      (v) => ['DISCENTE_MESTRADO', 'DISCENTE_DOUTORADO', 'DISCENTE_PROFISSIONAL', 'EGRESSO'].includes(v.papel)
+      (v) => ['DISCENTE_MESTRADO', 'DISCENTE_DOUTORADO', 'DISCENTE_PROFISSIONAL'].includes(v.papel)
     ).length;
+    modulos['egressos'] = progVinculos.filter((v) => v.papel === 'EGRESSO').length;
+    modulos['documentos'] = modulos['resolucoes'] + modulos['formularios'];
+    modulos['linhas'] = linhas.length;
 
     // Histórico de coordenadores (inativos, COORDENADOR_ANTERIOR).
     const historico_coordenadores = todosVinculos
@@ -282,8 +289,12 @@ export const getProgramaBySlug = async (req, res) => {
     );
     const metrica_recente = metricasRows[0] || null;
 
+    // Menu do microsite (Fase S.1): 4 grupos + Notícias/Documentos/Contato,
+    // só com o que tem conteúdo — ver server/utils/micrositeMenu.js.
+    const menu = montarMenu({ modulos, paginas });
+
     res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, pagina_sobre, paginas, linhas,
-               modulos, historico_coordenadores, comissoes, metrica_recente });
+               modulos, menu, historico_coordenadores, comissoes, metrica_recente });
   } catch (error) {
     serverError(res, 'Erro ao buscar programa', error);
   }

@@ -5,6 +5,7 @@ import { serverError } from '../utils/httpError.js';
 import { slugify } from '../utils/slug.js';
 import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
 import { responderLista } from '../utils/listagem.js';
+import { SUBROTAS_MICROSITE } from '../utils/micrositeMenu.js';
 
 // Páginas ganham endereço próprio em /<slug> (sem programa) ou
 // /<slug-do-programa>/<slug> (vinculada a um programa) — ver App.jsx e
@@ -29,11 +30,9 @@ const PRPG_ROUTES = new Set([
   'capes-print', 'mobilidade-estudantil', 'reconhecimento', 'noticias',
   'noticia', 'p', 'admin', 'busca', 'privacidade',
 ]);
-const MICROSITE_SUBROTAS = new Set([
-  'sobre', 'noticias', 'editais', 'busca', 'comissoes', 'discentes',
-  'pessoas', 'disciplinas', 'teses', 'faq', 'grupos-pesquisa',
-  'documentos', 'contato',
-]);
+// Vem do modelo do menu (server/utils/micrositeMenu.js), que lista as
+// sub-rotas fixas do microsite.
+const MICROSITE_SUBROTAS = new Set(SUBROTAS_MICROSITE);
 
 const generateUniqueSlug = async (title, pages, currentId, programaId) => {
   let taken;
