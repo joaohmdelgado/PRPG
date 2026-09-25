@@ -220,7 +220,11 @@ Access at `/admin/login`. Main sections in sidebar:
   programas (coordinator resolution, sensitive-field filtering, coordinator
   history, cascade delete), users (uniqueness, default password, role rules,
   access control), role-based authorization, calendarios (single-current rule +
-  milestones child table), grupos/teses reference resolution. ~41 tests.
+  milestones child table), grupos/teses reference resolution, Câmara, atos,
+  pós-doc, contatos, prazos, notificações, indicadores, and `robustez.test.js`
+  (async errors never crash the process, pg data errors -> 400/409, news
+  dates, origin filter, users/resumo, compression/cache). ~260 tests in 35
+  files — the exact number drifts; check with `npx vitest run`.
 - Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes

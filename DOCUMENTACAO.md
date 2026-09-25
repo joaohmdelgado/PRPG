@@ -59,7 +59,7 @@ Além do **site público da PRPG**, a aplicação oferece:
 | **Sanitização de HTML** | DOMPurify / isomorphic-dompurify |
 | **Geração de PDF** | pdfkit (declaração de proficiência) |
 | **Planilhas** | xlsx (leitura de dados de importação) |
-| **Ícones / animação** | lucide-react, motion |
+| **Ícones** | lucide-react (+ Font Awesome via CDN no index.html) |
 | **Testes** | Vitest + supertest |
 | **Type checking** | TypeScript (apenas `--noEmit`, sem compilar) |
 
@@ -171,9 +171,7 @@ PRPG/
     ├── App.jsx               # Roteador principal (rotas públicas, admin e microsites)
     ├── api.js                # URL base da API
     ├── auth.js               # Helpers de sessão/escopo (papéis, gestor de programa)
-    ├── style.css             # Estilos globais
     ├── styles/globals.css    # Estilos globais adicionais
-    ├── programasData.js      # Dados estáticos de programas (apoio ao frontend)
     ├── data/nacionalidades.js# Lista de nacionalidades (cadastro de alunos)
     ├── hooks/useUsers.js     # Hook de acesso à lista de usuários
     ├── components/           # Componentes reutilizáveis (layout, UI, admin, microsite)
@@ -356,10 +354,9 @@ SPA em React. O Vite serve em dev (porta 3000) e gera o build de produção.
 | `App.jsx` | **Roteador central.** Define três blocos de rotas: (1) **Admin** (`/admin/...`, protegidas por `RequireAuth`), (2) **Microsite de programa** (`:programaSlug/*`), (3) **Site público** da PRPG (envolto em `PublicLayout`). |
 | `api.js` | Exporta `API_URL` (lê `VITE_API_URL`, cai em `http://localhost:5000`). |
 | `auth.js` | Helpers de sessão: lê token/papéis do `localStorage`, `hasRole`, `isPrpgAdmin`, `isProgramaGestor`, `getGestorPrograma`, `getScopedProgramaId`, `withProgramaScope` (anexa `?programa=<id>` às listagens do gestor). |
-| `programasData.js` | Dados estáticos de apoio sobre programas. |
 | `data/nacionalidades.js` | Lista de nacionalidades para o cadastro de alunos. |
 | `hooks/useUsers.js` | Hook para carregar/usar a lista de usuários. |
-| `style.css` / `styles/globals.css` | Estilos globais (TailwindCSS). |
+| `styles/globals.css` | Estilos globais (TailwindCSS). |
 
 ### Componentes (`src/components/`)
 
@@ -564,7 +561,7 @@ Painel `Importação` (Admin/Gestor) recebe o JSON do Drupal antigo e importa
   de desenvolvimento (`prpg`) nunca é tocado.**
 - Requer o PostgreSQL do Docker rodando (`npm run db:up`).
 
-Cobertura (~41 testes): autenticação, validação de entrada, sanitização de HTML,
+Cobertura (~260 testes em 35 arquivos — o número exato muda; confira com `npx vitest run`): autenticação, validação de entrada, sanitização de HTML,
 CRUD de notícias, cálculo de status de editais, geração de slug de páginas,
 taxonomias, programas (coordenador, filtragem de campos sensíveis, histórico,
 cascade delete), usuários (unicidade, senha padrão, regras de papel, acesso),
@@ -604,6 +601,6 @@ proficiência e microsites de programa.
 
 > **Convenções do código** (ver também `CLAUDE.md`):
 > - IDs são slugs/timestamps (TEXT), não UUIDs.
-> - Datas costumam ser TEXT no formato `'YYYY-MM-DD'`.
+> - Datas são colunas `DATE` e trafegam na API como `'YYYY-MM-DD'` (parser em `server/db/pool.js`).
 > - Controllers são finos; a lógica de banco fica nos repositórios.
 > - HTML é sanitizado no servidor **e** no cliente (defesa em profundidade).

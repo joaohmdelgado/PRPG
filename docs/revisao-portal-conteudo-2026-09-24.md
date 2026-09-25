@@ -255,20 +255,33 @@ mais da agenda da secretaria do que de código.
 
 | | # | Ação | Onde |
 |---|---|---|---|
-| `[ ]` | R.1 | Envolver todo handler `async` (helper aplicado no router, ou migrar para Express 5). Teste: payload inválido devolve erro em JSON e o processo continua vivo | `server/routes/adminRoutes.js`, `server/utils/`, `server/__tests__/` |
-| `[ ]` | R.2 | Validar datas e números na borda da API (400 com mensagem) antes de chegar ao banco | `server/utils/datas.js`, controllers de conteúdo |
-| `[ ]` | R.3 | Criar leitura pública de grupos por programa (só campos públicos); diferenciar erro de lista vazia | rota de grupos, `ProgramaGrupos.jsx` |
-| `[ ]` | R.4 | Com `microsite_ativo=false`, responder 404 para anônimos; botão "Pré-visualizar" para admin/gestor | `programasController.getProgramaBySlug`, `AdminProgramaSite.jsx` |
-| `[ ]` | R.5 | Converter `news.date` de texto para `DATE` e ordenar por data decrescente no repositório | migração, `server/db/repositories.js` |
-| `[ ]` | R.6 | Regra única de escopo nas listas (`?escopo=prpg\|programa\|todos`) e filtro por programa no painel, em vez de esconder | controllers de conteúdo, listas do admin |
-| `[ ]` | R.7 | `server/utils/slug.js` compartilhado: remove acentos; colisão gera sufixo ou 409, nunca 500 | news, pages, programas |
-| `[ ]` | R.8 | Criar `/api/users/resumo` (id, nome) ou devolver `atualizado_por_nome` via JOIN; aposentar o `useUsers` completo nas 25 telas | `usersController.js`, `src/hooks/useUsers.js` |
-| `[ ]` | R.9 | `compression` e `Cache-Control` curto nos GET públicos; cache longo em `/uploads` (nomes já são únicos) | `server/app.js` |
-| `[ ]` | R.10 | Consertos pontuais: `class=` em `src/pages/Noticia.jsx:64`, os 10 `href="#"`, os spans do topo, os CTAs mortos da home (esconder até a Fase H) | vários |
-| `[ ]` | R.11 | Remover `src/programasData.js`, `src/style.css` e `motion`; mover ferramentas de build para `devDependencies`; atualizar contagem de testes em `CLAUDE.md`/`DOCUMENTACAO.md` | — |
+| `[x]` | R.1 | Envolver todo handler `async` (helper aplicado no router, ou migrar para Express 5). Teste: payload inválido devolve erro em JSON e o processo continua vivo | `server/routes/adminRoutes.js`, `server/utils/`, `server/__tests__/` |
+| `[x]` | R.2 | Validar datas e números na borda da API (400 com mensagem) antes de chegar ao banco | `server/utils/datas.js`, controllers de conteúdo |
+| `[x]` | R.3 | Criar leitura pública de grupos por programa (só campos públicos); diferenciar erro de lista vazia | rota de grupos, `ProgramaGrupos.jsx` |
+| `[x]` | R.4 | Com `microsite_ativo=false`, responder 404 para anônimos; botão "Pré-visualizar" para admin/gestor | `programasController.getProgramaBySlug`, `AdminProgramaSite.jsx` |
+| `[x]` | R.5 | Converter `news.date` de texto para `DATE` e ordenar por data decrescente no repositório | migração, `server/db/repositories.js` |
+| `[x]` | R.6 | Regra única de escopo nas listas (`?escopo=prpg\|programa\|todos`) e filtro por programa no painel, em vez de esconder | controllers de conteúdo, listas do admin |
+| `[x]` | R.7 | `server/utils/slug.js` compartilhado: remove acentos; colisão gera sufixo ou 409, nunca 500 | news, pages, programas |
+| `[x]` | R.8 | Criar `/api/users/resumo` (id, nome) ou devolver `atualizado_por_nome` via JOIN; aposentar o `useUsers` completo nas 25 telas | `usersController.js`, `src/hooks/useUsers.js` |
+| `[x]` | R.9 | `compression` e `Cache-Control` curto nos GET públicos; cache longo em `/uploads` (nomes já são únicos) | `server/app.js` |
+| `[x]` | R.10 | Consertos pontuais: `class=` em `src/pages/Noticia.jsx:64`, os 10 `href="#"`, os spans do topo, os CTAs mortos da home (esconder até a Fase H) | vários |
+| `[x]` | R.11 | Remover `src/programasData.js`, `src/style.css` e `motion`; mover ferramentas de build para `devDependencies`; atualizar contagem de testes em `CLAUDE.md`/`DOCUMENTACAO.md` | — |
 
 **Pronto quando:** um payload malformado não derruba a API (teste), as notícias saem em ordem
 cronológica, o microsite em rascunho não é público e `/api/news` trafega comprimido.
+
+> **Nota de execução (24/09/2026)** — todos os itens aplicados, com testes em
+> `server/__tests__/robustez.test.js` (suíte: 259 testes verdes). Confirmado antes de
+> corrigir: as duas rejeições apontadas no §2.7 derrubariam o processo. Achados de passagem,
+> também corrigidos: o `EmptyState` do microsite ignorava `titulo`/`descricao` (5 páginas
+> mostravam só o ícone); 63 respostas 500 escritas à mão vazavam `e.message` em produção;
+> `.gitattributes` fixa LF nos `.sql` (o checksum do runner de migrações mudaria num clone
+> Windows); o importador de notícias gravava data por extenso. Medido: `/api/news`
+> 88 KB → 21 KB transferidos, `/api/programas` 60 KB → 8,5 KB. **Mudança visível:** o
+> microsite do PROFIAP (`microsite_ativo=false`) deixou de ser público — só quem o
+> administra vê, com faixa de pré-visualização. **Fica para a Fase H:** as notícias e
+> editais fictícios da home (R.10 só tirou os links mortos). A regra de escopo (R.6) é só
+> mecanismo: o que o portal agrega continua pendente da decisão D-R1.
 
 ### Fase F — Fundação editorial (~2 semanas)
 
@@ -410,7 +423,7 @@ pendências no sistema, não na planilha.
 
 | Fase | Itens | Decisões antes | Início | Fim | Estado |
 |---|---|---|---|---|---|
-| R — Robustez imediata | 11 | — | | | ⬜ não iniciada |
+| R — Robustez imediata | 11 | — | 24/09/2026 | 24/09/2026 | ✅ concluída (ver nota da Fase R) |
 | F — Fundação editorial | 7 | D-R3 | | | ⬜ não iniciada |
 | H — Portal dirigido por dados | 7 | D-R1 | | | ⬜ não iniciada |
 | N — Conexões entre conteúdos | 9 | D-R1, D-R2 | | | ⬜ não iniciada |
