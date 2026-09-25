@@ -67,6 +67,22 @@ export const getUsers = async (req, res) => {
   }
 };
 
+// Resumo para exibir "editado por" nas telas do painel (Fase R.8). Antes
+// essas telas baixavam /api/users inteiro (CPF, SIAPE, telefones, perfil de
+// aluno) só para achar um nome. Só quem pode escrever conteúdo aparece como
+// autor (requireInstitutionalWriter), então só essas contas entram — sem
+// alunos nem professores — e só id + nome.
+const PAPEIS_AUTORES = ['Administrator', 'Gestor', 'GestorPrograma'];
+
+export const getUsersResumo = async (req, res) => {
+  const { rows } = await query(
+    `SELECT id, COALESCE(NULLIF(btrim(perfil_nome), ''), email) AS nome
+       FROM users WHERE roles && $1::text[] ORDER BY nome`,
+    [PAPEIS_AUTORES]
+  );
+  res.json(rows);
+};
+
 export const getUserById = async (req, res) => {
   try {
     const isSelf = req.user && req.user.id === req.params.id;

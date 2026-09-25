@@ -64,7 +64,7 @@ import { getTaxonomiaRefs, getTaxonomiaRefById, createTaxonomiaRef, updateTaxono
 import { getTiposImportacao, runImportacao } from '../controllers/importController.js';
 
 import { login } from '../controllers/authController.js';
-import { getUsers, getUserById, createUser, updateUser, deleteUser } from '../controllers/usersController.js';
+import { getUsers, getUsersResumo, getUserById, createUser, updateUser, deleteUser } from '../controllers/usersController.js';
 import { getTaxonomias, updateTaxonomias } from '../controllers/taxonomiasController.js';
 
 import {
@@ -237,6 +237,8 @@ router.delete('/taxonomia-refs/:id', protect, requireRole(['Administrator', 'Ges
 // programa via createUser) e pode excluir apenas os que o seu programa possui
 // (requireProgramaOwnership confere users.programa_id).
 router.get('/users', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getUsers);
+// Antes de /users/:id. Só id + nome de quem pode ser autor de conteúdo.
+router.get('/users/resumo', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getUsersResumo);
 router.post('/users', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), createUser);
 router.delete('/users/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireProgramaOwnership((id) => usersRepo.getById(id)), deleteUser);
 

@@ -52,6 +52,23 @@ describe('R.5 — data das notícias', () => {
   });
 });
 
+describe('R.8 — resumo de usuários para autoria', () => {
+  it('traz só id e nome da equipe (sem CPF, sem alunos) e exige login', async () => {
+    await pool.query(
+      `INSERT INTO users (id, email, password_hash, roles, perfil_nome, perfil_cpf)
+       VALUES ('aluno-r8', 'aluno@r8.br', 'x', '{Aluno}', 'Aluno R8', '11122233344')`
+    );
+    const anon = await request(app).get('/api/users/resumo');
+    expect(anon.status).toBe(401);
+
+    const res = await auth(request(app).get('/api/users/resumo'));
+    expect(res.status).toBe(200);
+    expect(res.body.some((u) => u.id === 'aluno-r8')).toBe(false);
+    expect(res.body.length).toBeGreaterThan(0);
+    for (const u of res.body) expect(Object.keys(u).sort()).toEqual(['id', 'nome']);
+  });
+});
+
 describe('R.7 — slug de notícia', () => {
   it('remove acentos e dá sufixo a título repetido (nunca 500)', async () => {
     const a = await auth(request(app).post('/api/news')).send({ title: 'Notícia de Seleção' });

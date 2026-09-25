@@ -6,7 +6,8 @@ import React from 'react';
 export const authorName = (id, users = []) => {
   if (!id) return null;
   const u = users.find((x) => x.id === id);
-  return u ? (u.perfil_geral?.nome || u.email) : null;
+  // `nome` vem de /api/users/resumo; perfil_geral/email, do cadastro completo.
+  return u ? (u.nome || u.perfil_geral?.nome || u.email) : null;
 };
 
 // Exibe "Criado por X · Última edição por Y" a partir dos campos de auditoria.
