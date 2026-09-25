@@ -174,3 +174,38 @@ describe('N.6 — calendário com datas, próximos prazos e .ics', () => {
     expect(ics.text).toContain(`DTSTART;VALUE=DATE:${isoEm(3).replace(/-/g, '')}`);
   });
 });
+
+describe('N.9 — indicadores calculados por programa e ano', () => {
+  it('conta vínculos pela vigência, egressos pela titulação e defesas pelo ano', async () => {
+    const id = await criarPrograma({ nome: 'Indicadores', slug: 'ind' });
+    const anoAtual = new Date().getFullYear();
+    await pool.query(`INSERT INTO pessoas (id, nome) VALUES ('d1','D1'),('d2','D2'),('a1','A1'),('e1','E1')`);
+    await pool.query(`INSERT INTO vinculos (id, programa_id, pessoa_id, papel, ativo, data_inicio_mandato, data_fim_mandato) VALUES
+      ('v1', $1, 'd1', 'DOCENTE_PERMANENTE', TRUE, '2022-03-01', NULL),
+      ('v2', $1, 'd2', 'DOCENTE_COLABORADOR', TRUE, NULL, NULL),
+      ('v3', $1, 'a1', 'DISCENTE_MESTRADO', FALSE, '2022-03-01', '2023-12-20'),
+      ('v4', $1, 'e1', 'EGRESSO', TRUE, NULL, '2023-12-20')`, [id]);
+    await auth(request(app).post('/api/teses-dissertacoes')).send({ id: 't1', title: 'D', tipo: 'Dissertação', ano: '2023-01-01', programaId: id });
+    await pool.query(`INSERT INTO metricas_anuais (id, programa_id, ano, producao_artigos, discentes_mestrado, docentes_permanentes)
+      VALUES ('m1', $1, 2023, 12, 99, 99)`, [id]);
+
+    const res = await request(app).get('/api/programas/slug/ind/metricas');
+    expect(res.status).toBe(200);
+    const ano = (a) => res.body.find((l) => l.ano === a);
+    expect(ano(2022)).toMatchObject({ docentes_permanentes: 1, docentes: 1, discentes_mestrado: 1 });
+    // 2023: calculado vence o informado; o que só é informado vem de metricas_anuais.
+    expect(ano(2023)).toMatchObject({ docentes_permanentes: 1, discentes_mestrado: 1, egressos: 1, dissertacoes_defendidas: 1, producao_artigos: 12 });
+    expect(ano(2023).fontes).toMatchObject({ discentes_mestrado: 'calculado', producao_artigos: 'informado' });
+    // Vínculo sem datas conta só no ano corrente.
+    expect(ano(anoAtual)).toMatchObject({ docentes: 2, discentes_mestrado: 0 });
+
+    // Sem nada calculado naquele ano, o informado vale (cadastro incompleto).
+    await pool.query(`INSERT INTO metricas_anuais (id, programa_id, ano, discentes_doutorado) VALUES ('m2', $1, 2021, 7)`, [id]);
+    const r2 = await request(app).get(`/api/programas/slug/${id}/metricas`); // também por id
+    expect(r2.body.find((l) => l.ano === 2021)).toMatchObject({ discentes_doutorado: 7, fontes: { discentes_doutorado: 'informado' } });
+
+    // A página pública do programa traz os números.
+    const pub = await request(app).get('/api/programas/slug/ind/publico');
+    expect(pub.body.indicadores[0].ano).toBe(anoAtual);
+  });
+});

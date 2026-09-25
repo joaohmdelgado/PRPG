@@ -9,6 +9,7 @@ import { linhasPesquisaRepo } from '../db/repositories.js';
 import { sqlPublicado } from '../utils/publicacao.js';
 import { calculateEditalStatus } from './editaisController.js';
 import { linkPrograma } from '../utils/programaResumo.js';
+import { indicadoresDoPrograma } from '../db/indicadoresRepo.js';
 
 const CAMPOS_PUBLICOS = [
   'nome', 'slug', 'status', 'campus', 'em_rede', 'nome_rede', 'grande_area', 'area_conhecimento',
@@ -32,7 +33,7 @@ export const getProgramaPublico = async (req, res) => {
   const { rows: [prog] } = await query('SELECT * FROM programas WHERE slug = $1', [req.params.slug]);
   if (!prog) return res.status(404).json({ message: 'Programa não encontrado.' });
 
-  const [modalidades, coordenacao, docentes, linhas, editais, teses] = await Promise.all([
+  const [modalidades, coordenacao, docentes, linhas, editais, teses, indicadores] = await Promise.all([
     query('SELECT tipo, nota_capes, ano_inicio FROM modalidades WHERE programa_id = $1 ORDER BY tipo', [prog.id]),
     query(PESSOA_SQL, [prog.id, ['COORDENADOR_ATUAL', 'COORDENADOR', 'SUBSTITUTO', 'VICE_COORDENADOR']]),
     query(PESSOA_SQL, [prog.id, Object.keys(PAPEL_DOCENTE)]),
@@ -42,6 +43,7 @@ export const getProgramaPublico = async (req, res) => {
     query(`SELECT id, title, tipo, ano, arquivo_url, count(*) OVER () AS total
              FROM teses_dissertacoes t WHERE programa_id = $1 AND ${sqlPublicado('t')}
              ORDER BY ano DESC NULLS LAST LIMIT 5`, [prog.id]),
+    indicadoresDoPrograma(prog.id),
   ]);
 
   const dados = Object.fromEntries(CAMPOS_PUBLICOS.map((c) => [c, prog[c] ?? null]));
@@ -66,6 +68,8 @@ export const getProgramaPublico = async (req, res) => {
     docentes: docentes.rows.map((d) => ({ nome: d.nome, categoria: PAPEL_DOCENTE[d.papel], lattes: d.lattes || null })),
     linhas: linhas.map((l) => l.nome || l),
     editais: editaisAbertos,
+    // Números por ano (Fase N.9), os 6 mais recentes.
+    indicadores: indicadores.slice(0, 6),
     teses: {
       total: teses.rows[0] ? Number(teses.rows[0].total) : 0,
       recentes: teses.rows.map((t) => ({ id: t.id, title: t.title, tipo: t.tipo, ano: t.ano, arquivoUrl: t.arquivo_url })),

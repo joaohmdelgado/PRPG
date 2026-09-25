@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
 import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js';
+import { indicadoresDoPrograma } from '../db/indicadoresRepo.js';
 import { serverError } from '../utils/httpError.js';
 import { slugify } from '../utils/slug.js';
 import { visivelPara, sqlPublicado } from '../utils/publicacao.js';
@@ -887,14 +888,14 @@ export const removeComissaoMembro = async (req, res) => {
 // Métricas anuais públicas (Fase 5)
 // ──────────────────────────────────────────────────────────────────────────────
 
+// Indicadores por ano (Fase N.9): calculados dos vínculos e teses + os
+// informados em metricas_anuais para o que não dá para calcular. Aceita o
+// slug ou o id do programa (o painel usa o id).
 export const getProgramaMetricasPublic = async (req, res) => {
   try {
-    const prog = (await query('SELECT id FROM programas WHERE slug=$1', [req.params.slug])).rows[0];
+    const prog = (await query('SELECT id FROM programas WHERE slug = $1 OR id = $1', [req.params.slug])).rows[0];
     if (!prog) return res.status(404).json({ message: 'Programa não encontrado' });
-    const { rows } = await query(
-      'SELECT * FROM metricas_anuais WHERE programa_id=$1 ORDER BY ano DESC', [prog.id]
-    );
-    res.json(rows);
+    res.json(await indicadoresDoPrograma(prog.id));
   } catch (error) {
     serverError(res, 'Erro ao buscar métricas', error);
   }

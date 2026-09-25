@@ -26,15 +26,20 @@ export default function AdminProgramaMetricas() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  // Indicadores calculados pelo sistema (Fase N.9): docentes, discentes,
+  // egressos e defesas saem do cadastro — aqui só para conferência.
+  const [calculados, setCalculados] = useState([]);
 
   const load = async () => {
     setLoading(true);
-    const [r1, r2] = await Promise.all([
+    const [r1, r2, r3] = await Promise.all([
       apiFetch(`/api/metricas?programa=${id}`),
       apiFetch(`/api/programas/${id}`),
+      apiFetch(`/api/programas/slug/${id}/metricas`),
     ]);
     if (r1.ok) setMetricas(await r1.json());
     if (r2.ok) setPrograma(await r2.json());
+    if (r3.ok) setCalculados((await r3.json()).filter((l) => ['docentes', 'discentes_mestrado', 'discentes_doutorado', 'egressos', 'teses_defendidas', 'dissertacoes_defendidas'].some((c) => l.fontes?.[c] === 'calculado' && l[c] > 0)));
     setLoading(false);
   };
 
@@ -86,6 +91,41 @@ export default function AdminProgramaMetricas() {
       </div>
 
       {error && <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">{error}</div>}
+
+      {calculados.length > 0 && (
+        <section className="mb-6 rounded-xl border border-blue-100 bg-blue-50/40 p-4" aria-labelledby="metricas-calculadas">
+          <h3 id="metricas-calculadas" className="font-medium text-gray-700 mb-1">Calculado pelo sistema</h3>
+          <p className="text-xs text-gray-500 mb-3">
+            Vem do cadastro de docentes, discentes e teses — é o que o site mostra. Os campos equivalentes abaixo só
+            valem para os anos em que o cálculo dá zero (cadastro ainda incompleto); produção, bolsas e taxas continuam informados aqui.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-gray-500">
+                  <th scope="col" className="py-1 pr-3">Ano</th>
+                  <th scope="col" className="py-1 pr-3 text-right">Docentes</th>
+                  <th scope="col" className="py-1 pr-3 text-right">Disc. mestrado</th>
+                  <th scope="col" className="py-1 pr-3 text-right">Disc. doutorado</th>
+                  <th scope="col" className="py-1 pr-3 text-right">Egressos</th>
+                  <th scope="col" className="py-1 pr-3 text-right">Dissertações</th>
+                  <th scope="col" className="py-1 pr-3 text-right">Teses</th>
+                </tr>
+              </thead>
+              <tbody>
+                {calculados.map((l) => (
+                  <tr key={l.ano} className="border-t border-blue-100">
+                    <th scope="row" className="py-1 pr-3 font-medium">{l.ano}</th>
+                    {['docentes', 'discentes_mestrado', 'discentes_doutorado', 'egressos', 'dissertacoes_defendidas', 'teses_defendidas'].map((c) => (
+                      <td key={c} className="py-1 pr-3 text-right">{l.fontes?.[c] === 'calculado' ? l[c] : '—'}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* Form de edição / criação */}
       {editando !== null && (

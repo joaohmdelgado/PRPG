@@ -23,6 +23,48 @@ function Bloco({ titulo, icone, children }) {
   );
 }
 
+// Números por ano (Fase N.9): calculados dos vínculos e das teses do
+// cadastro; colunas sem nenhum valor não aparecem.
+const COLUNAS = [
+  ['docentes', 'Docentes'],
+  ['discentes', 'Discentes'],
+  ['egressos', 'Egressos'],
+  ['dissertacoes_defendidas', 'Dissertações'],
+  ['teses_defendidas', 'Teses'],
+];
+function Numeros({ indicadores = [] }) {
+  const linhas = indicadores.map((i) => ({
+    ...i, discentes: (i.discentes_mestrado || 0) + (i.discentes_doutorado || 0) + (i.discentes_profissional || 0),
+  }));
+  const colunas = COLUNAS.filter(([c]) => linhas.some((l) => l[c] > 0));
+  const visiveis = linhas.filter((l) => colunas.some(([c]) => l[c] > 0));
+  if (!colunas.length || !visiveis.length) return null;
+  return (
+    <Bloco titulo="Números do programa" icone="fa-solid fa-chart-column">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <caption className="sr-only">Indicadores por ano</caption>
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-gray-100">
+              <th scope="col" className="py-2 pr-4">Ano</th>
+              {colunas.map(([c, r]) => <th key={c} scope="col" className="py-2 pr-4 text-right">{r}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {visiveis.map((l) => (
+              <tr key={l.ano} className="border-b border-gray-50">
+                <th scope="row" className="py-2 pr-4 font-semibold text-gray-800">{l.ano}</th>
+                {colunas.map(([c]) => <td key={c} className="py-2 pr-4 text-right text-gray-700">{l[c] || '—'}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-gray-400 mt-3">Calculado a partir do cadastro de docentes, discentes e trabalhos defendidos.</p>
+    </Bloco>
+  );
+}
+
 export default function ProgramaPublico() {
   const { slug } = useParams();
   const [p, setP] = useState(null);
@@ -144,6 +186,8 @@ export default function ProgramaPublico() {
                 </ul>
               </Bloco>
             )}
+
+            <Numeros indicadores={p.indicadores} />
 
             {p.teses.total > 0 && (
               <Bloco titulo="Teses e dissertações" icone="fa-solid fa-book">
