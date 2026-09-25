@@ -5,10 +5,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Users } from 'lucide-react';
 import { apiFetch } from '../../api';
-import { withProgramaScope } from '../../auth';
+import { withProgramaScope, isProgramaGestor } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
+import OrigemFiltro, { filtrarPorOrigem, useOrigemFiltro, useProgramasResumo, SeloPrograma, ORIGEM_TODAS } from '../../components/admin/OrigemFiltro';
 
 const AdminGruposPesquisa = () => {
   const [grupos, setGrupos] = useState([]);
@@ -19,7 +20,12 @@ const AdminGruposPesquisa = () => {
   const users = useUsers();
   const { confirm, ConfirmModal } = useConfirm();
   const { toast, Toasts } = useToast();
-  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(grupos);
+  const gestor = isProgramaGestor();
+  const [origem, setOrigem] = useOrigemFiltro(ORIGEM_TODAS);
+  const programas = useProgramasResumo(!gestor);
+  // Gestor de programa já recebe só o seu conteúdo (withProgramaScope).
+  const porOrigem = gestor ? grupos : filtrarPorOrigem(grupos, origem);
+  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(porOrigem);
 
   const fetchGrupos = async () => {
     try {
@@ -89,6 +95,8 @@ const AdminGruposPesquisa = () => {
 
       {error && <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6">{error}</div>}
 
+      {!gestor && <OrigemFiltro value={origem} onChange={(v) => { clear(); setOrigem(v); }} programas={programas} />}
+
       <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
 
       <div className="overflow-x-auto">
@@ -96,7 +104,7 @@ const AdminGruposPesquisa = () => {
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-6 py-3 w-px">
-                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={grupos.length === 0} />
+                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={porOrigem.length === 0} />
               </th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500 w-1/3">Título</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500 w-1/3">Líderes</th>
@@ -105,7 +113,7 @@ const AdminGruposPesquisa = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {grupos.map((item) => {
+            {porOrigem.map((item) => {
               const leadersText = item.lideres && item.lideres.length > 0
                 ? item.lideres.map(l => l.nome).join(', ')
                 : 'Nenhum líder associado';
@@ -117,6 +125,7 @@ const AdminGruposPesquisa = () => {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-900 font-medium">
                     {item.title}
+                    {!gestor && <SeloPrograma programaId={item.programaId} programas={programas} />}
                     <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
@@ -144,7 +153,7 @@ const AdminGruposPesquisa = () => {
                 </tr>
               );
             })}
-            {grupos.length === 0 && (
+            {porOrigem.length === 0 && (
               <EmptyRow colSpan={5} message="Nenhum grupo de pesquisa cadastrado." />
             )}
           </tbody>

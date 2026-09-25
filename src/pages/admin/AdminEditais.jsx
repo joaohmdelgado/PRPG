@@ -8,6 +8,7 @@ import { withProgramaScope, isProgramaGestor } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
+import OrigemFiltro, { filtrarPorOrigem, useOrigemFiltro, useProgramasResumo, SeloPrograma } from '../../components/admin/OrigemFiltro';
 
 const AdminEditais = () => {
   const [editais, setEditais] = useState([]);
@@ -16,14 +17,18 @@ const AdminEditais = () => {
   const navigate = useNavigate();
   const users = useUsers();
   const { confirm, ConfirmModal } = useConfirm();
-  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(editais);
+  const gestor = isProgramaGestor();
+  const [origem, setOrigem] = useOrigemFiltro();
+  const programas = useProgramasResumo(!gestor);
+  // Gestor de programa já recebe só o seu conteúdo (withProgramaScope).
+  const visiveis = gestor ? editais : filtrarPorOrigem(editais, origem);
+  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(visiveis);
 
   const fetchEditais = async () => {
     try {
       const response = await fetch(withProgramaScope(`${API_URL}/api/editais`));
       const data = await response.json();
-      // No painel geral da PRPG (não gestor de programa), exibe só editais sem programa.
-      setEditais(isProgramaGestor() ? data : data.filter((e) => !e.programaId));
+      setEditais(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Erro ao buscar editais:', error);
     } finally {
@@ -81,6 +86,8 @@ const AdminEditais = () => {
         </Link>
       </div>
 
+      {!gestor && <OrigemFiltro value={origem} onChange={(v) => { clear(); setOrigem(v); }} programas={programas} />}
+
       <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
 
       <div className="overflow-x-auto">
@@ -88,7 +95,7 @@ const AdminEditais = () => {
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               <th className="px-6 py-3 w-px">
-                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={editais.length === 0} />
+                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={visiveis.length === 0} />
               </th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Título</th>
               <th className="px-6 py-3 text-sm font-medium text-gray-500">Categoria</th>
@@ -98,13 +105,14 @@ const AdminEditais = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {editais.map((item) => (
+            {visiveis.map((item) => (
               <tr key={item.id} className={`hover:bg-gray-50 ${isSelected(item.id) ? 'bg-ufrpe-blue/5' : ''}`}>
                 <td className="px-6 py-4">
                   <RowCheckbox checked={isSelected(item.id)} onToggle={() => toggle(item.id)} label={`Selecionar ${item.title}`} />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-900">
                   {item.title}
+                  {!gestor && <SeloPrograma programaId={item.programaId} programas={programas} />}
                   <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">
@@ -134,7 +142,7 @@ const AdminEditais = () => {
                 </td>
               </tr>
             ))}
-            {editais.length === 0 && (
+            {visiveis.length === 0 && (
               <EmptyRow colSpan={6} message="Nenhum edital encontrado." />
             )}
           </tbody>

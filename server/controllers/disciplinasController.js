@@ -1,14 +1,9 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { disciplinasRepo } from '../db/repositories.js';
+import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { query } from '../db/pool.js';
 import { resolverOuCriarPessoa } from '../db/pessoasRepo.js';
 import { serverError } from '../utils/httpError.js';
-
-const resolveProgramaId = async (param) => {
-  if (!param) return null;
-  const { rows } = await query('SELECT id FROM programas WHERE id = $1 OR slug = $1 LIMIT 1', [param]);
-  return rows[0]?.id ?? param;
-};
 
 // Fase D: docente_pessoa_id é pessoas.id de verdade — resolve em lote.
 const resolvePessoas = async (ids) => {
@@ -25,10 +20,7 @@ const anexarResolvidos = (disciplinas, byId) => disciplinas.map((d) => ({
 
 export const getDisciplinas = async (req, res) => {
   let disciplinas = await disciplinasRepo.getAll();
-  if (req.query.programa) {
-    const pid = await resolveProgramaId(req.query.programa);
-    disciplinas = disciplinas.filter((d) => d.programaId === pid);
-  }
+  disciplinas = await filtrarPorEscopo(disciplinas, req.query);
   const byId = await resolvePessoas(disciplinas.map((d) => d.docentePessoaId));
   res.json(anexarResolvidos(disciplinas, byId));
 };

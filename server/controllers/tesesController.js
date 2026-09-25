@@ -1,14 +1,9 @@
 import { isPlainObject } from '../utils/sanitize.js';
 import { tesesRepo } from '../db/repositories.js';
+import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { query } from '../db/pool.js';
 import { resolverOuCriarPessoa } from '../db/pessoasRepo.js';
 import { serverError } from '../utils/httpError.js';
-
-const resolveProgramaId = async (param) => {
-  if (!param) return null;
-  const { rows } = await query('SELECT id FROM programas WHERE id = $1 OR slug = $1 LIMIT 1', [param]);
-  return rows[0]?.id ?? param;
-};
 
 // Fase D: autor/orientador agora são pessoas.id de verdade — resolve em lote
 // (nome + e-mail institucional) em vez de carregar todos os users em memória.
@@ -27,10 +22,7 @@ const anexarResolvidos = (teses, byId) => teses.map((t) => ({
 
 export const getTeses = async (req, res) => {
   let teses = await tesesRepo.getAll();
-  if (req.query.programa) {
-    const pid = await resolveProgramaId(req.query.programa);
-    teses = teses.filter((t) => t.programaId === pid);
-  }
+  teses = await filtrarPorEscopo(teses, req.query);
   const byId = await resolvePessoas(teses.flatMap((t) => [t.autorPessoaId, t.orientadorPessoaId]));
   res.json(anexarResolvidos(teses, byId));
 };

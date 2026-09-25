@@ -1,16 +1,9 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { editaisRepo } from '../db/repositories.js';
-import { query } from '../db/pool.js';
+import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { eventosRepo } from '../db/eventosRepo.js';
 import { hojeISO } from '../utils/datas.js';
 import { serverError } from '../utils/httpError.js';
-
-// Resolve um parametro `programa` (id OU slug) para o id real do programa.
-const resolveProgramaId = async (param) => {
-  if (!param) return null;
-  const { rows } = await query('SELECT id FROM programas WHERE id = $1 OR slug = $1 LIMIT 1', [param]);
-  return rows[0]?.id ?? param;
-};
 
 const getLocalDateString = () => {
   const d = new Date();
@@ -80,10 +73,7 @@ const anexarEventos = (edital, eventos) => {
 
 export const getEditais = async (req, res) => {
   let editais = await editaisRepo.getAll();
-  if (req.query.programa) {
-    const pid = await resolveProgramaId(req.query.programa);
-    editais = editais.filter((e) => e.programaId === pid);
-  }
+  editais = await filtrarPorEscopo(editais, req.query);
   const comEventos = await Promise.all(
     editais.map(async (e) => anexarEventos(e, await eventosRepo.listByEntidade('edital', e.id)))
   );

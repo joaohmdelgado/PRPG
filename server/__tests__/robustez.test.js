@@ -52,6 +52,21 @@ describe('R.5 — data das notícias', () => {
   });
 });
 
+describe('R.6 — regra única de origem nas listagens', () => {
+  it('?escopo=prpg traz só o geral; ?programa= aceita id ou slug; sem filtro traz tudo', async () => {
+    const prog = await auth(request(app).post('/api/programas')).send({ nome: 'PPG R6', slug: 'ppgr6' });
+    expect(prog.status).toBe(201);
+    await auth(request(app).post('/api/resolucoes')).send({ title: 'Geral' });
+    await auth(request(app).post('/api/resolucoes')).send({ title: 'Do programa', programaId: prog.body.id });
+
+    const titulos = async (qs) => (await request(app).get(`/api/resolucoes${qs}`)).body.map((r) => r.title).sort();
+    expect(await titulos('')).toEqual(['Do programa', 'Geral']);
+    expect(await titulos('?escopo=prpg')).toEqual(['Geral']);
+    expect(await titulos('?programa=ppgr6')).toEqual(['Do programa']);
+    expect(await titulos(`?programa=${prog.body.id}`)).toEqual(['Do programa']);
+  });
+});
+
 describe('R.1/R.2 — erros em handlers async viram resposta JSON', () => {
   it('data inválida numa coluna DATE devolve 400 (não derruba nem pendura)', async () => {
     const criado = await auth(request(app).post('/api/editais')).send({ title: 'Edital R' });

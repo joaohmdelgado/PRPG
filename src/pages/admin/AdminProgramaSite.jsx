@@ -21,9 +21,9 @@ const SECOES_PROGRAMA = (id) => [
   { label: 'Métricas Anuais',    to: `/admin/programas/${id}/metricas`,  icon: BarChart2 },
 ];
 
-// Listagens gerais (Notícias, Editais...): a tela de destino não filtra por
-// programa (nenhuma lista admin lê ?programa= de um admin global hoje — só o
-// GestorPrograma tem escopo automático). Linkam para a lista completa.
+// Listagens gerais (Notícias, Editais...): o link leva ?programa=<id> e a
+// lista abre filtrada (OrigemFiltro, Fase R.6). O GestorPrograma já tem
+// escopo automático e ignora o filtro.
 const SECOES_GERAIS = [
   { label: 'Notícias',              to: '/admin/noticias',            icon: Newspaper },
   { label: 'Editais',               to: '/admin/editais',             icon: FileText },
@@ -229,11 +229,11 @@ const AdminProgramaSite = () => {
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h3 className="font-heading text-lg font-semibold text-gray-800 mb-1">Outros Conteúdos</h3>
         <p className="text-xs text-gray-500 mb-4">
-          Listas gerais da PRPG — use a busca de cada tela para filtrar por "{programa.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : programa.nome}".
+          Abrem as listas gerais já filtradas por este programa.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {SECOES_GERAIS.map((s) => (
-            <LinkCard key={s.to} to={s.to} icon={s.icon} label={s.label} />
+            <LinkCard key={s.to} to={`${s.to}?programa=${encodeURIComponent(id)}`} icon={s.icon} label={s.label} />
           ))}
         </div>
       </div>

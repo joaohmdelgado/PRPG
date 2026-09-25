@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, Book, FileText } from 'lucide-react';
 import { API_URL, apiFetch } from '../../api';
-import { withProgramaScope } from '../../auth';
+import { withProgramaScope, isProgramaGestor } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
+import OrigemFiltro, { filtrarPorOrigem, useOrigemFiltro, useProgramasResumo, SeloPrograma, ORIGEM_TODAS } from '../../components/admin/OrigemFiltro';
 
 const AdminDisciplinasList = () => {
   const [disciplinas, setDisciplinas] = useState([]);
@@ -52,7 +53,12 @@ const AdminDisciplinasList = () => {
     }
   };
 
-  const filteredDisciplinas = disciplinas.filter(item => {
+  const gestor = isProgramaGestor();
+  const [origem, setOrigem] = useOrigemFiltro(ORIGEM_TODAS);
+  const programas = useProgramasResumo(!gestor);
+  // Gestor de programa já recebe só o seu conteúdo (withProgramaScope).
+  const porOrigem = gestor ? disciplinas : filtrarPorOrigem(disciplinas, origem);
+  const filteredDisciplinas = porOrigem.filter(item => {
     const title = item.title || '';
     const docente = item.docente?.nome || '';
     const tipo = item.tipoDisciplina || '';
@@ -115,6 +121,8 @@ const AdminDisciplinasList = () => {
         />
       </div>
 
+      {!gestor && <OrigemFiltro value={origem} onChange={(v) => { clear(); setOrigem(v); }} programas={programas} />}
+
       <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
 
       <div className="overflow-x-auto">
@@ -140,6 +148,7 @@ const AdminDisciplinasList = () => {
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs" title={item.title}>
                   <div className="truncate">{item.title}</div>
+                  {!gestor && <SeloPrograma programaId={item.programaId} programas={programas} />}
                   <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                 </td>
                 <td className="px-6 py-4 text-sm text-gray-500">

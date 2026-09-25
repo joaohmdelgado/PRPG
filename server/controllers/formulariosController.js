@@ -1,21 +1,11 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { formulariosRepo } from '../db/repositories.js';
-import { query } from '../db/pool.js';
+import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { serverError } from '../utils/httpError.js';
-
-const resolveProgramaId = async (param) => {
-  if (!param) return null;
-  const { rows } = await query('SELECT id FROM programas WHERE id = $1 OR slug = $1 LIMIT 1', [param]);
-  return rows[0]?.id ?? param;
-};
 
 export const getFormularios = async (req, res) => {
   const all = await formulariosRepo.getAll();
-  if (req.query.programa) {
-    const pid = await resolveProgramaId(req.query.programa);
-    return res.json(all.filter((f) => f.programaId === pid));
-  }
-  res.json(all);
+  res.json(await filtrarPorEscopo(all, req.query));
 };
 
 export const getFormularioById = async (req, res) => {

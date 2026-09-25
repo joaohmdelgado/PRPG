@@ -1,14 +1,9 @@
 import crypto from 'crypto';
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { gruposRepo } from '../db/repositories.js';
+import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { query } from '../db/pool.js';
 import { serverError } from '../utils/httpError.js';
-
-const resolveProgramaId = async (param) => {
-  if (!param) return null;
-  const { rows } = await query('SELECT id FROM programas WHERE id = $1 OR slug = $1 LIMIT 1', [param]);
-  return rows[0]?.id ?? param;
-};
 
 // Fase D: líderes são linhas de `vinculos` (papel='LIDER_GRUPO_PESQUISA',
 // grupo_pesquisa_id), não mais o JSONB field_lideres — substitui o
@@ -57,10 +52,7 @@ const substituirLideres = async (grupoId, liderIds) => {
 export const getGruposPesquisa = async (req, res) => {
   try {
     let grupos = await gruposRepo.getAll();
-    if (req.query.programa) {
-      const pid = await resolveProgramaId(req.query.programa);
-      grupos = grupos.filter((g) => g.programaId === pid);
-    }
+    grupos = await filtrarPorEscopo(grupos, req.query);
     const lideresByGrupo = await listarLideres(grupos.map((g) => g.id));
     const resolved = grupos.map((g) => ({
       ...g,

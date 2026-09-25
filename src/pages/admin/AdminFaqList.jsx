@@ -4,10 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, HelpCircle } from 'lucide-react';
 import { apiFetch } from '../../api';
-import { withProgramaScope } from '../../auth';
+import { withProgramaScope, isProgramaGestor } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
+import OrigemFiltro, { filtrarPorOrigem, useOrigemFiltro, useProgramasResumo, SeloPrograma, ORIGEM_TODAS } from '../../components/admin/OrigemFiltro';
 
 const AdminFaqList = () => {
   const [faqs, setFaqs] = useState([]);
@@ -52,7 +53,12 @@ const AdminFaqList = () => {
     }
   };
 
-  const filteredFaqs = faqs.filter(item => {
+  const gestor = isProgramaGestor();
+  const [origem, setOrigem] = useOrigemFiltro(ORIGEM_TODAS);
+  const programas = useProgramasResumo(!gestor);
+  // Gestor de programa já recebe só o seu conteúdo (withProgramaScope).
+  const porOrigem = gestor ? faqs : filtrarPorOrigem(faqs, origem);
+  const filteredFaqs = porOrigem.filter(item => {
     const title = item.title || '';
     const resposta = item.resposta || '';
     const query = searchQuery.toLowerCase();
@@ -112,6 +118,8 @@ const AdminFaqList = () => {
         />
       </div>
 
+      {!gestor && <OrigemFiltro value={origem} onChange={(v) => { clear(); setOrigem(v); }} programas={programas} />}
+
       <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
 
       <div className="overflow-x-auto">
@@ -133,6 +141,7 @@ const AdminFaqList = () => {
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-gray-900 pr-10" title={item.title}>
                   {item.title}
+                  {!gestor && <SeloPrograma programaId={item.programaId} programas={programas} />}
                   <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
                 </td>
                 <td className="px-6 py-4 text-sm font-medium text-right">
