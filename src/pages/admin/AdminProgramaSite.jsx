@@ -54,7 +54,24 @@ function LinkCard({ to, icon: Icon, label, hint }) {
 
 function stripHtml(html) {
   if (!html) return '';
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return html.replace(/<[^>]+>/g, ' ').replace(/&nbsp;|&#160;/gi, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// Ordem das páginas fixas (a mesma de PAGINAS_FIXAS em
+// server/utils/micrositeMenu.js — Fase S.2).
+const ORDEM_FIXAS = ['sobre', 'impacto-social', 'autoavaliacao', 'infraestrutura', 'internacionalizacao', 'planejamento'];
+
+function EstadoFixa({ pagina }) {
+  if (pagina.chave === 'sobre') {
+    return <span className="text-xs text-gray-400">sempre no menu</span>;
+  }
+  if (!stripHtml(pagina.body?.value)) {
+    return <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500">vazia · fora do menu</span>;
+  }
+  if (pagina.status !== 'PUBLICADO') {
+    return <span className="text-xs px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{pagina.status === 'RASCUNHO' ? 'rascunho' : 'arquivada'} · fora do menu</span>;
+  }
+  return <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">no menu</span>;
 }
 
 const AdminProgramaSite = () => {
@@ -90,7 +107,9 @@ const AdminProgramaSite = () => {
     );
   }
 
-  const sobre = paginas.find((p) => p.chave === 'sobre');
+  const fixas = paginas
+    .filter((p) => p.chave)
+    .sort((a, b) => ORDEM_FIXAS.indexOf(a.chave) - ORDEM_FIXAS.indexOf(b.chave));
   const criadas = paginas.filter((p) => !p.chave);
   const titulo = `${programa.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla + ' — ' : ''}${programa.nome}`;
   const backTo = isProgramaGestor() ? `/admin/programas/editar/${id}` : '/admin/programas';
@@ -136,27 +155,42 @@ const AdminProgramaSite = () => {
         )}
       </div>
 
-      {/* Página fixa "Sobre" */}
+      {/* Páginas fixas (Fase S.2) */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <div className="flex items-center gap-2 mb-1">
           <Lock size={15} className="text-amber-600" />
-          <h3 className="font-heading text-lg font-semibold text-gray-800">Sobre o Programa</h3>
-          <span className="text-xs text-gray-400">— página fixa, sempre em "/sobre"</span>
+          <h3 className="font-heading text-lg font-semibold text-gray-800">Páginas fixas</h3>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
-          {sobre?.body?.value && stripHtml(sobre.body.value)
-            ? stripHtml(sobre.body.value).slice(0, 220) + (stripHtml(sobre.body.value).length > 220 ? '…' : '')
-            : <span className="text-gray-400 italic">Conteúdo em construção — ainda não foi escrito.</span>}
+        <p className="text-xs text-gray-500 mb-4">
+          Todo programa tem estas páginas, com endereço fixo. Elas só entram no menu "O Programa" depois de
+          ganhar texto — até lá ficam ocultas.
         </p>
-        {sobre ? (
-          <Link
-            to={`/admin/paginas/editar/${sobre.id}`}
-            className="inline-flex items-center gap-2 text-sm font-medium text-white bg-ufrpe-blue hover:bg-[#2a3a66] px-4 py-2 rounded-md transition-colors"
-          >
-            <Edit2 size={15} /> Editar Sobre
-          </Link>
+        {fixas.length === 0 ? (
+          <p className="text-xs text-gray-400">Páginas fixas ainda não disponíveis — recarregue em instantes.</p>
         ) : (
-          <p className="text-xs text-gray-400">Página fixa ainda não disponível — recarregue em instantes.</p>
+          <ul className="divide-y divide-gray-100">
+            {fixas.map((p) => {
+              const texto = stripHtml(p.body?.value);
+              return (
+                <li key={p.id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate flex items-center gap-2">
+                      {p.title} <EstadoFixa pagina={p} />
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {texto ? texto.slice(0, 140) : <span className="italic text-gray-400">Ainda não foi escrita.</span>}
+                    </p>
+                  </div>
+                  <Link
+                    to={`/admin/paginas/editar/${p.id}`}
+                    className="shrink-0 inline-flex items-center gap-1.5 text-sm font-medium text-ufrpe-blue border border-ufrpe-blue/30 hover:bg-ufrpe-blue/5 px-3 py-1.5 rounded-md transition-colors"
+                  >
+                    <Edit2 size={14} /> {texto ? 'Editar' : 'Escrever'}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
 
@@ -167,7 +201,7 @@ const AdminProgramaSite = () => {
             <h3 className="font-heading text-lg font-semibold text-gray-800 flex items-center gap-2">
               <File size={17} className="text-ufrpe-blue" /> Páginas do Programa
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">Conteúdo livre (Histórico, Regimento, Infraestrutura…), com endereço próprio dentro do microsite.</p>
+            <p className="text-xs text-gray-500 mt-0.5">Conteúdo livre (Histórico, Regimento, Laboratórios…), com endereço próprio dentro do microsite.</p>
           </div>
           <Link
             to={`/admin/paginas/nova?programa=${id}`}

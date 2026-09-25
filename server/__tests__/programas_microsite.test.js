@@ -300,3 +300,83 @@ describe('microsite — menu em 4 grupos (Fase S.1)', () => {
     expect(b.body.slug).toBe('linhas-de-pesquisa-1');
   });
 });
+
+describe('microsite — páginas fixas de todo programa (Fase S.2)', () => {
+  const FIXAS = ['autoavaliacao', 'impacto-social', 'infraestrutura', 'internacionalizacao', 'planejamento', 'sobre'];
+  const fixasDo = async (id) =>
+    (await auth(request(app).get(`/api/pages?programa=${id}`))).body.filter((p) => p.chave);
+  const itensPrograma = (menu) => menu.find((e) => e.chave === 'programa').itens.map((i) => i.chave);
+
+  it('cria as seis páginas fixas, vazias e fora do menu (só "Sobre" aparece)', async () => {
+    const { id, slug } = await criar({ slug: 'fixas' });
+    const fixas = await fixasDo(id);
+    expect(fixas.map((p) => p.chave).sort()).toEqual(FIXAS);
+    expect(fixas.every((p) => p.slug === p.chave)).toBe(true);
+
+    const { body } = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(itensPrograma(body.menu)).toEqual(['sobre']);
+    // Continuam fora da lista de páginas criadas.
+    expect(body.paginas).toEqual([]);
+  });
+
+  it('página fixa com texto entra no menu na posição do modelo; "<p>&nbsp;</p>" conta como vazia', async () => {
+    const { id, slug } = await criar({ slug: 'fixas2' });
+    const fixas = await fixasDo(id);
+    const infra = fixas.find((p) => p.chave === 'infraestrutura');
+    const impacto = fixas.find((p) => p.chave === 'impacto-social');
+    await auth(request(app).put(`/api/pages/${infra.id}`)).send({ body: { value: '<p>Laboratórios</p>' } });
+    await auth(request(app).put(`/api/pages/${impacto.id}`)).send({ body: { value: '<p>&nbsp;</p>' } });
+
+    const { body } = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(itensPrograma(body.menu)).toEqual(['sobre', 'infraestrutura']);
+    expect(body.menu.find((e) => e.chave === 'programa').itens[1]).toMatchObject({ rotulo: 'Infraestrutura', sub: 'infraestrutura' });
+  });
+
+  it('página fixa em rascunho não aparece no menu público', async () => {
+    const { id, slug } = await criar({ slug: 'fixas3' });
+    const plan = (await fixasDo(id)).find((p) => p.chave === 'planejamento');
+    await auth(request(app).put(`/api/pages/${plan.id}`)).send({ body: { value: '<p>PPI</p>' }, status: 'RASCUNHO' });
+    const { body } = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(itensPrograma(body.menu)).toEqual(['sobre']);
+  });
+
+  it('é idempotente e adota página comum que já usava o endereço (texto mantido)', async () => {
+    const { id } = await criar({ slug: 'adota' });
+    const antiga = (await fixasDo(id)).find((p) => p.chave === 'infraestrutura');
+    // Simula o legado: a "infraestrutura" era uma página comum do programa.
+    await pool.query('UPDATE pages SET chave = NULL, body_value = $2 WHERE id = $1', [antiga.id, '<p>Texto antigo</p>']);
+
+    await auth(request(app).put(`/api/programas/${id}`)).send({ nome: 'PPG História' }); // auto-cura
+    const fixas = await fixasDo(id);
+    expect(fixas).toHaveLength(6);
+    const infra = fixas.find((p) => p.chave === 'infraestrutura');
+    expect(infra.id).toBe(antiga.id);
+    expect(infra.body.value).toBe('<p>Texto antigo</p>');
+  });
+
+  it('não pode excluir nem mudar o endereço de uma página fixa nova', async () => {
+    const { id } = await criar({ slug: 'trava' });
+    const auto = (await fixasDo(id)).find((p) => p.chave === 'autoavaliacao');
+    expect((await auth(request(app).delete(`/api/pages/${auto.id}`))).status).toBe(400);
+    const upd = await auth(request(app).put(`/api/pages/${auto.id}`)).send({ title: 'Relatórios de Autoavaliação' });
+    expect(upd.body.slug).toBe('autoavaliacao');
+  });
+
+  it('páginas vazias não aparecem na busca do microsite nem na busca do portal', async () => {
+    const { id, slug } = await criar({ slug: 'busca-fixa' });
+    const res = await request(app).get(`/api/programas/slug/${slug}/busca?q=Infraestrutura`);
+    expect(res.body.filter((r) => r.tipo === 'pagina')).toEqual([]);
+
+    const infra = (await fixasDo(id)).find((p) => p.chave === 'infraestrutura');
+    await auth(request(app).put(`/api/pages/${infra.id}`)).send({ body: { value: '<p>Laboratórios</p>' } });
+    const res2 = await request(app).get(`/api/programas/slug/${slug}/busca?q=Infraestrutura`);
+    expect(res2.body.filter((r) => r.tipo === 'pagina').map((r) => r.slug)).toEqual(['infraestrutura']);
+
+    const vazia = await request(app).get('/api/portal/busca?q=Planejamento');
+    expect(JSON.stringify(vazia.body)).not.toContain('/busca-fixa/planejamento');
+    const plan = (await fixasDo(id)).find((p) => p.chave === 'planejamento');
+    await auth(request(app).put(`/api/pages/${plan.id}`)).send({ body: { value: '<p>Metas do quadriênio</p>' } });
+    const cheia = await request(app).get('/api/portal/busca?q=Planejamento');
+    expect(JSON.stringify(cheia.body)).toContain('/busca-fixa/planejamento');
+  });
+});

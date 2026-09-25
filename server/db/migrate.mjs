@@ -137,17 +137,16 @@ async function main() {
   await migrateRepo('users', 'users.json', usersRepo);
   await migrateRepo('calendarios', 'calendarios.json', calendariosRepo);
 
-  // Todo programa tem uma página fixa "Sobre" (chave='sobre'), editável no
-  // admin. pages.json já traz a do PGH com conteúdo migrado de
-  // programa_paginas (ver 2026-09-14_pages_programa_scoped.sql); os demais
-  // programas ganham aqui uma versão vazia (ensureFixedSobre é idempotente).
-  console.log('Garantindo página fixa "Sobre" para cada programa...');
-  let sobreCriadas = 0;
-  for (const p of programas) {
-    if (!(await pagesRepo.getFixed(p.id, 'sobre'))) sobreCriadas++;
-    await pagesRepo.ensureFixedSobre(p.id);
-  }
-  console.log(`  sobre (fixa): ${sobreCriadas}/${programas.length} criada(s) agora`);
+  // Todo programa tem as páginas fixas do microsite (Sobre, Impacto Social,
+  // Autoavaliação, Infraestrutura, Internacionalização, Planejamento — Fase
+  // S.2), editáveis no admin. pages.json já traz a "Sobre" do PGH com conteúdo
+  // migrado de programa_paginas (ver 2026-09-14_pages_programa_scoped.sql); o
+  // resto nasce vazio (ensureFixedPages é idempotente).
+  console.log('Garantindo as páginas fixas de cada programa...');
+  const { rows: [{ n: fixasAntes }] } = await query('SELECT count(*)::int AS n FROM pages WHERE programa_id IS NOT NULL AND chave IS NOT NULL');
+  for (const p of programas) await pagesRepo.ensureFixedPages(p.id);
+  const { rows: [{ n: fixasDepois }] } = await query('SELECT count(*)::int AS n FROM pages WHERE programa_id IS NOT NULL AND chave IS NOT NULL');
+  console.log(`  páginas fixas: ${fixasDepois - fixasAntes} criada(s) agora (${fixasDepois} no total)`);
 
   // Páginas institucionais da PRPG (Fase H.3): o TRUNCATE acima as apagou.
   console.log(`  institucionais: ${await garantirPaginasInstitucionais()} criada(s)`);

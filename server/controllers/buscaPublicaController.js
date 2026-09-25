@@ -5,6 +5,7 @@
 // A busca interna do painel (processos, atos, pós-doc) continua em /api/busca.
 import { query } from '../db/pool.js';
 import { sqlPublicado } from '../utils/publicacao.js';
+import { sqlPaginaComTexto } from '../utils/micrositeMenu.js';
 
 const POR_GRUPO = 10;
 const TRECHO = `'MaxWords=28, MinWords=12, MaxFragments=1, StartSel=<mark>, StopSel=</mark>'`;
@@ -45,7 +46,7 @@ const GRUPOS = [
             ts_headline('pt_sem_acento', busca_sem_tags(coalesce(pg.body_summary, '') || ' ' || coalesce(pg.body_value, '')), $1, ${TRECHO}) AS trecho,
             ts_rank(busca_tsv(pg.title, pg.body_summary, pg.body_value), $1) AS nota
           FROM pages pg LEFT JOIN programas p ON p.id = pg.programa_id
-          WHERE ${sqlPublicado('pg')}
+          WHERE ${sqlPublicado('pg')} AND ${sqlPaginaComTexto('pg')}
             AND (pg.programa_id IS NULL OR p.microsite_ativo)
             AND (busca_tsv(pg.title, pg.body_summary, pg.body_value) @@ $1 OR busca_limpar(pg.title) ILIKE $2)`,
     ordem: 'nota DESC, titulo',

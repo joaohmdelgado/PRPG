@@ -8,7 +8,7 @@ import { withProgramaScope } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
 import useUsers from '../../hooks/useUsers';
-import { filterAdminPages } from './adminPagesFilter';
+import { filterAdminPages, semFixasVaziasDePrograma } from './adminPagesFilter';
 
 const AdminPagesList = () => {
   const [pages, setPages] = useState([]);
@@ -63,7 +63,7 @@ const AdminPagesList = () => {
     }
   };
 
-  const filteredPages = filterAdminPages(pages, searchQuery, selectedProgramaId);
+  const filteredPages = filterAdminPages(semFixasVaziasDePrograma(pages), searchQuery, selectedProgramaId);
 
   // Páginas fixas (chave definida, ex.: "Sobre") não podem ser excluídas —
   // ver pagesController.js — então ficam fora da seleção em massa.
@@ -96,6 +96,9 @@ const AdminPagesList = () => {
           </h2>
           <p className="text-sm text-gray-500 mt-1">
             Criação de páginas institucionais com conteúdos ricos e URLs dinâmicas
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            Páginas fixas dos programas ainda vazias (Impacto Social, Infraestrutura…) ficam em Programas → Site do Programa.
           </p>
         </div>
         <Link 

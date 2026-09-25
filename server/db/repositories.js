@@ -5,6 +5,7 @@ import { periodoDeTexto } from '../utils/periodo.js';
 import { STATUS_PUBLICACAO } from '../utils/publicacao.js';
 import { query } from './pool.js';
 import { parseDataPt } from '../utils/datas.js';
+import { PAGINAS_FIXAS } from '../utils/micrositeMenu.js';
 
 const toArr = (v) => (Array.isArray(v) ? v : v != null && v !== '' ? [v] : []);
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
@@ -207,20 +208,40 @@ pagesRepo.getByPrograma = async (programaId) => {
   return rows.map(pagesRepo._decorate);
 };
 
-// Garante que o programa tenha sua pagina fixa "Sobre" (idempotente — chamada
-// tanto na criacao de um programa novo quanto no backfill de migrate.mjs para
-// os ja existentes). Nasce vazia; o admin preenche o conteudo depois.
-pagesRepo.ensureFixedSobre = async (programaId, actor) => {
-  const existing = await pagesRepo.getFixed(programaId, 'sobre');
-  if (existing) return existing;
-  return pagesRepo.create({
-    id: crypto.randomUUID(),
-    title: 'Sobre o Programa',
-    slug: 'sobre',
-    chave: 'sobre',
-    programaId,
-    body: { value: '', summary: '' },
-  }, actor);
+// Paginas fixas do programa (todas as chaves de PAGINAS_FIXAS que existirem).
+pagesRepo.getFixedByPrograma = async (programaId) => {
+  const { rows } = await query(
+    'SELECT * FROM pages WHERE programa_id = $1 AND chave IS NOT NULL',
+    [programaId]
+  );
+  return rows.map(pagesRepo._decorate);
+};
+
+// Garante que o programa tenha as paginas fixas do microsite (Fase S.2 —
+// Sobre, Impacto Social, Autoavaliacao, Infraestrutura, Internacionalizacao,
+// Planejamento; ver PAGINAS_FIXAS). Idempotente: chamada na criacao e na
+// edicao do programa e no backfill de migrate.mjs. Nascem vazias (e fora do
+// menu ate ganharem texto). Se o programa ja tinha criado uma pagina comum
+// com o mesmo endereco (ex.: /pgx/infraestrutura), ela vira a fixa — o texto
+// dela e mantido. Mesmo criterio da migracao 2026-09-25_paginas_fixas_programa.
+pagesRepo.ensureFixedPages = async (programaId, actor) => {
+  const existentes = new Set((await pagesRepo.getFixedByPrograma(programaId)).map((p) => p.chave));
+  for (const { chave, titulo } of PAGINAS_FIXAS) {
+    if (existentes.has(chave)) continue;
+    const { rowCount } = await query(
+      'UPDATE pages SET chave = $2 WHERE programa_id = $1 AND slug = $2 AND chave IS NULL',
+      [programaId, chave]
+    );
+    if (rowCount) continue;
+    await pagesRepo.create({
+      id: crypto.randomUUID(),
+      title: titulo,
+      slug: chave,
+      chave,
+      programaId,
+      body: { value: '', summary: '' },
+    }, actor);
+  }
 };
 
 // ======================= Grupos de Pesquisa =======================

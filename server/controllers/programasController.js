@@ -6,7 +6,7 @@ import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js'
 import { indicadoresDoPrograma } from '../db/indicadoresRepo.js';
 import { serverError } from '../utils/httpError.js';
 import { slugify } from '../utils/slug.js';
-import { montarMenu } from '../utils/micrositeMenu.js';
+import { montarMenu, temTexto, sqlPaginaComTexto } from '../utils/micrositeMenu.js';
 import { visivelPara, sqlPublicado } from '../utils/publicacao.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
@@ -230,8 +230,10 @@ export const getProgramaBySlug = async (req, res) => {
     });
 
     // Rascunho/agendado só aparece para quem edita o programa (pré-visualização).
-    const sobre = await pagesRepo.getFixed(prog.id, 'sobre');
-    const pagina_sobre = sobre && visivelPara(req.user, sobre) ? sobre : null;
+    const fixas = (await pagesRepo.getFixedByPrograma(prog.id)).filter((p) => visivelPara(req.user, p));
+    const pagina_sobre = fixas.find((p) => p.chave === 'sobre') || null;
+    // Páginas fixas com texto entram no menu; vazias ficam ocultas (Fase S.2).
+    const paginasFixas = fixas.filter((p) => temTexto(p.body?.value)).map((p) => p.chave);
     // Páginas criadas pelo programa (não a fixa) — alimentam o submenu
     // "O Programa" do microsite (ProgramaLayout.jsx).
     const paginas = (await pagesRepo.getByPrograma(prog.id)).filter((p) => visivelPara(req.user, p));
@@ -291,7 +293,7 @@ export const getProgramaBySlug = async (req, res) => {
 
     // Menu do microsite (Fase S.1): 4 grupos + Notícias/Documentos/Contato,
     // só com o que tem conteúdo — ver server/utils/micrositeMenu.js.
-    const menu = montarMenu({ modulos, paginas });
+    const menu = montarMenu({ modulos, paginas, paginasFixas });
 
     res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, pagina_sobre, paginas, linhas,
                modulos, menu, historico_coordenadores, comissoes, metrica_recente });
@@ -405,7 +407,7 @@ export const createPrograma = async (req, res) => {
     await handlePessoaVinculo(data.coordenador_atual, 'COORDENADOR_ATUAL', progId);
     await handlePessoaVinculo(data.substituto, 'SUBSTITUTO', progId);
     await handlePessoaVinculo(data.secretaria, 'TAE', progId);
-    await pagesRepo.ensureFixedSobre(progId, actor);
+    await pagesRepo.ensureFixedPages(progId, actor);
 
     res.status(201).json({ message: 'Programa criado com sucesso', id: progId, slug });
   } catch (error) {
@@ -478,7 +480,7 @@ export const updatePrograma = async (req, res) => {
     await handlePessoaVinculo(data.coordenador_atual, 'COORDENADOR_ATUAL', progId);
     await handlePessoaVinculo(data.substituto, 'SUBSTITUTO', progId);
     await handlePessoaVinculo(data.secretaria, 'TAE', progId);
-    await pagesRepo.ensureFixedSobre(progId, actor); // auto-cura: garante a pagina fixa mesmo p/ programas antigos
+    await pagesRepo.ensureFixedPages(progId, actor); // auto-cura: garante as paginas fixas mesmo p/ programas antigos
 
     res.json({ message: 'Programa atualizado com sucesso', slug });
   } catch (error) {
@@ -550,7 +552,8 @@ export const buscaPrograma = async (req, res) => {
       ),
       query(
         `SELECT id, slug, title AS titulo, body_summary AS resumo, 'pagina' AS tipo FROM pages
-         WHERE programa_id = $1 AND ${sqlPublicado()} AND (title ILIKE $2 OR body_value ILIKE $2 OR body_summary ILIKE $2) LIMIT 5`,
+         WHERE programa_id = $1 AND ${sqlPublicado()} AND ${sqlPaginaComTexto()}
+           AND (title ILIKE $2 OR body_value ILIKE $2 OR body_summary ILIKE $2) LIMIT 5`,
         [pid, like]
       ),
     ]);

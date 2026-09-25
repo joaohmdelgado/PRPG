@@ -5,14 +5,20 @@ import { usePrograma, programaPath } from '../../components/programa/ProgramaCon
 import { Spinner, EmptyState } from '../../components/programa/ProgramaUI';
 import InstitutionalPageContent from '../../components/InstitutionalPageContent';
 
+// Texto de verdade no HTML do editor — mesmo critério de temTexto() em
+// server/utils/micrositeMenu.js ("<p>&nbsp;</p>" é vazio).
+const temTexto = (html) =>
+  !!html && /\S/.test(String(html).replace(/<[^>]*>/g, ' ').replace(/&nbsp;|&#160;/gi, ' '));
+
 // Página institucional com endereço próprio dentro do microsite do programa
-// (/<programaSlug>/<pageSlug>). A mesma página também aparece agregada na
-// aba "Sobre" (ver ProgramaSobre.jsx) — este é o endereço direto e dedicado.
+// (/<programaSlug>/<pageSlug>): as criadas pelo programa e as fixas (Impacto
+// Social, Infraestrutura... — Fase S.2). Fixa ainda vazia fica fora do menu;
+// quem chega pelo endereço vê "em construção" em vez de uma página em branco.
 export default function ProgramaPagina() {
   const { programa, slug } = usePrograma();
   const { pageSlug } = useParams();
   const [pagina, setPagina] = useState(null);
-  const [status, setStatus] = useState('loading'); // loading | ok | notfound
+  const [status, setStatus] = useState('loading'); // loading | ok | vazia | notfound
 
   useEffect(() => {
     let active = true;
@@ -26,7 +32,7 @@ export default function ProgramaPagina() {
         if (!active) return;
         if (data) {
           setPagina(data);
-          setStatus('ok');
+          setStatus(data.chave && !temTexto(data.body?.value) ? 'vazia' : 'ok');
         } else {
           setStatus('notfound');
         }
@@ -36,6 +42,18 @@ export default function ProgramaPagina() {
   }, [pageSlug, programa.id]);
 
   if (status === 'loading') return <Spinner />;
+
+  if (status === 'vazia') {
+    return (
+      <main className="container mx-auto px-4 py-16">
+        <EmptyState
+          icon="fa-file-pen"
+          title={pagina.title}
+          hint="Conteúdo em construção — as informações serão publicadas em breve."
+        />
+      </main>
+    );
+  }
 
   if (status === 'notfound') {
     return (

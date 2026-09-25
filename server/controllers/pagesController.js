@@ -107,7 +107,7 @@ export const createPage = async (req, res) => {
   try {
     if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });
     const data = { ...req.body };
-    delete data.chave; // só o backend marca páginas fixas (ver ensureFixedSobre)
+    delete data.chave; // só o backend marca páginas fixas (ver pagesRepo.ensureFixedPages)
     if (!data.title || !data.title.trim()) {
       return res.status(400).json({ message: 'O título é obrigatório.' });
     }
