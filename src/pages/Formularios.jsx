@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
+import useScrollToHash from '../hooks/useScrollToHash';
 
 export default function Formularios() {
   const [searchTerm, setSearchTerm] = useState('');
   const [formulariosData, setFormulariosData] = useState([]);
   const [loading, setLoading] = useState(true);
+  useScrollToHash(!loading);
 
   useEffect(() => {
     const fetchFormularios = async () => {

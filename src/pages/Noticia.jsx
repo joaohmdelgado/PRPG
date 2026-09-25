@@ -59,7 +59,7 @@ export default function Noticia() {
           to="/noticias"
           className="inline-flex items-center gap-2 px-6 py-3 bg-ufrpe-blue hover:bg-ufrpe-yellow hover:text-ufrpe-blue text-white font-bold rounded-xl transition-all"
         >
-          <i class="fa-solid fa-arrow-left"></i> Voltar para Notícias
+          <i className="fa-solid fa-arrow-left"></i> Voltar para Notícias
         </Link>
       </div>
     );

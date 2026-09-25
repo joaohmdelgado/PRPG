@@ -46,7 +46,7 @@ export default function Financeiro() {
               
               <div className="prose prose-lg max-w-none text-gray-600 leading-relaxed space-y-8">
                 <p>
-                  A Pós-graduação é financiada com recursos próprios da UFRPE, assim como recebe recursos externos de vários órgãos, como a Coordenação de Aperfeiçoamento de Pessoal de Nível Superior (<strong className="text-ufrpe-blue">CAPES</strong>), o Conselho Nacional de Desenvolvimento Científico e Tecnológico (<strong class="text-ufrpe-blue">CNPq</strong>), a Fundação de Apoio à Ciência e Tecnologia do Estado de Pernambuco (<strong class="text-ufrpe-blue">FACEPE</strong>) e a Financiadora de Estudos e Projetos (<strong class="text-ufrpe-blue">FINEP</strong>), empresa pública do Ministério da Ciência, Tecnologia e Inovações (MCTI).
+                  A Pós-graduação é financiada com recursos próprios da UFRPE, assim como recebe recursos externos de vários órgãos, como a Coordenação de Aperfeiçoamento de Pessoal de Nível Superior (<strong className="text-ufrpe-blue">CAPES</strong>), o Conselho Nacional de Desenvolvimento Científico e Tecnológico (<strong className="text-ufrpe-blue">CNPq</strong>), a Fundação de Apoio à Ciência e Tecnologia do Estado de Pernambuco (<strong className="text-ufrpe-blue">FACEPE</strong>) e a Financiadora de Estudos e Projetos (<strong className="text-ufrpe-blue">FINEP</strong>), empresa pública do Ministério da Ciência, Tecnologia e Inovações (MCTI).
                 </p>
 
                 <div className="grid md:grid-cols-2 gap-8 my-12">
@@ -81,14 +81,8 @@ export default function Financeiro() {
                     </p>
                     
                     <div className="flex flex-wrap gap-4 mt-8">
-                      <a href="#" className="flex items-center gap-3 bg-gray-100 hover:bg-ufrpe-yellow hover:text-white px-5 py-3 rounded-xl transition font-bold text-sm">
-                        <i className="fa-solid fa-file-pdf"></i> Portaria Regulamentadora
-                      </a>
-                      <a href="#" className="flex items-center gap-3 bg-gray-100 hover:bg-ufrpe-yellow hover:text-white px-5 py-3 rounded-xl transition font-bold text-sm">
-                        <i className="fa-solid fa-magnifying-glass-chart"></i> Acompanhamento de Bolsas
-                      </a>
-                      <Link to="/formularios" className="flex items-center gap-3 bg-gray-100 hover:bg-ufrpe-yellow hover:text-white px-5 py-3 rounded-xl transition font-bold text-sm">
-                        <i className="fa-solid fa-file-signature"></i> Termo de Compromisso
+                      <Link to="/formularios#apoio-financeiro" className="flex items-center gap-3 bg-gray-100 hover:bg-ufrpe-yellow hover:text-white px-5 py-3 rounded-xl transition font-bold text-sm">
+                        <i className="fa-solid fa-file-signature"></i> Termo de Compromisso e formulários de bolsa
                       </Link>
                     </div>
                   </div>
@@ -99,23 +93,18 @@ export default function Financeiro() {
                       Tem o objetivo de financiar as atividades dos Programas de Pós-graduação, proporcionando melhores condições para a formação de recursos humanos.
                     </p>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                      <a href="#" className="p-4 bg-gray-50 rounded-2xl hover:shadow-md transition text-center group">
-                        <i className="fa-solid fa-file-lines text-2xl text-ufrpe-blue/40 group-hover:text-ufrpe-yellow mb-3 block"></i>
-                        <span className="text-xs font-bold uppercase">Portaria</span>
-                      </a>
-                      <a href="#" className="p-4 bg-gray-50 rounded-2xl hover:shadow-md transition text-center group">
-                        <i className="fa-solid fa-scroll text-2xl text-ufrpe-blue/40 group-hover:text-ufrpe-yellow mb-3 block"></i>
-                        <span className="text-xs font-bold uppercase">Resolução</span>
-                      </a>
-                      <a href="#" className="p-4 bg-gray-50 rounded-2xl hover:shadow-md transition text-center group">
-                        <i className="fa-solid fa-book-open text-2xl text-ufrpe-blue/40 group-hover:text-ufrpe-yellow mb-3 block"></i>
-                        <span className="text-xs font-bold uppercase">Manual</span>
-                      </a>
-                      <a href="#" className="p-4 bg-gray-50 rounded-2xl hover:shadow-md transition text-center group">
-                        <i className="fa-solid fa-table text-2xl text-ufrpe-blue/40 group-hover:text-ufrpe-yellow mb-3 block"></i>
-                        <span className="text-xs font-bold uppercase">Saldo</span>
-                      </a>
+                    {/* Os documentos vivem em Resoluções/Formulários (seção Apoio
+                        Financeiro), geridos pelo painel — antes eram 4 cartões
+                        com href="#". */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+                      <Link to="/resolucoes#apoio-financeiro" className="p-4 bg-gray-50 rounded-2xl hover:shadow-md transition text-center group">
+                        <i className="fa-solid fa-scroll text-2xl text-ufrpe-blue/40 group-hover:text-ufrpe-yellow mb-3 block" aria-hidden="true"></i>
+                        <span className="text-xs font-bold uppercase">Normas do PROAP (portaria, resolução, manual)</span>
+                      </Link>
+                      <Link to="/formularios#apoio-financeiro" className="p-4 bg-gray-50 rounded-2xl hover:shadow-md transition text-center group">
+                        <i className="fa-solid fa-file-lines text-2xl text-ufrpe-blue/40 group-hover:text-ufrpe-yellow mb-3 block" aria-hidden="true"></i>
+                        <span className="text-xs font-bold uppercase">Formulários do PROAP</span>
+                      </Link>
                     </div>
                   </div>
                 </div>

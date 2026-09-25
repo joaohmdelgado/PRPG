@@ -74,9 +74,10 @@ export function Topbar({ onOpenMap }) {
           </button>
         </div>
         <div className="flex gap-4">
-          <span className="hover:text-ufrpe-yellow transition cursor-pointer border-r border-white/10 pr-4">Portal UFRPE</span>
-          <span className="hover:text-ufrpe-yellow transition cursor-pointer border-r border-white/10 pr-4">SIGAA</span>
-          <span className="hover:text-ufrpe-yellow transition cursor-pointer">AVA</span>
+          {/* Eram <span> sem destino. Mesmos endereços do rodapé. */}
+          <a href="https://www.ufrpe.br/" target="_blank" rel="noopener noreferrer" className="hover:text-ufrpe-yellow transition border-r border-white/10 pr-4">Portal UFRPE</a>
+          <a href="https://sigs.ufrpe.br/sigaa/" target="_blank" rel="noopener noreferrer" className="hover:text-ufrpe-yellow transition border-r border-white/10 pr-4">SIGAA</a>
+          <a href="http://ava.ufrpe.br/" target="_blank" rel="noopener noreferrer" className="hover:text-ufrpe-yellow transition">AVA</a>
         </div>
       </div>
     </div>
@@ -204,6 +205,15 @@ export default function Navbar() {
                   </ul>
                 </li>
               ))}
+              {/* Notícias só existia no menu mobile. */}
+              <li className="px-3 py-4">
+                <Link
+                  to="/noticias"
+                  className={`hover:text-ufrpe-yellow transition ${currentPage.startsWith('/noticia') ? 'text-ufrpe-yellow font-bold' : ''}`}
+                >
+                  Notícias
+                </Link>
+              </li>
             </ul>
           </div>
 

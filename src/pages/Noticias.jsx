@@ -206,7 +206,7 @@ export default function Noticias() {
                   <option value="2025">2025</option>
                   <option value="2024">2024</option>
                 </select>
-                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
               </div>
             </div>
           </div>

@@ -1,31 +1,38 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+// Atalhos: todos com destino real (antes 6 de 8 não levavam a lugar nenhum).
+// `ext` = link externo. "Clínica de Bovinos" saiu: não há página para ela.
 const QUICK = [
   { i: 'fa-regular fa-calendar-days', l: 'Calendário\nAcadêmico', p: '/calendario-academico' },
-  { i: 'fa-solid fa-book-open', l: 'Catálogo de\nCursos', p: null },
-  { i: 'fa-solid fa-gavel', l: 'Resoluções', p: null },
-  { i: 'fa-solid fa-file-signature', l: 'Formulários', p: null },
-  { i: 'fa-solid fa-globe', l: 'Internacionalização', p: null },
-  { i: 'fa-solid fa-people-arrows', l: 'Proext-PG', p: null },
+  { i: 'fa-solid fa-book-open', l: 'Catálogo de\nCursos', p: 'https://prpg.ufrpe.br/sites/default/files/2024-06/Cat%C3%A1logo%20UFRPE_compressed.pdf', ext: true },
+  { i: 'fa-solid fa-gavel', l: 'Resoluções', p: '/resolucoes' },
+  { i: 'fa-solid fa-file-signature', l: 'Formulários', p: '/formularios' },
+  { i: 'fa-solid fa-globe', l: 'Internacionalização', p: '/sobre-internacionalizacao' },
+  { i: 'fa-solid fa-people-arrows', l: 'Proext-PG', p: '/proext-pg' },
   { i: 'fa-solid fa-bullhorn', l: 'Editais', p: '/editais' },
-  { i: 'fa-solid fa-cow', l: 'Clínica de\nBovinos', p: null },
 ];
 
 const SERVICES = [
-  { i: 'fa-solid fa-door-open', c: 'text-ufrpe-cyan', bg: 'bg-ufrpe-cyan/10', t: 'Ingresso e Seleção', d: 'Editais, inscrição, matrícula inicial e linhas de pesquisa.', lc: 'text-ufrpe-cyan' },
-  { i: 'fa-solid fa-book-open-reader', c: 'text-ufrpe-yellow-hover', bg: 'bg-ufrpe-yellow/20', t: 'Vida Acadêmica', d: 'Disciplinas, créditos, frequência e orientação.', lc: 'text-ufrpe-yellow-hover' },
-  { i: 'fa-solid fa-graduation-cap', c: 'text-green-600', bg: 'bg-green-100', t: 'Qualificação e Defesa', d: 'Prazos, banca examinadora e entrega final de trabalhos.', lc: 'text-green-600' },
-  { i: 'fa-solid fa-hand-holding-dollar', c: 'text-purple-600', bg: 'bg-purple-100', t: 'Bolsas e Apoio', d: 'Critérios, implementação, relatórios e cancelamento.', lc: 'text-purple-600' },
-  { i: 'fa-solid fa-folder-open', c: 'text-orange-600', bg: 'bg-orange-100', t: 'Documentação', d: 'Histórico, declarações, diploma e comprovantes.', lc: 'text-orange-600' },
-  { i: 'fa-solid fa-laptop-code', c: 'text-slate-600', bg: 'bg-slate-100', t: 'Sistemas e Acesso', d: 'SIGAA, e-mail institucional e Wi-Fi Eduroam.', lc: 'text-slate-600' },
+  { i: 'fa-solid fa-door-open', c: 'text-ufrpe-cyan', bg: 'bg-ufrpe-cyan/10', t: 'Ingresso e Seleção', d: 'Editais, inscrição, matrícula inicial e linhas de pesquisa.', lc: 'text-ufrpe-cyan', p: '/editais' },
+  { i: 'fa-solid fa-book-open-reader', c: 'text-ufrpe-yellow-hover', bg: 'bg-ufrpe-yellow/20', t: 'Vida Acadêmica', d: 'Disciplinas, créditos, frequência e orientação.', lc: 'text-ufrpe-yellow-hover', p: '/calendario-academico' },
+  { i: 'fa-solid fa-graduation-cap', c: 'text-green-600', bg: 'bg-green-100', t: 'Qualificação e Defesa', d: 'Prazos, banca examinadora e entrega final de trabalhos.', lc: 'text-green-600', p: '/formularios#mestrado-doutorado' },
+  { i: 'fa-solid fa-hand-holding-dollar', c: 'text-purple-600', bg: 'bg-purple-100', t: 'Bolsas e Apoio', d: 'Critérios, implementação, relatórios e cancelamento.', lc: 'text-purple-600', p: '/financeiro' },
+  { i: 'fa-solid fa-folder-open', c: 'text-orange-600', bg: 'bg-orange-100', t: 'Documentação', d: 'Histórico, declarações, diploma e comprovantes.', lc: 'text-orange-600', p: '/formularios' },
+  { i: 'fa-solid fa-laptop-code', c: 'text-slate-600', bg: 'bg-slate-100', t: 'Sistemas e Acesso', d: 'SIGAA, e-mail institucional e Wi-Fi Eduroam.', lc: 'text-slate-600', p: 'https://sigs.ufrpe.br/sigaa/', ext: true },
 ];
 
 const PROGRAMS = [
-  { t: 'Stricto Sensu', img: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&q=80', d: 'Mestrados e Doutorados Acadêmicos e Profissionais voltados para a formação de pesquisadores e docentes de excelência.', badge: '42 Programas', count: '59 Cursos' },
-  { t: 'Lato Sensu', img: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80', d: 'Cursos de Especialização para aprofundamento técnico, atualização profissional e prática.', badge: 'Especializações', count: '8 Cursos' },
-  { t: 'Residência', img: 'https://images.unsplash.com/photo-1629813359670-652f4477ca3f?w=800&q=80', d: 'Residência em Medicina Veterinária e Residência Profissional, unindo teoria e prática intensiva.', badge: 'Treinamento em Serviço', count: '' },
+  { t: 'Stricto Sensu', img: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800&q=80', d: 'Mestrados e Doutorados Acadêmicos e Profissionais voltados para a formação de pesquisadores e docentes de excelência.', badge: '42 Programas', count: '59 Cursos', p: '/programas' },
+  { t: 'Lato Sensu', img: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80', d: 'Cursos de Especialização para aprofundamento técnico, atualização profissional e prática.', badge: 'Especializações', count: '8 Cursos', p: '/especializacao' },
+  { t: 'Residência', img: 'https://images.unsplash.com/photo-1629813359670-652f4477ca3f?w=800&q=80', d: 'Residência em Medicina Veterinária e Residência Profissional, unindo teoria e prática intensiva.', badge: 'Treinamento em Serviço', count: '', p: '/residencia-profissional' },
 ];
+
+// Link interno (react-router) ou externo (nova aba), com as mesmas classes.
+function Destino({ p, ext, className, children }) {
+  if (ext) return <a href={p} target="_blank" rel="noopener noreferrer" className={className}>{children}</a>;
+  return <Link to={p} className={className}>{children}</Link>;
+}
 
 const EDITAIS = [
   { status: 'open', bc: 'border-ufrpe-cyan', badge: 'bg-cyan-100 text-cyan-800', bl: 'Inscrições Abertas', dt: '05/05/2026', ddl: 'até 20/05/2026', t: 'Edital 05/2026 – Seleção para Pós-doutorado em Extensão (Proext-PG)', d: 'A PRPG torna público o edital para seleção de bolsistas de pós-doutorado vinculados a projetos de extensão.' },
@@ -47,10 +54,10 @@ export default function Home() {
           <div className="max-w-3xl">
             <span className="inline-block px-3 py-1 bg-ufrpe-yellow text-ufrpe-blue text-xs font-bold rounded-full mb-6 tracking-wide uppercase">Pós-Graduação UFRPE</span>
             <h2 className="font-heading font-extrabold text-4xl md:text-6xl mb-6 leading-tight">Aprendendo hoje,<br /><span className="text-ufrpe-yellow">liderando amanhã.</span></h2>
-            <p className="text-lg text-gray-300 mb-8 max-w-2xl font-light">Formando professionals para o exercício, em alto nível, da docência, da pesquisa e da atividade autônoma, fomentando a produção de novos conhecimentos.</p>
+            <p className="text-lg text-gray-300 mb-8 max-w-2xl font-light">Formando profissionais para o exercício, em alto nível, da docência, da pesquisa e da atividade autônoma, fomentando a produção de novos conhecimentos.</p>
             <div className="flex flex-wrap gap-4">
-              <button onClick={() => navigate('/editais')} className="px-8 py-3 bg-ufrpe-yellow text-ufrpe-blue font-bold rounded-lg hover:bg-white transition-colors shadow-[0_8px_20px_rgba(254,189,17,.25)]">Conheça os Cursos</button>
-              <button className="px-8 py-3 text-white font-bold rounded-lg border border-white/20 hover:bg-white/20 transition-colors backdrop-blur-sm bg-white/10">Sou Aluno</button>
+              <Link to="/programas" className="px-8 py-3 bg-ufrpe-yellow text-ufrpe-blue font-bold rounded-lg hover:bg-white transition-colors shadow-[0_8px_20px_rgba(254,189,17,.25)]">Conheça os Cursos</Link>
+              <Link to="/editais" className="px-8 py-3 text-white font-bold rounded-lg border border-white/20 hover:bg-white/20 transition-colors backdrop-blur-sm bg-white/10">Editais abertos</Link>
             </div>
           </div>
         </div>
@@ -59,12 +66,12 @@ export default function Home() {
       {/* SECTION 2: ACESSOS RÁPIDOS */}
       <section className="py-12 bg-white relative z-30 -mt-10 mx-4 md:mx-auto container rounded-2xl border border-gray-100 shadow-[0_20px_40px_rgba(0,0,0,.08)]">
         <div className="px-6 md:px-10">
-          <div className="grid grid-cols-4 lg:grid-cols-8 gap-4 text-center">
+          <div className="grid grid-cols-4 lg:grid-cols-7 gap-4 text-center">
             {QUICK.map((q, i) => (
-              <button key={i} onClick={() => q.p && navigate(q.p)} className="group flex flex-col items-center gap-3">
-                <div className="w-14 h-14 rounded-2xl bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center text-xl group-hover:bg-ufrpe-yellow group-hover:text-white transition-all transform group-hover:-translate-y-1"><i className={q.i}></i></div>
+              <Destino key={i} p={q.p} ext={q.ext} className="group flex flex-col items-center gap-3">
+                <div className="w-14 h-14 rounded-2xl bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center text-xl group-hover:bg-ufrpe-yellow group-hover:text-white transition-all transform group-hover:-translate-y-1"><i className={q.i} aria-hidden="true"></i></div>
                 <span className="text-xs font-semibold text-gray-700 group-hover:text-ufrpe-blue leading-tight whitespace-pre-line">{q.l}</span>
-              </button>
+              </Destino>
             ))}
           </div>
         </div>
@@ -124,12 +131,12 @@ export default function Home() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {SERVICES.map((s, i) => (
-              <div key={i} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all hover:-translate-y-1 group">
-                <div className={`w-12 h-12 ${s.bg} ${s.c} rounded-xl flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform`}><i className={s.i}></i></div>
+              <Destino key={i} p={s.p} ext={s.ext} className="block bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all hover:-translate-y-1 group">
+                <div className={`w-12 h-12 ${s.bg} ${s.c} rounded-xl flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform`}><i className={s.i} aria-hidden="true"></i></div>
                 <h3 className="font-heading font-bold text-xl text-ufrpe-blue mb-3">{s.t}</h3>
                 <p className="text-sm text-gray-600 mb-6">{s.d}</p>
-                <span className={`${s.lc} font-semibold text-sm flex items-center gap-2`}>Explorar <i className="fa-solid fa-arrow-right text-xs"></i></span>
-              </div>
+                <span className={`${s.lc} font-semibold text-sm flex items-center gap-2`}>Explorar <i className="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i></span>
+              </Destino>
             ))}
           </div>
         </div>
@@ -182,7 +189,7 @@ export default function Home() {
                       <span className="bg-blue-50 text-ufrpe-blue text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100">{p.badge}</span>
                       {p.count && <span className="text-gray-400 text-sm font-medium">{p.count}</span>}
                     </div>
-                    <button onClick={() => navigate('/editais')} className="block w-full text-center py-3.5 bg-gray-50 text-ufrpe-blue font-bold rounded-xl border border-gray-200 hover:bg-ufrpe-yellow hover:text-white hover:border-ufrpe-yellow transition-all">Conhecer Programas</button>
+                    <Link to={p.p} className="block w-full text-center py-3.5 bg-gray-50 text-ufrpe-blue font-bold rounded-xl border border-gray-200 hover:bg-ufrpe-yellow hover:text-white hover:border-ufrpe-yellow transition-all">Conhecer {p.t}</Link>
                   </div>
                 </div>
               </div>

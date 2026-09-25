@@ -17,7 +17,6 @@ export default function Footer() {
     { label: 'E-mail Institucional', path: 'https://www.ufrpe.br/', isExternal: true },
     { label: 'Wi-Fi Eduroam', path: 'https://www.ufrpe.br/', isExternal: true }
   ];
-  const socials = ['instagram', 'youtube', 'linkedin-in'];
 
   return (
     <footer style={{ background: '#151e36' }} className="text-white pt-20 pb-8 mt-auto border-t-4 border-ufrpe-yellow">
@@ -35,16 +34,8 @@ export default function Footer() {
               Dois Irmãos, Recife - PE, Brasil<br />
               CEP 52171-900
             </p>
-            <div className="flex gap-3">
-              {socials.map(s => (
-                <a key={s} href="#"
-                  className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-ufrpe-yellow hover:text-ufrpe-blue hover:border-ufrpe-yellow transition-all"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)' }}
-                >
-                  <i className={`fa-brands fa-${s}`}></i>
-                </a>
-              ))}
-            </div>
+            {/* Redes sociais: os endereços oficiais ainda não foram informados
+                (antes eram links href="#"). Entram com os menus editáveis (Fase H). */}
           </div>
 
           {/* Quick links */}
@@ -108,7 +99,7 @@ export default function Footer() {
                 </div>
                 <div>
                   <span className="block font-semibold text-white mb-0.5">Secretaria PRPG</span>
-                  <span className="hover:text-ufrpe-yellow cursor-pointer transition">secretaria.prpg@ufrpe.br</span>
+                  <a href="mailto:secretaria.prpg@ufrpe.br" className="hover:text-ufrpe-yellow transition">secretaria.prpg@ufrpe.br</a>
                 </div>
               </li>
               <li className="flex items-start gap-3">
@@ -128,10 +119,8 @@ export default function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500">
           <p>© 2026 PRPG - Universidade Federal Rural de Pernambuco. Todos os direitos reservados.</p>
-          <div className="flex gap-6">
-            <a href="#" className="hover:text-white transition">Política de Privacidade</a>
-            <a href="#" className="hover:text-white transition">Termos de Uso</a>
-          </div>
+          {/* Política de Privacidade e Termos de Uso: páginas ainda não existem
+              (eram href="#"); previstas na Fase H.7. */}
         </div>
       </div>
     </footer>

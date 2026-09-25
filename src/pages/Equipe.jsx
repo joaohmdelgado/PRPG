@@ -125,7 +125,7 @@ export default function Equipe() {
                       </div>
                     </div>
                     <div className="space-y-2 pt-4 border-t border-gray-50">
-                      <p className="text-xs text-gray-500 flex items-center gap-2"><i class="fa-solid fa-phone text-ufrpe-blue/30"></i> 81 99937-8589</p>
+                      <p className="text-xs text-gray-500 flex items-center gap-2"><i className="fa-solid fa-phone text-ufrpe-blue/30"></i> 81 99937-8589</p>
                       <p className="text-xs text-gray-400">Atendimento via WhatsApp disponível</p>
                     </div>
                   </div>
@@ -141,7 +141,7 @@ export default function Equipe() {
                       </div>
                     </div>
                     <div className="space-y-2 pt-4 border-t border-gray-50">
-                      <p className="text-xs text-gray-500 flex items-center gap-2"><i class="fa-solid fa-phone text-ufrpe-blue/30"></i> 81 3320-6050</p>
+                      <p className="text-xs text-gray-500 flex items-center gap-2"><i className="fa-solid fa-phone text-ufrpe-blue/30"></i> 81 3320-6050</p>
                       <p className="text-xs text-gray-400">Atendimento via WhatsApp disponível</p>
                     </div>
                   </div>
@@ -157,7 +157,7 @@ export default function Equipe() {
                       </div>
                     </div>
                     <div className="space-y-2 pt-4 border-t border-gray-50">
-                      <p className="text-xs text-gray-500 flex items-center gap-2"><i class="fa-solid fa-phone text-ufrpe-blue/30"></i> 81 99979-1596</p>
+                      <p className="text-xs text-gray-500 flex items-center gap-2"><i className="fa-solid fa-phone text-ufrpe-blue/30"></i> 81 99979-1596</p>
                       <p className="text-xs text-gray-400">Atendimento via WhatsApp disponível</p>
                     </div>
                   </div>

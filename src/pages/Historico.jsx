@@ -43,7 +43,7 @@ export default function Historico() {
             {/* Timeline Intro */}
             <div className="text-center mb-16">
               <span className="inline-flex items-center px-4 py-1.5 rounded-full bg-ufrpe-blue/5 text-ufrpe-blue text-xs font-bold uppercase tracking-wider mb-4 border border-ufrpe-blue/10">Nossa Jornada</span>
-              <h2 class="text-3xl font-heading font-black text-ufrpe-blue mb-4">Evolução e Conquistas</h2>
+              <h2 className="text-3xl font-heading font-black text-ufrpe-blue mb-4">Evolução e Conquistas</h2>
               <div className="w-20 h-1.5 bg-ufrpe-yellow mx-auto rounded-full"></div>
             </div>
 

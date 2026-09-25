@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
+import useScrollToHash from '../hooks/useScrollToHash';
 
 export default function Resolucoes() {
   const [searchTerm, setSearchTerm] = useState('');
   const [resolucoesData, setResolucoesData] = useState([]);
   const [loading, setLoading] = useState(true);
+  useScrollToHash(!loading);
 
   useEffect(() => {
     const fetchResolucoes = async () => {
@@ -168,14 +170,6 @@ export default function Resolucoes() {
                       ))}
                     </div>
                   
-                  <div className="mt-8 pt-6 border-t border-gray-100">
-                    <a
-                      href="#"
-                      className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gray-100 text-gray-600 border border-gray-200 rounded-xl hover:bg-ufrpe-yellow hover:text-ufrpe-blue hover:border-ufrpe-yellow transition-all font-bold text-sm"
-                    >
-                      <i className="fa-solid fa-clock-rotate-left"></i> Resoluções Revogadas
-                    </a>
-                  </div>
                 </div>
               </div>
             </div>
