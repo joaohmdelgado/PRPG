@@ -2,15 +2,17 @@ import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { formulariosRepo } from '../db/repositories.js';
 import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { serverError } from '../utils/httpError.js';
+import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
+import { responderLista } from '../utils/listagem.js';
 
 export const getFormularios = async (req, res) => {
-  const all = await formulariosRepo.getAll();
-  res.json(await filtrarPorEscopo(all, req.query));
+  const all = await filtrarPorEscopo(await formulariosRepo.getAll(), req.query);
+  responderLista(res, filtrarVisiveis(all, req.user, req.query), req.query);
 };
 
 export const getFormularioById = async (req, res) => {
   const f = await formulariosRepo.getById(req.params.id);
-  if (f) res.json(f);
+  if (f && visivelPara(req.user, f)) res.json(f);
   else res.status(404).json({ message: 'Formulário não encontrado' });
 };
 

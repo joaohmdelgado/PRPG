@@ -1,14 +1,16 @@
 import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { calendariosRepo } from '../db/repositories.js';
 import { serverError } from '../utils/httpError.js';
+import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
+import { responderLista } from '../utils/listagem.js';
 
 export const getCalendarios = async (req, res) => {
-  res.json(await calendariosRepo.getAll());
+  responderLista(res, filtrarVisiveis(await calendariosRepo.getAll(), req.user, req.query), req.query);
 };
 
 export const getCalendarioById = async (req, res) => {
   const c = await calendariosRepo.getById(req.params.id);
-  if (c) res.json(c);
+  if (c && visivelPara(req.user, c)) res.json(c);
   else res.status(404).json({ message: 'Calendário não encontrado' });
 };
 

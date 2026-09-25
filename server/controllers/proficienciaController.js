@@ -75,6 +75,7 @@ const buscarEditalAberto = async () => {
   const { rows } = await query(
     `SELECT * FROM editais
      WHERE proficiencia = TRUE
+       AND status = 'PUBLICADO' AND (publicado_em IS NULL OR publicado_em <= now())
        AND (periodo_data_inicio IS NULL OR periodo_data_inicio <= $1)
        AND (periodo_data_fim   IS NULL OR periodo_data_fim   >= $1)
      ORDER BY periodo_data_inicio DESC NULLS LAST

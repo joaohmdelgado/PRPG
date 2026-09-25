@@ -151,15 +151,16 @@ const importUpload = multer({
 // (server/app.js) em vez de virar unhandledRejection e derrubar o processo.
 const router = asyncRouter(express.Router());
 
-// Rotas públicas
-router.get('/news', getNews);
-router.get('/news/:id', getNewsById);
-router.get('/editais', getEditais);
-router.get('/editais/:id', getEditalById);
-router.get('/resolucoes', getResolucoes);
-router.get('/resolucoes/:id', getResolucaoById);
-router.get('/formularios', getFormularios);
-router.get('/formularios/:id', getFormularioById);
+// Rotas públicas. optionalProtect: com o token de quem edita, a listagem
+// inclui rascunhos e agendados (Fase F.1 — ver server/utils/publicacao.js).
+router.get('/news', optionalProtect, getNews);
+router.get('/news/:id', optionalProtect, getNewsById);
+router.get('/editais', optionalProtect, getEditais);
+router.get('/editais/:id', optionalProtect, getEditalById);
+router.get('/resolucoes', optionalProtect, getResolucoes);
+router.get('/resolucoes/:id', optionalProtect, getResolucaoById);
+router.get('/formularios', optionalProtect, getFormularios);
+router.get('/formularios/:id', optionalProtect, getFormularioById);
 router.get('/programas', getProgramas);
 // optionalProtect: com token de quem edita o programa, o microsite em
 // rascunho responde (pré-visualização); anônimo recebe 404.
@@ -184,24 +185,24 @@ router.get('/programas/:id/linhas', protect, requireRole(['Administrator', 'Gest
 router.put('/programas/:id/linhas', protect, requireInstitutionalWriter, requireSelfPrograma, updateProgramaLinhas);
 // Rota genérica DEPOIS das específicas
 router.get('/programas/:id', getProgramaById);
-router.get('/calendarios', getCalendarios);
-router.get('/calendarios/:id', getCalendarioById);
+router.get('/calendarios', optionalProtect, getCalendarios);
+router.get('/calendarios/:id', optionalProtect, getCalendarioById);
 router.get('/taxonomias', getTaxonomias);
 router.get('/linhas-pesquisa', optionalProtect, getLinhas);
 router.get('/linhas-pesquisa/:id', getLinhaById);
 router.get('/taxonomia-refs', optionalProtect, getTaxonomiaRefs);
 router.get('/taxonomia-refs/:id', optionalProtect, getTaxonomiaRefById);
-router.get('/teses-dissertacoes', getTeses);
-router.get('/teses-dissertacoes/:id', getTeseById);
-router.get('/faq', getFaqs);
-router.get('/faq/:id', getFaqById);
-router.get('/disciplinas', getDisciplinas);
-router.get('/disciplinas/:id', getDisciplinaById);
-router.get('/bolsas', getBolsas);
-router.get('/bolsas/:id', getBolsaById);
-router.get('/pages', getPages);
-router.get('/pages/:id', getPageById);
-router.get('/pages/slug/:slug', getPageBySlug);
+router.get('/teses-dissertacoes', optionalProtect, getTeses);
+router.get('/teses-dissertacoes/:id', optionalProtect, getTeseById);
+router.get('/faq', optionalProtect, getFaqs);
+router.get('/faq/:id', optionalProtect, getFaqById);
+router.get('/disciplinas', optionalProtect, getDisciplinas);
+router.get('/disciplinas/:id', optionalProtect, getDisciplinaById);
+router.get('/bolsas', optionalProtect, getBolsas);
+router.get('/bolsas/:id', optionalProtect, getBolsaById);
+router.get('/pages', optionalProtect, getPages);
+router.get('/pages/:id', optionalProtect, getPageById);
+router.get('/pages/slug/:slug', optionalProtect, getPageBySlug);
 
 // Autenticação (com limite de tentativas por IP contra força bruta)
 router.post('/login', loginLimiter, login);

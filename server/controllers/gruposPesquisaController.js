@@ -4,6 +4,7 @@ import { gruposRepo } from '../db/repositories.js';
 import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { query } from '../db/pool.js';
 import { serverError } from '../utils/httpError.js';
+import { estaPublicado } from '../utils/publicacao.js';
 
 // Fase D: líderes são linhas de `vinculos` (papel='LIDER_GRUPO_PESQUISA',
 // grupo_pesquisa_id), não mais o JSONB field_lideres — substitui o
@@ -71,7 +72,7 @@ export const getGruposPesquisa = async (req, res) => {
 export const getGruposPublicos = async (req, res) => {
   const { rows } = await query('SELECT id FROM programas WHERE slug = $1', [req.params.slug]);
   if (!rows[0]) return res.status(404).json({ message: 'Programa não encontrado' });
-  const grupos = (await gruposRepo.getAll()).filter((g) => g.programaId === rows[0].id);
+  const grupos = (await gruposRepo.getAll()).filter((g) => g.programaId === rows[0].id && estaPublicado(g));
   const lideresByGrupo = await listarLideres(grupos.map((g) => g.id));
   res.json(grupos.map((g) => ({
     id: g.id,

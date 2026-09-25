@@ -63,10 +63,11 @@ export async function resetDb() {
   // reiniciado (I/O saudável): TRUNCATE levava ~1,6 s por reset em mediana
   // (p99 5,5 s, pior 7,7 s; ~70% do tempo da suíte) contra ~10 ms com DELETE.
   // DELETE é DML comum: não cria relfilenode.
-  // Não há trigger de usuário no schema (limpar_dependentes() está definida
-  // mas não anexada a nenhuma tabela), então DELETE não dispara efeito
-  // colateral que o TRUNCATE não disparava. Uma única transação, um
-  // round-trip.
+  // Os únicos triggers de usuário do schema são BEFORE UPDATE
+  // (tocar_atualizado_em, Fase F.1) — DELETE não os dispara; e
+  // limpar_dependentes() está definida mas não anexada a nenhuma tabela.
+  // Então DELETE não tem efeito colateral que o TRUNCATE não tinha. Uma única
+  // transação, um round-trip.
   const deletes = RESET_TABLES.map((t) => `DELETE FROM ${t};`).join('\n  ');
   const seqResets = RESET_SEQUENCES.map((s) => `ALTER SEQUENCE ${s} RESTART;`).join('\n  ');
   await pool.query(`BEGIN;\n  ${deletes}\n  ${seqResets}\nCOMMIT;`);

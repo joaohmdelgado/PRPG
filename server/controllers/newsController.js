@@ -3,15 +3,29 @@ import { newsRepo } from '../db/repositories.js';
 import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { serverError } from '../utils/httpError.js';
 import { slugify, slugUnico } from '../utils/slug.js';
+import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
+import { responderLista, filtrarTexto } from '../utils/listagem.js';
 
+// Listagem (Fase F.2/F.3): só o que o usuário pode ver (rascunho/agendado só
+// para quem edita), filtros no servidor e paginação opcional.
+//   ?q=        busca em título e resumo
+//   ?categoria= slug da categoria    ?ano=  ano    ?excluir= id (relacionadas)
+//   ?destaque=1  só as marcadas como destaque
+//   ?resumo=1  sem o corpo (content) — a listagem não o exibe
 export const getNews = async (req, res) => {
-  const all = await newsRepo.getAll();
-  res.json(await filtrarPorEscopo(all, req.query));
+  const q = req.query;
+  let items = filtrarVisiveis(await filtrarPorEscopo(await newsRepo.getAll(), q), req.user, q);
+  if (q.categoria) items = items.filter((n) => n.categorySlug === q.categoria);
+  if (q.ano) items = items.filter((n) => String(n.year) === String(q.ano));
+  if (q.excluir) items = items.filter((n) => n.id !== q.excluir);
+  if (q.destaque === '1') items = items.filter((n) => n.destaque);
+  items = filtrarTexto(items, q.q, ['title', 'excerpt']);
+  responderLista(res, items, q, { resumir: ({ content, ...resto }) => resto });
 };
 
 export const getNewsById = async (req, res) => {
   const article = await newsRepo.getById(req.params.id);
-  if (article) res.json(article);
+  if (article && visivelPara(req.user, article)) res.json(article);
   else res.status(404).json({ message: 'Notícia não encontrada' });
 };
 

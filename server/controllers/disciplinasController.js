@@ -4,6 +4,8 @@ import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { query } from '../db/pool.js';
 import { resolverOuCriarPessoa } from '../db/pessoasRepo.js';
 import { serverError } from '../utils/httpError.js';
+import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
+import { responderLista } from '../utils/listagem.js';
 
 // Fase D: docente_pessoa_id é pessoas.id de verdade — resolve em lote.
 const resolvePessoas = async (ids) => {
@@ -20,14 +22,14 @@ const anexarResolvidos = (disciplinas, byId) => disciplinas.map((d) => ({
 
 export const getDisciplinas = async (req, res) => {
   let disciplinas = await disciplinasRepo.getAll();
-  disciplinas = await filtrarPorEscopo(disciplinas, req.query);
+  disciplinas = filtrarVisiveis(await filtrarPorEscopo(disciplinas, req.query), req.user, req.query);
   const byId = await resolvePessoas(disciplinas.map((d) => d.docentePessoaId));
-  res.json(anexarResolvidos(disciplinas, byId));
+  responderLista(res, anexarResolvidos(disciplinas, byId), req.query);
 };
 
 export const getDisciplinaById = async (req, res) => {
   const d = await disciplinasRepo.getById(req.params.id);
-  if (!d) return res.status(404).json({ message: 'Disciplina não encontrada' });
+  if (!d || !visivelPara(req.user, d)) return res.status(404).json({ message: 'Disciplina não encontrada' });
   const byId = await resolvePessoas([d.docentePessoaId]);
   res.json(anexarResolvidos([d], byId)[0]);
 };

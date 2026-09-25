@@ -3,6 +3,8 @@ import { bolsasRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
 import { resolverOuCriarPessoa } from '../db/pessoasRepo.js';
 import { serverError } from '../utils/httpError.js';
+import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
+import { responderLista } from '../utils/listagem.js';
 
 // Fase D: pessoa_id é pessoas.id de verdade — resolve em lote.
 const resolvePessoas = async (ids) => {
@@ -18,14 +20,14 @@ const anexarResolvidos = (bolsas, byId) => bolsas.map((b) => ({
 }));
 
 export const getBolsas = async (req, res) => {
-  const bolsas = await bolsasRepo.getAll();
+  const bolsas = filtrarVisiveis(await bolsasRepo.getAll(), req.user, req.query);
   const byId = await resolvePessoas(bolsas.map((b) => b.pessoaId));
-  res.json(anexarResolvidos(bolsas, byId));
+  responderLista(res, anexarResolvidos(bolsas, byId), req.query);
 };
 
 export const getBolsaById = async (req, res) => {
   const b = await bolsasRepo.getById(req.params.id);
-  if (!b) return res.status(404).json({ message: 'Bolsa não encontrada' });
+  if (!b || !visivelPara(req.user, b)) return res.status(404).json({ message: 'Bolsa não encontrada' });
   const byId = await resolvePessoas([b.pessoaId]);
   res.json(anexarResolvidos([b], byId)[0]);
 };

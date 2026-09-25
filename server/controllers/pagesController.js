@@ -3,6 +3,8 @@ import { pagesRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
 import { serverError } from '../utils/httpError.js';
 import { slugify } from '../utils/slug.js';
+import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
+import { responderLista } from '../utils/listagem.js';
 
 // Páginas ganham endereço próprio em /<slug> (sem programa) ou
 // /<slug-do-programa>/<slug> (vinculada a um programa) — ver App.jsx e
@@ -70,14 +72,14 @@ export const getPages = async (req, res) => {
       'SELECT id FROM programas WHERE id=$1 OR slug=$1', [programa]
     )).rows[0];
     if (!prog) return res.json([]);
-    return res.json(all.filter((p) => p.programaId === prog.id));
+    return responderLista(res, filtrarVisiveis(all.filter((p) => p.programaId === prog.id), req.user, req.query), req.query);
   }
-  res.json(all);
+  responderLista(res, filtrarVisiveis(all, req.user, req.query), req.query);
 };
 
 export const getPageById = async (req, res) => {
   const page = await pagesRepo.getById(req.params.id);
-  if (page) res.json(page);
+  if (page && visivelPara(req.user, page)) res.json(page);
   else res.status(404).json({ message: 'Página não encontrada' });
 };
 
@@ -98,7 +100,7 @@ export const getPageBySlug = async (req, res) => {
   } else {
     page = pages.find((p) => p.slug === req.params.slug && !p.programaId);
   }
-  if (page) res.json(page);
+  if (page && visivelPara(req.user, page)) res.json(page);
   else res.status(404).json({ message: 'Página não encontrada' });
 };
 

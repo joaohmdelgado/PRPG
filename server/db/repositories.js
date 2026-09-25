@@ -1,5 +1,6 @@
 import crypto from 'crypto';
-import { createRepository } from './repository.js';
+import { createRepository, ConflitoEdicao } from './repository.js';
+import { STATUS_PUBLICACAO } from '../utils/publicacao.js';
 import { query } from './pool.js';
 import { parseDataPt } from '../utils/datas.js';
 
@@ -15,6 +16,7 @@ const anoDe = (iso) => (typeof iso === 'string' && /^\d{4}-/.test(iso) ? iso.sli
 export const newsRepo = createRepository({
   table: 'news',
   orderBy: 'date DESC NULLS LAST, id ASC',
+  publicavel: true,
   fromRow: (r) => ({
     id: r.id, title: r.title, category: r.category, categorySlug: r.category_slug,
     date: r.date, year: r.year, image: r.image, excerpt: r.excerpt,
@@ -22,9 +24,11 @@ export const newsRepo = createRepository({
     imageCaption: r.image_caption, tags: r.tags ?? [],
     quote: r.quote_text || r.quote_author ? { text: r.quote_text, author: r.quote_author } : undefined,
     programaId: r.programa_id ?? null,
+    destaque: !!r.destaque, imagemAlt: r.imagem_alt ?? null,
   }),
   toRow: (o) => ({
     id: o.id, title: o.title, category: o.category, category_slug: o.categorySlug,
+    destaque: !!o.destaque, imagem_alt: o.imagemAlt || null,
     date: parseDataPt(o.date),
     // year acompanha a data quando o cliente não manda (filtro por ano em /noticias).
     year: o.year != null && o.year !== '' ? String(o.year) : anoDe(parseDataPt(o.date)),
@@ -42,6 +46,7 @@ export const newsRepo = createRepository({
 // eventosRepo.listByEntidade, não neste repo (que só mapeia a tabela `editais`).
 export const editaisRepo = createRepository({
   table: 'editais',
+  publicavel: true,
   fromRow: (r) => ({
     id: r.id, categoryId: r.category_id, categoryTitle: r.category_title, title: r.title,
     publishedAt: r.published_at, deadline: r.deadline, year: r.year, description: r.description,
@@ -69,15 +74,17 @@ export const editaisRepo = createRepository({
 const docFromRow = (r) => ({
   id: r.id, sectionId: r.section_id, sectionTitle: r.section_title,
   categoryTitle: r.category_title, title: r.title, desc: r.descricao, link: r.link,
+  ordem: r.ordem ?? 0,
 });
 const docToRow = (o) => ({
   id: o.id, section_id: o.sectionId, section_title: o.sectionTitle,
   category_title: o.categoryTitle, title: o.title, descricao: o.desc, link: o.link,
   programa_id: o.programaId || null,
+  ordem: Number.parseInt(o.ordem, 10) || 0,
 });
 const docFromRowFull = (r) => ({ ...docFromRow(r), programaId: r.programa_id || null });
-export const resolucoesRepo  = createRepository({ table: 'resolucoes',  fromRow: docFromRowFull, toRow: docToRow });
-export const formulariosRepo = createRepository({ table: 'formularios', fromRow: docFromRowFull, toRow: docToRow });
+export const resolucoesRepo  = createRepository({ table: 'resolucoes',  fromRow: docFromRowFull, toRow: docToRow, orderBy: 'ordem ASC, id ASC', publicavel: true });
+export const formulariosRepo = createRepository({ table: 'formularios', fromRow: docFromRowFull, toRow: docToRow, orderBy: 'ordem ASC, id ASC', publicavel: true });
 
 // =========================== Portarias ============================
 export const portariasRepo = createRepository({
@@ -98,6 +105,7 @@ export const portariasRepo = createRepository({
 // via resolverOuCriarPessoa, não aqui — o repo só mapeia a coluna).
 export const tesesRepo = createRepository({
   table: 'teses_dissertacoes',
+  publicavel: true,
   fromRow: (r) => ({
     id: r.id, title: r.title, ano: r.ano, arquivoUrl: r.arquivo_url,
     autorPessoaId: r.autor_pessoa_id, orientadorPessoaId: r.orientador_pessoa_id,
@@ -113,8 +121,10 @@ export const tesesRepo = createRepository({
 // ============================== FAQ ===============================
 export const faqRepo = createRepository({
   table: 'faq',
-  fromRow: (r) => ({ id: r.id, title: r.title, resposta: r.resposta, programaId: r.programa_id || null }),
-  toRow: (o) => ({ id: o.id, title: o.title, resposta: o.resposta || null, programa_id: o.programaId || null }),
+  orderBy: 'ordem ASC, id ASC',
+  publicavel: true,
+  fromRow: (r) => ({ id: r.id, title: r.title, resposta: r.resposta, programaId: r.programa_id || null, ordem: r.ordem ?? 0 }),
+  toRow: (o) => ({ id: o.id, title: o.title, resposta: o.resposta || null, programa_id: o.programaId || null, ordem: Number.parseInt(o.ordem, 10) || 0 }),
 });
 
 // =========================== Disciplinas ==========================
@@ -122,6 +132,7 @@ export const faqRepo = createRepository({
 // em disciplinasController, não aqui).
 export const disciplinasRepo = createRepository({
   table: 'disciplinas',
+  publicavel: true,
   fromRow: (r) => ({
     id: r.id, title: r.title, cargaHoraria: r.carga_horaria,
     docentePessoaId: r.docente_pessoa_id, ementaUrl: r.ementa_url,
@@ -138,6 +149,7 @@ export const disciplinasRepo = createRepository({
 // Fase D: field_aluno -> pessoa_id (FK de verdade); período TEXT -> DATE.
 export const bolsasRepo = createRepository({
   table: 'bolsas',
+  publicavel: true,
   fromRow: (r) => ({
     id: r.id, title: r.title, pessoaId: r.pessoa_id,
     dataInicio: r.data_inicio, dataFim: r.data_fim,
@@ -161,6 +173,7 @@ const pagesFromRow = (r) => ({
 
 export const pagesRepo = createRepository({
   table: 'pages',
+  publicavel: true,
   fromRow: pagesFromRow,
   toRow: (o) => ({
     id: o.id, title: o.title, slug: o.slug, chave: o.chave || null,
@@ -178,7 +191,7 @@ pagesRepo.getFixed = async (programaId, chave) => {
     'SELECT * FROM pages WHERE programa_id = $1 AND chave = $2',
     [programaId, chave]
   );
-  return rows[0] ? pagesFromRow(rows[0]) : null;
+  return rows[0] ? pagesRepo._decorate(rows[0]) : null;
 };
 
 // Paginas CRIADAS pelo programa (exclui a fixa) — usadas no submenu "O
@@ -189,7 +202,7 @@ pagesRepo.getByPrograma = async (programaId) => {
     'SELECT * FROM pages WHERE programa_id = $1 AND chave IS NULL ORDER BY title ASC',
     [programaId]
   );
-  return rows.map(pagesFromRow);
+  return rows.map(pagesRepo._decorate);
 };
 
 // Garante que o programa tenha sua pagina fixa "Sobre" (idempotente — chamada
@@ -213,6 +226,7 @@ pagesRepo.ensureFixedSobre = async (programaId, actor) => {
 // `vinculos` (papel='LIDER_GRUPO_PESQUISA'), geridas em gruposPesquisaController.
 export const gruposRepo = createRepository({
   table: 'grupos_pesquisa',
+  publicavel: true,
   fromRow: (r) => ({
     id: r.id, title: r.title,
     body: { value: r.body_value, summary: r.body_summary },
@@ -317,7 +331,11 @@ const calFromRow = (r) => ({
   id: r.id, ano: r.ano, isCurrent: r.is_current, title: r.title,
   pdfLink: r.pdf_link, description: r.description, milestones: r._milestones ?? [],
   criado_por: r.criado_por ?? null, atualizado_por: r.atualizado_por ?? null,
+  // Envelope de publicação (Fase F.1), igual ao de createRepository({ publicavel }).
+  status: r.status, publicadoEm: r.publicado_em ?? null,
+  criado_em: r.criado_em ?? null, atualizado_em: r.atualizado_em ?? null,
 });
+const statusOuPadrao = (v) => (STATUS_PUBLICACAO.includes(v) ? v : 'PUBLICADO');
 const saveMilestones = async (calendarioId, milestones) => {
   await query('DELETE FROM calendario_milestones WHERE calendario_id = $1', [calendarioId]);
   const list = Array.isArray(milestones) ? milestones : [];
@@ -342,9 +360,10 @@ export const calendariosRepo = {
   },
   async create(o, actor) {
     await query(
-      `INSERT INTO calendarios (id, ano, is_current, title, pdf_link, description, criado_por, atualizado_por)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$7)`,
-      [o.id, intOrNull(o.ano), !!o.isCurrent, o.title ?? null, o.pdfLink ?? null, o.description ?? null, actor ?? null]
+      `INSERT INTO calendarios (id, ano, is_current, title, pdf_link, description, criado_por, atualizado_por, status, publicado_em)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$7,$8,$9)`,
+      [o.id, intOrNull(o.ano), !!o.isCurrent, o.title ?? null, o.pdfLink ?? null, o.description ?? null, actor ?? null,
+        statusOuPadrao(o.status), o.publicadoEm || null]
     );
     await saveMilestones(o.id, o.milestones);
     return calendariosRepo.getById(o.id);
@@ -352,12 +371,18 @@ export const calendariosRepo = {
   async update(id, partial, actor) {
     const existing = await calendariosRepo.getById(id);
     if (!existing) return null;
-    const o = { ...existing, ...partial };
-    await query(
+    const { _versao: versao, ...dados } = partial;
+    const o = { ...existing, ...dados };
+    // Checagem de edição concorrente no próprio WHERE (ver repository.js).
+    const { rowCount } = await query(
       `UPDATE calendarios SET ano=$1, is_current=$2, title=$3, pdf_link=$4, description=$5,
-         atualizado_por=COALESCE($6, atualizado_por) WHERE id=$7`,
-      [intOrNull(o.ano), !!o.isCurrent, o.title ?? null, o.pdfLink ?? null, o.description ?? null, actor ?? null, id]
+         atualizado_por=COALESCE($6, atualizado_por), status=$8, publicado_em=$9
+       WHERE id=$7 AND ($10::timestamptz IS NULL
+         OR date_trunc('milliseconds', atualizado_em) IS NOT DISTINCT FROM date_trunc('milliseconds', $10::timestamptz))`,
+      [intOrNull(o.ano), !!o.isCurrent, o.title ?? null, o.pdfLink ?? null, o.description ?? null, actor ?? null, id,
+        statusOuPadrao(o.status), o.publicadoEm || null, versao || null]
     );
+    if (rowCount === 0) throw new ConflitoEdicao();
     await saveMilestones(id, o.milestones);
     return calendariosRepo.getById(id);
   },

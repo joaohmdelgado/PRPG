@@ -141,6 +141,10 @@ app.use((err, req, res, next) => {
   }
   const clientError = pgClientError(err);
   if (clientError) return res.status(clientError.status).json({ message: clientError.message });
+  // Erro de regra de negócio com mensagem para o usuário (ex.: ConflitoEdicao, 409).
+  if (err?.expose && err.status >= 400 && err.status < 500) {
+    return res.status(err.status).json({ message: err.message });
+  }
   logUnexpectedError({ requestId: req.requestId, error: err });
   const status = err?.status || err?.statusCode || 500;
   res.status(status).json({

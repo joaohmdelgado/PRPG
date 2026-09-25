@@ -23,6 +23,19 @@ export const eventosRepo = {
     );
     return rows.map(fromRow);
   },
+  // Eventos de várias entidades numa consulta só (evita N+1 em listagens),
+  // agrupados por entidade_id na mesma ordem de listByEntidade.
+  async listByEntidades(entidade, ids) {
+    const porId = new Map(ids.map((id) => [id, []]));
+    if (ids.length === 0) return porId;
+    const { rows } = await query(
+      `SELECT * FROM eventos WHERE entidade = $1 AND entidade_id = ANY($2)
+       ORDER BY data DESC, criado_em DESC`,
+      [entidade, ids]
+    );
+    for (const r of rows) porId.get(r.entidade_id)?.push(fromRow(r));
+    return porId;
+  },
   async create(o, actor) {
     if (!isEntidadeValida(o.entidade)) {
       throw new Error(`Entidade inválida para eventos: ${o.entidade}`);

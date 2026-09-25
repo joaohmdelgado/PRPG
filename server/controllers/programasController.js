@@ -5,6 +5,7 @@ import { query } from '../db/pool.js';
 import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { serverError } from '../utils/httpError.js';
 import { slugify } from '../utils/slug.js';
+import { visivelPara, sqlPublicado } from '../utils/publicacao.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
 const strOrNull = (v) => (v === '' || v == null ? null : v);
@@ -226,10 +227,12 @@ export const getProgramaBySlug = async (req, res) => {
       if (v.papel === 'TAE') secretaria = filterSensitivePessoa(combined, isAdmin);
     });
 
-    const pagina_sobre = await pagesRepo.getFixed(prog.id, 'sobre');
+    // Rascunho/agendado só aparece para quem edita o programa (pré-visualização).
+    const sobre = await pagesRepo.getFixed(prog.id, 'sobre');
+    const pagina_sobre = sobre && visivelPara(req.user, sobre) ? sobre : null;
     // Páginas criadas pelo programa (não a fixa) — alimentam o submenu
     // "O Programa" do microsite (ProgramaLayout.jsx).
-    const paginas = await pagesRepo.getByPrograma(prog.id);
+    const paginas = (await pagesRepo.getByPrograma(prog.id)).filter((p) => visivelPara(req.user, p));
     const linhas = await linhasPesquisaRepo.getByPrograma(prog.id);
 
     // Conta itens por módulo para o menu dinâmico do microsite.
@@ -243,7 +246,7 @@ export const getProgramaBySlug = async (req, res) => {
     ];
     const modulos = {};
     await Promise.all(MODULOS_TABELAS.map(async ([key, tbl]) => {
-      const { rows } = await query(`SELECT count(*)::int AS n FROM ${tbl} WHERE programa_id = $1`, [prog.id]);
+      const { rows } = await query(`SELECT count(*)::int AS n FROM ${tbl} WHERE programa_id = $1 AND ${sqlPublicado()}`, [prog.id]);
       modulos[key] = rows[0]?.n ?? 0;
     }));
     modulos['pessoas'] = progVinculos.filter(
@@ -505,37 +508,37 @@ export const buscaPrograma = async (req, res) => {
     const [news, editais, disciplinas, teses, faq, grupos, paginas] = await Promise.all([
       query(
         `SELECT id, title AS titulo, excerpt AS resumo, 'noticia' AS tipo FROM news
-         WHERE programa_id = $1 AND (title ILIKE $2 OR excerpt ILIKE $2 OR content::text ILIKE $2) LIMIT 5`,
+         WHERE programa_id = $1 AND ${sqlPublicado()} AND (title ILIKE $2 OR excerpt ILIKE $2 OR content::text ILIKE $2) LIMIT 5`,
         [pid, like]
       ),
       query(
         `SELECT id, title AS titulo, description AS resumo, 'edital' AS tipo FROM editais
-         WHERE programa_id = $1 AND (title ILIKE $2 OR description ILIKE $2) LIMIT 5`,
+         WHERE programa_id = $1 AND ${sqlPublicado()} AND (title ILIKE $2 OR description ILIKE $2) LIMIT 5`,
         [pid, like]
       ),
       query(
         `SELECT id, title AS titulo, '' AS resumo, 'disciplina' AS tipo FROM disciplinas
-         WHERE programa_id = $1 AND title ILIKE $2 LIMIT 5`,
+         WHERE programa_id = $1 AND ${sqlPublicado()} AND title ILIKE $2 LIMIT 5`,
         [pid, like]
       ),
       query(
         `SELECT id, title AS titulo, '' AS resumo, 'tese' AS tipo FROM teses_dissertacoes
-         WHERE programa_id = $1 AND title ILIKE $2 LIMIT 5`,
+         WHERE programa_id = $1 AND ${sqlPublicado()} AND title ILIKE $2 LIMIT 5`,
         [pid, like]
       ),
       query(
         `SELECT id, title AS titulo, '' AS resumo, 'faq' AS tipo FROM faq
-         WHERE programa_id = $1 AND (title ILIKE $2 OR resposta ILIKE $2) LIMIT 5`,
+         WHERE programa_id = $1 AND ${sqlPublicado()} AND (title ILIKE $2 OR resposta ILIKE $2) LIMIT 5`,
         [pid, like]
       ),
       query(
         `SELECT id, title AS titulo, '' AS resumo, 'grupo' AS tipo FROM grupos_pesquisa
-         WHERE programa_id = $1 AND title ILIKE $2 LIMIT 5`,
+         WHERE programa_id = $1 AND ${sqlPublicado()} AND title ILIKE $2 LIMIT 5`,
         [pid, like]
       ),
       query(
         `SELECT id, slug, title AS titulo, body_summary AS resumo, 'pagina' AS tipo FROM pages
-         WHERE programa_id = $1 AND (title ILIKE $2 OR body_value ILIKE $2 OR body_summary ILIKE $2) LIMIT 5`,
+         WHERE programa_id = $1 AND ${sqlPublicado()} AND (title ILIKE $2 OR body_value ILIKE $2 OR body_summary ILIKE $2) LIMIT 5`,
         [pid, like]
       ),
     ]);

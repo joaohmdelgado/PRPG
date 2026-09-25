@@ -22,6 +22,9 @@ export const pgClientError = (err) => {
 export function serverError(res, message, err, status = 500) {
   const clientError = pgClientError(err);
   if (clientError) return res.status(clientError.status).json({ message: clientError.message });
+  if (err?.expose && err.status >= 400 && err.status < 500) {
+    return res.status(err.status).json({ message: err.message });
+  }
   console.error(`[${status}] ${message}:`, err);
   return res.status(status).json({
     message,

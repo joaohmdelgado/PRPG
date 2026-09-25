@@ -4,6 +4,8 @@ import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { eventosRepo } from '../db/eventosRepo.js';
 import { hojeISO } from '../utils/datas.js';
 import { serverError } from '../utils/httpError.js';
+import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
+import { responderLista } from '../utils/listagem.js';
 
 const getLocalDateString = () => {
   const d = new Date();
@@ -73,16 +75,16 @@ const anexarEventos = (edital, eventos) => {
 
 export const getEditais = async (req, res) => {
   let editais = await editaisRepo.getAll();
-  editais = await filtrarPorEscopo(editais, req.query);
-  const comEventos = await Promise.all(
-    editais.map(async (e) => anexarEventos(e, await eventosRepo.listByEntidade('edital', e.id)))
-  );
-  res.json(comEventos.map(calculateEditalStatus));
+  editais = filtrarVisiveis(await filtrarPorEscopo(editais, req.query), req.user, req.query);
+  // Uma consulta de eventos para todos os editais (antes: uma por edital).
+  const eventosPorEdital = await eventosRepo.listByEntidades('edital', editais.map((e) => e.id));
+  const comEventos = editais.map((e) => anexarEventos(e, eventosPorEdital.get(e.id) || []));
+  responderLista(res, comEventos.map(calculateEditalStatus), req.query);
 };
 
 export const getEditalById = async (req, res) => {
   const edital = await editaisRepo.getById(req.params.id);
-  if (!edital) return res.status(404).json({ message: 'Edital não encontrado' });
+  if (!edital || !visivelPara(req.user, edital)) return res.status(404).json({ message: 'Edital não encontrado' });
   const eventos = await eventosRepo.listByEntidade('edital', edital.id);
   res.json(calculateEditalStatus(anexarEventos(edital, eventos)));
 };

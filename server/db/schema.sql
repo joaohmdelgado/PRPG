@@ -1292,3 +1292,50 @@ INSERT INTO ato_series (id, nome, especie, sigla, unidade_id, exige_destinatario
   ('EDITAL_LATO_SENSU', 'Editais Lato Sensu', 'EDITAL', 'EDITAL LATO SENSU', 'prpg-lato-sensu', FALSE, TRUE, 4),
   ('EDITAL_PROFICIENCIA', 'Editais de Proficiência', 'EDITAL', 'EDITAL PROFICIÊNCIA', NULL, FALSE, TRUE, 5)
 ON CONFLICT (id) DO NOTHING;
+
+-- ======================= Envelope de publicacao =======================
+-- Fase F.1: mesmo bloco de server/db/migrations/2026-09-25_envelope_publicacao.sql
+-- (ver o cabecalho de la para o significado de cada coluna).
+CREATE OR REPLACE FUNCTION tocar_atualizado_em() RETURNS TRIGGER AS $$
+BEGIN
+  NEW.atualizado_em := now();
+  RETURN NEW;
+END; $$ LANGUAGE plpgsql;
+
+DO $$
+DECLARE
+  t TEXT;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'news', 'editais', 'resolucoes', 'formularios', 'pages', 'faq',
+    'disciplinas', 'teses_dissertacoes', 'grupos_pesquisa', 'bolsas', 'calendarios'
+  ] LOOP
+    EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT ''PUBLICADO''', t);
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = t || '_status_chk') THEN
+      EXECUTE format(
+        'ALTER TABLE %I ADD CONSTRAINT %I CHECK (status IN (''RASCUNHO'', ''PUBLICADO'', ''ARQUIVADO''))',
+        t, t || '_status_chk');
+    END IF;
+    EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS publicado_em TIMESTAMPTZ', t);
+    -- Sem DEFAULT no ADD COLUMN: as linhas antigas ficam NULL (data real
+    -- desconhecida); o DEFAULT vale so para as novas.
+    EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS criado_em TIMESTAMPTZ', t);
+    EXECUTE format('ALTER TABLE %I ADD COLUMN IF NOT EXISTS atualizado_em TIMESTAMPTZ', t);
+    EXECUTE format('ALTER TABLE %I ALTER COLUMN criado_em SET DEFAULT now()', t);
+    EXECUTE format('ALTER TABLE %I ALTER COLUMN atualizado_em SET DEFAULT now()', t);
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I', t || '_tocar_atualizado', t);
+    EXECUTE format(
+      'CREATE TRIGGER %I BEFORE UPDATE ON %I FOR EACH ROW EXECUTE FUNCTION tocar_atualizado_em()',
+      t || '_tocar_atualizado', t);
+    EXECUTE format('CREATE INDEX IF NOT EXISTS %I ON %I (status)', t || '_status_idx', t);
+  END LOOP;
+END$$;
+
+-- Notícia: destaque na home e texto alternativo da imagem de capa (acessibilidade).
+ALTER TABLE news ADD COLUMN IF NOT EXISTS destaque BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE news ADD COLUMN IF NOT EXISTS imagem_alt TEXT;
+
+-- Listas curadas: ordem manual dentro da seção.
+ALTER TABLE resolucoes  ADD COLUMN IF NOT EXISTS ordem INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE formularios ADD COLUMN IF NOT EXISTS ordem INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE faq         ADD COLUMN IF NOT EXISTS ordem INTEGER NOT NULL DEFAULT 0;

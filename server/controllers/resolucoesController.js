@@ -2,15 +2,17 @@ import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { resolucoesRepo } from '../db/repositories.js';
 import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { serverError } from '../utils/httpError.js';
+import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
+import { responderLista } from '../utils/listagem.js';
 
 export const getResolucoes = async (req, res) => {
-  const all = await resolucoesRepo.getAll();
-  res.json(await filtrarPorEscopo(all, req.query));
+  const all = await filtrarPorEscopo(await resolucoesRepo.getAll(), req.query);
+  responderLista(res, filtrarVisiveis(all, req.user, req.query), req.query);
 };
 
 export const getResolucaoById = async (req, res) => {
   const r = await resolucoesRepo.getById(req.params.id);
-  if (r) res.json(r);
+  if (r && visivelPara(req.user, r)) res.json(r);
   else res.status(404).json({ message: 'Resolução não encontrada' });
 };
 
