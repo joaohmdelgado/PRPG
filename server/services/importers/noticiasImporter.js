@@ -1,5 +1,6 @@
 import { newsRepo } from '../../db/repositories.js';
 import { sanitizeHtml } from '../../utils/sanitize.js';
+import { slugify } from '../../utils/slug.js';
 
 // Importador de NOTÍCIAS a partir do export de nós do site antigo
 // (Drupal: array de objetos onde cada campo é uma lista de { value | url | target_id | ... }).
@@ -16,13 +17,6 @@ const first = (campo, chave = 'value') => {
 };
 
 // Transforma texto em slug seguro para compor IDs (a-z, 0-9 e hífen).
-const slugify = (s) =>
-  String(s || '')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .toLowerCase().trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
 // ISO completo → 'YYYY-MM-DD' (news.date é DATE desde a Fase R.5; a exibição
 // por extenso é feita nas telas). Vazio quando ausente.
 const formatarData = (iso) => {

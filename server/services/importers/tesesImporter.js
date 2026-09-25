@@ -1,6 +1,7 @@
 import { tesesRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
 import { resolverOuCriarPessoa } from '../../db/pessoasRepo.js';
+import { slugify } from '../../utils/slug.js';
 
 // Importador de TESES e DISSERTAÇÕES a partir do export de nós do site antigo
 // (Drupal: array de objetos onde cada campo é uma lista de { value | url | target_id | ... }).
@@ -22,13 +23,6 @@ const first = (campo, chave = 'value') => {
 };
 
 // Transforma texto em slug seguro para compor IDs (a-z, 0-9 e hífen).
-const slugify = (s) =>
-  String(s || '')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .toLowerCase().trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
 // Remove o prefixo redundante de tipo do título (o tipo é guardado em separado),
 // ex.: "Dissertação - Foo" → "Foo"; "Tese – Bar" → "Bar"; "Dissertacao- Baz" → "Baz".
 const limparTitulo = (titulo) =>

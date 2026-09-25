@@ -2,6 +2,7 @@ import { sanitizeHtmlField, isPlainObject } from '../utils/sanitize.js';
 import { newsRepo } from '../db/repositories.js';
 import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { serverError } from '../utils/httpError.js';
+import { slugify, slugUnico } from '../utils/slug.js';
 
 export const getNews = async (req, res) => {
   const all = await newsRepo.getAll();
@@ -24,7 +25,8 @@ export const createNews = async (req, res) => {
   }
   if (data.content) data.content = sanitizeHtmlField(data.content);
   if (!data.id) {
-    data.id = String(data.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    // Título repetido ganha sufixo (-2, -3...) em vez de colidir na PK.
+    data.id = await slugUnico(slugify(data.title) || 'noticia', async (s) => !!(await newsRepo.getById(s)));
   }
   try {
     res.status(201).json(await newsRepo.create(data, req.user?.id));

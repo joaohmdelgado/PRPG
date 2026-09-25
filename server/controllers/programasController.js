@@ -4,6 +4,7 @@ import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
 import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { serverError } from '../utils/httpError.js';
+import { slugify } from '../utils/slug.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
 const strOrNull = (v) => (v === '' || v == null ? null : v);
@@ -15,18 +16,6 @@ const ALLOWED_STATUS = ['ATIVO', 'SUSPENSO', 'DESATIVADO', 'EM_AVALIACAO'];
 const normalizeStatus = (v, fallback = 'ATIVO') => (ALLOWED_STATUS.includes(v) ? v : fallback);
 
 // Slug do microsite (mesmo padrao usado em pagesController).
-const slugify = (text) =>
-  (text || '')
-    .toString()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
-    .replace(/--+/g, '-')
-    .replace(/(^-|-$)+/g, '');
-
 // Segmentos de topo ja usados pelo site da PRPG: nao podem virar slug de programa.
 const RESERVED_SLUGS = new Set([
   'admin', 'api', 'uploads', 'p', 'sobre', 'missao-visao-valores', 'historico',

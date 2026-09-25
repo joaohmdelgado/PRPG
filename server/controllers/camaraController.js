@@ -16,6 +16,7 @@ import { enviarEmail } from '../services/email.js';
 import { resolverEmail } from '../services/prazos.js';
 import QRCode from 'qrcode';
 import { serverError } from '../utils/httpError.js';
+import { slugify } from '../utils/slug.js';
 
 // ============================ Vocabulários ============================
 // Listas sugeridas ao frontend (selects). Não bloqueiam o servidor: o campo
@@ -38,10 +39,6 @@ export const getVocabularios = async (req, res) => {
 export const getUnidades = async (req, res) => {
   res.json(await unidadesRepo.getAll());
 };
-
-const slugify = (s) => String(s || '')
-  .normalize('NFD').replace(/[̀-ͯ]/g, '')
-  .toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
 export const createUnidade = async (req, res) => {
   if (!isPlainObject(req.body)) return res.status(400).json({ message: 'Dados inválidos.' });

@@ -52,6 +52,17 @@ describe('R.5 — data das notícias', () => {
   });
 });
 
+describe('R.7 — slug de notícia', () => {
+  it('remove acentos e dá sufixo a título repetido (nunca 500)', async () => {
+    const a = await auth(request(app).post('/api/news')).send({ title: 'Notícia de Seleção' });
+    const b = await auth(request(app).post('/api/news')).send({ title: 'Notícia de Seleção' });
+    expect(a.status).toBe(201);
+    expect(b.status).toBe(201);
+    expect(a.body.id).toBe('noticia-de-selecao');
+    expect(b.body.id).toBe('noticia-de-selecao-2');
+  });
+});
+
 describe('R.6 — regra única de origem nas listagens', () => {
   it('?escopo=prpg traz só o geral; ?programa= aceita id ou slug; sem filtro traz tudo', async () => {
     const prog = await auth(request(app).post('/api/programas')).send({ nome: 'PPG R6', slug: 'ppgr6' });

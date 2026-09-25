@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { usersRepo, taxonomiaRefsRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
 import { PAPEIS_DISCENTE } from '../../controllers/programasController.js';
+import { slugify } from '../../utils/slug.js';
 
 // Importador de ALUNOS (discentes) a partir do export de usuários do site antigo
 // (Drupal: array de objetos onde cada campo é uma lista de { value | uri | url | target_id }).
@@ -34,14 +35,6 @@ const papelDiscente = (nivelRaw) =>
   String(nivelRaw || '').toLowerCase().startsWith('dout') ? 'DISCENTE_DOUTORADO' : 'DISCENTE_MESTRADO';
 
 // Slug simples para compor e-mails sintéticos (sem acentos/espaços).
-const slugify = (s) =>
-  String(s || '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
 // Converte um registro bruto do arquivo no formato normalizado do importador.
 const map = (raw) => {
   const nome = first(raw.name);

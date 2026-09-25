@@ -1,6 +1,7 @@
 import { disciplinasRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
 import { sanitizeHtml } from '../../utils/sanitize.js';
+import { slugify } from '../../utils/slug.js';
 
 // Importador de DISCIPLINAS a partir do export de nós do site antigo
 // (Drupal: array de objetos onde cada campo é uma lista de { value | url | ... }).
@@ -16,13 +17,6 @@ const first = (campo, chave = 'value') => {
 };
 
 // Transforma texto em slug seguro para compor IDs (a-z, 0-9 e hífen).
-const slugify = (s) =>
-  String(s || '')
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .toLowerCase().trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
 // Extrai o código da disciplina (texto antes de " - " no título), ex.: "ADMP0001".
 const extrairCodigo = (titulo) => {
   const m = String(titulo || '').split(' - ')[0];

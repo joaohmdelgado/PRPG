@@ -2,17 +2,7 @@ import { sanitizeHtml, isPlainObject } from '../utils/sanitize.js';
 import { pagesRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
 import { serverError } from '../utils/httpError.js';
-
-const slugify = (text) =>
-  (text || '')
-    .toString()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
-    .replace(/--+/g, '-');
+import { slugify } from '../utils/slug.js';
 
 // Páginas ganham endereço próprio em /<slug> (sem programa) ou
 // /<slug-do-programa>/<slug> (vinculada a um programa) — ver App.jsx e
