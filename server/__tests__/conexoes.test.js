@@ -135,3 +135,42 @@ describe('N.5 — relacionados', () => {
     expect(cand.body.map((c) => `${c.tipo}:${c.id}`)).toEqual(['edital:e1']);
   });
 });
+
+describe('N.6 — calendário com datas, próximos prazos e .ics', () => {
+  const br = (iso) => iso.split('-').reverse().join('/');
+
+  it('deriva as datas do período, liga ao edital e alimenta prazos e .ics', async () => {
+    const prog = await criarPrograma({ nome: 'Prog', sigla: 'PP', slug: 'pp' });
+    await auth(request(app).post('/api/editais')).send({
+      id: 'ed', title: 'Seleção PP', programaId: prog, field_periodo: { data_inicio: isoEm(-2), data_fim: isoEm(9) },
+    });
+    const cal = await auth(request(app).post('/api/calendarios')).send({
+      id: 'c1', ano: 2026, isCurrent: true, title: 'Cal',
+      milestones: [
+        { event: 'Matrícula', date: `${br(isoEm(3))} a ${br(isoEm(5))}`, editalId: 'ed' },
+        { event: 'Trancamento', date: `até ${br(isoEm(20))}` },
+        { event: 'Já passou', date: br(isoEm(-10)) },
+        { event: 'Sem data', date: 'a definir', editalId: 'nao-existe' },
+      ],
+    });
+    expect(cal.status).toBe(201);
+    const [matricula, trancamento, , semData] = cal.body.milestones;
+    expect(matricula).toMatchObject({ dataInicio: isoEm(3), dataFim: isoEm(5), editalId: 'ed' });
+    expect(trancamento).toMatchObject({ dataInicio: null, dataFim: isoEm(20) });
+    expect(semData).toMatchObject({ dataFim: null, editalId: null }); // edital inexistente não quebra
+
+    const prazos = (await request(app).get('/api/portal/prazos?limite=10')).body;
+    expect(prazos.map((p) => p.titulo)).toEqual(['Matrícula', 'Inscrições: Seleção PP', 'Trancamento']);
+    expect(prazos[0].destino).toBe('/editais/ed');
+    // Filtro por programa: os editais do programa + o calendário da PRPG.
+    const outro = await criarPrograma({ nome: 'Outro', slug: 'outro' });
+    expect((await request(app).get(`/api/portal/prazos?programa=outro`)).body.map((p) => p.titulo)).toEqual(['Matrícula', 'Trancamento']);
+    expect(outro).toBeTruthy();
+
+    const ics = await request(app).get('/api/portal/calendario.ics');
+    expect(ics.headers['content-type']).toMatch(/text\/calendar/);
+    expect(ics.text).toContain('BEGIN:VCALENDAR');
+    expect(ics.text.match(/BEGIN:VEVENT/g)).toHaveLength(3);
+    expect(ics.text).toContain(`DTSTART;VALUE=DATE:${isoEm(3).replace(/-/g, '')}`);
+  });
+});

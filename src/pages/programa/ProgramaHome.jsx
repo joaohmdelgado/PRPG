@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { API_URL, apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import { formatDate } from '../../components/programa/ProgramaUI';
+import ProximosPrazos from '../../components/ProximosPrazos';
 
 const LINHA_ICONS = ['fa-book', 'fa-landmark', 'fa-people-group', 'fa-scroll', 'fa-earth-americas', 'fa-feather'];
 
@@ -110,6 +111,9 @@ export default function ProgramaHome() {
             </div>
           )}
         </section>
+
+        {/* Prazos: editais do programa + calendário acadêmico (Fase N.6). */}
+        <ProximosPrazos programa={slug} limite={4} className="border border-gray-100" />
 
         {/* Linhas de pesquisa */}
         {linhas.length > 0 && (

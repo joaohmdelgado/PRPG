@@ -3,12 +3,12 @@
 // menu_itens e configuracoes).
 import { pool, query } from '../db/pool.js';
 import { isPlainObject } from '../utils/sanitize.js';
-import { newsRepo, editaisRepo, calendariosRepo } from '../db/repositories.js';
+import { newsRepo, editaisRepo } from '../db/repositories.js';
 import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { estaPublicado, sqlPublicado } from '../utils/publicacao.js';
 import { calculateEditalStatus } from './editaisController.js';
-import { hojeISO } from '../utils/datas.js';
 import { mapaProgramas } from '../utils/programaResumo.js';
+import { proximosPrazos } from './prazosPublicosController.js';
 
 const podeEditar = (user) => (user?.roles || []).some((r) => r === 'Administrator' || r === 'Gestor');
 
@@ -189,21 +189,11 @@ export const updateConfiguracao = async (req, res) => {
 // só requisição e já filtrado pelo que é público — antes eram notícias,
 // editais e números fixos no código.
 
-// "02/03/2026 a 06/03/2026", "até 24/04/2026", "09/03/2026" -> última data
-// do texto em ISO (o marco "vence" nela). null se não houver data.
-export const fimDoMarco = (texto) => {
-  const datas = [...String(texto || '').matchAll(/(\d{2})\/(\d{2})\/(\d{4})/g)];
-  if (!datas.length) return null;
-  const [, d, m, a] = datas[datas.length - 1];
-  return `${a}-${m}-${d}`;
-};
-
 const QTD_NOTICIAS = 3;
 const QTD_EDITAIS = 4;
 const QTD_PRAZOS = 6;
 
 export const getHome = async (req, res) => {
-  const hoje = hojeISO();
   const programas = await mapaProgramas();
   const comPrograma = (item) => ({ ...item, programa: item.programaId ? programas.get(item.programaId) || null : null });
 
@@ -228,16 +218,9 @@ export const getHome = async (req, res) => {
     downloadLink: e.downloadLink || null, programaId: e.programaId,
   }));
 
-  // Próximos prazos: fim das inscrições abertas + marcos do calendário vigente.
-  const prazos = abertos.filter((e) => fim(e) !== '9999-12-31').map((e) => ({
-    data: fim(e), titulo: `Inscrições: ${e.title}`, destino: `/editais/${e.id}`, tipo: 'edital',
-  }));
-  const calendario = (await calendariosRepo.getAll()).find((c) => c.isCurrent && estaPublicado(c));
-  for (const m of calendario?.milestones || []) {
-    const data = fimDoMarco(m.date);
-    if (data && data >= hoje) prazos.push({ data, titulo: m.event, periodo: m.date, destino: '/calendario-academico', tipo: 'calendario' });
-  }
-  prazos.sort((a, b) => a.data.localeCompare(b.data));
+  // Próximos prazos: fim das inscrições abertas + marcos do calendário
+  // vigente (datas de verdade desde a Fase N.6 — ver prazosPublicosController).
+  const prazos = await proximosPrazos({ limite: QTD_PRAZOS });
 
   // Números calculados. Docentes e discentes só contam os vínculos já
   // cadastrados no sistema (a importação das planilhas é da Fase O) — a home
@@ -252,5 +235,5 @@ export const getHome = async (req, res) => {
       (SELECT count(DISTINCT pessoa_id)::int FROM vinculos WHERE papel LIKE 'DOCENTE%') AS docentes,
       (SELECT count(DISTINCT pessoa_id)::int FROM vinculos WHERE papel LIKE 'DISCENTE%') AS discentes`);
 
-  res.json({ destaque, noticias: recentes, editais: editaisHome, prazos: prazos.slice(0, QTD_PRAZOS), numeros });
+  res.json({ destaque, noticias: recentes, editais: editaisHome, prazos, numeros });
 };

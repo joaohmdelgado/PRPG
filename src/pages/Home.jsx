@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { apiFetch, urlMidia } from '../api';
 import { useMenu, useConfig } from '../hooks/usePortal';
 import LinkDestino from '../components/LinkDestino';
+import ProximosPrazos from '../components/ProximosPrazos';
 
 // Página inicial dirigida por dados (Fase H.2): banner, atalhos, cartões e
 // parceiros vêm de "Menus e portal"; notícias, editais, prazos e números vêm
@@ -221,27 +222,7 @@ export default function Home() {
                   );
                 })}
               </div>
-              <aside aria-labelledby="home-prazos" className="bg-white rounded-2xl p-6 shadow-sm h-fit">
-                <h3 id="home-prazos" className="font-heading font-bold text-lg text-ufrpe-blue mb-4 flex items-center gap-2"><i className="fa-regular fa-clock text-ufrpe-yellow" aria-hidden="true"></i>Próximos prazos</h3>
-                {dados.prazos.length === 0 ? (
-                  <p className="text-sm text-gray-500">Nenhum prazo nos próximos dias. <Link to="/calendario-academico" className="text-ufrpe-blue underline">Calendário acadêmico</Link>.</p>
-                ) : (
-                  <ol className="space-y-4">
-                    {dados.prazos.map((p) => (
-                      <li key={`${p.tipo}-${p.data}-${p.titulo}`} className="flex gap-3">
-                        <span className="shrink-0 w-14 text-center rounded-lg bg-ufrpe-blue/5 text-ufrpe-blue py-1">
-                          <span className="block text-lg font-bold leading-none">{p.data.slice(8, 10)}</span>
-                          <span className="block text-[10px] uppercase">{new Date(`${p.data}T12:00:00`).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</span>
-                        </span>
-                        <Link to={p.destino} className="text-sm text-gray-700 hover:text-ufrpe-blue leading-snug">
-                          {p.titulo}
-                          {p.periodo && <span className="block text-xs text-gray-400">{p.periodo}</span>}
-                        </Link>
-                      </li>
-                    ))}
-                  </ol>
-                )}
-              </aside>
+              <ProximosPrazos prazos={dados.prazos} />
             </div>
           </div>
         </section>

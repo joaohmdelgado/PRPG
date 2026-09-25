@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { createRepository, ConflitoEdicao } from './repository.js';
 import { registrarRevisao, apagarRevisoes } from './revisoesRepo.js';
+import { periodoDeTexto } from '../utils/periodo.js';
 import { STATUS_PUBLICACAO } from '../utils/publicacao.js';
 import { query } from './pool.js';
 import { parseDataPt } from '../utils/datas.js';
@@ -321,12 +322,16 @@ export const usersRepo = {
 
 // ========================== Calendarios ===========================
 // Inclui a tabela filha calendario_milestones.
+// Marcos (Fase N.6): `date` é o período como escrito (o que o site mostra);
+// dataInicio/dataFim são derivadas dele ao salvar; editalId é opcional.
 const loadMilestones = async (calendarioId) => {
   const { rows } = await query(
-    'SELECT event, date FROM calendario_milestones WHERE calendario_id = $1 ORDER BY ord ASC',
+    'SELECT event, date, data_inicio, data_fim, edital_id FROM calendario_milestones WHERE calendario_id = $1 ORDER BY ord ASC',
     [calendarioId]
   );
-  return rows.map((m) => ({ event: m.event, date: m.date }));
+  return rows.map((m) => ({
+    event: m.event, date: m.date, dataInicio: m.data_inicio, dataFim: m.data_fim, editalId: m.edital_id,
+  }));
 };
 const calFromRow = (r) => ({
   id: r.id, ano: r.ano, isCurrent: r.is_current, title: r.title,
@@ -337,13 +342,15 @@ const calFromRow = (r) => ({
   criado_em: r.criado_em ?? null, atualizado_em: r.atualizado_em ?? null,
 });
 const statusOuPadrao = (v) => (STATUS_PUBLICACAO.includes(v) ? v : 'PUBLICADO');
-const saveMilestones = async (calendarioId, milestones) => {
+const saveMilestones = async (calendarioId, milestones, ano = null) => {
   await query('DELETE FROM calendario_milestones WHERE calendario_id = $1', [calendarioId]);
   const list = Array.isArray(milestones) ? milestones : [];
   for (let i = 0; i < list.length; i++) {
+    const { inicio, fim } = periodoDeTexto(list[i].date, ano);
     await query(
-      'INSERT INTO calendario_milestones (calendario_id, ord, event, date) VALUES ($1,$2,$3,$4)',
-      [calendarioId, i, list[i].event ?? null, list[i].date ?? null]
+      `INSERT INTO calendario_milestones (calendario_id, ord, event, date, data_inicio, data_fim, edital_id)
+       VALUES ($1,$2,$3,$4,$5,$6,(SELECT id FROM editais WHERE id = $7))`,
+      [calendarioId, i, list[i].event ?? null, list[i].date ?? null, inicio, fim, list[i].editalId || null]
     );
   }
 };
@@ -366,7 +373,7 @@ export const calendariosRepo = {
       [o.id, intOrNull(o.ano), !!o.isCurrent, o.title ?? null, o.pdfLink ?? null, o.description ?? null, actor ?? null,
         statusOuPadrao(o.status), o.publicadoEm || null]
     );
-    await saveMilestones(o.id, o.milestones);
+    await saveMilestones(o.id, o.milestones, intOrNull(o.ano));
     return calendariosRepo.getById(o.id);
   },
   async update(id, partial, actor) {
@@ -384,7 +391,7 @@ export const calendariosRepo = {
         statusOuPadrao(o.status), o.publicadoEm || null, versao || null]
     );
     if (rowCount === 0) throw new ConflitoEdicao();
-    await saveMilestones(id, o.milestones);
+    await saveMilestones(id, o.milestones, intOrNull(o.ano));
     const atualizado = await calendariosRepo.getById(id);
     await registrarRevisao('calendarios', existing, atualizado);
     return atualizado;

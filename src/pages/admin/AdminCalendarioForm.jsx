@@ -8,6 +8,7 @@ import useUsers from '../../hooks/useUsers';
 import { configEditor, CKEDITOR_CDN } from '../../components/admin/ckeditor';
 import PublicacaoCampos from '../../components/admin/PublicacaoCampos';
 import useAvisoAlteracoes from '../../hooks/useAvisoAlteracoes';
+import MarcosEditor from '../../components/admin/MarcosEditor';
 
 const AdminCalendarioForm = () => {
   const { id } = useParams();
@@ -27,7 +28,6 @@ const AdminCalendarioForm = () => {
     milestones: []
   });
 
-  const [milestonesInput, setMilestonesInput] = useState('');
   const [loading, setLoading] = useState(isEditing);
   const { sujo } = useAvisoAlteracoes(formData, !loading);
   const [error, setError] = useState('');
@@ -107,14 +107,8 @@ const AdminCalendarioForm = () => {
               isCurrent: Boolean(data.isCurrent),
               pdfLink: data.pdfLink || '',
               description: descHTML,
-              milestones: data.milestones || []
+              milestones: (data.milestones || []).map((m) => ({ event: m.event || '', date: m.date || '', editalId: m.editalId || '' }))
             });
-
-            if (data.milestones) {
-              setMilestonesInput(
-                data.milestones.map(m => `${m.event} | ${m.date}`).join('\n')
-              );
-            }
 
             if (editorInstanceRef.current) {
               editorInstanceRef.current.setData(descHTML);
@@ -144,18 +138,10 @@ const AdminCalendarioForm = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Converte a string de marcos de prazo no formato "Evento | Data" para array de objetos
-    const milestonesArray = milestonesInput
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.includes('|'))
-      .map(line => {
-        const parts = line.split('|');
-        return {
-          event: parts[0].trim(),
-          date: parts[1].trim()
-        };
-      });
+    // Marcos em linhas (Fase N.6); linha sem atividade é descartada.
+    const milestonesArray = formData.milestones
+      .filter((m) => m.event && m.event.trim())
+      .map((m) => ({ event: m.event.trim(), date: (m.date || '').trim(), editalId: m.editalId || null }));
 
     const payload = {
       ...formData,
@@ -281,18 +267,11 @@ const AdminCalendarioForm = () => {
             `}</style>
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Principais Datas e Prazos (Formato: Atividade | Período)
-            </label>
-            <textarea
-              value={milestonesInput}
-              onChange={(e) => setMilestonesInput(e.target.value)}
-              rows={6}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow font-mono text-sm"
-              placeholder="Exemplo:&#10;Início das Aulas do Semestre 2026.1 | 09/03/2026&#10;Matrícula de Discentes | 02/03/2026 a 06/03/2026"
-            />
-          </div>
+          <MarcosEditor
+            marcos={formData.milestones}
+            ano={Number.parseInt(formData.ano, 10) || new Date().getFullYear()}
+            onChange={(milestones) => setFormData((prev) => ({ ...prev, milestones }))}
+          />
         </div>
 
         <div className="flex justify-end pt-4 border-t border-gray-200">

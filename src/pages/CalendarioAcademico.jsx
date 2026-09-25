@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../api';
+import { Link } from 'react-router-dom';
+import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 
+// Data de hoje no fuso local, 'YYYY-MM-DD' (compara com dataInicio/dataFim dos marcos).
+const hojeLocal = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 export default function CalendarioAcademico() {
+  const hoje = hojeLocal();
   const [calendariosData, setCalendariosData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -85,7 +93,16 @@ export default function CalendarioAcademico() {
                           {currentCalendar.title}
                         </h2>
                       </div>
-                      <a 
+                      <div className="flex flex-wrap gap-3">
+                      {/* Agenda assinável (Fase N.6): marcos com data + inscrições abertas. */}
+                      <a
+                        href={`${API_URL}/api/portal/calendario.ics`}
+                        className="px-5 py-3 border border-ufrpe-blue/30 text-ufrpe-blue font-bold rounded-xl hover:bg-ufrpe-blue/5 transition-all flex items-center gap-2 shrink-0"
+                      >
+                        <i className="fa-regular fa-calendar-plus" aria-hidden="true"></i> Adicionar à minha agenda
+                      </a>
+                      {currentCalendar.pdfLink && (
+                      <a
                         href={currentCalendar.pdfLink}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -93,6 +110,8 @@ export default function CalendarioAcademico() {
                       >
                         <i className="fa-solid fa-file-pdf"></i> Baixar PDF Completo
                       </a>
+                      )}
+                      </div>
                     </div>
                     <div className="p-6 md:p-8">
                       {currentCalendar.description && (
@@ -114,14 +133,23 @@ export default function CalendarioAcademico() {
                               <div className="mt-2 md:mt-0">Período / Data</div>
                             </div>
                             <div className="divide-y divide-gray-100">
-                              {currentCalendar.milestones.map((m, idx) => (
-                                <div key={idx} className="grid grid-cols-1 md:grid-cols-2 p-4 text-sm text-gray-700 hover:bg-gray-50/50 transition">
-                                  <div className="font-semibold text-gray-900">{m.event}</div>
-                                  <div className="mt-1 md:mt-0 text-gray-500 flex items-center gap-2">
-                                    <i className="fa-regular fa-clock text-xs text-ufrpe-yellow"></i> {m.date}
+                              {currentCalendar.milestones.map((m, idx) => {
+                                // Situação pela data real do marco (Fase N.6).
+                                const encerrado = m.dataFim && m.dataFim < hoje;
+                                const emCurso = !encerrado && m.dataInicio && m.dataInicio <= hoje && m.dataFim >= hoje;
+                                return (
+                                  <div key={idx} className={`grid grid-cols-1 md:grid-cols-2 p-4 text-sm hover:bg-gray-50/50 transition ${encerrado ? 'text-gray-400' : 'text-gray-700'}`}>
+                                    <div className={`font-semibold ${encerrado ? 'text-gray-400' : 'text-gray-900'}`}>
+                                      {m.editalId ? <Link to={`/editais/${m.editalId}`} className="hover:text-ufrpe-blue hover:underline">{m.event}</Link> : m.event}
+                                      {emCurso && <span className="ml-2 text-[10px] font-bold uppercase tracking-wider bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-full">Em curso</span>}
+                                      {encerrado && <span className="ml-2 text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Encerrado</span>}
+                                    </div>
+                                    <div className="mt-1 md:mt-0 text-gray-500 flex items-center gap-2">
+                                      <i className="fa-regular fa-clock text-xs text-ufrpe-yellow" aria-hidden="true"></i> {m.date}
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         </>
