@@ -65,6 +65,7 @@ const AdminBolsaForm = lazy(() => import('./pages/admin/AdminBolsaForm'));
 const AdminPagesList = lazy(() => import('./pages/admin/AdminPagesList'));
 const AdminMidia = lazy(() => import('./pages/admin/AdminMidia'));
 const AdminPortal = lazy(() => import('./pages/admin/AdminPortal'));
+const AdminEstrutura = lazy(() => import('./pages/admin/AdminEstrutura'));
 const AdminPageForm = lazy(() => import('./pages/admin/AdminPageForm'));
 const AdminMetricas = lazy(() => import('./pages/admin/AdminMetricas'));
 const AdminImportacao = lazy(() => import('./pages/admin/AdminImportacao'));
@@ -182,6 +183,9 @@ function App() {
             </Route>
             <Route path="portal" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
               <Route index element={<AdminPortal />} />
+            </Route>
+            <Route path="estrutura" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
+              <Route index element={<AdminEstrutura />} />
             </Route>
             <Route path="taxonomias" element={<RequireAuth allowedRoles={['Administrator', 'Gestor']} />}>
               <Route index element={<AdminTaxonomias />} />

@@ -1,0 +1,86 @@
+{
+  "_origem": "Carga inicial da Fase H.4, extraída de src/pages/Equipe.jsx e src/pages/EstruturaOrganizacional.jsx (25/09/2026). Onde as duas páginas divergiam, ficou o que também aparecia em Sobre a Internacionalização/Especialização — ver a nota da Fase H em docs/revisao-portal-conteudo-2026-09-24.md.",
+  "unidades": [
+    {
+      "id": "prpg", "sigla": "PRPG", "nome": "Pró-Reitoria de Pós-Graduação", "tipo": "PROREITORIA", "pai": null, "ordem": 0,
+      "descricao": "Liderança institucional e estratégica da Pós-Graduação na UFRPE.",
+      "contatos": [{ "tipo": "TELEFONE", "valor": "(81) 3320-6050" }]
+    },
+    {
+      "id": "prpg-secretaria", "sigla": "Secretaria", "nome": "Secretaria Administrativa", "tipo": "SETOR", "pai": "prpg", "ordem": 1,
+      "descricao": "Atendimento ao público e apoio administrativo da Pró-Reitoria.",
+      "contatos": [{ "tipo": "EMAIL", "valor": "sec.prpg@ufrpe.br" }, { "tipo": "TELEFONE", "valor": "(81) 3320-6050" }]
+    },
+    {
+      "id": "coord-stricto-excelencia", "pai": "prpg", "ordem": 2,
+      "descricao": "Incentivo e acompanhamento dos programas com os mais altos conceitos na avaliação da CAPES.",
+      "contatos": [{ "tipo": "EMAIL", "valor": "sec.cppg@ufrpe.br" }, { "tipo": "TELEFONE", "valor": "(81) 3320-6052" }]
+    },
+    {
+      "id": "coord-stricto-consolidacao", "sigla": "Consolidação", "nome": "Coordenadoria de Programas Stricto Sensu em Consolidação", "tipo": "SETOR", "pai": "prpg", "ordem": 3,
+      "descricao": "Apoio ao crescimento e fortalecimento de programas em desenvolvimento na instituição.",
+      "contatos": [{ "tipo": "EMAIL", "valor": "cppg.prpg@ufrpe.br" }, { "tipo": "TELEFONE", "valor": "(81) 3320-6052" }]
+    },
+    {
+      "id": "prpg-internacionalizacao", "nome": "Coordenação de Internacionalização dos Programas de Pós-Graduação Stricto Sensu", "pai": "prpg", "ordem": 4,
+      "descricao": "Gestão de convênios internacionais, mobilidade acadêmica e projetos de cooperação global.",
+      "contatos": [{ "tipo": "EMAIL", "valor": "cippg.prpg@ufrpe.br" }, { "tipo": "TELEFONE", "valor": "(81) 3320-6051" }]
+    },
+    {
+      "id": "prpg-lato-sensu", "nome": "Coordenação dos Cursos de Pós-Graduação Lato Sensu", "pai": "prpg", "ordem": 5,
+      "descricao": "Gestão de cursos de especialização e residências profissionais da universidade.",
+      "contatos": [{ "tipo": "EMAIL", "valor": "latosensu.prpg@ufrpe.br" }, { "tipo": "TELEFONE", "valor": "(81) 3320-6055" }, { "tipo": "WHATSAPP", "valor": "(81) 99653-7655" }]
+    },
+    {
+      "id": "prpg-financeiro", "sigla": "Financeiro", "nome": "Coordenação de Gestão Financeira", "tipo": "SETOR", "pai": "prpg", "ordem": 6,
+      "descricao": "Responsável pela execução orçamentária e financeira dos recursos da PRPG.",
+      "contatos": [{ "tipo": "EMAIL", "valor": "financeiro.prpg@ufrpe.br" }, { "tipo": "TELEFONE", "valor": "(81) 3320-6056" }]
+    },
+    {
+      "id": "clinica-bovinos-garanhuns", "sigla": "CBG", "nome": "Clínica de Bovinos de Garanhuns", "tipo": "SETOR", "pai": "prpg", "ordem": 7,
+      "descricao": "Unidade especializada localizada no Agreste pernambucano, dedicada ao atendimento clínico e hospitalar, servindo de base para o ensino prático e pesquisas avançadas em Medicina Veterinária.",
+      "contatos": [{ "tipo": "ENDERECO", "valor": "Av. Bom Pastor, s/n, Garanhuns - PE" }, { "tipo": "SITE", "valor": "cbg.prppg.ufrpe.br" }, { "tipo": "TELEFONE", "valor": "(87) 3761-3233" }, { "tipo": "TELEFONE", "valor": "(87) 3762-2397" }]
+    },
+    {
+      "id": "nubiotec", "sigla": "NUBIOTEC", "nome": "Núcleo de Biotecnologia (NUBIOTEC)", "tipo": "SETOR", "pai": "prpg", "ordem": 8,
+      "descricao": "Unidade multiusuária vinculada à PRPG/UFRPE, construída com recursos da FINEP, que desenvolve atividades científicas e tecnológicas visando produtos e serviços biotecnológicos inovadores.",
+      "contatos": [{ "tipo": "EMAIL", "valor": "nubiotec.prpg@ufrpe.br" }, { "tipo": "TELEFONE", "valor": "(81) 3320-6057" }]
+    },
+    { "id": "prpg-dadm", "pai": "prpg", "ordem": 20, "exibir": false },
+    { "id": "prpg-secretaria-camara", "pai": "prpg", "ordem": 21, "exibir": false }
+  ],
+  "membros": [
+    { "unidade": "prpg", "nome": "Rinaldo Aparecido Mota", "papel": "PRO_REITOR", "funcao": "Pró-Reitor", "ordem": 0,
+      "foto": "https://prpg.ufrpe.br/sites/default/files/styles/image_300/public/2021-02/rinaldo.jpeg",
+      "contatos": [{ "tipo": "EMAIL", "valor": "proreitor.prpg@ufrpe.br" }, { "tipo": "TELEFONE", "valor": "(81) 3320-6050" }] },
+    { "unidade": "prpg", "nome": "João Henrique de Medeiros Delgado", "papel": "SERVIDOR", "funcao": "Administração de Conteúdo Digital (sites)", "ordem": 1,
+      "contatos": [{ "tipo": "WHATSAPP", "valor": "(81) 99992-4710" }] },
+    { "unidade": "prpg-secretaria", "nome": "Raquelle Cavalcanti Souza da Silva", "papel": "SECRETARIO", "funcao": "Secretária", "ordem": 0,
+      "contatos": [{ "tipo": "WHATSAPP", "valor": "(81) 99937-8589" }] },
+    { "unidade": "prpg-secretaria", "nome": "Laura Vila Nova", "papel": "SECRETARIO", "funcao": "Secretária", "ordem": 1,
+      "foto": "https://prpg.ufrpe.br/sites/default/files/styles/image_300/public/2021-02/laura.jpeg",
+      "contatos": [{ "tipo": "TELEFONE", "valor": "(81) 3320-6050" }] },
+    { "unidade": "prpg-secretaria", "nome": "Maria Isabel de Moraes Gomes", "papel": "SECRETARIO", "funcao": "Secretária", "ordem": 2,
+      "foto": "https://prpg.ufrpe.br/sites/default/files/styles/image_300/public/2021-02/isabel.jpeg",
+      "contatos": [{ "tipo": "WHATSAPP", "valor": "(81) 99979-1596" }] },
+    { "unidade": "coord-stricto-excelencia", "nome": "Anete Soares Cavalcanti", "papel": "COORDENADOR", "funcao": "Coordenadora", "ordem": 0,
+      "foto": "https://prpg.ufrpe.br/sites/default/files/styles/image_300/public/2021-02/anete.jpeg" },
+    { "unidade": "coord-stricto-excelencia", "nome": "Diego de Queiroz Jordão", "papel": "SECRETARIO", "funcao": "Secretário", "ordem": 1,
+      "foto": "https://prpg.ufrpe.br/sites/default/files/styles/image_300/public/2021-04/diego.jpeg",
+      "contatos": [{ "tipo": "CELULAR", "valor": "(81) 99940-1506" }] },
+    { "unidade": "coord-stricto-consolidacao", "nome": "Tatiana Souza Porto", "papel": "COORDENADOR", "funcao": "Coordenadora", "ordem": 0,
+      "foto": "https://prpg.ufrpe.br/sites/default/files/styles/image_300/public/2021-02/tatiana.jpeg" },
+    { "unidade": "coord-stricto-consolidacao", "nome": "Analice Regis", "papel": "SECRETARIO", "funcao": "Secretária", "ordem": 1,
+      "foto": "https://prpg.ufrpe.br/sites/default/files/styles/image_300/public/2021-02/Analice.jpeg" },
+    { "unidade": "prpg-internacionalizacao", "nome": "Edivan Rodrigues de Souza", "papel": "COORDENADOR", "funcao": "Coordenador", "ordem": 0 },
+    { "unidade": "prpg-internacionalizacao", "nome": "Nathanyel Santos", "papel": "SECRETARIO", "funcao": "Secretário", "ordem": 1,
+      "foto": "https://prpg.ufrpe.br/sites/default/files/styles/image_300/public/2021-02/nathanyel.jpeg",
+      "contatos": [{ "tipo": "CELULAR", "valor": "(31) 8352-0270" }] },
+    { "unidade": "prpg-lato-sensu", "nome": "Ramom Rachide Nunes", "papel": "COORDENADOR", "funcao": "Coordenador", "ordem": 0,
+      "foto": "https://prpg.ufrpe.br/sites/default/files/styles/image_300/public/2021-02/rachide.jpeg" },
+    { "unidade": "prpg-lato-sensu", "nome": "Mariana da Conceição Alves", "papel": "SECRETARIO", "funcao": "Secretária", "ordem": 1,
+      "contatos": [{ "tipo": "WHATSAPP", "valor": "(81) 99653-7655" }] },
+    { "unidade": "prpg-financeiro", "nome": "João Ferreira dos Santos Pimentel Neto", "papel": "COORDENADOR", "funcao": "Coordenador de Gestão Financeira", "ordem": 0,
+      "foto": "https://prpg.ufrpe.br/sites/default/files/styles/image_300/public/2021-02/joao-ferreira.jpeg" }
+  ]
+}

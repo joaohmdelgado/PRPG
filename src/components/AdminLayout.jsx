@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet,
   GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle,
-  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Gavel, Contact, Inbox, Microscope, Mail, ClipboardList, Layers, Images, Menu
+  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Gavel, Contact, Inbox, Microscope, Mail, ClipboardList, Layers, Images, Menu, Network
 } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../auth';
 
@@ -21,6 +21,7 @@ const CONTEUDO = [
   { to: '/admin/paginas', label: 'Páginas', icon: File },
   { to: '/admin/midia', label: 'Biblioteca de Mídia', icon: Images },
   { to: '/admin/portal', label: 'Menus e portal', icon: Menu },
+  { to: '/admin/estrutura', label: 'Equipe e estrutura', icon: Network },
 ];
 
 const ADMINISTRACAO = [

@@ -81,6 +81,9 @@ import {
 import { arquivosRepo } from '../db/anexosRepo.js';
 import { registrarUploadPublico, getArquivos, getUsosArquivo, substituirArquivo, deleteArquivo } from '../controllers/arquivosController.js';
 import { getMenus, getMenu, updateMenu, getConfiguracoes, updateConfiguracao, getHome } from '../controllers/portalController.js';
+import {
+  getEstrutura, updateUnidadeEstrutura, createUnidadeEstrutura, addMembroEstrutura, updateMembroEstrutura, endMembroEstrutura,
+} from '../controllers/estruturaController.js';
 import { autorizarRevisao, getRevisoes, getRevisao, restaurarRevisao } from '../controllers/revisoesController.js';
 import { asyncRouter } from '../utils/asyncRouter.js';
 
@@ -404,6 +407,14 @@ router.get('/menus/:chave', getMenu);
 router.put('/menus/:chave', protect, requireRole(['Administrator', 'Gestor']), updateMenu);
 router.get('/configuracoes', getConfiguracoes);
 router.get('/portal/home', getHome);
+
+// Equipe e Estrutura Organizacional (Fase H.4): leitura pública; edição Admin/Gestor.
+router.get('/estrutura', optionalProtect, getEstrutura);
+router.post('/estrutura/unidades', protect, requireRole(['Administrator', 'Gestor']), createUnidadeEstrutura);
+router.put('/estrutura/unidades/:id', protect, requireRole(['Administrator', 'Gestor']), updateUnidadeEstrutura);
+router.post('/estrutura/unidades/:id/membros', protect, requireRole(['Administrator', 'Gestor']), addMembroEstrutura);
+router.put('/estrutura/membros/:id', protect, requireRole(['Administrator', 'Gestor']), updateMembroEstrutura);
+router.delete('/estrutura/membros/:id', protect, requireRole(['Administrator', 'Gestor']), endMembroEstrutura);
 router.put('/configuracoes/:chave', protect, requireRole(['Administrator', 'Gestor']), updateConfiguracao);
 router.get('/camara/unidades', protect, requireRole(CAMARA_LEITURA), getUnidades);
 router.post('/camara/unidades', protect, requireRole(CAMARA_ESCRITA), createUnidade);
