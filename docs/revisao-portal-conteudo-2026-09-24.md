@@ -447,12 +447,62 @@ página pública e nenhum número do site é digitado quando pode ser calculado.
 
 | | # | Ação |
 |---|---|---|
-| `[ ]` | S.1 | Menu em 4 grupos: O Programa / Pessoas / Produção / Admissão, mais Notícias, Documentos e Contato |
-| `[ ]` | S.2 | Páginas fixas para todos os programas (sobre, impacto social, autoavaliação, infraestrutura, internacionalização, planejamento), **ocultas enquanto estiverem vazias** |
-| `[ ]` | S.3 | Ocultar, reordenar e renomear módulos por programa (pendência registrada em 14/09) |
-| `[ ]` | S.4 | Checklist de publicação com percentual em "Site do Programa" (logo, cores, descrição, Sobre, coordenação, contatos, linhas) — ajuda a tirar os 40 programas do zero |
-| `[ ]` | S.5 | Validação de contraste das cores escolhidas pelo programa ao salvar |
-| `[ ]` | S.6 | Plano de redirecionamento dos domínios antigos (pgb.ufrpe.br etc.) com a TI — tabela de redirecionamentos |
+| `[x]` | S.1 | Menu em 4 grupos: O Programa / Pessoas / Produção / Admissão, mais Notícias, Documentos e Contato |
+| `[x]` | S.2 | Páginas fixas para todos os programas (sobre, impacto social, autoavaliação, infraestrutura, internacionalização, planejamento), **ocultas enquanto estiverem vazias** |
+| `[x]` | S.3 | Ocultar, reordenar e renomear módulos por programa (pendência registrada em 14/09) |
+| `[x]` | S.4 | Checklist de publicação com percentual em "Site do Programa" (logo, cores, descrição, Sobre, coordenação, contatos, linhas) — ajuda a tirar os 40 programas do zero |
+| `[x]` | S.5 | Validação de contraste das cores escolhidas pelo programa ao salvar |
+| `[x]` | S.6 | Plano de redirecionamento dos domínios antigos (pgb.ufrpe.br etc.) com a TI — tabela de redirecionamentos |
+
+> **Nota de execução (25/09/2026)** — 6 de 6 itens aplicados (commits 10e8c40 S.1, f20af02 S.2,
+> 98b75dd S.3, 1ff3fa7 S.4, d6952f0 S.5, 712ba5e S.6), com testes em `programas_microsite.test.js`
+> e `adminPagesFilter.test.js` (suíte: 346 testes verdes). Migrações
+> `2026-09-25_paginas_fixas_programa` e `2026-09-25_programa_menu_itens` aplicadas no banco de
+> desenvolvimento. **Como ficou:**
+> - S.1: o modelo do menu fica no código (`server/utils/micrositeMenu.js`) e o servidor devolve o
+>   menu pronto em `GET /programas/slug/:slug` (`menu`). **Decisão:** não reaproveitar
+>   `menus`/`menu_itens` da H.1 — lá o menu é uma árvore de destinos gravada inteira; copiá-la para
+>   42 programas congelaria o modelo (módulo novo = editar 42 menus) e não expressa "some enquanto
+>   vazio", que é calculado. Grupos: **O Programa** (Sobre, Impacto Social, Linhas de Pesquisa,
+>   Autoavaliação, Comissões, Disciplinas, Infraestrutura, Internacionalização, Planejamento,
+>   Perguntas Frequentes + páginas criadas), **Pessoas** (Docentes, Discentes, Egressos),
+>   **Produção** (Teses e Dissertações, Grupos de Pesquisa), **Admissão** (Editais); soltos:
+>   Início, Notícias, Documentos, Contato. Novas subpáginas `/linhas-de-pesquisa` e `/egressos`
+>   (egressos deixaram de contar como discentes). Documentos passa a aparecer também quando só há
+>   formulários (antes dependia só de resoluções). Menu desktop a partir de `lg` (8 entradas).
+> - S.2: 5 páginas fixas novas por programa (252 no banco de dev, com as 42 "Sobre"), fora do menu
+>   até terem texto publicado; `<p>&nbsp;</p>` conta como vazio. Página comum que já usava o
+>   endereço vira a fixa, com o texto. Buscas do microsite e do portal ignoram páginas sem texto; a
+>   lista geral de páginas do painel esconde as fixas vazias dos programas (ficam em "Site do
+>   Programa").
+> - S.3: tabela `programa_menu_itens` guarda só as diferenças (nome, grupo, ordem, oculto) — o
+>   programa pode inclusive mover um item ou página para outro grupo (ex.: "Como ingressar" em
+>   Admissão). Início muda de nome, mas não some nem sai do topo. Editor em "Site do Programa";
+>   `GET/PUT /api/programas/:id/menu` (Admin/Gestor e o Gestor do próprio programa).
+> - S.4: checklist de 7 itens com percentual e atalho "Resolver"
+>   (`GET /api/programas/:id/checklist`). No banco de dev: PGH 71% (faltam logo e coordenação),
+>   PROFIAP 29% e os outros 40 programas 14%.
+> - S.5: `server/utils/contraste.js` (WCAG 2.x, mínimo 4,5:1) confere primária × fundo claro (vale
+>   para texto branco sobre a primária) e destaque × primária; o formulário importa o mesmo módulo
+>   para a prévia ao vivo. Só valida quando alguma cor muda. **Achado corrigido:** a home do
+>   microsite usava a cor de destaque como texto sobre fundo claro — com o amarelo padrão, 1,6:1;
+>   essas 3 chamadas passaram a cinza.
+> - S.6: [redirecionamentos-dominios-programas.md](redirecionamentos-dominios-programas.md) — 30
+>   domínios (29 da análise + `pgh.ufrpe.br`), 29 identificados; `pgcds` não respondeu em 14/09 nem
+>   em 25/09. Os sites antigos são a mesma instalação Drupal 8, então uma tabela de caminhos serve
+>   para todos. Para o destino não mudar quando o programa publicar, `/<slug>` de microsite não
+>   publicado leva agora à página automática `/programas/<slug>`. **Decisões novas para a PRPG:**
+>   D-S1 (usar o subdomínio antigo como slug — hoje 40 slugs são o nome por extenso), D-S2
+>   (preservar `/sites/default/files`), D-S3 (quando desligar cada Drupal).
+> **Ficou de fora:** perfil/página "Coordenação" própria (fica no "Sobre"); "Informações gerais" de
+> Admissão como página fixa (o programa pode criar uma página e movê-la para Admissão pela S.3);
+> filtro de editais "abertos/fechados" no microsite; itens próprios de alguns sites (CCD,
+> laboratórios, revistas) — viram páginas criadas pelo programa.
+> **Não verificado no navegador:** as telas do painel (editor do menu, páginas fixas e checklist em
+> "Site do Programa", prévia de contraste no formulário) — exigem login; conferidas por build,
+> typecheck e testes da API. O microsite público (menu em grupos no desktop, página de linhas,
+> página fixa vazia, redirecionamento de microsite não publicado) foi conferido no navegador; o
+> menu mobile, pelo DOM (o painel não desenhou capturas no tamanho de celular).
 
 ### Fase O — Virada das planilhas (paralela, começa na semana 1)
 
@@ -540,7 +590,7 @@ pendências no sistema, não na planilha.
 | F — Fundação editorial | 7 | D-R3 | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase F) |
 | H — Portal dirigido por dados | 7 | D-R1 | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase H) |
 | N — Conexões entre conteúdos | 9 | D-R1, D-R2 | 25/09/2026 | 25/09/2026 | 🟡 6/9 (N.4 ⛔ D-R2; N.7 ⛔ E.11/D-E*; N.8 ⛔ D-G1 — ver nota da Fase N) |
-| S — Microsites em 4 grupos | 6 | — | | | ⬜ não iniciada |
+| S — Microsites em 4 grupos | 6 | — | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase S; D-S1..D-S3 para a TI) |
 | O — Virada das planilhas | 7 | D-R5 + `PLANO.md` §4 | | | ⬜ não iniciada |
 | U — Painel e acessibilidade | 7 | — | | | ⬜ não iniciada |
 | P — Performance e SEO | 6 | D-R4 | | | ⬜ não iniciada |

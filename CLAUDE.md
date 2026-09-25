@@ -247,7 +247,9 @@ Access at `/admin/login`. Main sections in sidebar:
   dates, origin filter, users/resumo, compression/cache), and the editorial
   foundation (`publicacao`, `vocabularios`, `arquivos`, `revisoes`) and the
   data-driven portal (`portal`, `estrutura`) and content connections
-  (`conexoes`). ~320 tests in 41 files — the exact number drifts; check with `npx vitest run`.
+  (`conexoes`), and the program microsites (`programas_microsite`: menu groups,
+  fixed pages, menu overrides, publication checklist, color contrast). ~345 tests in
+  41 files — the exact number drifts; check with `npx vitest run`.
 - Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes
@@ -359,6 +361,20 @@ calendar milestones have real dates (`data_inicio`/`data_fim`, parsed from the
 typed period by `server/utils/periodo.js`) feeding `/api/portal/prazos` and
 `/api/portal/calendario.ics`; per-year program indicators come from the view
 `indicadores_programa_ano` merged with `metricas_anuais` (`server/db/indicadoresRepo.js`).
+
+**Program microsites (Fase S)**: the microsite menu is built on the server from a
+template in `server/utils/micrositeMenu.js` (groups O Programa / Pessoas / Produção /
+Admissão + Notícias, Documentos, Contato; an entry only shows when it has published
+content) and returned as `menu` by `GET /api/programas/slug/:slug`. Every program has 6
+fixed pages (`pages.chave`: sobre, impacto-social, autoavaliacao, infraestrutura,
+internacionalizacao, planejamento — `pagesRepo.ensureFixedPages`), hidden from the menu
+while empty. Per-program overrides (rename/hide/reorder/move group) live in
+`programa_menu_itens` (only the differences; `GET/PUT /api/programas/:id/menu`); counts,
+menu and the publication checklist (`GET /api/programas/:id/checklist`) come from
+`server/db/micrositeRepo.js`. Program colors must pass `server/utils/contraste.js`
+(WCAG 4.5:1; the admin form imports the same module). `/<slug>` of an unpublished
+microsite redirects to `/programas/<slug>`; old `<sigla>.ufrpe.br` domains are mapped in
+`docs/redirecionamentos-dominios-programas.md`.
 
 **Checking User Roles**:
 - Admin users are defined in `server/data/users.json`
