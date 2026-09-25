@@ -1,6 +1,7 @@
 import React from 'react';
 import { Eye } from 'lucide-react';
 import HistoricoVersoes from './HistoricoVersoes';
+import RelacionadosEditor from './RelacionadosEditor';
 
 // Bloco "Publicação" dos formulários de conteúdo (Fase F.6): status,
 // agendamento e pré-visualização. O servidor só mostra ao público o que está
@@ -19,7 +20,8 @@ const paraIso = (local) => (local ? new Date(local).toISOString() : '');
 // `sujo`: há alterações não salvas (ver hooks/useAvisoAlteracoes).
 // `historico`: { entidade, id, versao } de um item já salvo — mostra o
 // histórico de versões (Fase F.7) logo abaixo.
-export default function PublicacaoCampos({ status = 'PUBLICADO', publicadoEm = '', onChange, previewUrl, sujo = false, historico = null }) {
+// `relacionados`: { tipo, id } — editor de "Relacionados" (Fase N.5).
+export default function PublicacaoCampos({ status = 'PUBLICADO', publicadoEm = '', onChange, previewUrl, sujo = false, historico = null, relacionados = null }) {
   const agendado = status === 'PUBLICADO' && publicadoEm && new Date(publicadoEm) > new Date();
   const set = (campo, valor) => onChange({ status, publicadoEm, [campo]: valor });
 
@@ -63,6 +65,7 @@ export default function PublicacaoCampos({ status = 'PUBLICADO', publicadoEm = '
       </p>
     </fieldset>
     {historico?.id && <HistoricoVersoes {...historico} sujo={sujo} />}
+    {relacionados?.id && <RelacionadosEditor {...relacionados} />}
     </>
   );
 }

@@ -86,6 +86,7 @@ import {
 } from '../controllers/estruturaController.js';
 import { buscaPublica } from '../controllers/buscaPublicaController.js';
 import { getProgramaPublico } from '../controllers/programaPublicoController.js';
+import { getReferencias, putReferencias, getCandidatos } from '../controllers/referenciasController.js';
 import { autorizarRevisao, getRevisoes, getRevisao, restaurarRevisao } from '../controllers/revisoesController.js';
 import { asyncRouter } from '../utils/asyncRouter.js';
 
@@ -255,6 +256,10 @@ router.delete('/arquivos/:id', protect, requireRole(['Administrator', 'Gestor'])
 // item vê as versões anteriores e restaura uma delas.
 router.get('/revisoes/:entidade/:id', protect, requireInstitutionalWriter, autorizarRevisao, getRevisoes);
 router.get('/revisoes/:entidade/:id/:revisaoId', protect, requireInstitutionalWriter, autorizarRevisao, getRevisao);
+// Relacionados entre conteúdos (Fase N.5).
+router.get('/referencias-candidatos', protect, requireInstitutionalWriter, getCandidatos);
+router.get('/referencias/:tipo/:id', optionalProtect, getReferencias);
+router.put('/referencias/:tipo/:id', protect, requireInstitutionalWriter, putReferencias);
 router.post('/revisoes/:entidade/:id/:revisaoId/restaurar', protect, requireInstitutionalWriter, autorizarRevisao, restaurarRevisao);
 
 // Rotas exclusivas para Administrator e Gestor

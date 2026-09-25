@@ -1,6 +1,7 @@
 import { query } from './pool.js';
 import { STATUS_PUBLICACAO } from '../utils/publicacao.js';
 import { registrarRevisao, apagarRevisoes } from './revisoesRepo.js';
+import { apagarReferenciasDaTabela } from './referenciasRepo.js';
 
 // Conflito de edição (Fase F.2): outra pessoa salvou o registro depois que
 // este cliente o carregou. O tratador global responde 409 com a mensagem.
@@ -99,7 +100,10 @@ export function createRepository({ table, fromRow, toRow, orderBy = 'id ASC', pu
 
     async remove(id) {
       const { rowCount } = await query(`DELETE FROM ${table} WHERE id = $1`, [id]);
-      if (rowCount > 0 && publicavel) await apagarRevisoes(table, id);
+      if (rowCount > 0 && publicavel) {
+        await apagarRevisoes(table, id);
+        await apagarReferenciasDaTabela(table, id); // "Relacionados" (Fase N.5)
+      }
       return rowCount > 0;
     },
 

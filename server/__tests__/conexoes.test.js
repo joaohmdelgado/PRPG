@@ -103,3 +103,35 @@ describe('N.3 — repositório de teses', () => {
     expect((await request(app).get('/api/teses-dissertacoes/t1')).body.autor).not.toHaveProperty('email');
   });
 });
+
+describe('N.5 — relacionados', () => {
+  it('liga nos dois sentidos, o público só vê o que está publicado, e some ao excluir', async () => {
+    await auth(request(app).post('/api/editais')).send({ id: 'e1', title: 'Seleção 2026' });
+    await auth(request(app).post('/api/resolucoes')).send({ id: 'r1', title: 'Resolução 10/2020', link: 'https://x/r.pdf' });
+    await auth(request(app).post('/api/news')).send({ id: 'n1', title: 'Rascunho', status: 'RASCUNHO' });
+
+    const put = await auth(request(app).put('/api/referencias/edital/e1'))
+      .send({ itens: [{ tipo: 'resolucao', id: 'r1' }, { tipo: 'noticia', id: 'n1' }, { tipo: 'edital', id: 'e1' }] });
+    expect(put.status).toBe(200);
+    expect(put.body.map((i) => i.id)).toEqual(['r1', 'n1']); // a ligação consigo mesmo é ignorada
+
+    const pub = await request(app).get('/api/referencias/edital/e1');
+    expect(pub.body).toEqual([expect.objectContaining({ tipo: 'resolucao', id: 'r1', destino: 'https://x/r.pdf', rotuloTipo: 'Resolução' })]);
+    // Sentido inverso: a resolução mostra o edital.
+    expect((await request(app).get('/api/referencias/resolucao/r1')).body.map((i) => i.destino)).toEqual(['/editais/e1']);
+
+    await auth(request(app).delete('/api/resolucoes/r1'));
+    const { rows } = await pool.query('SELECT count(*)::int AS n FROM referencias');
+    expect(rows[0].n).toBe(1); // sobrou só edital -> notícia
+  });
+
+  it('valida itens e acesso; busca candidatos por título sem acento', async () => {
+    await auth(request(app).post('/api/editais')).send({ id: 'e1', title: 'Edital de Proficiência' });
+    expect((await request(app).put('/api/referencias/edital/e1').send({ itens: [] })).status).toBe(401);
+    expect((await auth(request(app).put('/api/referencias/edital/e1')).send({ itens: [{ tipo: 'noticia', id: 'nao-existe' }] })).status).toBe(400);
+    expect((await auth(request(app).put('/api/referencias/edital/e1')).send({ itens: [{ tipo: 'usuario', id: 'x' }] })).status).toBe(400);
+    expect((await request(app).get('/api/referencias/processo/1')).status).toBe(404);
+    const cand = await auth(request(app).get('/api/referencias-candidatos?q=proficiencia'));
+    expect(cand.body.map((c) => `${c.tipo}:${c.id}`)).toEqual(['edital:e1']);
+  });
+});

@@ -4,13 +4,13 @@ import { pool } from '../db/pool.js';
 import { app } from '../app.js';
 import { usersRepo } from '../db/repositories.js';
 
-// Tudo que o resetDb esvazia a cada teste: as 47 tabelas do schema `public`
+// Tudo que o resetDb esvazia a cada teste: as 48 tabelas do schema `public`
 // menos `unidades` (seed persistente, nunca tocada). São as 38 que o antigo
 // TRUNCATE listava + 5 que ele arrastava por CASCADE (linhas_pesquisa e as
 // duas tabelas de junção, taxonomia_refs e vocabularios — todas com FK para
 // programas/users). O DELETE não arrasta nada sozinho, então as 5 entram
 // aqui de forma explícita. `revisoes` (Fase F.7) e `menus`/`menu_itens`/`configuracoes`
-// (Fase H.1) vieram depois.
+// (Fase H.1) e `referencias` (Fase N.5) vieram depois.
 //
 // ORDEM: `atos` vem antes de `ato_series` porque atos.serie_id -> ato_series
 // é a única FK NO ACTION entre estas tabelas (atos_serie_id_fkey); todas as
@@ -30,7 +30,7 @@ export const RESET_TABLES = [
   'arquivos', 'anexos', 'contatos', 'eventos',
   'atos', 'ato_series', 'ato_referencias', 'documentos', 'declaracoes',
   'pos_doutorados', 'notificacoes', 'ato_diplomas',
-  'revisoes', 'menu_itens', 'menus', 'configuracoes',
+  'revisoes', 'menu_itens', 'menus', 'configuracoes', 'referencias',
 ];
 
 // Tabelas do schema que o resetDb deliberadamente NÃO toca: `unidades` é seed
@@ -52,7 +52,7 @@ export const RESET_FORA_DO_SCHEMA = ['schema_migrations'];
 export const RESET_SEQUENCES = [
   'calendario_milestones_id_seq', 'ato_diplomas_id_seq', 'linhas_pesquisa_id_seq',
   'taxonomia_refs_id_seq', 'vocabularios_id_seq', 'revisoes_id_seq',
-  'menu_itens_id_seq',
+  'menu_itens_id_seq', 'referencias_id_seq',
 ];
 
 export async function resetDb() {

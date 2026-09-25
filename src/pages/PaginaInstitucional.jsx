@@ -4,6 +4,7 @@ import { apiFetch } from '../api';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
 import SafeHtml from '../components/SafeHtml';
+import Relacionados from '../components/Relacionados';
 
 // Página de conteúdo da PRPG vinda do painel ("Páginas"). Atende às páginas
 // institucionais de endereço fixo (Fase H.3 — /sobre, /historico...: antes um
@@ -88,6 +89,7 @@ export default function PaginaInstitucional({ slug: slugFixo }) {
           <article className="bg-white p-6 sm:p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100">
             <SafeHtml className="html-content" html={page.body?.value} />
           </article>
+          <Relacionados tipo="pagina" id={page.id} className="mt-8" />
         </div>
       </div>
     </>

@@ -243,6 +243,7 @@ const AdminResolucaoForm = () => {
           previewUrl={null}
           sujo={sujo}
           historico={isEditing ? { entidade: 'resolucoes', id, versao: formData._versao } : null}
+          relacionados={isEditing ? { tipo: 'resolucao', id } : null}
         />
         <div className={isProgramaGestor() ? 'hidden' : undefined}>
           <label className="block text-sm font-medium text-gray-700 mb-1">Programa (opcional)</label>

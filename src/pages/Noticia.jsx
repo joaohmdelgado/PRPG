@@ -4,6 +4,7 @@ import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
 import CabecalhoPagina from '../components/CabecalhoPagina';
+import Relacionados from '../components/Relacionados';
 import useVocabulario, { corDe } from '../hooks/useVocabulario';
 
 const formatDate = (dateStr) => {
@@ -207,6 +208,8 @@ export default function Noticia() {
             </div>
           )}
 
+          {/* Ligados a esta notícia no painel (Fase N.5). */}
+          <Relacionados tipo="noticia" id={newsItem.id} className="mt-12" />
         </div>
       </main>
 

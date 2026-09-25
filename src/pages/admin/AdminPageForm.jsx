@@ -236,6 +236,7 @@ const AdminPageForm = () => {
           previewUrl={isEditing && formData.slug ? (selectedPrograma ? `/${selectedPrograma.slug}/${formData.slug}` : `/${formData.slug}`) : null}
           sujo={sujo}
           historico={isEditing ? { entidade: 'pages', id, versao: formData._versao } : null}
+          relacionados={isEditing ? { tipo: 'pagina', id } : null}
         />
         {/* Título */}
         <div>

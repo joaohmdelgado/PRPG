@@ -4,6 +4,7 @@ import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
 import CabecalhoPagina from '../components/CabecalhoPagina';
+import Relacionados from '../components/Relacionados';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -305,6 +306,8 @@ export default function Edital() {
             </div>
 
           </div>
+          {/* Resoluções, formulários e notícias ligados a este edital (Fase N.5). */}
+          <Relacionados tipo="edital" id={edital.id} className="mt-8" />
         </div>
       </main>
     </>
