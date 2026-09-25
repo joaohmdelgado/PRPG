@@ -6,7 +6,8 @@ import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js'
 import { indicadoresDoPrograma } from '../db/indicadoresRepo.js';
 import { serverError } from '../utils/httpError.js';
 import { slugify } from '../utils/slug.js';
-import { montarMenu, temTexto, sqlPaginaComTexto } from '../utils/micrositeMenu.js';
+import { sqlPaginaComTexto, validarAjustes } from '../utils/micrositeMenu.js';
+import { contarModulos, menuDoPrograma, salvarAjustes } from '../db/micrositeRepo.js';
 import { visivelPara, sqlPublicado } from '../utils/publicacao.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
@@ -230,41 +231,18 @@ export const getProgramaBySlug = async (req, res) => {
     });
 
     // Rascunho/agendado só aparece para quem edita o programa (pré-visualização).
-    const fixas = (await pagesRepo.getFixedByPrograma(prog.id)).filter((p) => visivelPara(req.user, p));
-    const pagina_sobre = fixas.find((p) => p.chave === 'sobre') || null;
-    // Páginas fixas com texto entram no menu; vazias ficam ocultas (Fase S.2).
-    const paginasFixas = fixas.filter((p) => temTexto(p.body?.value)).map((p) => p.chave);
-    // Páginas criadas pelo programa (não a fixa) — alimentam o submenu
-    // "O Programa" do microsite (ProgramaLayout.jsx).
+    const sobre = await pagesRepo.getFixed(prog.id, 'sobre');
+    const pagina_sobre = sobre && visivelPara(req.user, sobre) ? sobre : null;
+    // Páginas criadas pelo programa (não as fixas) — entram no submenu
+    // "O Programa" do microsite.
     const paginas = (await pagesRepo.getByPrograma(prog.id)).filter((p) => visivelPara(req.user, p));
     const linhas = await linhasPesquisaRepo.getByPrograma(prog.id);
 
-    // Conta itens por módulo para o menu dinâmico do microsite.
-    const MODULOS_TABELAS = [
-      ['disciplinas', 'disciplinas'],
-      ['teses', 'teses_dissertacoes'],
-      ['faq', 'faq'],
-      ['grupos', 'grupos_pesquisa'],
-      ['resolucoes', 'resolucoes'],
-      ['formularios', 'formularios'],
-    ];
-    const modulos = {};
-    await Promise.all(MODULOS_TABELAS.map(async ([key, tbl]) => {
-      const { rows } = await query(`SELECT count(*)::int AS n FROM ${tbl} WHERE programa_id = $1 AND ${sqlPublicado()}`, [prog.id]);
-      modulos[key] = rows[0]?.n ?? 0;
-    }));
-    modulos['pessoas'] = progVinculos.filter(
-      (v) => ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR'].includes(v.papel)
-    ).length;
-    modulos['docentes'] = modulos['pessoas'];
-    // Discentes (em curso) e egressos são itens separados do grupo "Pessoas"
-    // (Fase S.1) — antes os egressos contavam como discentes.
-    modulos['discentes'] = progVinculos.filter(
-      (v) => ['DISCENTE_MESTRADO', 'DISCENTE_DOUTORADO', 'DISCENTE_PROFISSIONAL'].includes(v.papel)
-    ).length;
-    modulos['egressos'] = progVinculos.filter((v) => v.papel === 'EGRESSO').length;
-    modulos['documentos'] = modulos['resolucoes'] + modulos['formularios'];
-    modulos['linhas'] = linhas.length;
+    // Conteúdo por módulo (menu e contadores da home) e o menu do microsite:
+    // 4 grupos + Notícias/Documentos/Contato, só com o que tem conteúdo, com
+    // os ajustes do programa (Fases S.1–S.3, server/db/micrositeRepo.js).
+    const modulos = await contarModulos(prog.id);
+    const menu = await menuDoPrograma(prog.id, req.user, { modulos });
 
     // Histórico de coordenadores (inativos, COORDENADOR_ANTERIOR).
     const historico_coordenadores = todosVinculos
@@ -282,7 +260,6 @@ export const getProgramaBySlug = async (req, res) => {
       if (!comissoes[v.papel]) comissoes[v.papel] = [];
       comissoes[v.papel].push(filterSensitivePessoa(combined, isAdmin));
     });
-    modulos['comissoes'] = comissaoVinculos.length;
 
     // Métrica mais recente para os contadores da home.
     const { rows: metricasRows } = await query(
@@ -290,10 +267,6 @@ export const getProgramaBySlug = async (req, res) => {
       [prog.id]
     );
     const metrica_recente = metricasRows[0] || null;
-
-    // Menu do microsite (Fase S.1): 4 grupos + Notícias/Documentos/Contato,
-    // só com o que tem conteúdo — ver server/utils/micrositeMenu.js.
-    const menu = montarMenu({ modulos, paginas, paginasFixas });
 
     res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, pagina_sobre, paginas, linhas,
                modulos, menu, historico_coordenadores, comissoes, metrica_recente });
@@ -938,4 +911,28 @@ export const updateProgramaLinhas = async (req, res) => {
   } catch (error) {
     serverError(res, 'Erro ao atualizar linhas', error);
   }
+};
+
+// ===================== Menu do microsite (Fase S.3) =====================
+// Editor do painel: o menu inteiro, com o que está oculto ou sem conteúdo.
+export const getMenuPrograma = async (req, res) => {
+  const { rows } = await query('SELECT id FROM programas WHERE id = $1', [req.params.id]);
+  if (!rows[0]) return res.status(404).json({ message: 'Programa não encontrado' });
+  res.json(await menuDoPrograma(req.params.id, req.user, { todos: true }));
+};
+
+// Grava ocultar/reordenar/renomear/mudar de grupo. Recebe { itens: [{ chave,
+// rotulo, grupo, ordem, oculto }] } — o menu inteiro, que substitui o anterior.
+export const updateMenuPrograma = async (req, res) => {
+  const { rows } = await query('SELECT id FROM programas WHERE id = $1', [req.params.id]);
+  if (!rows[0]) return res.status(404).json({ message: 'Programa não encontrado' });
+  const paginaIds = (await pagesRepo.getByPrograma(req.params.id)).map((p) => p.id);
+  let linhas;
+  try {
+    linhas = validarAjustes(req.body?.itens, paginaIds);
+  } catch (e) {
+    return res.status(400).json({ message: e.message });
+  }
+  await salvarAjustes(req.params.id, linhas, req.user?.id);
+  res.json(await menuDoPrograma(req.params.id, req.user, { todos: true }));
 };

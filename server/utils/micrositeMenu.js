@@ -82,33 +82,126 @@ const temConteudo = (entrada, modulos, fixasComTexto) =>
   || (!!entrada.modulo && (modulos[entrada.modulo] ?? 0) > 0)
   || (!!entrada.pagina && fixasComTexto.has(entrada.pagina));
 
-// Monta o menu do programa. Devolve só o visível: grupo sem nenhum item
-// visível não aparece.
+export const GRUPOS = TOPO.filter((t) => t.grupo).map((t) => t.chave);
+export const ROTULO_MAX = 60;
+// Início é a âncora do menu: pode mudar de nome, mas não some nem sai do topo.
+const FIXO_NO_TOPO = 'inicio';
+
+// Ajustes por programa (Fase S.3 — tabela programa_menu_itens): só as
+// diferenças em relação ao modelo. `rotulo`/`grupo`/`ordem` nulos = padrão.
+// Uma chave sem ajuste (ex.: página criada depois do último ajuste) fica
+// na posição padrão — páginas novas, no fim de "O Programa".
+//
+// Monta o menu do programa.
 //   modulos — contagem de conteúdo publicado por módulo;
 //   paginas — páginas criadas pelo programa ({ id, title, slug }), já
 //             filtradas pelo que quem lê pode ver;
-//   paginasFixas — chaves das páginas fixas visíveis e com texto.
-// Saída: [{ chave, rotulo, icone, sub }] para links e
-//        [{ chave, rotulo, icone, itens: [{ chave, rotulo, sub }] }] para grupos.
-export function montarMenu({ modulos = {}, paginas = [], paginasFixas = [] } = {}) {
+//   paginasFixas — chaves das páginas fixas visíveis e com texto;
+//   ajustes — linhas de programa_menu_itens;
+//   todos — true para o editor do painel: devolve também o que está oculto ou
+//           sem conteúdo, com os campos de edição (rotuloPadrao, grupoPadrao,
+//           oculto, temConteudo, tipo).
+// Saída pública (todos=false): só o visível; grupo sem item visível some.
+//   [{ chave, rotulo, icone, sub }] para links e
+//   [{ chave, rotulo, icone, itens: [{ chave, rotulo, sub }] }] para grupos.
+export function montarMenu({ modulos = {}, paginas = [], paginasFixas = [], ajustes = [], todos = false } = {}) {
   const fixasComTexto = new Set(paginasFixas);
-  const itensPorGrupo = new Map(TOPO.filter((t) => t.grupo).map((t) => [t.chave, []]));
-  for (const item of ITENS) {
-    if (!temConteudo(item, modulos, fixasComTexto)) continue;
-    itensPorGrupo.get(item.grupo).push({ chave: item.chave, rotulo: item.rotulo, sub: item.sub });
-  }
-  for (const p of paginas) {
-    itensPorGrupo.get('programa').push({ chave: `pagina:${p.id}`, rotulo: p.title, sub: p.slug });
-  }
+  const ajuste = new Map(ajustes.map((a) => [a.chave, a]));
+  const rotuloDe = (e, padrao) => ajuste.get(e)?.rotulo || padrao;
+  const ocultoDe = (e) => e !== FIXO_NO_TOPO && !!ajuste.get(e)?.oculto;
+  const ordemDe = (e, padrao) => {
+    const o = ajuste.get(e)?.ordem;
+    return Number.isInteger(o) ? o : padrao;
+  };
+
+  // Itens (segundo nível), com o grupo efetivo e a chave de ordenação.
+  const itens = [
+    ...ITENS.map((it, i) => ({
+      chave: it.chave, rotuloPadrao: it.rotulo, sub: it.sub, grupoPadrao: it.grupo,
+      tipo: it.pagina ? 'pagina-fixa' : it.modulo ? 'modulo' : 'fixo',
+      temConteudo: temConteudo(it, modulos, fixasComTexto), padrao: i,
+    })),
+    ...paginas.map((p, i) => ({
+      chave: `pagina:${p.id}`, rotuloPadrao: p.title, sub: p.slug, grupoPadrao: 'programa',
+      tipo: 'pagina', temConteudo: true, padrao: 1000 + i,
+    })),
+  ].map((it) => {
+    const grupo = GRUPOS.includes(ajuste.get(it.chave)?.grupo) ? ajuste.get(it.chave).grupo : it.grupoPadrao;
+    return {
+      ...it, grupo, rotulo: rotuloDe(it.chave, it.rotuloPadrao), oculto: ocultoDe(it.chave),
+      ordem: ordemDe(it.chave, it.padrao),
+    };
+  });
+  const porOrdem = (a, b) => a.ordem - b.ordem || a.padrao - b.padrao;
+
+  const topo = TOPO.map((t, i) => ({ ...t, padrao: i, ordem: t.chave === FIXO_NO_TOPO ? -1 : ordemDe(t.chave, i) }))
+    .sort(porOrdem);
 
   const menu = [];
-  for (const t of TOPO) {
+  for (const t of topo) {
+    const base = { chave: t.chave, rotulo: rotuloDe(t.chave, t.rotulo), icone: t.icone };
+    const extra = todos ? { rotuloPadrao: t.rotulo, oculto: ocultoDe(t.chave) } : {};
     if (t.grupo) {
-      const itens = itensPorGrupo.get(t.chave);
-      if (itens.length) menu.push({ chave: t.chave, rotulo: t.rotulo, icone: t.icone, itens });
-    } else if (temConteudo(t, modulos, fixasComTexto)) {
-      menu.push({ chave: t.chave, rotulo: t.rotulo, icone: t.icone, sub: t.sub });
+      const doGrupo = itens.filter((it) => it.grupo === t.chave).sort(porOrdem);
+      if (todos) {
+        menu.push({
+          ...base, ...extra, tipo: 'grupo',
+          itens: doGrupo.map(({ chave, rotulo, rotuloPadrao, sub, grupo, grupoPadrao, tipo, temConteudo: tc, oculto }) =>
+            ({ chave, rotulo, rotuloPadrao, sub, grupo, grupoPadrao, tipo, temConteudo: tc, oculto })),
+        });
+        continue;
+      }
+      if (ocultoDe(t.chave)) continue;
+      const visiveis = doGrupo.filter((it) => it.temConteudo && !it.oculto)
+        .map(({ chave, rotulo, sub }) => ({ chave, rotulo, sub }));
+      if (visiveis.length) menu.push({ ...base, itens: visiveis });
+    } else if (todos) {
+      menu.push({ ...base, ...extra, sub: t.sub, tipo: 'link', fixo: t.chave === FIXO_NO_TOPO,
+        temConteudo: temConteudo(t, modulos, fixasComTexto) });
+    } else if (temConteudo(t, modulos, fixasComTexto) && !ocultoDe(t.chave)) {
+      menu.push({ ...base, sub: t.sub });
     }
   }
   return menu;
+}
+
+// Valida o que o editor do painel manda (PUT /programas/:id/menu) e devolve
+// as linhas a gravar, só com o que difere do padrão. `paginaIds` = ids das
+// páginas criadas pelo programa (únicas chaves "pagina:<id>" aceitas).
+// Lança Error com mensagem para o usuário quando algo não confere.
+export function validarAjustes(entrada, paginaIds = []) {
+  if (!Array.isArray(entrada)) throw new Error('Envie a lista de itens do menu.');
+  const padraoTopo = new Map(TOPO.map((t) => [t.chave, t]));
+  const padraoItem = new Map(ITENS.map((it) => [it.chave, it]));
+  const paginas = new Set(paginaIds.map((id) => `pagina:${id}`));
+  const vistos = new Set();
+  const linhas = [];
+  for (const e of entrada) {
+    const chave = typeof e?.chave === 'string' ? e.chave : '';
+    const noTopo = padraoTopo.get(chave);
+    const item = padraoItem.get(chave);
+    if (!noTopo && !item && !paginas.has(chave)) throw new Error(`Item de menu desconhecido: ${chave || '(vazio)'}.`);
+    if (vistos.has(chave)) throw new Error(`Item repetido no menu: ${chave}.`);
+    vistos.add(chave);
+
+    const rotulo = typeof e.rotulo === 'string' ? e.rotulo.trim() : '';
+    if (rotulo.length > ROTULO_MAX) throw new Error(`O nome "${rotulo.slice(0, 20)}…" passa de ${ROTULO_MAX} caracteres.`);
+    let grupo = e.grupo ?? null;
+    if (grupo !== null && (noTopo || !GRUPOS.includes(grupo))) throw new Error(`Grupo inválido para ${chave}.`);
+    const ordem = e.ordem ?? null;
+    if (ordem !== null && !(Number.isInteger(ordem) && ordem >= 0 && ordem < 10000)) throw new Error(`Ordem inválida para ${chave}.`);
+    const oculto = e.oculto === true && chave !== FIXO_NO_TOPO;
+
+    const rotuloPadrao = noTopo?.rotulo ?? item?.rotulo;
+    const grupoPadrao = noTopo ? null : (item?.grupo ?? 'programa');
+    if (grupo === grupoPadrao) grupo = null;
+    linhas.push({
+      chave,
+      rotulo: rotulo && rotulo !== rotuloPadrao ? rotulo : null,
+      grupo,
+      ordem,
+      oculto,
+    });
+  }
+  return linhas;
 }

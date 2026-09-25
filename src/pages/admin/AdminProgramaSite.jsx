@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
+import MicrositeMenuEditor from '../../components/admin/MicrositeMenuEditor';
 
 // Seções de conteúdo com rota PRÓPRIA por programa (já filtradas, qualquer
 // que seja o papel de quem acessa — ver AdminProgramaPessoas.jsx).
@@ -247,6 +248,17 @@ const AdminProgramaSite = () => {
             ))}
           </ul>
         )}
+      </div>
+
+      {/* Menu do microsite (Fase S.3) */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h3 className="font-heading text-lg font-semibold text-gray-800">Menu do microsite</h3>
+        <p className="text-xs text-gray-500 mt-0.5 mb-4">
+          O modelo é o mesmo dos sites dos programas (O Programa, Pessoas, Produção, Admissão). Aqui dá para
+          mudar nomes, ocultar, reordenar e trocar item de grupo. Itens sem conteúdo ficam fora do menu
+          automaticamente, mesmo marcados como visíveis.
+        </p>
+        <MicrositeMenuEditor programaId={id} />
       </div>
 
       {/* Pessoas, comissões e métricas — já filtrados por este programa */}

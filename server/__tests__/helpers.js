@@ -31,6 +31,7 @@ export const RESET_TABLES = [
   'atos', 'ato_series', 'ato_referencias', 'documentos', 'declaracoes',
   'pos_doutorados', 'notificacoes', 'ato_diplomas',
   'revisoes', 'menu_itens', 'menus', 'configuracoes', 'referencias',
+  'programa_menu_itens',
 ];
 
 // Tabelas do schema que o resetDb deliberadamente NÃO toca: `unidades` é seed

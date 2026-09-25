@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../app.js';
 import { pool } from '../db/pool.js';
-import { resetDb, seedAdmin, loginAdmin } from './helpers.js';
+import { resetDb, seedAdmin, loginAdmin, login } from './helpers.js';
 
 let token;
 
@@ -378,5 +378,99 @@ describe('microsite — páginas fixas de todo programa (Fase S.2)', () => {
     await auth(request(app).put(`/api/pages/${plan.id}`)).send({ body: { value: '<p>Metas do quadriênio</p>' } });
     const cheia = await request(app).get('/api/portal/busca?q=Planejamento');
     expect(JSON.stringify(cheia.body)).toContain('/busca-fixa/planejamento');
+  });
+});
+
+describe('microsite — ocultar, reordenar e renomear o menu (Fase S.3)', () => {
+  const grupo = (menu, chave) => menu.find((e) => e.chave === chave);
+
+  it('editor devolve o menu inteiro, inclusive o que ainda não tem conteúdo', async () => {
+    const { id } = await criar({ slug: 'editor' });
+    const res = await auth(request(app).get(`/api/programas/${id}/menu`));
+    expect(res.status).toBe(200);
+    expect(res.body.map((e) => e.chave)).toEqual(['inicio', 'programa', 'pessoas', 'producao', 'admissao', 'noticias', 'documentos', 'contato']);
+    const docentes = grupo(res.body, 'pessoas').itens.find((i) => i.chave === 'docentes');
+    expect(docentes).toMatchObject({ rotulo: 'Docentes', rotuloPadrao: 'Docentes', temConteudo: false, oculto: false, grupo: 'pessoas' });
+  });
+
+  it('renomeia, oculta, reordena e muda item de grupo; o público vê o resultado', async () => {
+    const { id, slug } = await criar({ slug: 'ajustado' });
+    await auth(request(app).post('/api/disciplinas')).send({ title: 'D1', programaId: id });
+    const put = await auth(request(app).put(`/api/programas/${id}/menu`)).send({
+      itens: [
+        { chave: 'noticias', ordem: 1 },
+        { chave: 'programa', rotulo: 'Institucional', ordem: 2 },
+        { chave: 'contato', oculto: true },
+        { chave: 'disciplinas', grupo: 'admissao', ordem: 0, rotulo: 'Estrutura Curricular' },
+        { chave: 'editais', grupo: 'admissao', ordem: 1 },
+      ],
+    });
+    expect(put.status).toBe(200);
+
+    const { body } = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(body.menu.map((e) => e.chave)).toEqual(['inicio', 'noticias', 'programa', 'admissao']);
+    expect(grupo(body.menu, 'programa').rotulo).toBe('Institucional');
+    expect(grupo(body.menu, 'programa').itens.map((i) => i.chave)).toEqual(['sobre']);
+    expect(grupo(body.menu, 'admissao').itens).toEqual([
+      { chave: 'disciplinas', rotulo: 'Estrutura Curricular', sub: 'disciplinas' },
+      { chave: 'editais', rotulo: 'Editais', sub: 'editais' },
+    ]);
+
+    // Só o que difere do padrão é gravado (editais no grupo de sempre).
+    const { rows } = await pool.query('SELECT chave, rotulo, grupo, oculto FROM programa_menu_itens WHERE programa_id = $1 ORDER BY chave', [id]);
+    expect(rows.find((r) => r.chave === 'editais')).toMatchObject({ grupo: null, rotulo: null });
+  });
+
+  it('item oculto sem conteúdo continua fora; Início não pode ser ocultado', async () => {
+    const { id, slug } = await criar({ slug: 'inicio-fixo' });
+    await auth(request(app).put(`/api/programas/${id}/menu`)).send({
+      itens: [{ chave: 'inicio', oculto: true, rotulo: 'Página inicial' }],
+    });
+    const { body } = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(body.menu[0]).toMatchObject({ chave: 'inicio', rotulo: 'Página inicial' });
+  });
+
+  it('página criada pelo programa pode ser movida para outro grupo', async () => {
+    const { id, slug } = await criar({ slug: 'mover' });
+    const pg = await auth(request(app).post('/api/pages')).send({ title: 'Como ingressar', programaId: id, body: { value: '<p>x</p>' } });
+    const put = await auth(request(app).put(`/api/programas/${id}/menu`)).send({
+      itens: [{ chave: `pagina:${pg.body.id}`, grupo: 'admissao', ordem: 0 }],
+    });
+    expect(put.status).toBe(200);
+    const { body } = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(grupo(body.menu, 'admissao').itens.map((i) => i.rotulo)).toEqual(['Como ingressar', 'Editais']);
+    expect(grupo(body.menu, 'programa').itens.map((i) => i.chave)).toEqual(['sobre']);
+  });
+
+  it('recusa chave desconhecida, página de outro programa, grupo inválido e nome longo (400)', async () => {
+    const a = await criar({ slug: 'val-a' });
+    const b = await criar({ nome: 'PPG B', sigla: 'b', slug: 'val-b' });
+    const alheia = await auth(request(app).post('/api/pages')).send({ title: 'De B', programaId: b.id });
+    const casos = [
+      [{ chave: 'inventado' }],
+      [{ chave: `pagina:${alheia.body.id}` }],
+      [{ chave: 'docentes', grupo: 'nao-existe' }],
+      [{ chave: 'noticias', grupo: 'pessoas' }], // entrada do topo não vira item de grupo
+      [{ chave: 'faq', rotulo: 'x'.repeat(61) }],
+      [{ chave: 'faq' }, { chave: 'faq' }],
+    ];
+    for (const itens of casos) {
+      const res = await auth(request(app).put(`/api/programas/${a.id}/menu`)).send({ itens });
+      expect(res.status, JSON.stringify(itens)).toBe(400);
+    }
+  });
+
+  it('gestor de programa edita só o menu do próprio programa; anônimo não edita', async () => {
+    const a = await criar({ slug: 'gp-a' });
+    const b = await criar({ nome: 'PPG B', sigla: 'b', slug: 'gp-b' });
+    await auth(request(app).post('/api/users')).send({
+      email: 'gestor@menu.com', password: 'senha123', roles: ['GestorPrograma'], programaId: a.id, perfil_geral: { nome: 'G' },
+    });
+    const gt = await login('gestor@menu.com');
+    const como = (req) => req.set('Authorization', `Bearer ${gt}`);
+    const corpo = { itens: [{ chave: 'faq', oculto: true }] };
+    expect((await como(request(app).put(`/api/programas/${a.id}/menu`)).send(corpo)).status).toBe(200);
+    expect((await como(request(app).put(`/api/programas/${b.id}/menu`)).send(corpo)).status).toBe(403);
+    expect((await request(app).put(`/api/programas/${a.id}/menu`).send(corpo)).status).toBe(401);
   });
 });
