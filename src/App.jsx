@@ -93,6 +93,8 @@ const ProficienciaInscricaoSucesso = lazy(() => import('./pages/ProficienciaInsc
 // o endereço continua o mesmo.
 const PaginaInstitucional = lazy(() => import('./pages/PaginaInstitucional'));
 const Busca = lazy(() => import('./pages/Busca'));
+const RepositorioTeses = lazy(() => import('./pages/RepositorioTeses'));
+const ProgramaPublico = lazy(() => import('./pages/ProgramaPublico'));
 
 function NotFoundPublic() {
   return (
@@ -287,6 +289,7 @@ function App() {
           <Route path="/financeiro" element={<PaginaInstitucional slug="financeiro" />} />
           <Route path="/proext-pg" element={<PaginaInstitucional slug="proext-pg" />} />
           <Route path="/programas" element={<ProgramasStrictoSensu />} />
+          <Route path="/programas/:slug" element={<ProgramaPublico />} />
           <Route path="/calendario-academico" element={<CalendarioAcademico />} />
           <Route path="/editais" element={<Editais />} />
           <Route path="/editais/:id" element={<Edital />} />
@@ -306,6 +309,7 @@ function App() {
           <Route path="/reconhecimento" element={<PaginaInstitucional slug="reconhecimento" />} />
           <Route path="/privacidade" element={<PaginaInstitucional slug="privacidade" />} />
           <Route path="/busca" element={<Busca />} />
+          <Route path="/teses" element={<RepositorioTeses />} />
           <Route path="/noticias" element={<Noticias />} />
           <Route path="/noticia/:id" element={<Noticia />} />
           <Route path="/p/:slug" element={<PaginaInstitucional />} />

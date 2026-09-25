@@ -85,6 +85,7 @@ import {
   getEstrutura, updateUnidadeEstrutura, createUnidadeEstrutura, addMembroEstrutura, updateMembroEstrutura, endMembroEstrutura,
 } from '../controllers/estruturaController.js';
 import { buscaPublica } from '../controllers/buscaPublicaController.js';
+import { getProgramaPublico } from '../controllers/programaPublicoController.js';
 import { autorizarRevisao, getRevisoes, getRevisao, restaurarRevisao } from '../controllers/revisoesController.js';
 import { asyncRouter } from '../utils/asyncRouter.js';
 
@@ -174,6 +175,7 @@ router.get('/programas', getProgramas);
 // optionalProtect: com token de quem edita o programa, o microsite em
 // rascunho responde (pré-visualização); anônimo recebe 404.
 router.get('/programas/slug/:slug', optionalProtect, getProgramaBySlug);
+router.get('/programas/slug/:slug/publico', getProgramaPublico); // Fase N.2 — página automática de todo programa
 router.get('/programas/slug/:slug/pessoas', getProgramaDocentesPublic);
 router.get('/programas/slug/:slug/busca', buscaPrograma);
 router.get('/programas/slug/:slug/metricas', getProgramaMetricasPublic);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { apiFetch } from '../api';
 import CabecalhoPagina from '../components/CabecalhoPagina';
@@ -15,6 +16,11 @@ const mapModalidade = (tipo) => {
     default: return tipo;
   }
 };
+
+// Página do programa no portal (Fase N.2): o microsite quando ativo; senão a
+// página automática /programas/<slug>.
+const linkPrograma = (p) => (p.slug ? (p.microsite_ativo ? `/${p.slug}` : `/programas/${p.slug}`) : null);
+const siglaDe = (p) => (p.sigla && p.sigla !== 'S/SIGLA' ? p.sigla : '');
 
 const STATUS_LABELS = {
   ATIVO: 'Ativo',
@@ -33,6 +39,11 @@ const STATUS_BADGE_CLS = {
 export default function ProgramasStrictoSensu() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRede, setFilterRede] = useState('ALL');
+  // Filtros da Fase N.2: grande área, modalidade, nota CAPES e campus.
+  const [filtroArea, setFiltroArea] = useState('');
+  const [filtroModalidade, setFiltroModalidade] = useState('');
+  const [filtroNota, setFiltroNota] = useState('');
+  const [filtroCampus, setFiltroCampus] = useState('');
   const [programasData, setProgramasData] = useState({});
   const [allProgramas, setAllProgramas] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +68,7 @@ export default function ProgramasStrictoSensu() {
     const grouped = {};
     const filtered = allProgramas.filter(prog => {
       const matchSearch = prog.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          prog.sigla.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          siglaDe(prog).toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (prog.area_conhecimento && prog.area_conhecimento.toLowerCase().includes(searchTerm.toLowerCase())) ||
                           (prog.linhas && prog.linhas.some(l => (l.nome || l.label || l).toLowerCase().includes(searchTerm.toLowerCase()))) ||
                           (prog.palavras_chave && prog.palavras_chave.some(k => k.toLowerCase().includes(searchTerm.toLowerCase())));
@@ -66,7 +77,12 @@ export default function ProgramasStrictoSensu() {
       if (filterRede === 'SIM') matchRede = prog.em_rede === true;
       if (filterRede === 'NAO') matchRede = prog.em_rede === false;
 
-      return matchSearch && matchRede;
+      const mods = prog.modalidades || [];
+      const matchArea = !filtroArea || prog.grande_area === filtroArea;
+      const matchModalidade = !filtroModalidade || mods.some((m) => m.tipo === filtroModalidade);
+      const matchNota = !filtroNota || mods.some((m) => String(m.nota_capes) === filtroNota);
+      const matchCampus = !filtroCampus || (prog.campus || 'SEDE') === filtroCampus;
+      return matchSearch && matchRede && matchArea && matchModalidade && matchNota && matchCampus;
     });
 
     filtered.forEach(prog => {
@@ -89,7 +105,17 @@ export default function ProgramasStrictoSensu() {
     });
 
     setProgramasData(orderedGrouped);
-  }, [allProgramas, searchTerm, filterRede]);
+  }, [allProgramas, searchTerm, filterRede, filtroArea, filtroModalidade, filtroNota, filtroCampus]);
+
+  // Opções dos filtros a partir do cadastro.
+  const opcoes = (valores) => [...new Set(valores.filter(Boolean).map(String))].sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true }));
+  const areas = opcoes(allProgramas.map((p) => p.grande_area));
+  const campi = opcoes(allProgramas.map((p) => p.campus || 'SEDE'));
+  const notas = opcoes(allProgramas.flatMap((p) => (p.modalidades || []).map((m) => m.nota_capes)));
+  const filtrosAtivos = filtroArea || filtroModalidade || filtroNota || filtroCampus || filterRede !== 'ALL' || searchTerm;
+  const limparFiltros = () => {
+    setSearchTerm(''); setFilterRede('ALL'); setFiltroArea(''); setFiltroModalidade(''); setFiltroNota(''); setFiltroCampus('');
+  };
 
   const handleExport = (format) => {
     // Generate flat list from currently filtered programs
@@ -97,7 +123,7 @@ export default function ProgramasStrictoSensu() {
     Object.values(programasData).forEach(list => {
       list.forEach(prog => {
         flatData.push({
-          'Sigla': prog.sigla,
+          'Sigla': siglaDe(prog),
           'Nome': prog.nome,
           'Status': STATUS_LABELS[prog.status] || prog.status || 'Ativo',
           'Campus': prog.campus,
@@ -217,6 +243,27 @@ export default function ProgramasStrictoSensu() {
                 </div>
               </div>
 
+              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 -mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {[
+                  ['prog-area', 'Grande área', filtroArea, setFiltroArea, areas.map((a) => [a, a])],
+                  ['prog-modalidade', 'Modalidade', filtroModalidade, setFiltroModalidade, [['M', 'Mestrado Acadêmico'], ['D', 'Doutorado Acadêmico'], ['P', 'Mestrado Profissional']]],
+                  ['prog-nota', 'Nota CAPES', filtroNota, setFiltroNota, notas.map((n) => [n, `Nota ${n}`])],
+                  ['prog-campus', 'Campus', filtroCampus, setFiltroCampus, campi.map((c) => [c, c])],
+                  // Filtro sem opção (dado ainda não cadastrado, ex.: nota CAPES) não aparece.
+                ].filter(([, , , , itens]) => itens.length > 0).map(([id, rotulo, valor, set, itens]) => (
+                  <div key={id}>
+                    <label htmlFor={id} className="block text-xs font-bold text-gray-500 uppercase mb-1">{rotulo}</label>
+                    <select id={id} value={valor} onChange={(e) => set(e.target.value)} className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none text-sm">
+                      <option value="">Todas</option>
+                      {itens.map(([v, r]) => <option key={v} value={v}>{r}</option>)}
+                    </select>
+                  </div>
+                ))}
+                {filtrosAtivos && (
+                  <button type="button" onClick={limparFiltros} className="sm:col-span-2 lg:col-span-4 justify-self-start text-sm font-semibold text-ufrpe-blue hover:underline">Limpar filtros</button>
+                )}
+              </div>
+
               {Object.keys(programasData).length === 0 ? (
                 <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm animate-in fade-in duration-300">
                   <i className="fa-solid fa-graduation-cap text-gray-300 text-5xl mb-4"></i>
@@ -240,7 +287,9 @@ export default function ProgramasStrictoSensu() {
                         >
                           <div className="flex justify-between items-start mb-3 gap-2">
                             <h3 className="font-bold text-lg text-ufrpe-blue group-hover:text-ufrpe-yellow transition-colors leading-tight">
-                              {prog.nome} ({prog.sigla})
+                              {linkPrograma(prog)
+                                ? <Link to={linkPrograma(prog)} className="hover:underline">{prog.nome}{siglaDe(prog) && ` (${siglaDe(prog)})`}</Link>
+                                : <>{prog.nome}{siglaDe(prog) && ` (${siglaDe(prog)})`}</>}
                             </h3>
                           </div>
                           
@@ -326,6 +375,11 @@ export default function ProgramasStrictoSensu() {
                           </div>
                           
                           <div className="mt-auto">
+                            {linkPrograma(prog) && (
+                              <Link to={linkPrograma(prog)} className="block w-full text-center mb-3 py-2.5 bg-ufrpe-blue text-white text-sm font-bold rounded-lg hover:bg-ufrpe-yellow hover:text-ufrpe-blue transition-colors">
+                                {prog.microsite_ativo ? 'Acessar o site do programa' : 'Ver página do programa'}
+                              </Link>
+                            )}
                             {(prog.regimento_url || prog.regulamento_url || prog.sucupira_url) && (
                               <div className="flex flex-wrap gap-2 mb-3">
                                 {prog.regimento_url && (

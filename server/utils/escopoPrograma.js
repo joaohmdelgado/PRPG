@@ -16,6 +16,7 @@ export const resolveProgramaId = async (param) => {
 //                         nos tipos que têm `destaque` (notícias), os itens
 //                         de programa não marcados para o portal. Editais de
 //                         programa entram sempre (com o selo do programa).
+//   ?escopo=programas   → só o conteúdo dos programas (filtro de /editais, N.1)
 //   nenhum              → tudo (painel, e consumidores antigos)
 export async function filtrarPorEscopo(items, q = {}) {
   if (q.programa) {
@@ -23,6 +24,7 @@ export async function filtrarPorEscopo(items, q = {}) {
     return items.filter((i) => i.programaId === pid);
   }
   if (q.escopo === 'prpg') return items.filter((i) => !i.programaId);
+  if (q.escopo === 'programas') return items.filter((i) => i.programaId);
   if (q.escopo === 'portal') return items.filter((i) => !i.programaId || i.destaque !== false);
   return items;
 }

@@ -8,6 +8,7 @@ import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { estaPublicado, sqlPublicado } from '../utils/publicacao.js';
 import { calculateEditalStatus } from './editaisController.js';
 import { hojeISO } from '../utils/datas.js';
+import { mapaProgramas } from '../utils/programaResumo.js';
 
 const podeEditar = (user) => (user?.roles || []).some((r) => r === 'Administrator' || r === 'Gestor');
 
@@ -203,9 +204,7 @@ const QTD_PRAZOS = 6;
 
 export const getHome = async (req, res) => {
   const hoje = hojeISO();
-  const programas = new Map((await query(
-    'SELECT id, slug, sigla, nome, microsite_ativo FROM programas'
-  )).rows.map((p) => [p.id, { slug: p.slug, sigla: p.sigla, nome: p.nome, site: !!p.microsite_ativo }]));
+  const programas = await mapaProgramas();
   const comPrograma = (item) => ({ ...item, programa: item.programaId ? programas.get(item.programaId) || null : null });
 
   // Notícias: o que o portal agrega (D-R1), mais recentes primeiro. A de

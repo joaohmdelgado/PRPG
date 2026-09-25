@@ -31,13 +31,12 @@ const dataLonga = (iso) => {
 };
 const dataCurta = (iso) => (iso ? String(iso).slice(0, 10).split('-').reverse().join('/') : '');
 
-function SeloPrograma({ programa, className = '' }) {
+// Selo do programa. Dentro de um card que já é link (notícia), fica texto.
+function SeloPrograma({ programa, className = '', link = false }) {
   if (!programa) return null;
-  return (
-    <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-ufrpe-blue/10 text-ufrpe-blue ${className}`} title={programa.nome}>
-      {programa.sigla || programa.nome}
-    </span>
-  );
+  const classe = `inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-ufrpe-blue/10 text-ufrpe-blue ${className}`;
+  if (link && programa.link) return <Link to={programa.link} className={`${classe} hover:bg-ufrpe-blue/20`} title={programa.nome}>{programa.sigla || programa.nome}</Link>;
+  return <span className={classe} title={programa.nome}>{programa.sigla || programa.nome}</span>;
 }
 
 function Capa({ noticia, className }) {
@@ -91,7 +90,7 @@ export default function Home() {
             {hero.texto && <p className="text-lg text-gray-300 mb-8 max-w-2xl font-light">{hero.texto}</p>}
             <div className="flex flex-wrap gap-4">
               <Link to="/programas" className="px-8 py-3 bg-ufrpe-yellow text-ufrpe-blue font-bold rounded-lg hover:bg-white transition-colors shadow-[0_8px_20px_rgba(254,189,17,.25)]">Conheça os Cursos</Link>
-              <Link to="/editais" className="px-8 py-3 text-white font-bold rounded-lg border border-white/20 hover:bg-white/20 transition-colors backdrop-blur-sm bg-white/10">Editais abertos</Link>
+              <Link to="/editais?situacao=abertas" className="px-8 py-3 text-white font-bold rounded-lg border border-white/20 hover:bg-white/20 transition-colors backdrop-blur-sm bg-white/10">Editais abertos</Link>
             </div>
           </div>
         </div>
@@ -213,7 +212,7 @@ export default function Home() {
                       <div className="flex flex-wrap items-center gap-3 mb-2">
                         <span className={`${cor.selo} text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider`}>{e.situationLabel}</span>
                         {e.dataFim && e.situation === 'abertas' && <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-md"><i className="fa-regular fa-calendar mr-1" aria-hidden="true"></i>até {dataCurta(e.dataFim)}</span>}
-                        <SeloPrograma programa={e.programa} />
+                        <SeloPrograma programa={e.programa} link />
                       </div>
                       <h3 className="font-heading font-bold text-xl text-ufrpe-blue leading-snug">
                         <Link to={`/editais/${e.id}`} className="group-hover:text-ufrpe-cyan transition-colors">{e.title}</Link>

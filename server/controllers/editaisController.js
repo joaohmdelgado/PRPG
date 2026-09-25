@@ -6,6 +6,7 @@ import { hojeISO } from '../utils/datas.js';
 import { serverError } from '../utils/httpError.js';
 import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
 import { responderLista } from '../utils/listagem.js';
+import { mapaProgramas, anexarPrograma } from '../utils/programaResumo.js';
 
 const getLocalDateString = () => {
   const d = new Date();
@@ -79,7 +80,8 @@ export const getEditais = async (req, res) => {
   // Uma consulta de eventos para todos os editais (antes: uma por edital).
   const eventosPorEdital = await eventosRepo.listByEntidades('edital', editais.map((e) => e.id));
   const comEventos = editais.map((e) => anexarEventos(e, eventosPorEdital.get(e.id) || []));
-  let lista = comEventos.map(calculateEditalStatus);
+  // Selo e link do programa (Fase N.1).
+  let lista = anexarPrograma(comEventos.map(calculateEditalStatus), await mapaProgramas());
   // ?situacao=abertas|andamento|concluido (home e filtros da página).
   if (req.query.situacao) lista = lista.filter((e) => e.situation === req.query.situacao);
   responderLista(res, lista, req.query);
