@@ -396,18 +396,52 @@ item fictício.
 
 | | # | Ação |
 |---|---|---|
-| `[ ]` | N.1 | Página de editais que agrega PRPG e programas, com selo e link para o microsite, filtros por programa/modalidade/situação; visão "Seleções abertas" para candidatos |
-| `[ ]` | N.2 | Catálogo de programas com link para o microsite e filtros (área, modalidade, nota CAPES, campus). Página automática para programas sem microsite (coordenação, contatos públicos, modalidades, linhas, editais abertos, docentes): **os 42 programas passam a ter página pública no primeiro dia** |
-| `[ ]` | N.3 | Repositório global de teses e dissertações (programa, ano, tipo, orientador) |
-| `[ ]` | N.4 | Perfil público do docente (programas e papéis, linhas, disciplinas, orientações, grupos, Lattes/ORCID, contatos públicos). Exige antes fechar a FK de `vinculos.pessoa_id` (B.3) e ligar as linhas de pesquisa a `pessoas`; visibilidade por flag + `contatos.publico` |
-| `[ ]` | N.5 | Tabela `referencias` (origem → destino, tipo; lista fechada de entidades, mesmo padrão já aceito para `anexos`) e bloco "Relacionados" em notícia, edital, resolução e página |
-| `[ ]` | N.6 | Calendário com marcos em `DATE`, opcionalmente ligados a edital; componente "Próximos prazos" (home, microsite, área do aluno); exportação `.ics` |
-| `[ ]` | N.7 | Destravar E.11: `documento.secao` (F.4) substitui `section_id`; resoluções e formulários migram para `atos`/`documentos`; a página de resoluções passa a mostrar "vigente/revogada/alterada por" via `ato_referencias` |
-| `[ ]` | N.8 | Contatos como fonte única (conclui G.9 e B.6) e fim dos 8 campos espalhados |
-| `[ ]` | N.9 | View de indicadores derivados por programa/ano (docentes, discentes, egressos, teses); `metricas_anuais` fica só para o que não dá para calcular |
+| `[x]` | N.1 | Página de editais que agrega PRPG e programas, com selo e link para o microsite, filtros por programa/modalidade/situação; visão "Seleções abertas" para candidatos |
+| `[x]` | N.2 | Catálogo de programas com link para o microsite e filtros (área, modalidade, nota CAPES, campus). Página automática para programas sem microsite (coordenação, contatos públicos, modalidades, linhas, editais abertos, docentes): **os 42 programas passam a ter página pública no primeiro dia** |
+| `[x]` | N.3 | Repositório global de teses e dissertações (programa, ano, tipo, orientador) |
+| `[⛔]` | N.4 | Perfil público do docente (programas e papéis, linhas, disciplinas, orientações, grupos, Lattes/ORCID, contatos públicos). Exige antes fechar a FK de `vinculos.pessoa_id` (B.3) e ligar as linhas de pesquisa a `pessoas`; visibilidade por flag + `contatos.publico` |
+| `[x]` | N.5 | Tabela `referencias` (origem → destino, tipo; lista fechada de entidades, mesmo padrão já aceito para `anexos`) e bloco "Relacionados" em notícia, edital, resolução e página |
+| `[x]` | N.6 | Calendário com marcos em `DATE`, opcionalmente ligados a edital; componente "Próximos prazos" (home, microsite, área do aluno); exportação `.ics` |
+| `[⛔]` | N.7 | Destravar E.11: `documento.secao` (F.4) substitui `section_id`; resoluções e formulários migram para `atos`/`documentos`; a página de resoluções passa a mostrar "vigente/revogada/alterada por" via `ato_referencias` |
+| `[⛔]` | N.8 | Contatos como fonte única (conclui G.9 e B.6) e fim dos 8 campos espalhados |
+| `[x]` | N.9 | View de indicadores derivados por programa/ano (docentes, discentes, egressos, teses); `metricas_anuais` fica só para o que não dá para calcular |
 
 **Pronto quando:** de qualquer conteúdo se chega aos relacionados em 1 clique, todo programa tem
 página pública e nenhum número do site é digitado quando pode ser calculado.
+
+> **Nota de execução (25/09/2026)** — 6 de 9 itens aplicados (commits 17bd433 N.1-N.3, 5eb1a82 N.5,
+> abdeb70 N.6, 2a5dca4 N.9), com testes em `conexoes.test.js` (suíte: 320 testes verdes). Migrações
+> `2026-09-25_programas_slug`, `_menu_teses`, `_referencias`, `_calendario_datas` e
+> `_indicadores_programa` aplicadas no banco de desenvolvimento. **Como ficou:**
+> - N.1: `/editais` com selo do programa (link para o microsite ou a página automática), filtros de
+>   origem/programa/situação/ano no endereço e a visão "Seleções abertas". **Filtro por modalidade
+>   não feito:** o edital não tem modalidade no cadastro (precisaria de campo novo).
+> - N.2: **só 2 dos 42 programas tinham `slug`** — gerado para os outros 40 (sigla; sem sigla, o
+>   nome). `/programas/<slug>` é a página automática (cursos, coordenação, docentes com Lattes,
+>   linhas, editais em aberto, teses, números, contatos do programa — nenhum contato pessoal).
+>   Catálogo com filtros de área, modalidade, nota CAPES e campus; **grande área e nota CAPES estão
+>   vazias nos 42 programas**, então esses filtros ficam ocultos até a importação (Fase O).
+> - N.3: `/teses` (repositório de todos os programas, paginado no servidor) — entrou no menu. **Achado
+>   corrigido:** a API pública de teses devolvia o e-mail de autor e orientador; agora só o painel recebe.
+> - N.5: tabela `referencias` + bloco "Relacionados" em notícia, edital e páginas, editor nos 5
+>   formulários. Resolução e formulário não têm página própria: seus relacionados aparecem nos itens
+>   ligados a eles.
+> - N.6: marcos do calendário com `data_inicio`/`data_fim` (derivadas do texto do período, que
+>   continua sendo o que se digita) e edital opcional; "Próximos prazos" na home e no microsite;
+>   agenda `.ics` assinável (`/api/portal/calendario.ics`). **Área do aluno não existe** — o
+>   componente fica pronto para ela.
+> - N.9: view `indicadores_programa_ano`; `metricas_anuais` vale só para o não calculável e para
+>   anos em que o cálculo dá zero (cadastro incompleto). Vínculo sem datas conta só no ano corrente.
+> **Bloqueados (não iniciados):**
+> - N.4 (perfil público do docente): **D-R2** — decisão do encarregado de dados — e o fechamento da FK
+>   polimórfica de `vinculos.pessoa_id` (B.3, adiada desde a Fase A).
+> - N.7 ("vigente/revogada" nas resoluções): depende da E.11, que depende do importador E.5 (**D-E2,
+>   D-E3, D-E5**). A parte "`documento.secao` substitui `section_id`" já vale desde a F.4 (a seção
+>   gravada é o valor do vocabulário).
+> - N.8 (contatos como fonte única): depende de **D-G1** e da importação G.4 (D-G2..D-G8). Aposentar os
+>   campos espalhados antes disso tiraria dado do ar ou a proteção de privacidade (nota B.6 do PLANO).
+> **Não verificado no navegador:** o editor de relacionados e o de marcos no painel (exigem login) —
+> conferidos por build e testes; as páginas públicas foram conferidas no navegador.
 
 ### Fase S — Microsites no modelo que os programas já usam (~1 semana)
 
@@ -505,7 +539,7 @@ pendências no sistema, não na planilha.
 | R — Robustez imediata | 11 | — | 24/09/2026 | 24/09/2026 | ✅ concluída (ver nota da Fase R) |
 | F — Fundação editorial | 7 | D-R3 | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase F) |
 | H — Portal dirigido por dados | 7 | D-R1 | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase H) |
-| N — Conexões entre conteúdos | 9 | D-R1, D-R2 | | | ⬜ não iniciada |
+| N — Conexões entre conteúdos | 9 | D-R1, D-R2 | 25/09/2026 | 25/09/2026 | 🟡 6/9 (N.4 ⛔ D-R2; N.7 ⛔ E.11/D-E*; N.8 ⛔ D-G1 — ver nota da Fase N) |
 | S — Microsites em 4 grupos | 6 | — | | | ⬜ não iniciada |
 | O — Virada das planilhas | 7 | D-R5 + `PLANO.md` §4 | | | ⬜ não iniciada |
 | U — Painel e acessibilidade | 7 | — | | | ⬜ não iniciada |

@@ -246,7 +246,8 @@ Access at `/admin/login`. Main sections in sidebar:
   (async errors never crash the process, pg data errors -> 400/409, news
   dates, origin filter, users/resumo, compression/cache), and the editorial
   foundation (`publicacao`, `vocabularios`, `arquivos`, `revisoes`) and the
-  data-driven portal (`portal`, `estrutura`). ~310 tests in 40 files — the exact number drifts; check with `npx vitest run`.
+  data-driven portal (`portal`, `estrutura`) and content connections
+  (`conexoes`). ~320 tests in 41 files — the exact number drifts; check with `npx vitest run`.
 - Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes
@@ -349,6 +350,15 @@ content lives in `server/data/paginas-institucionais.json` and
 `npm run db:migrate`) only when missing — never overwrites edits. Public search:
 `/busca` → `/api/portal/busca` (Postgres full-text, `unaccent`). Page headers use
 `src/components/CabecalhoPagina.jsx` (breadcrumb derived from the main menu).
+
+**Connections (Fase N)**: every program has a public page `/programas/<slug>`
+(`/api/programas/slug/:slug/publico`, public data only) and a selo summary via
+`server/utils/programaResumo.js`; `/teses` is the cross-program repository;
+`referencias` links content both ways ("Relacionados", `/api/referencias/:tipo/:id`);
+calendar milestones have real dates (`data_inicio`/`data_fim`, parsed from the
+typed period by `server/utils/periodo.js`) feeding `/api/portal/prazos` and
+`/api/portal/calendario.ics`; per-year program indicators come from the view
+`indicadores_programa_ano` merged with `metricas_anuais` (`server/db/indicadoresRepo.js`).
 
 **Checking User Roles**:
 - Admin users are defined in `server/data/users.json`
