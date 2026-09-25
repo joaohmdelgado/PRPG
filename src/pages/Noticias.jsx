@@ -17,56 +17,61 @@ const formatDate = (dateStr) => {
   return dateStr;
 };
 
+const POR_PAGINA = 6;
+
 export default function Noticias() {
+  // Filtros e página ficam na URL (link compartilhável, voltar do navegador
+  // funciona). A filtragem e a paginação acontecem no servidor (Fase F.3):
+  // antes a página baixava todas as notícias, com o corpo completo.
   const [searchParams, setSearchParams] = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [category, setCategory] = useState('');
-  const [year, setYear] = useState('');
-  const [noticiasData, setNoticiasData] = useState([]);
+  const busca = searchParams.get('search') || '';
+  const category = searchParams.get('categoria') || '';
+  const year = searchParams.get('ano') || '';
+  const currentPage = Math.max(Number.parseInt(searchParams.get('pagina'), 10) || 1, 1);
+
+  const [search, setSearch] = useState(busca);
+  const [resultado, setResultado] = useState({ items: [], pages: 1, total: 0, anos: [] });
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(false);
 
-  useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const response = await apiFetch('/api/news', { auth: false });
-        const data = await response.json();
-        setNoticiasData(data);
-      } catch (error) {
-        console.error('Erro ao buscar notícias:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNews();
-  }, []);
-
-  // Sync search state if URL parameter changes
-  useEffect(() => {
-    setSearch(searchParams.get('search') || '');
-  }, [searchParams]);
-  
-  // Apply filtering
-  const filteredNoticias = noticiasData.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase()) || 
-                          item.excerpt.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = category === '' || item.categorySlug === category;
-    const matchesYear = year === '' || item.year === year;
-    return matchesSearch && matchesCategory && matchesYear;
+  // Atualiza a URL; qualquer mudança de filtro volta para a página 1.
+  const setFiltro = (chave, valor) => setSearchParams((prev) => {
+    const next = new URLSearchParams(prev);
+    if (valor) next.set(chave, valor); else next.delete(chave);
+    if (chave !== 'pagina') next.delete('pagina');
+    return next;
   });
 
-  // Pagination settings (can be extended)
-  const itemsPerPage = 6;
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.ceil(filteredNoticias.length / itemsPerPage);
-  
-  const paginatedNoticias = filteredNoticias.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Busca digitada: espera a pessoa parar de digitar antes de consultar.
+  useEffect(() => { setSearch(busca); }, [busca]);
+  useEffect(() => {
+    if (search === busca) return undefined;
+    const t = setTimeout(() => setFiltro('search', search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    let vivo = true;
+    const params = new URLSearchParams({ resumo: '1', page: String(currentPage), limit: String(POR_PAGINA) });
+    if (busca) params.set('q', busca);
+    if (category) params.set('categoria', category);
+    if (year) params.set('ano', year);
+    setErro(false);
+    apiFetch(`/api/news?${params}`, { auth: false })
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then((data) => { if (vivo) setResultado(data); })
+      .catch(() => { if (vivo) setErro(true); })
+      .finally(() => { if (vivo) setLoading(false); });
+    return () => { vivo = false; };
+  }, [busca, category, year, currentPage]);
+
+  const paginatedNoticias = resultado.items;
+  const totalPages = resultado.pages;
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+      setFiltro('pagina', page > 1 ? String(page) : '');
+      window.scrollTo({ top: 0 });
     }
   };
 
@@ -154,19 +159,8 @@ export default function Noticias() {
                   <input
                     type="text"
                     value={search}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setSearch(val);
-                      setCurrentPage(1);
-                      setSearchParams((prev) => {
-                        if (val) {
-                          prev.set('search', val);
-                        } else {
-                          prev.delete('search');
-                        }
-                        return prev;
-                      });
-                    }}
+                    onChange={(e) => setSearch(e.target.value)}
+                    aria-label="Buscar notícia"
                     placeholder="Ex: Evento de Pós-Graduação..."
                     className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ufrpe-blue focus:border-ufrpe-blue outline-none transition-all text-sm"
                   />
@@ -179,7 +173,8 @@ export default function Noticias() {
                 </label>
                 <select
                   value={category}
-                  onChange={(e) => { setCategory(e.target.value); setCurrentPage(1); }}
+                  onChange={(e) => setFiltro('categoria', e.target.value)}
+                  aria-label="Categoria"
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ufrpe-blue focus:border-ufrpe-blue outline-none transition-all appearance-none cursor-pointer text-sm"
                 >
                   <option value="">Todas</option>
@@ -198,13 +193,12 @@ export default function Noticias() {
                 </label>
                 <select
                   value={year}
-                  onChange={(e) => { setYear(e.target.value); setCurrentPage(1); }}
+                  onChange={(e) => setFiltro('ano', e.target.value)}
+                  aria-label="Ano"
                   className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-ufrpe-blue focus:border-ufrpe-blue outline-none transition-all appearance-none cursor-pointer text-sm"
                 >
                   <option value="">Todos</option>
-                  <option value="2026">2026</option>
-                  <option value="2025">2025</option>
-                  <option value="2024">2024</option>
+                  {(resultado.anos || []).map((a) => <option key={a} value={a}>{a}</option>)}
                 </select>
                 <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
               </div>
@@ -212,7 +206,13 @@ export default function Noticias() {
           </div>
 
           {/* News Grid */}
-          {paginatedNoticias.length === 0 ? (
+          {erro ? (
+            <div role="alert" className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm max-w-lg mx-auto">
+              <i className="fa-solid fa-triangle-exclamation text-gray-300 text-5xl mb-4" aria-hidden="true"></i>
+              <h3 className="font-heading font-bold text-xl text-gray-700 mb-2">Não foi possível carregar as notícias</h3>
+              <p className="text-gray-500">Tente novamente em alguns instantes.</p>
+            </div>
+          ) : paginatedNoticias.length === 0 ? (
             <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm max-w-lg mx-auto">
               <i className="fa-solid fa-newspaper text-gray-300 text-5xl mb-4"></i>
               <h3 className="font-heading font-bold text-xl text-gray-700 mb-2">Nenhuma notícia encontrada</h3>

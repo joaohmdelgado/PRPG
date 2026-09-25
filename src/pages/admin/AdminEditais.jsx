@@ -3,7 +3,7 @@ import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { withProgramaScope, isProgramaGestor } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
@@ -26,7 +26,7 @@ const AdminEditais = () => {
 
   const fetchEditais = async () => {
     try {
-      const response = await fetch(withProgramaScope(`${API_URL}/api/editais`));
+      const response = await apiFetch(withProgramaScope('/api/editais'));
       const data = await response.json();
       setEditais(Array.isArray(data) ? data : []);
     } catch (error) {

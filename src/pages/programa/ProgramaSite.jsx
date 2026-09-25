@@ -54,7 +54,7 @@ export default function ProgramaSite() {
       .catch((e) => {
         if (!active) return;
         if (e.message === '404' && !restPath) {
-          apiFetch(`/api/pages/slug/${encodeURIComponent(programaSlug)}`, { auth: false })
+          apiFetch(`/api/pages/slug/${encodeURIComponent(programaSlug)}`)
             .then((r) => (r.ok ? r.json() : null))
             .then((page) => {
               if (!active) return;

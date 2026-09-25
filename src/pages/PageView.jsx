@@ -14,7 +14,7 @@ export default function PageView() {
       setLoading(true);
       setError('');
       try {
-        const response = await apiFetch(`/api/pages/slug/${slug}`, { auth: false });
+        const response = await apiFetch(`/api/pages/slug/${slug}`);
         if (response.ok) {
           const data = await response.json();
           setPage(data);

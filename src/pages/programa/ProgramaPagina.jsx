@@ -20,7 +20,7 @@ export default function ProgramaPagina() {
     // ?programa= escopa a busca (o slug só é único dentro do programa — ver
     // pagesController.js), senão duas páginas de programas diferentes com o
     // mesmo nome (ex.: "Regimento") poderiam colidir.
-    apiFetch(`/api/pages/slug/${encodeURIComponent(pageSlug)}?programa=${encodeURIComponent(programa.id)}`, { auth: false })
+    apiFetch(`/api/pages/slug/${encodeURIComponent(pageSlug)}?programa=${encodeURIComponent(programa.id)}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!active) return;

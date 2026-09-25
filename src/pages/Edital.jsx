@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
+import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -19,7 +20,7 @@ export default function Edital() {
   useEffect(() => {
     const fetchEdital = async () => {
       try {
-        const response = await apiFetch(`/api/editais/${id}`, { auth: false });
+        const response = await apiFetch(`/api/editais/${id}`);
         if (response.ok) {
           const data = await response.json();
           setEdital(data);
@@ -88,6 +89,7 @@ export default function Edital() {
 
   return (
     <>
+      <AvisoPreVisualizacao item={edital} />
       {/* Page Header / Breadcrumbs */}
       <div className="bg-ufrpe-blue text-white py-16 relative overflow-hidden">
         <i className="fa-solid fa-scroll text-[20rem] text-white/5 -bottom-20 -right-20 absolute rotate-12 pointer-events-none"></i>

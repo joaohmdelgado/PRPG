@@ -4,6 +4,7 @@ import { API_URL, apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import { Spinner, EmptyState, formatDate } from '../../components/programa/ProgramaUI';
 import SafeHtml from '../../components/SafeHtml';
+import AvisoPreVisualizacao from '../../components/AvisoPreVisualizacao';
 
 export default function ProgramaNoticia() {
   const { slug } = usePrograma();
@@ -14,7 +15,7 @@ export default function ProgramaNoticia() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    apiFetch(`/api/news/${encodeURIComponent(id)}`, { auth: false })
+    apiFetch(`/api/news/${encodeURIComponent(id)}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (active) setNoticia(d); })
       .catch(() => {})
@@ -42,6 +43,7 @@ export default function ProgramaNoticia() {
 
   return (
     <article>
+      <AvisoPreVisualizacao item={noticia} />
       {/* Cabeçalho */}
       <div className="bg-[var(--prog-primary)] text-white py-12">
         <div className="container mx-auto px-4 max-w-4xl">

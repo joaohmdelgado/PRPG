@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
+import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -20,25 +21,43 @@ const formatDate = (dateStr) => {
 
 export default function Noticia() {
   const { id } = useParams();
-  const [noticiasData, setNoticiasData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Só a notícia pedida (antes: a lista inteira, com o corpo de todas, para
+  // achar uma). Com token, quem edita vê o rascunho — é a pré-visualização.
+  const [newsItem, setNewsItem] = useState(null);
+  const [relatedNews, setRelatedNews] = useState([]);
+  const [estado, setEstado] = useState('carregando'); // carregando | ok | naoEncontrada | erro
 
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const response = await apiFetch('/api/news', { auth: false });
-        const data = await response.json();
-        setNoticiasData(data);
-      } catch (error) {
-        console.error('Erro ao buscar notícias:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNews();
-  }, []);
+    let vivo = true;
+    setEstado('carregando');
+    apiFetch(`/api/news/${encodeURIComponent(id)}`)
+      .then(async (r) => {
+        if (r.status === 404) { if (vivo) setEstado('naoEncontrada'); return; }
+        if (!r.ok) throw new Error(String(r.status));
+        const item = await r.json();
+        if (!vivo) return;
+        setNewsItem(item);
+        setEstado('ok');
+        // Relacionadas: mesma categoria, sem a atual; se a categoria tiver
+        // menos de 3, completa com as mais recentes.
+        const buscar = async (categoria) => {
+          const params = new URLSearchParams({ resumo: '1', page: '1', limit: '3', excluir: item.id });
+          if (categoria) params.set('categoria', categoria);
+          const rel = await apiFetch(`/api/news?${params}`, { auth: false });
+          return rel.ok ? (await rel.json()).items || [] : [];
+        };
+        let relacionadas = item.categorySlug ? await buscar(item.categorySlug) : [];
+        if (relacionadas.length < 3) {
+          const ids = new Set(relacionadas.map((n) => n.id));
+          relacionadas = [...relacionadas, ...(await buscar(null)).filter((n) => !ids.has(n.id))].slice(0, 3);
+        }
+        if (vivo) setRelatedNews(relacionadas);
+      })
+      .catch(() => { if (vivo) setEstado('erro'); });
+    return () => { vivo = false; };
+  }, [id]);
 
-  if (loading) {
+  if (estado === 'carregando') {
     return (
       <div className="container mx-auto px-4 py-24 text-center">
         <div className="text-xl text-gray-500">Carregando notícia...</div>
@@ -46,15 +65,12 @@ export default function Noticia() {
     );
   }
 
-  // Find current news item
-  const newsItem = noticiasData.find(item => item.id === id);
-
-  if (!newsItem) {
+  if (estado !== 'ok' || !newsItem) {
     return (
       <div className="container mx-auto px-4 py-24 text-center">
         <i className="fa-solid fa-circle-exclamation text-gray-300 text-6xl mb-4"></i>
-        <h2 className="font-heading font-bold text-3xl text-ufrpe-blue mb-4">Notícia não encontrada</h2>
-        <p className="text-gray-600 mb-8">O artigo solicitado não existe ou foi removido.</p>
+        <h2 className="font-heading font-bold text-3xl text-ufrpe-blue mb-4">{estado === 'erro' ? 'Não foi possível carregar a notícia' : 'Notícia não encontrada'}</h2>
+        <p className="text-gray-600 mb-8">{estado === 'erro' ? 'Tente novamente em alguns instantes.' : 'O artigo solicitado não existe ou foi removido.'}</p>
         <Link
           to="/noticias"
           className="inline-flex items-center gap-2 px-6 py-3 bg-ufrpe-blue hover:bg-ufrpe-yellow hover:text-ufrpe-blue text-white font-bold rounded-xl transition-all"
@@ -64,11 +80,6 @@ export default function Noticia() {
       </div>
     );
   }
-
-  // Get related news (max 3 items, excluding current item)
-  const relatedNews = noticiasData
-    .filter(item => item.id !== newsItem.id)
-    .slice(0, 3);
 
   const getCategoryBadgeClass = (categorySlug) => {
     switch (categorySlug) {
@@ -89,6 +100,7 @@ export default function Noticia() {
 
   return (
     <>
+      <AvisoPreVisualizacao item={newsItem} />
       {/* Main Content */}
       <main className="flex-grow pb-16">
         

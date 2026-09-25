@@ -1,5 +1,6 @@
 import React from 'react';
 import SafeHtml from './SafeHtml';
+import AvisoPreVisualizacao from './AvisoPreVisualizacao';
 
 // Hero + corpo de uma página institucional customizada. Compartilhado entre
 // /<slug> (página geral), /p/:slug (endereço legado) e /<programaSlug>/<slug>
@@ -7,6 +8,7 @@ import SafeHtml from './SafeHtml';
 export default function InstitutionalPageContent({ page, heroClassName = 'bg-ufrpe-blue', breadcrumb }) {
   return (
     <>
+      <AvisoPreVisualizacao item={page} />
       <div className={`${heroClassName} text-white py-16 relative overflow-hidden`}>
         <i className="fa-solid fa-file-lines text-[20rem] text-white/5 -bottom-20 -right-20 absolute rotate-12 pointer-events-none"></i>
         <div className="container mx-auto px-4">

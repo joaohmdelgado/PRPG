@@ -15,12 +15,14 @@ import { responderLista, filtrarTexto } from '../utils/listagem.js';
 export const getNews = async (req, res) => {
   const q = req.query;
   let items = filtrarVisiveis(await filtrarPorEscopo(await newsRepo.getAll(), q), req.user, q);
+  // Anos com notícia (antes de filtrar por ano/busca), para o seletor da página.
+  const anos = [...new Set(items.map((n) => n.year).filter(Boolean))].sort().reverse();
   if (q.categoria) items = items.filter((n) => n.categorySlug === q.categoria);
   if (q.ano) items = items.filter((n) => String(n.year) === String(q.ano));
   if (q.excluir) items = items.filter((n) => n.id !== q.excluir);
   if (q.destaque === '1') items = items.filter((n) => n.destaque);
   items = filtrarTexto(items, q.q, ['title', 'excerpt']);
-  responderLista(res, items, q, { resumir: ({ content, ...resto }) => resto });
+  responderLista(res, items, q, { resumir: ({ content, ...resto }) => resto, extra: { anos } });
 };
 
 export const getNewsById = async (req, res) => {

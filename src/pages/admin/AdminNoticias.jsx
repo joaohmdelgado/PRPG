@@ -3,7 +3,7 @@ import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { API_URL } from '../../api';
+import { API_URL, apiFetch } from '../../api';
 import { withProgramaScope, isProgramaGestor } from '../../auth';
 import { LastEdited } from '../../components/AuditInfo';
 import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
@@ -41,7 +41,7 @@ const AdminNoticias = () => {
 
   const fetchNews = async () => {
     try {
-      const response = await fetch(withProgramaScope(`${API_URL}/api/news`));
+      const response = await apiFetch(withProgramaScope('/api/news'));
       const data = await response.json();
       setNews(Array.isArray(data) ? data : []);
     } catch (error) {

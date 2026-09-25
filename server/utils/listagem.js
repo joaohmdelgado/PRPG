@@ -8,7 +8,8 @@
 
 const LIMITE_MAX = 100;
 
-export function responderLista(res, items, q = {}, { resumir } = {}) {
+// `extra`: campos a mais na resposta paginada (ex.: anos disponíveis para o filtro).
+export function responderLista(res, items, q = {}, { resumir, extra = {} } = {}) {
   let out = items;
   if (q.resumo === '1' && resumir) out = out.map(resumir);
   if (q.page === undefined && q.limit === undefined) return res.json(out);
@@ -17,7 +18,7 @@ export function responderLista(res, items, q = {}, { resumir } = {}) {
   const total = out.length;
   const pages = Math.max(Math.ceil(total / limit), 1);
   const page = Math.min(Math.max(Number.parseInt(q.page, 10) || 1, 1), pages);
-  return res.json({ items: out.slice((page - 1) * limit, page * limit), total, page, limit, pages });
+  return res.json({ items: out.slice((page - 1) * limit, page * limit), total, page, limit, pages, ...extra });
 }
 
 // Busca textual simples (sem acento, sem caixa) sobre os campos informados.
