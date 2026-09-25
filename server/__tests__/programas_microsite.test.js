@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../app.js';
 import { pool } from '../db/pool.js';
-import { resetDb, seedAdmin, loginAdmin, login } from './helpers.js';
+import { resetDb, seedAdmin, loginAdmin, login, seedUser } from './helpers.js';
 
 let token;
 
@@ -472,5 +472,50 @@ describe('microsite — ocultar, reordenar e renomear o menu (Fase S.3)', () => 
     expect((await como(request(app).put(`/api/programas/${a.id}/menu`)).send(corpo)).status).toBe(200);
     expect((await como(request(app).put(`/api/programas/${b.id}/menu`)).send(corpo)).status).toBe(403);
     expect((await request(app).put(`/api/programas/${a.id}/menu`).send(corpo)).status).toBe(401);
+  });
+});
+
+describe('microsite — checklist de publicação (Fase S.4)', () => {
+  const okDe = (body) => Object.fromEntries(body.itens.map((i) => [i.chave, i.ok]));
+
+  it('programa recém-criado começa em 0%', async () => {
+    const { id } = await criar({ slug: 'zero' });
+    const res = await auth(request(app).get(`/api/programas/${id}/checklist`));
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ feitos: 0, total: 7, percentual: 0 });
+    expect(res.body.itens.map((i) => i.chave)).toEqual(['logo', 'cores', 'descricao', 'sobre', 'coordenacao', 'contatos', 'linhas']);
+  });
+
+  it('conta cada item preenchido até 100%', async () => {
+    await seedUser({ id: 'coord-x', email: 'coordx@test.com', roles: ['Professor'], perfil_geral: { nome: 'Coord X' } });
+    const { id } = await criar({
+      slug: 'completo', logo_url: '/uploads/logo.png', cor_primaria: '#5a1a2b', cor_secundaria: '#c9a227',
+      descricao_curta: 'Programa de exemplo.', email_programa: 'ppg@ufrpe.br',
+      coordenador_atual: { pessoa_id: 'coord-x', portaria: 'P1' },
+    });
+    let res = await auth(request(app).get(`/api/programas/${id}/checklist`));
+    expect(okDe(res.body)).toMatchObject({ logo: true, cores: true, descricao: true, contatos: true, coordenacao: true, sobre: false, linhas: false });
+    expect(res.body.percentual).toBe(71);
+
+    const sobre = (await auth(request(app).get(`/api/pages?programa=${id}`))).body.find((p) => p.chave === 'sobre');
+    await auth(request(app).put(`/api/pages/${sobre.id}`)).send({ body: { value: '<p>Quem somos</p>' } });
+    const { rows: [linha] } = await pool.query("INSERT INTO linhas_pesquisa (nome) VALUES ('Linha 1') RETURNING id");
+    await auth(request(app).put(`/api/programas/${id}/linhas`)).send({ linha_ids: [linha.id] });
+
+    res = await auth(request(app).get(`/api/programas/${id}/checklist`));
+    expect(res.body).toMatchObject({ feitos: 7, percentual: 100 });
+  });
+
+  it('"Sobre" em rascunho ou só com espaço não conta', async () => {
+    const { id } = await criar({ slug: 'sobre-rasc' });
+    const sobre = (await auth(request(app).get(`/api/pages?programa=${id}`))).body.find((p) => p.chave === 'sobre');
+    await auth(request(app).put(`/api/pages/${sobre.id}`)).send({ body: { value: '<p>Texto</p>' }, status: 'RASCUNHO' });
+    expect(okDe((await auth(request(app).get(`/api/programas/${id}/checklist`))).body).sobre).toBe(false);
+  });
+
+  it('exige login e responde 404 para programa inexistente', async () => {
+    const { id } = await criar({ slug: 'chk' });
+    expect((await request(app).get(`/api/programas/${id}/checklist`)).status).toBe(401);
+    expect((await auth(request(app).get('/api/programas/nao-existe/checklist'))).status).toBe(404);
   });
 });

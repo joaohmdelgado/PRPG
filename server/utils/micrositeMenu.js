@@ -1,3 +1,5 @@
+import { estaPublicado } from './publicacao.js';
+
 // Menu do microsite de um programa (Fase S.1 de
 // docs/revisao-portal-conteudo-2026-09-24.md). Segue o padrão que os 29 sites
 // atuais dos programas já usam (analises-sites-pos-graduacao/): quatro grupos
@@ -204,4 +206,34 @@ export function validarAjustes(entrada, paginaIds = []) {
     });
   }
   return linhas;
+}
+
+// Checklist de publicação do microsite (Fase S.4): o mínimo para o site de um
+// programa não sair vazio. Cada item diz onde se resolve no painel
+// (`onde`: 'programa' = formulário do programa; 'sobre' = página fixa Sobre;
+// 'linhas' = linhas de pesquisa do programa).
+//   programa — linha de `programas`;
+//   sobre — página fixa "Sobre" (ou null);
+//   temCoordenacao — há vínculo ativo COORDENADOR_ATUAL;
+//   linhas — quantidade de linhas de pesquisa.
+export function checklistPublicacao({ programa, sobre, temCoordenacao, linhas }) {
+  const preenchido = (v) => typeof v === 'string' && v.trim() !== '';
+  const itens = [
+    { chave: 'logo', rotulo: 'Logo', ok: preenchido(programa.logo_url), onde: 'programa',
+      dica: 'Envie a logo em "Identidade Visual".' },
+    { chave: 'cores', rotulo: 'Cores', ok: preenchido(programa.cor_primaria) && preenchido(programa.cor_secundaria), onde: 'programa',
+      dica: 'Escolha a cor primária e a de destaque (sem elas o site usa o azul e o amarelo da PRPG).' },
+    { chave: 'descricao', rotulo: 'Descrição curta', ok: preenchido(programa.descricao_curta), onde: 'programa',
+      dica: 'Uma frase que resume o programa — aparece no topo e no rodapé.' },
+    { chave: 'sobre', rotulo: 'Página "Sobre"', ok: !!sobre && estaPublicado(sobre) && temTexto(sobre.body?.value), onde: 'sobre',
+      dica: 'Escreva e publique a página "Sobre o Programa".' },
+    { chave: 'coordenacao', rotulo: 'Coordenação', ok: !!temCoordenacao, onde: 'programa',
+      dica: 'Informe quem coordena o programa.' },
+    { chave: 'contatos', rotulo: 'Contatos', ok: preenchido(programa.email_programa) || preenchido(programa.telefone_secretaria), onde: 'programa',
+      dica: 'E-mail ou telefone da secretaria.' },
+    { chave: 'linhas', rotulo: 'Linhas de pesquisa', ok: linhas > 0, onde: 'linhas',
+      dica: 'Cadastre ao menos uma linha de pesquisa.' },
+  ];
+  const feitos = itens.filter((i) => i.ok).length;
+  return { itens, feitos, total: itens.length, percentual: Math.round((feitos / itens.length) * 100) };
 }

@@ -3,7 +3,7 @@ import { useConfirm } from '../../components/admin/ConfirmModal';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, ExternalLink, Plus, Edit2, Trash2, Lock, File,
+  ArrowLeft, ExternalLink, Plus, Edit2, Trash2, Lock, File, CheckCircle2, Circle,
   Newspaper, FileText, Scale, FileSpreadsheet, BookOpen, HelpCircle,
   Book, Microscope, Presentation, UserCheck, Users, FlaskConical,
   BarChart2, Settings,
@@ -75,6 +75,41 @@ function EstadoFixa({ pagina }) {
   return <span className="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-700">no menu</span>;
 }
 
+// Checklist de publicação (Fase S.4 — GET /api/programas/:id/checklist).
+function ChecklistPublicacao({ checklist, linkPara }) {
+  const { itens, feitos, total, percentual } = checklist;
+  const cor = percentual === 100 ? 'bg-green-500' : percentual >= 50 ? 'bg-ufrpe-blue' : 'bg-amber-500';
+  return (
+    <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="flex items-baseline justify-between gap-3 mb-2">
+        <h3 className="font-heading text-lg font-semibold text-gray-800">Checklist de publicação</h3>
+        <span className="text-sm font-semibold text-gray-700">{percentual}% <span className="font-normal text-gray-400">({feitos} de {total})</span></span>
+      </div>
+      <div className="h-2 rounded-full bg-gray-100 overflow-hidden mb-4" role="progressbar" aria-valuenow={percentual} aria-valuemin={0} aria-valuemax={100} aria-label="Checklist de publicação">
+        <div className={`h-full ${cor} transition-all`} style={{ width: `${percentual}%` }} />
+      </div>
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+        {itens.map((i) => (
+          <li key={i.chave} className="flex items-start gap-2 text-sm">
+            {i.ok
+              ? <CheckCircle2 size={17} className="text-green-600 shrink-0 mt-0.5" aria-label="feito" />
+              : <Circle size={17} className="text-gray-300 shrink-0 mt-0.5" aria-label="pendente" />}
+            <span className="min-w-0">
+              <span className={i.ok ? 'text-gray-700' : 'text-gray-900 font-medium'}>{i.rotulo}</span>
+              {!i.ok && (
+                <span className="block text-xs text-gray-500">
+                  {i.dica}{' '}
+                  {linkPara(i.onde) && <Link to={linkPara(i.onde)} className="text-ufrpe-blue hover:underline">Resolver</Link>}
+                </span>
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 const AdminProgramaSite = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -82,15 +117,18 @@ const AdminProgramaSite = () => {
 
   const [programa, setPrograma] = useState(null);
   const [paginas, setPaginas] = useState([]);
+  const [checklist, setChecklist] = useState(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null); // id da página sendo excluída
 
   const load = async () => {
     setLoading(true);
-    const [rPrograma, rPaginas] = await Promise.all([
+    const [rPrograma, rPaginas, rChecklist] = await Promise.all([
       apiFetch(`/api/programas/${id}`),
       apiFetch(`/api/pages?programa=${id}`),
+      apiFetch(`/api/programas/${id}/checklist`),
     ]);
+    if (rChecklist.ok) setChecklist(await rChecklist.json());
     if (rPrograma.ok) setPrograma(await rPrograma.json());
     else if (rPrograma.status === 401) return navigate('/admin/login');
     if (rPaginas.ok) setPaginas(await rPaginas.json());
@@ -155,6 +193,17 @@ const AdminProgramaSite = () => {
           </p>
         )}
       </div>
+
+      {checklist && (
+        <ChecklistPublicacao
+          checklist={checklist}
+          linkPara={(onde) => ({
+            programa: `/admin/programas/editar/${id}`,
+            sobre: fixas.find((p) => p.chave === 'sobre') ? `/admin/paginas/editar/${fixas.find((p) => p.chave === 'sobre').id}` : null,
+            linhas: `/admin/programas/${id}/linhas`,
+          })[onde]}
+        />
+      )}
 
       {/* Páginas fixas (Fase S.2) */}
       <div className="bg-white rounded-lg shadow-sm p-6">

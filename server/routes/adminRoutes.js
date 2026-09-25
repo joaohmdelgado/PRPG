@@ -9,7 +9,7 @@ import { getNews, getNewsById, createNews, updateNews, deleteNews } from '../con
 import { getEditais, getEditalById, createEdital, updateEdital, deleteEdital, addErrata, removeErrata, setResultadoParcial, setResultadoFinal } from '../controllers/editaisController.js';
 import { getResolucoes, getResolucaoById, createResolucao, updateResolucao, deleteResolucao } from '../controllers/resolucoesController.js';
 import { getFormularios, getFormularioById, createFormulario, updateFormulario, deleteFormulario } from '../controllers/formulariosController.js';
-import { getProgramas, getProgramaById, getProgramaBySlug, createPrograma, updatePrograma, deletePrograma, getProgramaDocentesPublic, getDocentesAdmin, addDocente, removeDocente, buscaPrograma, getComissoesAdmin, addComissaoMembro, removeComissaoMembro, getProgramaMetricasPublic, getProgramaDiscentesPublic, getDiscentesAdmin, addDiscente, removeDiscente, getProgramaLinhas, updateProgramaLinhas, getMenuPrograma, updateMenuPrograma } from '../controllers/programasController.js';
+import { getProgramas, getProgramaById, getProgramaBySlug, createPrograma, updatePrograma, deletePrograma, getProgramaDocentesPublic, getDocentesAdmin, addDocente, removeDocente, buscaPrograma, getComissoesAdmin, addComissaoMembro, removeComissaoMembro, getProgramaMetricasPublic, getProgramaDiscentesPublic, getDiscentesAdmin, addDiscente, removeDiscente, getProgramaLinhas, updateProgramaLinhas, getMenuPrograma, updateMenuPrograma, getChecklistPrograma } from '../controllers/programasController.js';
 import { getCalendarios, getCalendarioById, createCalendario, updateCalendario, deleteCalendario } from '../controllers/calendariosController.js';
 import { getPortarias, getPortariaById, createPortaria, updatePortaria, deletePortaria } from '../controllers/portariasController.js';
 import { getGruposPesquisa, getGruposPublicos, getGrupoPesquisaById, createGrupoPesquisa, updateGrupoPesquisa, deleteGrupoPesquisa } from '../controllers/gruposPesquisaController.js';
@@ -198,6 +198,7 @@ router.get('/programas/:id/linhas', protect, requireRole(['Administrator', 'Gest
 router.put('/programas/:id/linhas', protect, requireInstitutionalWriter, requireSelfPrograma, updateProgramaLinhas);
 router.get('/programas/:id/menu', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireSelfPrograma, getMenuPrograma);
 router.put('/programas/:id/menu', protect, requireInstitutionalWriter, requireSelfPrograma, updateMenuPrograma);
+router.get('/programas/:id/checklist', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireSelfPrograma, getChecklistPrograma);
 // Rota genérica DEPOIS das específicas
 router.get('/programas/:id', getProgramaById);
 router.get('/calendarios', optionalProtect, getCalendarios);

@@ -6,7 +6,7 @@
 import { pool, query } from './pool.js';
 import { pagesRepo } from './repositories.js';
 import { visivelPara, sqlPublicado } from '../utils/publicacao.js';
-import { montarMenu, temTexto } from '../utils/micrositeMenu.js';
+import { montarMenu, temTexto, checklistPublicacao } from '../utils/micrositeMenu.js';
 
 const TABELAS_MODULO = [
   ['disciplinas', 'disciplinas'],
@@ -86,4 +86,16 @@ export async function menuDoPrograma(programaId, user, { todos = false, modulos 
     ajustes,
     todos,
   });
+}
+
+// Checklist de publicação (Fase S.4) de um programa; null se não existe.
+export async function checklistDoPrograma(programaId) {
+  const { rows: [programa] } = await query('SELECT * FROM programas WHERE id = $1', [programaId]);
+  if (!programa) return null;
+  const [sobre, coord, linhas] = await Promise.all([
+    pagesRepo.getFixed(programaId, 'sobre'),
+    query(`SELECT 1 FROM vinculos WHERE programa_id = $1 AND papel = 'COORDENADOR_ATUAL' AND ativo LIMIT 1`, [programaId]),
+    query('SELECT count(*)::int AS n FROM programa_linhas_pesquisa WHERE programa_id = $1', [programaId]),
+  ]);
+  return checklistPublicacao({ programa, sobre, temCoordenacao: coord.rows.length > 0, linhas: linhas.rows[0].n });
 }

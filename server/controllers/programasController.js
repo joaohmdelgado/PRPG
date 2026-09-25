@@ -7,7 +7,7 @@ import { indicadoresDoPrograma } from '../db/indicadoresRepo.js';
 import { serverError } from '../utils/httpError.js';
 import { slugify } from '../utils/slug.js';
 import { sqlPaginaComTexto, validarAjustes } from '../utils/micrositeMenu.js';
-import { contarModulos, menuDoPrograma, salvarAjustes } from '../db/micrositeRepo.js';
+import { contarModulos, menuDoPrograma, salvarAjustes, checklistDoPrograma } from '../db/micrositeRepo.js';
 import { visivelPara, sqlPublicado } from '../utils/publicacao.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
@@ -935,4 +935,11 @@ export const updateMenuPrograma = async (req, res) => {
   }
   await salvarAjustes(req.params.id, linhas, req.user?.id);
   res.json(await menuDoPrograma(req.params.id, req.user, { todos: true }));
+};
+
+// Checklist de publicação do microsite (Fase S.4) — tela "Site do Programa".
+export const getChecklistPrograma = async (req, res) => {
+  const checklist = await checklistDoPrograma(req.params.id);
+  if (!checklist) return res.status(404).json({ message: 'Programa não encontrado' });
+  res.json(checklist);
 };
