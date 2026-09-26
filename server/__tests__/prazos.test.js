@@ -163,3 +163,46 @@ describe('prazos — agendador consolida todas as regras', () => {
     expect(resultado).toHaveProperty('reservas');
   });
 });
+
+describe('agendador fora do processo web (O.5)', () => {
+  it('modo só-painel registra o aviso em notificacoes (SO_PAINEL), mesmo com SMTP configurado, e guarda a execução', async () => {
+    const { executarAgendador, estadoDoAgendador } = await import('../services/agendador.js');
+    const { _resetTransporterCache } = await import('../services/email.js');
+    process.env.SMTP_HOST = 'smtp.invalido.test'; process.env.SMTP_USER = 'u'; process.env.SMTP_PASS = 'p';
+    _resetTransporterCache();
+    try {
+      await seedPessoaComEmail('pessoa-relator', 'Relator Teste', 'relator@teste.com');
+      const proc = await asAdmin(request(app).post('/api/camara/processos')).send({ numero: '23082.111111/2026-01', assunto: 'P' });
+      await pool.query(
+        `INSERT INTO camara_relatorias (id, processo_id, relator_id, relator_nome, prazo_devolucao, ativa, criado_em)
+         VALUES ('rel-x', $1, 'pessoa-relator', 'Relator Teste', $2, TRUE, now())`, [proc.body.id, diasISO(5)]);
+
+      const r = await executarAgendador({ origem: 'manual' });
+      expect(r.modo).toBe('SO_PAINEL');
+      expect(r.resumo.camara.lembretes).toBe(1);
+      const { rows } = await pool.query('SELECT situacao, tentativas FROM notificacoes');
+      expect(rows).toEqual([{ situacao: 'SO_PAINEL', tentativas: 0 }]); // nenhuma tentativa de envio
+
+      const estado = await estadoDoAgendador();
+      expect(estado).toMatchObject({ modoAtual: 'SO_PAINEL', atrasado: false });
+      expect(estado.ultima).toMatchObject({ origem: 'manual', erro: null });
+    } finally {
+      delete process.env.SMTP_HOST; delete process.env.SMTP_USER; delete process.env.SMTP_PASS;
+      _resetTransporterCache();
+    }
+  });
+
+  it('sem execução registrada o painel sabe que o agendador não roda', async () => {
+    const { estadoDoAgendador } = await import('../services/agendador.js');
+    expect(await estadoDoAgendador()).toMatchObject({ ultima: null, atrasado: true });
+  });
+
+  it('a API expõe o estado e a execução manual (só Administrator)', async () => {
+    const res = await asAdmin(request(app).post('/api/notificacoes/agendador/executar'));
+    expect(res.status).toBe(200);
+    const est = await asAdmin(request(app).get('/api/notificacoes/agendador'));
+    expect(est.body.historico).toHaveLength(1);
+    const semToken = await request(app).get('/api/notificacoes/agendador');
+    expect(semToken.status).toBe(401);
+  });
+});

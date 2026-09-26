@@ -35,6 +35,7 @@ export const RESET_TABLES = [
   // Fase O.2: importação das planilhas (origens/pendências/de-para antes da execução).
   'importacao_origens', 'importacao_pendencias', 'importacao_depara', 'importacoes',
   'planilhas', // Fase O.4 (seed de 4 linhas, recriado abaixo)
+  'agendador_execucoes', // Fase O.5
 ];
 
 // Tabelas do schema que o resetDb deliberadamente NÃO toca: `unidades` é seed
@@ -56,7 +57,7 @@ export const RESET_FORA_DO_SCHEMA = ['schema_migrations'];
 export const RESET_SEQUENCES = [
   'calendario_milestones_id_seq', 'ato_diplomas_id_seq', 'linhas_pesquisa_id_seq',
   'taxonomia_refs_id_seq', 'vocabularios_id_seq', 'revisoes_id_seq',
-  'menu_itens_id_seq', 'referencias_id_seq',
+  'menu_itens_id_seq', 'referencias_id_seq', 'agendador_execucoes_id_seq',
 ];
 
 export async function resetDb() {

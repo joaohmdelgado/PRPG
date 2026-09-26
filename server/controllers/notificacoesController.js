@@ -1,6 +1,7 @@
 // Fase I.6 (PLANO.md): tela de acompanhamento de envios. Ver services/email.js.
 import { query } from '../db/pool.js';
 import { enviarEmail, reenviar } from '../services/email.js';
+import { executarAgendador, estadoDoAgendador } from '../services/agendador.js';
 
 const fromRow = (r) => ({
   id: r.id, destinatarioEmail: r.destinatario_email, destinatarioPessoaId: r.destinatario_pessoa_id,
@@ -36,4 +37,13 @@ export const enviarTeste = async (req, res) => {
     destinatarioEmail: req.user.email, tipo: 'TESTE', entidade: null, entidadeId: null, dados: {},
   }, req.user?.id);
   res.status(201).json(resultado);
+};
+
+// Fase O.5: estado do agendador (que roda fora do processo web) e execução manual.
+export const getAgendador = async (_req, res) => res.json(await estadoDoAgendador());
+
+export const executarAgendadorManual = async (req, res) => {
+  const r = await executarAgendador({ origem: 'manual' });
+  if (r.ocupado) return res.status(409).json({ message: 'Outra execução do agendador está em andamento.' });
+  res.json(r);
 };

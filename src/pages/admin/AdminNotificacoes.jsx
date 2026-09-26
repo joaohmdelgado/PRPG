@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Send, RotateCw, Mail } from 'lucide-react';
+import { Send, RotateCw, Mail, Clock, Play } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
 import { useToast } from '../../components/admin/Toast';
@@ -10,6 +10,7 @@ const SITUACAO_INFO = {
   PENDENTE: { label: 'Pendente', color: 'bg-gray-100 text-gray-700' },
   ERRO: { label: 'Erro', color: 'bg-red-100 text-red-700' },
   SEM_SMTP: { label: 'SMTP não configurado', color: 'bg-amber-100 text-amber-800' },
+  SO_PAINEL: { label: 'Só no painel', color: 'bg-sky-100 text-sky-800' },
 };
 
 const fmtDataHora = (iso) => iso ? new Date(iso).toLocaleString('pt-BR') : '—';
@@ -19,6 +20,8 @@ export default function AdminNotificacoes() {
   const [situacao, setSituacao] = useState('');
   const [loading, setLoading] = useState(true);
   const [enviandoTeste, setEnviandoTeste] = useState(false);
+  const [agendador, setAgendador] = useState(null);
+  const [rodandoAgendador, setRodandoAgendador] = useState(false);
   const { toast, Toasts } = useToast();
 
   const fetchLista = useCallback(async () => {
@@ -31,7 +34,21 @@ export default function AdminNotificacoes() {
     setLoading(false);
   }, [situacao, toast]);
 
+  const fetchAgendador = useCallback(async () => {
+    const res = await apiFetch('/api/notificacoes/agendador');
+    if (res.ok) setAgendador(await res.json());
+  }, []);
+
   useEffect(() => { fetchLista(); }, [fetchLista]);
+  useEffect(() => { fetchAgendador(); }, [fetchAgendador]);
+
+  const rodarAgendador = async () => {
+    setRodandoAgendador(true);
+    const res = await apiFetch('/api/notificacoes/agendador/executar', { method: 'POST' });
+    setRodandoAgendador(false);
+    if (res.ok) { toast.success('Avaliação de prazos executada.'); fetchLista(); fetchAgendador(); }
+    else toast.error((await res.json().catch(() => ({}))).message || 'Não foi possível executar o agendador.');
+  };
 
   const enviarTeste = async () => {
     setEnviandoTeste(true);
@@ -66,8 +83,25 @@ export default function AdminNotificacoes() {
         </button>
       </div>
 
+      {agendador && (
+        <div className={`mb-4 rounded-lg border p-3 text-sm flex flex-wrap items-center justify-between gap-2 ${agendador.atrasado ? 'border-amber-200 bg-amber-50 text-amber-900' : 'border-gray-100 bg-gray-50 text-gray-700'}`}>
+          <span className="flex items-center gap-2">
+            <Clock size={15} />
+            {agendador.ultima
+              ? `Agendador de prazos: última execução em ${fmtDataHora(agendador.ultima.iniciadoEm)} (${agendador.ultima.origem}).`
+              : 'O agendador de prazos ainda não rodou.'}
+            {agendador.atrasado && ' Ele deveria rodar todo dia (npm run agendador, por cron).'}
+            {' '}Modo: {agendador.modoAtual === 'SO_PAINEL' ? 'só no painel (sem e-mail)' : 'com e-mail'}.
+            {agendador.ultima?.erro && ` Erro: ${agendador.ultima.erro}`}
+          </span>
+          <button onClick={rodarAgendador} disabled={rodandoAgendador} className="flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50">
+            <Play size={13} /> Executar agora
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2 mb-4">
-        {['', 'ENVIADO', 'PENDENTE', 'ERRO', 'SEM_SMTP'].map((s) => (
+        {['', 'ENVIADO', 'PENDENTE', 'ERRO', 'SEM_SMTP', 'SO_PAINEL'].map((s) => (
           <button
             key={s}
             onClick={() => setSituacao(s)}

@@ -4,6 +4,7 @@
 // SMTP como caminho normal, não exceção: toda tentativa é registrada em
 // `notificacoes`, com ou sem envio real (ver PLANO.md, critério de pronto).
 import crypto from 'crypto';
+import { AsyncLocalStorage } from 'async_hooks';
 import nodemailer from 'nodemailer';
 import { query } from '../db/pool.js';
 
@@ -28,6 +29,14 @@ const getTransporter = () => {
 // Só para os testes: força a recriação do transporte na próxima chamada.
 export const _resetTransporterCache = () => { transporterCache = null; };
 
+// Fase O.5: o agendador roda "só no painel" enquanto a D-C5 (SMTP institucional)
+// não é respondida — o aviso é registrado em `notificacoes` (SO_PAINEL) mesmo
+// que haja SMTP configurado, e só sai por e-mail quando alguém aciona o reenvio
+// na tela de Notificações. Contexto assíncrono, não flag global: uma requisição
+// web concorrente nunca é afetada.
+const contexto = new AsyncLocalStorage();
+export const rodarSoPainel = (fn) => contexto.run({ soPainel: true }, fn);
+
 const interpolar = (texto, dados = {}) =>
   String(texto || '').replace(/\{\{(\w+)\}\}/g, (_, chave) => (dados[chave] ?? ''));
 
@@ -49,16 +58,19 @@ export const enviarEmail = async ({ destinatarioEmail, destinatarioPessoaId, tip
   const corpo = interpolar(modelo?.meta?.corpo || '', dados);
 
   const id = crypto.randomUUID();
+  const soPainel = !!contexto.getStore()?.soPainel;
   const semSmtp = !smtpConfigurado();
   await query(
     `INSERT INTO notificacoes
        (id, destinatario_email, destinatario_pessoa_id, tipo, entidade, entidade_id, assunto, corpo, situacao, erro, criado_por)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
     [id, destinatarioEmail, destinatarioPessoaId || null, tipo, entidade || null, entidadeId || null,
-     assunto, corpo, semSmtp ? 'SEM_SMTP' : 'PENDENTE',
-     semSmtp ? 'SMTP não configurado — intenção registrada, e-mail não enviado.' : null, actor || null]
+     assunto, corpo, soPainel ? 'SO_PAINEL' : (semSmtp ? 'SEM_SMTP' : 'PENDENTE'),
+     soPainel ? 'Aviso do agendador registrado só no painel (e-mail desligado até a D-C5). Use "reenviar" para enviar.'
+       : (semSmtp ? 'SMTP não configurado — intenção registrada, e-mail não enviado.' : null), actor || null]
   );
 
+  if (soPainel) return { id, situacao: 'SO_PAINEL' };
   if (semSmtp) return { id, situacao: 'SEM_SMTP' };
   return tentarEnviar(id);
 };

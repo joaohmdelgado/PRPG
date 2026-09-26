@@ -57,7 +57,7 @@ import {
   exportXlsx as exportPosDoutoradoXlsx, exportSucupira, getIndicadores as getIndicadoresPosDoutorado,
   oficioCobrancaPdf, relacaoVigentesPdf, relatorioAnualPdf as relatorioAnualPosdocPdf,
 } from '../controllers/posDoutoradoController.js';
-import { getNotificacoes, reenviarNotificacao, enviarTeste } from '../controllers/notificacoesController.js';
+import { getNotificacoes, reenviarNotificacao, enviarTeste, getAgendador, executarAgendadorManual } from '../controllers/notificacoesController.js';
 import { buscaGlobal } from '../controllers/buscaController.js';
 
 
@@ -569,6 +569,8 @@ router.get('/pos-doutorado/:id/oficio-cobranca.pdf', protect, requireRole(POSDOC
 // de um módulo específico.
 router.get('/notificacoes', protect, requireRole(['Administrator']), getNotificacoes);
 router.post('/notificacoes/teste', protect, requireRole(['Administrator']), enviarTeste);
+router.get('/notificacoes/agendador', protect, requireRole(['Administrator']), getAgendador);
+router.post('/notificacoes/agendador/executar', protect, requireRole(['Administrator']), executarAgendadorManual);
 router.post('/notificacoes/:id/reenviar', protect, requireRole(['Administrator']), reenviarNotificacao);
 
 // ===================== Planilhas: importação e revisão (Fase O) =====================

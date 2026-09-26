@@ -18,7 +18,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "arquivos": "node server/scripts/arquivos.mjs",
-    "planilha": "node server/scripts/importarPlanilha.mjs"
+    "planilha": "node server/scripts/importarPlanilha.mjs",
+    "agendador": "node server/scripts/agendador.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
