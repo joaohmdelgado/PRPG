@@ -523,13 +523,109 @@ pendências no sistema, não na planilha.
 
 | | # | Ação |
 |---|---|---|
-| `[ ]` | U.1 | Área `/minha-conta` para aluno e professor (dados, inscrições, declarações, relatorias), separada do `/admin`; o login leva cada papel ao seu lugar |
-| `[ ]` | U.2 | Menu do painel por tarefa: Site · Programas · Secretaria (Câmara, Expedientes, Pós-doc, Proficiência) · Pessoas e Contatos · Configuração; "Portarias" sai quando E.11 concluir |
-| `[ ]` | U.3 | Componente de tabela único, com paginação, ordenação e filtros no servidor e na URL; filtro de programa para admin global |
-| `[ ]` | U.4 | Componentes de formulário acessíveis (`Field`, `Select`, `FileField` com `htmlFor`/`aria`), `Dialog` com foco, Toast anunciado a leitores de tela, painel responsivo com drawer |
-| `[ ]` | U.5 | Busca no painel (Ctrl+K) usando o `/api/busca` que já existe, ampliado aos tipos de conteúdo |
-| `[ ]` | U.6 | Estados de carregando, vazio e erro distintos em todo o front; ErrorBoundary por área |
-| `[ ]` | U.7 | Um só sistema de ícones (lucide), removendo o Font Awesome da CDN |
+| `[x]` | U.1 | Área `/minha-conta` para aluno e professor (dados, inscrições, declarações, relatorias), separada do `/admin`; o login leva cada papel ao seu lugar |
+| `[x]` | U.2 | Menu do painel por tarefa: Site · Programas · Secretaria (Câmara, Expedientes, Pós-doc, Proficiência) · Pessoas e Contatos · Configuração; "Portarias" sai quando E.11 concluir |
+| `[x]` | U.3 | Componente de tabela único, com paginação, ordenação e filtros no servidor e na URL; filtro de programa para admin global |
+| `[x]` | U.4 | Componentes de formulário acessíveis (`Field`, `Select`, `FileField` com `htmlFor`/`aria`), `Dialog` com foco, Toast anunciado a leitores de tela, painel responsivo com drawer |
+| `[x]` | U.5 | Busca no painel (Ctrl+K) usando o `/api/busca` que já existe, ampliado aos tipos de conteúdo |
+| `[x]` | U.6 | Estados de carregando, vazio e erro distintos em todo o front; ErrorBoundary por área |
+| `[x]` | U.7 | Um só sistema de ícones (lucide), removendo o Font Awesome da CDN |
+
+> **Nota de execução (26/09/2026)** — os 7 itens aplicados, um commit por item (U.7, U.2, U.4, U.6,
+> U.1, U.3, U.5, nessa ordem — os ícones e o menu primeiro porque tocam quase todos os arquivos),
+> mais quatro commits de acabamento (rede de segurança dos rótulos, telas do painel que ficavam em
+> branco, AdminLayout fora do chunk inicial). Suíte do servidor: 425 testes verdes em 48 arquivos
+> (`npx vitest run`); suíte nova do front: 64 testes em 4 arquivos (`npm run test:front`, jsdom).
+> **Como ficou:**
+> - U.7: um só sistema de ícones. `src/components/Icone.jsx` aceita o valor antigo do banco
+>   (`"fa-solid fa-gavel"`, gravado em menus, atalhos da home e redes sociais) e a forma curta
+>   (`"gavel"`); dimensiona por `font-size` (1em) e herda a cor, então **as cores do programa e o
+>   contraste validado na S.5 não mudam** (só o traço é mais fino que o do Font Awesome sólido). 214
+>   `<i class="fa-…">` trocados por script + o restante à mão; nenhum sobrou no código nem no
+>   `index.html` (saiu o CSS de 102 KB da CDN que bloqueava a renderização). O editor de menus troca o
+>   campo livre de classes por um seletor de ícones. Entrada: 85 → 79 KB gz (com o `AdminLayout` fora do
+>   chunk inicial). Migração `2026-09-26_icones_lucide` (aplicada no banco de desenvolvimento): só troca o texto de
+>   ajuda da lista "Redes sociais", que mandava digitar a classe do Font Awesome.
+> - U.2: menu por tarefa — **Site · Programas · Secretaria · Pessoas e Contatos · Configuração**,
+>   grupos recolhíveis (`aria-expanded`; o da rota atual abre sozinho, a escolha fica no navegador),
+>   `Pendências` como início. Secretaria: Câmara, Expedientes, Pós-Doutorado, Proficiência, **Portarias
+>   (fica até a E.11 concluir)** e Meus processos; Configuração: Classificações, Planilhas, Importar
+>   usuários, Qualidade dos dados e Notificações e agendador (só Administrator). O Gestor de Programa
+>   vê a versão dele (Site do Programa, Programa, Secretaria). Um só arquivo de dados
+>   (`components/admin/menuPainel.js`) alimenta o menu e a busca.
+> - U.4: `components/ui/Field.jsx` (`Field`, `Input`, `Select`, `Textarea`, `Checkbox`, `FileField`:
+>   `htmlFor`, `aria-describedby`, `aria-invalid`, `required`), `Dialog` (nome, `aria-modal`, foco preso e
+>   devolvido, Escape; base do `ConfirmModal`, do mapa, da biblioteca de mídia e do modal da
+>   proficiência), `Toast` com regiões vivas sempre montadas (sucesso `polite`, erro `assertive`; **erro
+>   não some sozinho**), painel com **drawer abaixo de 1024 px** (fora da ordem de foco quando fechado,
+>   prende o foco quando aberto), "Ir para o conteúdo", um só `<main>` (páginas públicas e do microsite
+>   aninhavam `<main>`) e foco/rolagem na troca de rota. Migrados para os componentes: login, troca
+>   de senha, inscrição de proficiência e /minha-conta. **Os outros ~240 rótulos não foram reescritos:**
+>   `hooks/useAssociarRotulos.js` liga em tempo de execução cada `<label>` solto ao campo seguinte,
+>   nomeia campo de arquivo, editor de texto rico e grupos de opções, e dá nome (pelo placeholder ou
+>   pela primeira opção) a busca/filtro sem rótulo. Um teste renderiza 8 formulários reais do painel
+>   (notícia, edital, resolução, tese, usuário, programa, Câmara, expediente) e exige **zero rótulos
+>   soltos e zero campos sem nome** — mas é uma rede de segurança, não a migração.
+> - U.6: `components/ui/Estados.jsx` (Carregando, EstadoVazio, EstadoErro com "Tentar de novo"),
+>   `api.lerJson` (lança `ErroApi` em status ≠ 2xx), `useCarga` e `AreaErrorBoundary` (painel, portal,
+>   microsite e /minha-conta; zera ao navegar). Falha de rede/401/500 deixa de aparecer como lista vazia
+>   ou "não encontrado" no calendário, formulários, resoluções, programas, em 11 páginas do microsite e
+>   em 6 telas do painel; as listas do painel ganharam os três estados pela tabela única (U.3).
+> - U.1: `/minha-conta` (Meus dados, Inscrições, Declarações, Relatorias) para aluno e professor. API:
+>   `GET/PUT /api/minha-conta`, `PUT /api/minha-conta/senha` (exige a senha atual) e `GET
+>   /api/minha-conta/declaracoes/:id/pdf` — sempre a **própria** conta (o id vem do token), o PDF só sai
+>   se a secretaria já emitiu e não foi revogado. Nome, CPF, e-mail e papéis **não** são editáveis pela
+>   pessoa (o cadastro confere o nome com a matrícula); ela edita telefones, Lattes/ORCID/Scholar e o
+>   que aparece no site. **Mudança de comportamento:** `/admin` passa a exigir papel da equipe
+>   (Administrator, Gestor, GestorPrograma) — aluno e professor que abrirem `/admin` caem em
+>   `/minha-conta`, e `/admin/meus-processos` é só da equipe (a relatoria do professor vive em
+>   `/minha-conta/relatorias`). O login leva cada papel ao seu lugar e volta à tela pedida se o perfil
+>   puder abri-la; "Entrar/Minha conta/Painel" na faixa do portal e "Minha conta" no cabeçalho do painel.
+>   Slugs `minha-conta` e `entrar` reservados.
+> - U.3: tabela única. Servidor: `responderLista` ganha `?q=` e `?ordenar=&dir=` restrito a uma lista de
+>   campos por controller (nunca um caminho arbitrário do objeto; vazios no fim; ordem estável, então a
+>   paginação não repete nem perde itens), aplicado a notícias, editais, resoluções, formulários,
+>   calendários, teses, FAQ, disciplinas, bolsas, páginas, programas e usuários. Front: `useListaServidor`
+>   (página, tamanho, busca, ordenação, situação e origem **na URL** — links compartilháveis),
+>   `DataTable` (`aria-sort`, filtro de programa/origem para a PRPG, paginação) e `ListaAdmin` (exclusão
+>   e exclusão em massa com confirmação, ações com nome acessível): **12 listas viraram configuração de
+>   ~30 linhas** (a de usuários deixou de baixar todas as contas — com CPF — para filtrar no navegador).
+>   "Páginas fixas vazias" e "somente PRPG" passaram a ser filtros do servidor (o helper saiu do front).
+> - U.5: Ctrl/Cmd+K de qualquer tela do painel (e botão "Buscar" no cabeçalho). `/api/busca` ganhou
+>   notícias, editais, resoluções, formulários, páginas, teses, FAQ, disciplinas, bolsas, usuários e
+>   programas (sem diferenciar acento/caixa; `%` e `_` são texto; rascunhos entram); o Gestor de Programa
+>   só encontra o do próprio programa. A paleta mostra "Ir para" (as telas), "Criar" e o conteúdo,
+>   como combobox/listbox (setas, Enter, Esc, anúncio de resultados); erro da busca aparece como erro.
+>   O atalho **não** dispara dentro do editor de texto (é o de link do CKEditor).
+> **Decisões assumidas:** o menu do Gestor de Programa continua sem Câmara/Expedientes/Pós-doc (as
+> rotas aceitam-no para leitura, mas o menu nunca os mostrou); "Dashboard / Métricas" virou
+> "Indicadores e métricas" em Programas; "Importação" virou "Importar usuários"; declaração baixável
+> só para proficiência (é o único tipo com gerador de PDF); `lucide-react` 0.546 ainda tem os ícones de
+> Instagram/LinkedIn/Twitter, mas os marca como obsoletos (somem na 1.0).
+> **Ficou de fora:**
+> - reescrever os ~240 rótulos restantes com `Field` (a rede de segurança cobre; a troca é mecânica);
+> - migrar para a tabela única as listas de Grupos de Pesquisa, Linhas, Portarias, Câmara, Reuniões,
+>   Expedientes, Pós-doc, Contatos, Proficiência, Mídia, Notificações, Métricas — têm consultas e
+>   filtros próprios no servidor ou não são tabelas de conteúdo;
+> - ícones de marca sem equivalente no lucide são aproximações: WhatsApp → balão de mensagem, Google →
+>   logotipo do Chrome, ORCID → cartão de pessoa;
+> - o teclado no menu do site público além do que já existia, e "Portarias" saindo do menu (E.11);
+> - estados de erro nas buscas auxiliares dos formulários (lista de programas, séries), na home do
+>   microsite (notícias) e nos blocos decorativos (Relacionados, Próximos prazos) — seguem
+>   silenciosos de propósito;
+> - Playwright + axe, NVDA e a validação em 320/375/768/1024/1440 px com zoom de 200% (Task 10).
+> **Não verificado:**
+> - **nenhuma tela do painel nem a `/minha-conta` foi aberta num navegador** (exigem login, e a
+>   instrução foi não entrar com senha): a conferência é build, typecheck, 64 testes de componentes em
+>   jsdom (menu, drawer, Ctrl+K, tabela com URL/ordenação/erro/exclusão, formulários reais, /minha-conta)
+>   e 30 testes de API novos. O que jsdom não mede — layout, foco visual, o drawer num celular de verdade,
+>   leitor de tela — ficou sem medir;
+> - as páginas públicas e o microsite foram conferidos no navegador (ícones, um só `<main>`, sem rolagem
+>   horizontal a 375 px, campos com nome, Dialog do mapa com foco e Escape); capturas de tela no tamanho
+>   de celular falham neste painel, então o celular foi conferido pelo DOM;
+> - o contraste dos ícones foi mantido por construção (mesma cor, `currentColor`), não remedido;
+> - o jsdom usado pelos testes de front vem do `isomorphic-dompurify` (dependência transitiva);
+>   declará-lo em `devDependencies` exige atualizar o `package-lock.json`.
 
 ### Fase P — Performance e SEO (~1,5 semana, complementa a Task 11 do plano de prontidão)
 
@@ -592,7 +688,7 @@ pendências no sistema, não na planilha.
 | N — Conexões entre conteúdos | 9 | D-R1, D-R2 | 25/09/2026 | 25/09/2026 | 🟡 6/9 (N.4 ⛔ D-R2; N.7 ⛔ E.11/D-E*; N.8 ⛔ D-G1 — ver nota da Fase N) |
 | S — Microsites em 4 grupos | 6 | — | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase S; D-S1..D-S3 para a TI) |
 | O — Virada das planilhas | 7 | D-R5 + `PLANO.md` §4 | 25/09/2026 | 25/09/2026 | 🟡 7/7 no código (400 testes verdes); **a virada em si depende da oficina (O.1) e da gravação das importações** — ver nota da Fase O |
-| U — Painel e acessibilidade | 7 | — | | | ⬜ não iniciada |
+| U — Painel e acessibilidade | 7 | — | 26/09/2026 | 26/09/2026 | 🟡 7/7 nos fluxos principais; migração dos ~240 rótulos e de 12 listas restantes fica para depois (ver nota da Fase U) |
 | P — Performance e SEO | 6 | D-R4 | | | ⬜ não iniciada |
 | | **60 itens** | **5 decisões** | | | |
 

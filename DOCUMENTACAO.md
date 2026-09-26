@@ -59,7 +59,7 @@ Além do **site público da PRPG**, a aplicação oferece:
 | **Sanitização de HTML** | DOMPurify / isomorphic-dompurify |
 | **Geração de PDF** | pdfkit (declaração de proficiência) |
 | **Planilhas** | xlsx (leitura de dados de importação) |
-| **Ícones** | lucide-react (+ Font Awesome via CDN no index.html) |
+| **Ícones** | lucide-react (componente `src/components/Icone.jsx`; o Font Awesome foi removido na Fase U.7) |
 | **Testes** | Vitest + supertest |
 | **Type checking** | TypeScript (apenas `--noEmit`, sem compilar) |
 

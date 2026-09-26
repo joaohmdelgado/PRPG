@@ -32,6 +32,7 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 | `npm run links` | Verificador de links (cron semanal); resultado no painel Qualidade dos dados |
 | `npm test` | Run the Vitest suite (needs `npm run db:up`; uses an isolated `prpg_test` DB) |
 | `npm run test:watch` | Vitest in watch mode |
+| `npm run test:front` | Component tests of the front (jsdom, no DB/API): panel menu/drawer, Ctrl+K, tabela, forms, /minha-conta |
 
 **First-time setup**: `npm install` → `npm run db:up` → apply schema
 (`docker exec -i prpg-postgres psql -U prpg -d prpg < server/db/schema.sql`) →
@@ -46,11 +47,27 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 ### Frontend Structure (`/src`)
 - **pages/**: Individual page components (public-facing pages like Home, Sobre, Editais)
 - **pages/admin/**: Admin panel pages (content management forms and lists)
+- **pages/conta/**: `/minha-conta` (aluno e professor) — Meus dados, Inscrições, Declarações, Relatorias
 - **components/**: Reusable React components
-  - `AdminLayout.jsx`: Sidebar navigation for admin panel
-  - `RequireAuth.jsx`: Auth protection wrapper
+  - `AdminLayout.jsx`: painel — menu por tarefa (`admin/menuPainel.js`), drawer abaixo de 1024 px, busca Ctrl+K
+  - `RequireAuth.jsx`: Auth protection wrapper (`allowedRoles`, `semAcesso`)
   - `Navbar.jsx` / `Footer.jsx`: Shared layout components
-- **App.jsx**: Main router configuration with all routes defined
+  - `Icone.jsx`: **the** icon component (lucide). Accepts the old Font Awesome strings stored in
+    the DB (`"fa-solid fa-gavel"`) and the short name (`"gavel"`); sized by `font-size`, colored by
+    `currentColor`. Font Awesome is gone — never add `<i class="fa-…">` or the CDN link; add the icon to
+    the table in `Icone.jsx` instead.
+  - `ui/`: accessible building blocks — `Field.jsx` (`Field`/`Input`/`Select`/`Textarea`/`Checkbox`/`FileField`
+    wire label, hint and error to the control), `Dialog.jsx` (focus trap, Escape, focus return),
+    `Estados.jsx` (`Carregando`/`EstadoVazio`/`EstadoErro` — the three states are distinct), `AreaErrorBoundary`,
+    `RouteFocusManager`. `admin/Toast.jsx` (live regions; errors persist) and `admin/ConfirmModal.jsx` sit on top.
+  - `admin/ListaAdmin.jsx` + `DataTable.jsx` + `hooks/useListaServidor.js`: the one table for panel
+    lists (see "Panel lists" below).
+- **hooks/useAssociarRotulos.js**: safety net mounted in the panel, public site, microsite and /minha-conta layouts —
+  links loose `<label>`s to the next control at runtime and names placeholder-only fields. New forms
+  should use `Field`, not depend on it.
+- **utils/datas.js**: `dataCurta`/`dataLonga`/`periodo` (don't copy `formatDate` into a screen again).
+- **api.js**: `apiFetch` (raw Response) and `lerJson` (throws `ErroApi` on non-2xx — use it so a failure is not shown as an empty list).
+- **App.jsx**: Main router configuration with all routes defined (`AdminLayout` is lazy)
 
 ### Backend Structure (`/server`)
 - **controllers/**: Business logic for each content type
@@ -223,28 +240,42 @@ is missing. `VITE_API_URL` is read by the frontend (`src/api.js`) at build time.
 
 ## Admin Panel Navigation
 
-Access at `/admin/login`. Main sections in sidebar:
-- Notícias (News)
-- Editais
-- Resoluções
-- Formulários
-- Programas
-- Calendários
-- Teses-Dissertações
-- FAQ
-- Disciplinas
-- Bolsas
-- Páginas (Custom pages)
-- Portarias (Admin only)
-- Grupos de Pesquisa (Admin only)
-- Usuários (User management, Admin only)
-- Menus e portal (`/admin/portal` — menus, footer, home shortcuts, contact, banner; tables `menus`/`menu_itens`/`configuracoes`)
-- Equipe e estrutura (`/admin/estrutura` — PRPG units/people/contacts behind /equipe and /estrutura-organizacional)
-- Classificações (editable categories/sections — `vocabularios`; ex-Taxonomias)
-- Biblioteca de Mídia (`/admin/midia` — reuse, "where used", replace a file everywhere)
-- Pendências (`/admin` — página inicial: o que está atrasado/vencendo, rascunhos, cadastros incompletos)
-- Planilhas (`/admin/planilhas` — simular/importar as 4 planilhas, critério de aposentadoria; `/admin/planilhas/revisao` — pendências de revisão)
-- Qualidade dos dados (`/admin/qualidade` — CPF inválido, pessoas duplicadas, vínculos sem data, links quebrados)
+Access at `/admin/login` (alias `/entrar`). The panel is for staff only (`Administrator`, `Gestor`,
+   `GestorPrograma`): `/admin` sends `Aluno`/`Professor` to `/minha-conta`, and the login sends each role to its
+   place (`auth.destinoPadrao`). The menu is by **task** (Fase U.2; data in `components/admin/menuPainel.js`,
+   one file feeds the sidebar and the Ctrl+K search), groups collapsible:
+- **Pendências** (`/admin` — início: o que está atrasado/vencendo, rascunhos, cadastros incompletos)
+- **Site** — Notícias, Editais, Resoluções, Formulários, Calendários, Teses e Dissertações, FAQ, Bolsas, Páginas,
+  Biblioteca de Mídia (`/admin/midia`), Menus e portal (`/admin/portal`; tables `menus`/`menu_itens`/`configuracoes`),
+  Equipe e estrutura (`/admin/estrutura` — units/people/contacts behind /equipe and /estrutura-organizacional)
+- **Programas** — Programas (each links to its "Site do Programa" `/admin/programas/:id/site`), Disciplinas,
+  Grupos de Pesquisa, Linhas de Pesquisa, Indicadores e métricas
+- **Secretaria** — Câmara de Pós-Graduação, Expedientes, Pós-Doutorado, Proficiência, **Portarias** (stays until
+  E.11 concludes), Meus processos
+- **Pessoas e Contatos** — Usuários, Agenda de Contatos
+- **Configuração** — Classificações (`vocabularios`), Planilhas (`/admin/planilhas`, `/admin/planilhas/revisao`),
+  Importar usuários, Qualidade dos dados (`/admin/qualidade`), Notificações e agendador (Administrator only)
+
+The `GestorPrograma` sees his own version (Site do Programa · Programa · Secretaria). **Ctrl/Cmd+K** opens the
+panel search (`PaletaBusca.jsx`): "Ir para" screens, "Criar", and content from `GET /api/busca` (news, editais,
+resoluções, formulários, páginas, teses, FAQ, disciplinas, bolsas, usuários, programas + processos, atos, pós-doc;
+scoped to the program for the GestorPrograma; not fired inside the CKEditor, where it is the link shortcut).
+
+**/minha-conta** (`pages/conta/`, any logged user; API `GET/PUT /api/minha-conta`, `PUT /api/minha-conta/senha`,
+`GET /api/minha-conta/declaracoes/:id/pdf` in `minhaContaController.js`): always the caller's own account
+(id from the token). Name/CPF/e-mail/roles are read-only; the person edits phones, Lattes/ORCID/Scholar and
+privacy; the declaration PDF is only served if the secretaria already emitted it.
+
+### Panel lists (Fase U.3)
+
+Content lists are configuration: `<ListaAdmin endpoint columns … />` (see `AdminNoticias.jsx`, ~15 lines). State
+lives in the URL (`?page&limit&q&ordenar&dir&status&programa`) and the query runs on the server. Server side, a
+controller passes `{ busca, ordenaveis }` to `responderLista` (`server/utils/listagem.js`): `?q=` searches the
+listed fields, `?ordenar=<campo>&dir=` only accepts a field from the controller's `ordenaveis` map (empty last,
+stable). No `?page` still returns the whole array (the public site and the forms that need "all" rely on it).
+Migrated: notícias, editais, resoluções, formulários, calendários, teses, FAQ, disciplinas, bolsas, páginas, programas,
+usuários. Not migrated (own server queries/filters): grupos, linhas, portarias, Câmara, expedientes, pós-doc, contatos,
+proficiência, mídia, notificações, métricas.
 
 ## Testing
 
@@ -270,8 +301,13 @@ Access at `/admin/login`. Main sections in sidebar:
   foundation (`publicacao`, `vocabularios`, `arquivos`, `revisoes`) and the
   data-driven portal (`portal`, `estrutura`) and content connections
   (`conexoes`), and the program microsites (`programas_microsite`: menu groups,
-  fixed pages, menu overrides, publication checklist, color contrast). ~400 tests in
-  45 files — the exact number drifts; check with `npx vitest run`.
+  fixed pages, menu overrides, publication checklist, color contrast), /minha-conta,
+  the list contract (`listagemAdmin`) and the panel search (`buscaPainel`). ~425 tests in
+  48 files — the exact number drifts; check with `npx vitest run`.
+- **Front component tests** (`npm run test:front`, `vitest.front.config.js`, jsdom, no DB/API) live in
+  `src/__tests__/`: `ui` (Field/Dialog/Toast/Icone/rede de rótulos/menu/login), `paineis` (AdminLayout drawer and
+  groups, RequireAuth, estados, /minha-conta, Ctrl+K), `tabela` (DataTable: URL, sort, errors, delete, selection),
+  `formularios` (8 real forms: zero loose labels). jsdom comes transitively from `isomorphic-dompurify`.
 - Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes

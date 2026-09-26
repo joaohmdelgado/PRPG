@@ -1455,7 +1455,7 @@ INSERT INTO menus (chave, nome, descricao, niveis, campos, ordem) VALUES
   ('principal',     'Menu principal',     'Barra de navegação do topo do site. Itens com subitens abrem um submenu.', 2, '{}', 0),
   ('topo',          'Links da faixa superior', 'Links curtos na faixa azul acima do menu (sistemas da UFRPE).', 1, '{}', 1),
   ('rodape',        'Rodapé',             'Colunas de links do rodapé: cada item de primeiro nível é o título de uma coluna.', 2, '{}', 2),
-  ('redes-sociais', 'Redes sociais',      'Ícones de redes sociais no rodapé. Ícone: classe do Font Awesome (ex.: fa-brands fa-instagram).', 1, '{icone}', 3),
+  ('redes-sociais', 'Redes sociais',      'Ícones de redes sociais no rodapé. Escolha o ícone da rede (Instagram, LinkedIn, YouTube, Facebook, X, WhatsApp).', 1, '{icone}', 3),
   ('acesso-rapido', 'Acesso rápido (home)', 'Atalhos com ícone logo abaixo do banner da página inicial.', 1, '{icone}', 4),
   ('jornada',       'Jornada do aluno (home)', 'Cartões de serviços da página inicial.', 1, '{icone,descricao}', 5),
   ('cursos',        'Programas e cursos (home)', 'Cartões "Nossos Programas e Cursos" da página inicial.', 1, '{descricao,imagem}', 6),
@@ -2076,3 +2076,11 @@ CREATE TABLE IF NOT EXISTS links_verificados (
   quebrado_desde  TIMESTAMPTZ           -- primeira verificação seguida que falhou
 );
 CREATE INDEX IF NOT EXISTS links_verificados_situacao_idx ON links_verificados (situacao);
+
+-- =====================================================================
+-- Fase U.7: ícones em lucide (mesmo bloco da migração 2026-09-26_icones_lucide).
+-- =====================================================================
+UPDATE menus
+   SET descricao = 'Ícones de redes sociais no rodapé. Escolha o ícone da rede (Instagram, LinkedIn, YouTube, Facebook, X, WhatsApp).'
+ WHERE chave = 'redes-sociais'
+   AND descricao = 'Ícones de redes sociais no rodapé. Ícone: classe do Font Awesome (ex.: fa-brands fa-instagram).';

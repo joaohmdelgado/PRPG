@@ -17,7 +17,8 @@ const MAX_ITENS = 120;
 // Destinos aceitos: rota interna, âncora, URL http(s), e-mail e telefone.
 // Nada de `javascript:` ou `data:` num link que vai para o site público.
 const DESTINO_OK = /^(\/|#|https?:\/\/|mailto:|tel:)/i;
-// Ícone = classes do Font Awesome ("fa-solid fa-gavel").
+// Ícone = nome curto ("gavel") ou, nos dados antigos, classes do Font Awesome
+// ("fa-solid fa-gavel"); o front resolve as duas formas (src/components/Icone.jsx).
 const ICONE_OK = /^[a-z0-9 -]{0,80}$/;
 const IMAGEM_OK = /^(\/uploads\/|https?:\/\/)/i;
 
