@@ -12,6 +12,7 @@ import { logUnexpectedError } from './utils/logger.js';
 import { pgClientError } from './utils/httpError.js';
 import { pool } from './db/pool.js';
 import { servirVariante } from './services/imagens.js';
+import { criarRotasSpa } from './seo/spa.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -132,6 +133,10 @@ app.use('/api', apiLimiter, adminRoutes);
 app.use('/api', (req, res) => {
   res.status(404).json({ message: 'Recurso não encontrado.' });
 });
+
+// Site (Fase P.4): robots.txt, sitemap.xml, arquivos do build e o index.html com
+// os metadados de cada endereço. Só responde se o build existir (dist/).
+app.use(criarRotasSpa());
 
 // Tratador de erros global: registra o detalhe no servidor e devolve uma
 // mensagem genérica, sem vazar internals em produção. Cobre JSON malformado,

@@ -152,6 +152,9 @@ export const CONFIGURACOES = {
   contato: ['email', 'telefone', 'whatsapp', 'endereco', 'mapa'],
   home: ['selo', 'titulo', 'destaque', 'texto', 'imagem'],
   identidade: ['logo'],
+  // Buscadores e pré-visualização de links (Fase P.4): texto e imagem padrão do
+  // site quando a página não tem os seus.
+  seo: ['descricao', 'imagem'],
 };
 
 export const getConfiguracoes = async (req, res) => {

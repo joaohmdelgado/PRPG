@@ -41,6 +41,13 @@ const CONFIGS = [
     ],
   },
   { chave: 'identidade', nome: 'Identidade', descricao: 'Logo exibida no cabeçalho do site.', campos: [['logo', 'Logo', 'imagem']] },
+  {
+    chave: 'seo', nome: 'Buscadores e redes', descricao: 'Como o portal aparece no Google e quando um link dele é compartilhado (WhatsApp, LinkedIn…). Cada notícia, edital e página usa o próprio título, resumo e imagem; isto vale para a página inicial e para o que não tiver imagem.',
+    campos: [
+      ['descricao', 'Descrição do portal (até ~160 caracteres)', 'textarea', 'Aparece abaixo do título nos resultados de busca. Em branco, usa o texto do banner da página inicial.'],
+      ['imagem', 'Imagem de compartilhamento', 'imagem', 'Ideal: 1200 × 630 px. Em branco, usa a imagem do banner.'],
+    ],
+  },
 ];
 
 function ConfigForm({ config, valorInicial }) {

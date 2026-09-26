@@ -14,7 +14,12 @@ export default defineConfig(() => {
     server: {
       // Imagens inseridas no editor ficam como /uploads/... (relativo); em
       // desenvolvimento o site (3000) repassa esses caminhos para a API.
-      proxy: { '/uploads': process.env.VITE_API_URL || 'http://localhost:5000' },
+      proxy: {
+        '/uploads': process.env.VITE_API_URL || 'http://localhost:5000',
+        // robots.txt e sitemap.xml saem da API (Fase P.4), também em desenvolvimento.
+        '/robots.txt': process.env.VITE_API_URL || 'http://localhost:5000',
+        '/sitemap.xml': process.env.VITE_API_URL || 'http://localhost:5000',
+      },
       hmr: process.env.DISABLE_HMR !== 'true',
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
