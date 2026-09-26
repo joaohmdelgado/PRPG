@@ -3,11 +3,12 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet,
   GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle,
-  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Gavel, Contact, Inbox, Microscope, Mail, ClipboardList, Layers, Images, Menu, Network, ClipboardCheck
+  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Gavel, Contact, Inbox, Microscope, Mail, ClipboardList, Layers, Images, Menu, Network, ClipboardCheck, ListChecks, DatabaseZap
 } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../auth';
 
 const CONTEUDO = [
+  { to: '/admin', label: 'Pendências', icon: ListChecks, exact: true },
   { to: '/admin/noticias', label: 'Notícias', icon: Newspaper },
   { to: '/admin/editais', label: 'Editais', icon: FileText },
   { to: '/admin/resolucoes', label: 'Resoluções', icon: Scale },
@@ -46,6 +47,7 @@ const ADMINISTRACAO = [
 // discentes, comissões). Itens globais da PRPG (calendários, bolsas, portarias,
 // taxonomias, usuários) ficam de fora.
 const gestorConteudo = (programaId) => [
+  { to: '/admin', label: 'Pendências', icon: ListChecks, exact: true },
   { to: '/admin/noticias', label: 'Notícias', icon: Newspaper },
   { to: '/admin/editais', label: 'Editais', icon: FileText },
   { to: '/admin/resolucoes', label: 'Resoluções', icon: Scale },
@@ -74,7 +76,9 @@ const AdminLayout = () => {
     navigate('/admin/login');
   };
 
-  const isActive = (path) => location.pathname.startsWith(path);
+  const isActive = (path, exact) => (exact
+    ? location.pathname.replace(/\/$/, '') === path
+    : location.pathname.startsWith(path));
 
   const userRoles = JSON.parse(localStorage.getItem('roles') || '[]');
   const isSuperAdmin = userRoles.includes('Administrator') || userRoles.includes('Gestor');
@@ -87,8 +91,8 @@ const AdminLayout = () => {
   const conteudoItems = gestorPrograma ? gestorConteudo(programa?.id) : CONTEUDO;
   const siglaPrograma = programa?.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : programa?.nome;
 
-  const NavItem = ({ to, label, icon: Icon }) => {
-    const active = isActive(to);
+  const NavItem = ({ to, label, icon: Icon, exact }) => {
+    const active = isActive(to, exact);
     return (
       <Link
         to={to}

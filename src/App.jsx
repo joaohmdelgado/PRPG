@@ -71,6 +71,7 @@ const AdminMetricas = lazy(() => import('./pages/admin/AdminMetricas'));
 const AdminImportacao = lazy(() => import('./pages/admin/AdminImportacao'));
 const AdminRevisaoImportacao = lazy(() => import('./pages/admin/AdminRevisaoImportacao'));
 const AdminPlanilhas = lazy(() => import('./pages/admin/AdminPlanilhas'));
+const AdminPainel = lazy(() => import('./pages/admin/AdminPainel'));
 const AdminProficiencia = lazy(() => import('./pages/admin/AdminProficiencia'));
 const AdminCamara = lazy(() => import('./pages/admin/AdminCamara'));
 const AdminCamaraForm = lazy(() => import('./pages/admin/AdminCamaraForm'));
@@ -139,7 +140,7 @@ function App() {
         </Route>
         <Route path="/admin" element={<RequireAuth />}>
           <Route element={<AdminLayout />}>
-            <Route index element={<AdminNoticias />} />
+            <Route index element={<AdminPainel />} />
             <Route path="noticias" element={<AdminNoticias />} />
             <Route path="noticias/nova" element={<AdminNoticiaForm />} />
             <Route path="noticias/editar/:id" element={<AdminNoticiaForm />} />

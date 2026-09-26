@@ -59,6 +59,7 @@ import {
 } from '../controllers/posDoutoradoController.js';
 import { getNotificacoes, reenviarNotificacao, enviarTeste, getAgendador, executarAgendadorManual } from '../controllers/notificacoesController.js';
 import { buscaGlobal } from '../controllers/buscaController.js';
+import { getPendencias as getPainelPendencias } from '../controllers/painelController.js';
 
 
 import { getLinhas, getLinhaById, createLinha, updateLinha, deleteLinha } from '../controllers/linhasPesquisaController.js';
@@ -591,6 +592,10 @@ router.get('/importacoes/planilhas/:fonte/divergencias', protect, requireRole(PL
 router.get('/importacoes/origem/:entidade/:entidadeId', protect, requireRole(PLANILHAS), getOrigem);
 router.get('/importacoes', protect, requireRole(PLANILHAS), getImportacoes);
 router.get('/importacoes/:id', protect, requireRole(PLANILHAS), getImportacao);
+
+// ===================== Painel de pendências (Fase O.6) =====================
+// Admin/Gestor veem tudo; o Gestor de Programa, só o do seu programa (escopo no controller).
+router.get('/painel/pendencias', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getPainelPendencias);
 
 // ===================== Busca global (Fase L.10) =====================
 router.get('/busca', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), buscaGlobal);
