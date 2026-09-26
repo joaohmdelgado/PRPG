@@ -1,79 +1,26 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import {
-  LayoutDashboard, Newspaper, FileText, LogOut, Scale, FileSpreadsheet,
-  GraduationCap, Calendar, Users, Tags, FileCheck, BookOpen, HelpCircle,
-  Book, Award, File, UserCog, ExternalLink, UserCheck, Presentation, Languages, Upload, FlaskConical, Gavel, Contact, Inbox, Microscope, Mail, ClipboardList, Layers, Images, Menu, Network, ClipboardCheck, ListChecks, DatabaseZap
-} from 'lucide-react';
+import { LogOut, ExternalLink, ChevronDown } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../auth';
+import { INICIO, gruposDoPainel } from './admin/menuPainel';
 
-const CONTEUDO = [
-  { to: '/admin', label: 'Pendências', icon: ListChecks, exact: true },
-  { to: '/admin/noticias', label: 'Notícias', icon: Newspaper },
-  { to: '/admin/editais', label: 'Editais', icon: FileText },
-  { to: '/admin/resolucoes', label: 'Resoluções', icon: Scale },
-  { to: '/admin/formularios', label: 'Formulários', icon: FileSpreadsheet },
-  { to: '/admin/programas', label: 'Programas', icon: GraduationCap },
-  { to: '/admin/calendarios', label: 'Calendários', icon: Calendar },
-  { to: '/admin/teses-dissertacoes', label: 'Teses e Dissertações', icon: BookOpen },
-  { to: '/admin/faq', label: 'FAQ', icon: HelpCircle },
-  { to: '/admin/disciplinas', label: 'Disciplinas', icon: Book },
-  { to: '/admin/bolsas', label: 'Bolsas', icon: Award },
-  { to: '/admin/paginas', label: 'Páginas', icon: File },
-  { to: '/admin/midia', label: 'Biblioteca de Mídia', icon: Images },
-  { to: '/admin/portal', label: 'Menus e portal', icon: Menu },
-  { to: '/admin/estrutura', label: 'Equipe e estrutura', icon: Network },
-];
+const GRUPOS_ABERTOS_KEY = 'painel.gruposAbertos';
 
-const ADMINISTRACAO = [
-  { to: '/admin/metricas', label: 'Dashboard / Métricas', icon: LayoutDashboard },
-  { to: '/admin/portarias', label: 'Portarias', icon: FileCheck },
-  { to: '/admin/grupos-pesquisa', label: 'Grupos de Pesquisa', icon: Users },
-  { to: '/admin/linhas-pesquisa', label: 'Linhas de Pesquisa', icon: FlaskConical },
-  { to: '/admin/taxonomias', label: 'Classificações', icon: Tags },
-  { to: '/admin/users', label: 'Usuários', icon: UserCog },
-  { to: '/admin/proficiencia', label: 'Proficiência', icon: Languages },
-  { to: '/admin/camara', label: 'Câmara de Pós-Graduação', icon: Gavel },
-  { to: '/admin/contatos', label: 'Agenda de Contatos', icon: Contact },
-  { to: '/admin/atos', label: 'Expedientes', icon: Inbox },
-  { to: '/admin/pos-doutorado', label: 'Pós-Doutorado', icon: Microscope },
-  { to: '/admin/notificacoes', label: 'Notificações', icon: Mail },
-  { to: '/admin/importacao', label: 'Importação', icon: Upload },
-  { to: '/admin/planilhas', label: 'Planilhas (importação)', icon: ClipboardCheck },
-  { to: '/admin/qualidade', label: 'Qualidade dos dados', icon: DatabaseZap },
-];
-
-// Navegação do Gestor de Programa: só conteúdo vinculável ao seu programa.
-// "Meu Programa" aponta para a edição do próprio programa (branding, docentes,
-// discentes, comissões). Itens globais da PRPG (calendários, bolsas, portarias,
-// taxonomias, usuários) ficam de fora.
-const gestorConteudo = (programaId) => [
-  { to: '/admin', label: 'Pendências', icon: ListChecks, exact: true },
-  { to: '/admin/noticias', label: 'Notícias', icon: Newspaper },
-  { to: '/admin/editais', label: 'Editais', icon: FileText },
-  { to: '/admin/resolucoes', label: 'Resoluções', icon: Scale },
-  { to: '/admin/formularios', label: 'Formulários', icon: FileSpreadsheet },
-  { to: '/admin/teses-dissertacoes', label: 'Teses e Dissertações', icon: BookOpen },
-  { to: '/admin/disciplinas', label: 'Disciplinas', icon: Book },
-  { to: '/admin/faq', label: 'FAQ', icon: HelpCircle },
-  { to: '/admin/grupos-pesquisa', label: 'Grupos de Pesquisa', icon: Users },
-  { to: '/admin/paginas', label: 'Páginas', icon: File },
-  { to: `/admin/programas/${programaId}/site`, label: 'Site do Programa', icon: Layers },
-  { to: `/admin/programas/${programaId}/docentes`, label: 'Docentes', icon: Presentation },
-  { to: `/admin/programas/${programaId}/discentes`, label: 'Discentes', icon: UserCheck },
-  { to: `/admin/programas/${programaId}/linhas`, label: 'Linhas de Pesquisa', icon: FlaskConical },
-  { to: `/admin/programas/editar/${programaId}`, label: 'Meu Programa', icon: GraduationCap },
-];
+const lerAbertos = () => {
+  try {
+    const v = JSON.parse(localStorage.getItem(GRUPOS_ABERTOS_KEY) || 'null');
+    return Array.isArray(v) ? v : null;
+  } catch {
+    return null;
+  }
+};
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    localStorage.removeItem('roles');
-    localStorage.removeItem('gestorPrograma');
+    ['token', 'username', 'roles', 'gestorPrograma', 'senhaTemporaria'].forEach((k) => localStorage.removeItem(k));
     navigate('/admin/login');
   };
 
@@ -88,35 +35,47 @@ const AdminLayout = () => {
   const username = localStorage.getItem('username') || 'Admin';
   const roleLabel = gestorPrograma ? 'Gestor de Programa' : (userRoles[0] || 'Usuário');
   const initial = username.trim().charAt(0).toUpperCase() || 'A';
-
-  const conteudoItems = gestorPrograma ? gestorConteudo(programa?.id) : CONTEUDO;
   const siglaPrograma = programa?.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : programa?.nome;
+
+  const grupos = gruposDoPainel({ superAdmin: isSuperAdmin, gestorPrograma, programaId: programa?.id, roles: userRoles });
+
+  // Grupo da rota atual sempre aberto; os demais seguem a escolha da pessoa
+  // (guardada no navegador). Sem escolha, só o grupo da rota atual.
+  const grupoAtual = grupos.find((g) => g.itens.some((i) => isActive(i.to, i.exact)))?.id;
+  const [abertos, setAbertos] = useState(() => lerAbertos() || []);
+  const estaAberto = (id) => id === grupoAtual || abertos.includes(id);
+  const alternar = (id) => setAbertos((prev) => {
+    const proximo = estaAberto(id) ? prev.filter((x) => x !== id) : [...prev, id];
+    try { localStorage.setItem(GRUPOS_ABERTOS_KEY, JSON.stringify(proximo)); } catch { /* sem armazenamento */ }
+    return proximo;
+  });
+  useEffect(() => {
+    // Ao entrar num grupo por outro caminho (busca, link), ele passa a ficar aberto.
+    if (grupoAtual && !abertos.includes(grupoAtual)) setAbertos((prev) => [...prev, grupoAtual]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grupoAtual]);
 
   const NavItem = ({ to, label, icon: Icon, exact }) => {
     const active = isActive(to, exact);
     return (
       <Link
         to={to}
-        className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+        aria-current={active ? 'page' : undefined}
+        className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
           active
             ? 'bg-ufrpe-yellow text-ufrpe-blue font-semibold'
-            : 'text-white/70 hover:text-white hover:bg-white/10'
+            : 'text-white/75 hover:text-white hover:bg-white/10'
         }`}
       >
         <Icon
           size={18}
-          className={active ? 'text-ufrpe-blue shrink-0' : 'text-white/45 group-hover:text-ufrpe-yellow shrink-0 transition-colors'}
+          aria-hidden="true"
+          className={active ? 'text-ufrpe-blue shrink-0' : 'text-white/50 group-hover:text-ufrpe-yellow shrink-0 transition-colors'}
         />
         <span className="truncate">{label}</span>
       </Link>
     );
   };
-
-  const SectionLabel = ({ children }) => (
-    <p className="px-3 pt-5 pb-2 text-[11px] font-semibold uppercase tracking-wider text-white/35">
-      {children}
-    </p>
-  );
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -127,45 +86,45 @@ const AdminLayout = () => {
             <span className="font-heading font-extrabold text-2xl text-white leading-none border-b-4 border-ufrpe-yellow pb-1 inline-block">
               PRPG
             </span>
-            <span className="block font-heading text-[13px] text-white/55 mt-2 tracking-wide">
+            <span className="block font-heading text-[13px] text-white/60 mt-2 tracking-wide">
               {gestorPrograma ? `Painel do Programa${siglaPrograma ? ` · ${siglaPrograma}` : ''}` : 'Painel Administrativo'}
             </span>
           </Link>
         </div>
 
-        <nav className="flex-1 px-3 pb-4 overflow-y-auto">
-          <SectionLabel>{gestorPrograma ? 'Conteúdo do Programa' : 'Conteúdo'}</SectionLabel>
-          <div className="space-y-1">
-            {conteudoItems.map((item) => (
-              <NavItem key={item.to} {...item} />
-            ))}
-          </div>
-
-          {/* Visível a qualquer usuário autenticado (Fase L.4): a relatoria é
-              resolvida pelo próprio login, sem exigir papel da Câmara. */}
-          <SectionLabel>Pessoal</SectionLabel>
-          <div className="space-y-1">
-            <NavItem to="/admin/meus-processos" label="Meus Processos" icon={ClipboardList} />
-          </div>
-
-          {isSuperAdmin && (
-            <>
-              <SectionLabel>Administração</SectionLabel>
-              <div className="space-y-1">
-                {ADMINISTRACAO.map((item) => (
-                  <NavItem key={item.to} {...item} />
-                ))}
+        <nav aria-label="Painel" className="flex-1 px-3 pb-4 pt-3 overflow-y-auto">
+          <NavItem {...INICIO} />
+          {grupos.map((g) => {
+            const aberto = estaAberto(g.id);
+            return (
+              <div key={g.id} className="mt-3">
+                <button
+                  type="button"
+                  onClick={() => alternar(g.id)}
+                  aria-expanded={aberto}
+                  aria-controls={`grupo-${g.id}`}
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-white/60 hover:text-white rounded"
+                >
+                  {g.rotulo}
+                  <ChevronDown size={14} aria-hidden="true" className={`transition-transform ${aberto ? '' : '-rotate-90'}`} />
+                </button>
+                <ul id={`grupo-${g.id}`} hidden={!aberto} className="space-y-0.5 mt-1">
+                  {g.itens.map((item) => (
+                    <li key={item.to}><NavItem {...item} /></li>
+                  ))}
+                </ul>
               </div>
-            </>
-          )}
+            );
+          })}
         </nav>
 
         <div className="p-3 border-t border-white/10">
           <button
+            type="button"
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 w-full text-left rounded-lg text-sm text-white/70 hover:bg-ufrpe-red hover:text-white transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 w-full text-left rounded-lg text-sm text-white/75 hover:bg-ufrpe-red hover:text-white transition-colors"
           >
-            <LogOut size={18} className="shrink-0" />
+            <LogOut size={18} className="shrink-0" aria-hidden="true" />
             <span>Sair</span>
           </button>
         </div>
@@ -182,18 +141,19 @@ const AdminLayout = () => {
               href={gestorPrograma && programa?.slug ? `/${programa.slug}` : '/'}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-1.5 text-sm text-gray-500 hover:text-ufrpe-blue transition-colors"
+              className="hidden sm:flex items-center gap-1.5 text-sm text-gray-600 hover:text-ufrpe-blue transition-colors"
             >
-              <ExternalLink size={15} />
+              <ExternalLink size={15} aria-hidden="true" />
               {gestorPrograma && programa?.slug ? 'Ver microsite' : 'Ver site'}
+              <span className="sr-only"> (abre em nova aba)</span>
             </a>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-ufrpe-blue text-white grid place-items-center font-heading font-semibold text-sm">
+              <div className="w-9 h-9 rounded-full bg-ufrpe-blue text-white grid place-items-center font-heading font-semibold text-sm" aria-hidden="true">
                 {initial}
               </div>
               <div className="leading-tight hidden sm:block">
                 <p className="text-sm font-medium text-gray-800">{username}</p>
-                <p className="text-xs text-gray-400">{roleLabel}</p>
+                <p className="text-xs text-gray-500">{roleLabel}</p>
               </div>
             </div>
           </div>
