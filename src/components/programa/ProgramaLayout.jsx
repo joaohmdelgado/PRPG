@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePrograma, programaPath } from './ProgramaContext';
 import Icone from '../Icone';
 import RouteFocusManager from '../ui/RouteFocusManager';
+import useAssociarRotulos from '../../hooks/useAssociarRotulos';
 import AreaErrorBoundary from '../ui/AreaErrorBoundary';
 
 // O menu vem montado do servidor (programa.menu — server/utils/micrositeMenu.js,
@@ -19,6 +20,8 @@ const SOCIALS = [
 // Casca do microsite: barra discreta da PRPG + masthead/menu/footer do programa,
 // com cores vindas do próprio programa (fallback para o azul/amarelo da PRPG).
 export default function ProgramaLayout({ children }) {
+  const mainRef = useRef(null);
+  useAssociarRotulos(mainRef);
   const { programa, slug } = usePrograma();
   const location = useLocation();
   const navigate = useNavigate();
@@ -239,7 +242,7 @@ export default function ProgramaLayout({ children }) {
         )}
       </nav>
 
-      <main id="conteudo-programa" tabIndex={-1} className="flex-1 outline-none"><AreaErrorBoundary area="esta página do programa">{children}</AreaErrorBoundary></main>
+      <main id="conteudo-programa" ref={mainRef} tabIndex={-1} className="flex-1 outline-none"><AreaErrorBoundary area="esta página do programa">{children}</AreaErrorBoundary></main>
 
       {/* Footer do programa */}
       <footer className="bg-[var(--prog-primary)] text-white/80 mt-auto border-t-4 border-[var(--prog-accent)]">

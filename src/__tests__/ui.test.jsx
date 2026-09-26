@@ -218,6 +218,15 @@ describe('associarRotulos (rede de segurança)', () => {
     expect(r.querySelector('[contenteditable]').getAttribute('aria-labelledby')).toBe(rotuloConteudo.id);
   });
 
+  it('campo sem rótulo algum é nomeado pelo placeholder ou pela primeira opção', () => {
+    const r = html('<div><input placeholder="Buscar notícia..."><select><option>Todos os anos</option><option>2026</option></select><input aria-label="já tem"><input placeholder="  "></div>');
+    associarRotulos(r);
+    expect(r.querySelector('input').getAttribute('aria-label')).toBe('Buscar notícia...');
+    expect(r.querySelector('select').getAttribute('aria-label')).toBe('Todos os anos');
+    expect(r.querySelectorAll('input')[1].getAttribute('aria-label')).toBe('já tem');
+    expect(r.querySelectorAll('input')[2].hasAttribute('aria-label')).toBe(false);
+  });
+
   it('editor que ainda não carregou fica para a próxima passada', () => {
     const r = html('<div><label>Descrição</label><div><div></div></div></div>');
     expect(associarRotulos(r)).toBe(0);

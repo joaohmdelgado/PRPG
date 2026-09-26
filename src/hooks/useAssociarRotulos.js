@@ -62,6 +62,22 @@ function ligarComposto(rotulo) {
   return false; // ainda vazio (ex.: o editor carrega depois): tenta na próxima mutação
 }
 
+// Campo sem nome nenhum (filtros e buscas só com placeholder): o placeholder — ou,
+// num <select>, a primeira opção, quase sempre "Todos os…" — vira o aria-label.
+// É o último recurso; o certo é um <label> (Field).
+const SEM_NOME = 'input:not([type="hidden"]):not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]), select, textarea';
+function nomearSemRotulo(raiz) {
+  let n = 0;
+  raiz.querySelectorAll(SEM_NOME).forEach((el) => {
+    if (el.labels?.length || el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby') || el.hasAttribute('title')) return;
+    const nome = (el.getAttribute('placeholder') || (el.tagName === 'SELECT' ? el.options[0]?.textContent : '') || '').trim();
+    if (!nome) return;
+    el.setAttribute('aria-label', nome);
+    n += 1;
+  });
+  return n;
+}
+
 export function associarRotulos(raiz) {
   if (!raiz) return 0;
   let n = 0;
@@ -77,7 +93,7 @@ export function associarRotulos(raiz) {
       n += 1;
     }
   });
-  return n;
+  return n + nomearSemRotulo(raiz);
 }
 
 export default function useAssociarRotulos(ref) {
@@ -91,12 +107,14 @@ export default function useAssociarRotulos(ref) {
     };
     rodar();
     const obs = new MutationObserver(() => {
-      if (!agendado) agendado = requestAnimationFrame(rodar);
+      // setTimeout (e não requestAnimationFrame): aba em segundo plano não desenha quadros,
+      // e o leitor de tela precisa dos nomes mesmo assim.
+      if (!agendado) agendado = setTimeout(rodar, 30);
     });
     obs.observe(raiz, { childList: true, subtree: true });
     return () => {
       obs.disconnect();
-      if (agendado) cancelAnimationFrame(agendado);
+      if (agendado) clearTimeout(agendado);
     };
   }, [ref]);
 }
