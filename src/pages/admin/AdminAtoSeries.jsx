@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { EstadoErro } from '../../components/ui/Estados';
 import { useToast } from '../../components/admin/Toast';
 import { useConfirm } from '../../components/admin/ConfirmModal';
 
@@ -13,16 +14,23 @@ const ESPECIES = ['OFICIO', 'PORTARIA', 'EDITAL', 'RESOLUCAO', 'DESPACHO', 'MEMO
 export default function AdminAtoSeries() {
   const [series, setSeries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [novo, setNovo] = useState(null);
   const { toast, Toasts } = useToast();
   const { confirm, ConfirmModal } = useConfirm();
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    const res = await apiFetch('/api/atos/series');
-    if (res.ok) setSeries(await res.json());
-    else toast.error('Erro ao carregar séries.');
-    setLoading(false);
+    setErro(null);
+    try {
+      const res = await apiFetch('/api/atos/series');
+      if (!res.ok) throw new Error(`Falha ao carregar (${res.status}).`);
+      setSeries(await res.json());
+    } catch (e) {
+      setErro(e);
+    } finally {
+      setLoading(false);
+    }
   }, [toast]);
 
   useEffect(() => { carregar(); }, [carregar]);
@@ -53,6 +61,7 @@ export default function AdminAtoSeries() {
   };
 
   if (loading) return <TableSkeleton rows={6} cols={5} />;
+  if (erro) return <div className="bg-white rounded-lg shadow-sm p-6"><EstadoErro erro={erro} onTentar={carregar} titulo="Não foi possível carregar as séries." /></div>;
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">

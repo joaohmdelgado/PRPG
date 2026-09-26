@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Building2, Trash2, Edit2, X, Check } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { EstadoErro } from '../../components/ui/Estados';
 import { useConfirm } from '../../components/admin/ConfirmModal';
 import { useToast } from '../../components/admin/Toast';
 
@@ -11,6 +12,7 @@ const BLANK = { sigla: '', nome: '', internaPrpg: false };
 const AdminCamaraUnidades = () => {
   const [unidades, setUnidades] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(BLANK);
   const [showNew, setShowNew] = useState(false);
@@ -19,10 +21,17 @@ const AdminCamaraUnidades = () => {
   const { toast, Toasts } = useToast();
 
   const fetchUnidades = useCallback(async () => {
-    const res = await apiFetch('/api/camara/unidades');
-    if (res.status === 401 || res.status === 403) return navigate('/admin/login');
-    if (res.ok) setUnidades(await res.json());
-    setLoading(false);
+    setErro(null);
+    try {
+      const res = await apiFetch('/api/camara/unidades');
+      if (res.status === 401 || res.status === 403) return navigate('/admin/login');
+      if (!res.ok) throw new Error(`Falha ao carregar (${res.status}).`);
+      setUnidades(await res.json());
+    } catch (e) {
+      setErro(e);
+    } finally {
+      setLoading(false);
+    }
   }, [navigate]);
 
   useEffect(() => { fetchUnidades(); }, [fetchUnidades]);
@@ -51,6 +60,7 @@ const AdminCamaraUnidades = () => {
   };
 
   if (loading) return <TableSkeleton cols={3} />;
+  if (erro) return <div className="bg-white rounded-lg shadow-sm p-6"><EstadoErro erro={erro} onTentar={() => { setLoading(true); fetchUnidades(); }} titulo="Não foi possível carregar as unidades." /></div>;
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">

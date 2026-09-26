@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Plus, CalendarClock, Trash2 } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
+import { EstadoErro } from '../../components/ui/Estados';
 import { useConfirm } from '../../components/admin/ConfirmModal';
 import { useToast } from '../../components/admin/Toast';
 import { fmtData } from '../../constants/camara';
@@ -16,6 +17,7 @@ const REUNIAO_STATUS_CLASSES = {
 const AdminCamaraReunioes = () => {
   const [reunioes, setReunioes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [novaData, setNovaData] = useState('');
   const [novoNumero, setNovoNumero] = useState('');
@@ -24,10 +26,17 @@ const AdminCamaraReunioes = () => {
   const { toast, Toasts } = useToast();
 
   const fetchReunioes = useCallback(async () => {
-    const res = await apiFetch('/api/camara/reunioes');
-    if (res.status === 401 || res.status === 403) return navigate('/admin/login');
-    if (res.ok) setReunioes(await res.json());
-    setLoading(false);
+    setErro(null);
+    try {
+      const res = await apiFetch('/api/camara/reunioes');
+      if (res.status === 401 || res.status === 403) return navigate('/admin/login');
+      if (!res.ok) throw new Error(`Falha ao carregar (${res.status}).`);
+      setReunioes(await res.json());
+    } catch (e) {
+      setErro(e);
+    } finally {
+      setLoading(false);
+    }
   }, [navigate]);
 
   useEffect(() => { fetchReunioes(); }, [fetchReunioes]);
@@ -53,6 +62,7 @@ const AdminCamaraReunioes = () => {
   };
 
   if (loading) return <TableSkeleton cols={4} />;
+  if (erro) return <div className="bg-white rounded-lg shadow-sm p-6"><EstadoErro erro={erro} onTentar={() => { setLoading(true); fetchReunioes(); }} titulo="Não foi possível carregar as reuniões." /></div>;
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">

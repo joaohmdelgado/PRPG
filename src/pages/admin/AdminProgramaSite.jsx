@@ -9,6 +9,7 @@ import {
   BarChart2, Settings,
 } from 'lucide-react';
 import { apiFetch } from '../../api';
+import { EstadoErro } from '../../components/ui/Estados';
 import { isProgramaGestor } from '../../auth';
 import MicrositeMenuEditor from '../../components/admin/MicrositeMenuEditor';
 
@@ -119,25 +120,36 @@ const AdminProgramaSite = () => {
   const [paginas, setPaginas] = useState([]);
   const [checklist, setChecklist] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [deleting, setDeleting] = useState(null); // id da página sendo excluída
 
   const load = async () => {
     setLoading(true);
-    const [rPrograma, rPaginas, rChecklist] = await Promise.all([
-      apiFetch(`/api/programas/${id}`),
-      apiFetch(`/api/pages?programa=${id}`),
-      apiFetch(`/api/programas/${id}/checklist`),
-    ]);
-    if (rChecklist.ok) setChecklist(await rChecklist.json());
-    if (rPrograma.ok) setPrograma(await rPrograma.json());
-    else if (rPrograma.status === 401) return navigate('/admin/login');
-    if (rPaginas.ok) setPaginas(await rPaginas.json());
-    setLoading(false);
+    setErro(null);
+    try {
+      const [rPrograma, rPaginas, rChecklist] = await Promise.all([
+        apiFetch(`/api/programas/${id}`),
+        apiFetch(`/api/pages?programa=${id}`),
+        apiFetch(`/api/programas/${id}/checklist`),
+      ]);
+      if (rPrograma.status === 401) return navigate('/admin/login');
+      // 404 = programa que não existe (tela própria abaixo); outro status é falha de verdade.
+      if (!rPrograma.ok && rPrograma.status !== 404) throw new Error(`Falha ao carregar o programa (${rPrograma.status}).`);
+      if (!rPaginas.ok) throw new Error(`Falha ao carregar as páginas (${rPaginas.status}).`);
+      if (rChecklist.ok) setChecklist(await rChecklist.json());
+      if (rPrograma.ok) setPrograma(await rPrograma.json());
+      setPaginas(await rPaginas.json());
+    } catch (e) {
+      setErro(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { load(); }, [id]);
 
   if (loading) return <FormSkeleton />;
+  if (erro) return <div className="bg-white rounded-lg shadow-sm p-6 max-w-5xl mx-auto"><EstadoErro erro={erro} onTentar={load} titulo="Não foi possível carregar o site do programa." /></div>;
   if (!programa) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 max-w-5xl mx-auto text-center text-gray-500">

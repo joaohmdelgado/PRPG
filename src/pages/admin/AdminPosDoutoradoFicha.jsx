@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Pencil, FileText, CalendarPlus, CheckCircle2, Trash2 } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { FormSkeleton } from '../../components/admin/AdminUI';
+import { EstadoErro } from '../../components/ui/Estados';
 import { useToast } from '../../components/admin/Toast';
 import { useConfirm } from '../../components/admin/ConfirmModal';
 import OrigemPlanilha from '../../components/admin/OrigemPlanilha';
@@ -25,15 +26,22 @@ export default function AdminPosDoutoradoFicha() {
   const { confirm, ConfirmModal } = useConfirm();
   const [pd, setPd] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [nup, setNup] = useState('');
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    const res = await apiFetch(`/api/pos-doutorado/${id}`);
-    if (res.ok) setPd(await res.json());
-    else toast.error('Erro ao carregar o registro.');
-    setLoading(false);
-  }, [id, toast]);
+    setErro(null);
+    try {
+      const res = await apiFetch(`/api/pos-doutorado/${id}`);
+      if (!res.ok) throw new Error(res.status === 404 ? 'Registro não encontrado.' : `Falha ao carregar (${res.status}).`);
+      setPd(await res.json());
+    } catch (e) {
+      setErro(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => { carregar(); }, [carregar]);
 
@@ -88,7 +96,7 @@ export default function AdminPosDoutoradoFicha() {
   };
 
   if (loading) return <FormSkeleton fields={6} />;
-  if (!pd) return null;
+  if (erro || !pd) return <div className="bg-white rounded-lg shadow-sm p-6"><EstadoErro erro={erro} onTentar={carregar} titulo="Não foi possível carregar o registro." /></div>;
   const info = situacaoInfo(pd.situacao);
 
   return (

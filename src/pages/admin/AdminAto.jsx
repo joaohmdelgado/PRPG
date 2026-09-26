@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Loader2, Pencil, Link2, Trash2 } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { FormSkeleton } from '../../components/admin/AdminUI';
+import { EstadoErro } from '../../components/ui/Estados';
 import { useToast } from '../../components/admin/Toast';
 import { useConfirm } from '../../components/admin/ConfirmModal';
 import OrigemPlanilha from '../../components/admin/OrigemPlanilha';
@@ -25,15 +26,22 @@ export default function AdminAto() {
   const { confirm, ConfirmModal } = useConfirm();
   const [ato, setAto] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [novaRef, setNovaRef] = useState({ tipo: 'REVOGA', alvo: '' });
 
   const carregar = useCallback(async () => {
     setLoading(true);
-    const res = await apiFetch(`/api/atos/${id}`);
-    if (res.ok) setAto(await res.json());
-    else toast.error('Erro ao carregar o ato.');
-    setLoading(false);
-  }, [id, toast]);
+    setErro(null);
+    try {
+      const res = await apiFetch(`/api/atos/${id}`);
+      if (!res.ok) throw new Error(res.status === 404 ? 'Expediente não encontrado.' : `Falha ao carregar (${res.status}).`);
+      setAto(await res.json());
+    } catch (e) {
+      setErro(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => { carregar(); }, [carregar]);
 
@@ -82,7 +90,7 @@ export default function AdminAto() {
   };
 
   if (loading) return <FormSkeleton fields={6} />;
-  if (!ato) return null;
+  if (erro || !ato) return <div className="bg-white rounded-lg shadow-sm p-6"><EstadoErro erro={erro} onTentar={carregar} titulo="Não foi possível carregar o expediente." /></div>;
   const info = situacaoInfo(ato.situacao);
 
   return (
