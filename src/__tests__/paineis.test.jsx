@@ -13,6 +13,7 @@ import ContaDeclaracoes from '../pages/conta/ContaDeclaracoes';
 import ContaRelatorias from '../pages/conta/ContaRelatorias';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+window.scrollTo = () => {};
 
 let root;
 let container;
@@ -265,5 +266,126 @@ describe('/minha-conta (U.1)', () => {
     expect(c.textContent).toContain('23082.000001/2026-11');
     expect(c.textContent).toContain('Atrasado — prazo 01/02/2026');
     vi.unstubAllGlobals();
+  });
+});
+
+// ---- Busca do painel (U.5)
+import { montarOpcoes } from '../components/admin/PaletaBusca';
+import { destinosDoPainel } from '../components/admin/menuPainel';
+import { useLocation } from 'react-router-dom';
+
+describe('busca do painel — Ctrl+K (U.5)', () => {
+  const perfil = { superAdmin: true, gestorPrograma: false, roles: ['Administrator'] };
+  const setValor = (el, v) => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, v);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  const tecla = (alvo, key, extra = {}) => alvo.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...extra }));
+  let rota;
+  function Rota() { rota = useLocation().pathname; return null; }
+
+  const painelComBusca = () => (
+    <MemoryRouter initialEntries={['/admin']}>
+      <Rota />
+      <Routes>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<p>Início</p>} />
+          <Route path="*" element={<p>Outra tela</p>} />
+        </Route>
+      </Routes>
+    </MemoryRouter>
+  );
+
+  it('montarOpcoes: telas, criar e conteúdo do servidor, na ordem, sem acento', () => {
+    const destinos = destinosDoPainel(perfil);
+    const secoes = montarOpcoes({
+      texto: 'Notícia', destinos, superAdmin: true,
+      resposta: { noticias: [{ id: 'n1', titulo: 'Notícia de teste', status: 'RASCUNHO' }], processos: [{ id: 'p1', numero: '23082.1/2026-1', assunto: 'Processo sobre notícia' }] },
+    });
+    expect(secoes.map((s) => s.chave)).toEqual(['ir', 'criar', 'noticias', 'processos']);
+    expect(secoes[0].itens[0]).toMatchObject({ rotulo: 'Notícias', to: '/admin/noticias' });
+    expect(secoes[1].itens[0]).toMatchObject({ rotulo: 'Nova notícia', to: '/admin/noticias/nova' });
+    expect(secoes[2].itens[0]).toMatchObject({ to: '/admin/noticias/editar/n1', status: 'RASCUNHO' });
+    expect(secoes[3].itens[0].to).toBe('/admin/camara/p1');
+    // sem texto: só a lista de telas
+    expect(montarOpcoes({ texto: '', destinos, resposta: null, superAdmin: true }).map((s) => s.chave)).toEqual(['ir']);
+    // quem não é da PRPG não recebe "Criar processo/expediente"
+    const gestor = montarOpcoes({ texto: 'nov', destinos: [], resposta: null, superAdmin: false })[0].itens.map((i) => i.to);
+    expect(gestor).not.toContain('/admin/camara/novo');
+    expect(gestor).toContain('/admin/noticias/nova');
+  });
+
+  it('Ctrl+K abre um combobox acessível; setas e Enter levam à tela; Esc fecha', async () => {
+    stubMatchMedia(true);
+    entrar(['Administrator']);
+    await montar(painelComBusca());
+    expect(document.querySelector('[role=dialog]')).toBeNull();
+
+    await act(async () => { tecla(document.body, 'k', { ctrlKey: true }); });
+    const dialogo = document.querySelector('[role=dialog]');
+    expect(dialogo).toBeTruthy();
+    const campo = dialogo.querySelector('[role=combobox]');
+    expect(document.activeElement).toBe(campo);
+    expect(campo.getAttribute('aria-controls')).toBe(dialogo.querySelector('[role=listbox]').id);
+
+    // digitar filtra as telas (sem chamar o servidor com menos de 2 letras)
+    await act(async () => { setValor(campo, 'expedi'); });
+    const opcoes = () => [...dialogo.querySelectorAll('[role=option]')];
+    expect(opcoes().map((o) => o.textContent)).toEqual(expect.arrayContaining([expect.stringContaining('Expedientes')]));
+    expect(campo.getAttribute('aria-activedescendant')).toBe(opcoes()[0].id);
+    expect(opcoes()[0].getAttribute('aria-selected')).toBe('true');
+
+    await act(async () => { tecla(campo, 'Enter'); });
+    expect(rota).toBe('/admin/atos');
+    expect(document.querySelector('[role=dialog]')).toBeNull();
+
+    // reabre e fecha com Escape
+    await act(async () => { tecla(document.body, 'k', { metaKey: true }); });
+    expect(document.querySelector('[role=dialog]')).toBeTruthy();
+    await act(async () => { tecla(document, 'Escape'); });
+    expect(document.querySelector('[role=dialog]')).toBeNull();
+  });
+
+  it('busca no servidor depois de 2 letras e mostra o conteúdo encontrado; erro aparece como erro', async () => {
+    stubMatchMedia(true);
+    entrar(['Administrator']);
+    let falha = false;
+    vi.stubGlobal('fetch', vi.fn(async (url) => (String(url).includes('/api/busca')
+      ? (falha ? { ok: false, status: 500, json: async () => ({}) }
+        : { ok: true, status: 200, json: async () => ({ editais: [{ id: 'e1', titulo: 'Edital de seleção 2026', status: 'PUBLICADO' }] }) })
+      : { ok: true, status: 200, json: async () => [] })));
+    await montar(painelComBusca());
+    await act(async () => { tecla(document.body, 'k', { ctrlKey: true }); });
+    const dialogo = document.querySelector('[role=dialog]');
+    const campo = dialogo.querySelector('[role=combobox]');
+
+    await act(async () => { setValor(campo, 'seleção'); });
+    await act(async () => { await new Promise((r) => setTimeout(r, 400)); });
+    expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/api/busca?q=sele'), expect.anything());
+    const achou = [...dialogo.querySelectorAll('[role=option]')].find((o) => o.textContent.includes('Edital de seleção 2026'));
+    expect(achou).toBeTruthy();
+    await act(async () => { achou.click(); });
+    expect(rota).toBe('/admin/editais/editar/e1');
+
+    // falha do servidor não vira "nada encontrado"
+    falha = true;
+    await act(async () => { tecla(document.body, 'k', { ctrlKey: true }); });
+    const campo2 = document.querySelector('[role=combobox]');
+    await act(async () => { setValor(campo2, 'qualquer'); });
+    await act(async () => { await new Promise((r) => setTimeout(r, 400)); });
+    expect(document.querySelector('[role=dialog] [role=alert]').textContent).toContain('A busca não respondeu');
+    vi.unstubAllGlobals();
+  });
+
+  it('não rouba o Ctrl+K do editor de texto (que usa para inserir link)', async () => {
+    stubMatchMedia(true);
+    entrar(['Administrator']);
+    await montar(painelComBusca());
+    const editor = document.createElement('div');
+    editor.setAttribute('contenteditable', 'true');
+    document.body.appendChild(editor);
+    await act(async () => { tecla(editor, 'k', { ctrlKey: true }); });
+    expect(document.querySelector('[role=dialog]')).toBeNull();
+    editor.remove();
   });
 });

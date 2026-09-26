@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, ExternalLink, ChevronDown, Menu as MenuIcon, X, UserRound } from 'lucide-react';
+import { LogOut, ExternalLink, ChevronDown, Menu as MenuIcon, X, UserRound, Search } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma, clearSession } from '../auth';
 import { INICIO, gruposDoPainel } from './admin/menuPainel';
 import RouteFocusManager from './ui/RouteFocusManager';
 import AreaErrorBoundary from './ui/AreaErrorBoundary';
+import PaletaBusca from './admin/PaletaBusca';
 import useFocusTrap from '../hooks/useFocusTrap';
 import useMediaQuery from '../hooks/useMediaQuery';
 import useAssociarRotulos from '../hooks/useAssociarRotulos';
@@ -54,7 +55,23 @@ const AdminLayout = () => {
   useEffect(() => { setDrawerAberto(false); }, [location.pathname]);
   useEffect(() => { if (desktop) setDrawerAberto(false); }, [desktop]);
 
-  const grupos = gruposDoPainel({ superAdmin: isSuperAdmin, gestorPrograma, programaId: programa?.id, roles: userRoles });
+  const perfil = { superAdmin: isSuperAdmin, gestorPrograma, programaId: programa?.id, roles: userRoles };
+  const grupos = gruposDoPainel(perfil);
+
+  // Busca do painel (Ctrl+K / Cmd+K), de qualquer tela.
+  const [buscaAberta, setBuscaAberta] = useState(false);
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'k') {
+        // No editor de texto o Ctrl+K é do próprio editor (inserir link): não roubamos.
+        if (e.target?.closest?.('[contenteditable="true"]')) return;
+        e.preventDefault();
+        setBuscaAberta((a) => !a);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
 
   // Grupo da rota atual sempre aberto; os demais seguem a escolha da pessoa
   // (guardada no navegador). Sem escolha, só o grupo da rota atual.
@@ -191,6 +208,13 @@ const AdminLayout = () => {
               {gestorPrograma && programa?.slug ? 'Ver microsite' : 'Ver site'}
               <span className="sr-only"> (abre em nova aba)</span>
             </a>
+            <button type="button" onClick={() => setBuscaAberta(true)} aria-keyshortcuts="Control+K Meta+K"
+              className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-md border border-gray-300 text-sm text-gray-600 hover:bg-gray-50">
+              <Search size={15} aria-hidden="true" />
+              <span className="hidden sm:inline">Buscar</span>
+              <span className="sr-only sm:hidden">Buscar no painel</span>
+              <kbd className="hidden md:inline text-[11px] text-gray-500 border rounded px-1">Ctrl K</kbd>
+            </button>
             <Link to="/minha-conta" className="hidden sm:flex items-center gap-1.5 text-sm text-gray-600 hover:text-ufrpe-blue transition-colors">
               <UserRound size={15} aria-hidden="true" /> Minha conta
             </Link>
@@ -212,6 +236,7 @@ const AdminLayout = () => {
           </AreaErrorBoundary>
         </main>
       </div>
+      <PaletaBusca aberta={buscaAberta} onFechar={() => setBuscaAberta(false)} perfil={perfil} />
     </div>
   );
 };
