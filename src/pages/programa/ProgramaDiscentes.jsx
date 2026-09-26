@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch, lerJson } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import Icone from '../../components/Icone';
+import Imagem from '../../components/Imagem';
 import { ErrorState } from '../../components/programa/ProgramaUI';
 
 const PAPEL_LABEL = {
@@ -23,8 +24,9 @@ function DiscenteCard({ discente }) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex gap-4 hover:shadow-md transition-shadow">
       <div className="shrink-0">
         {discente.foto_url ? (
-          <img
+          <Imagem
             src={discente.foto_url}
+            sizes="56px" largura={56} altura={56}
             alt={discente.nome}
             className="w-14 h-14 rounded-full object-cover border-2 border-[var(--prog-primary)]/20"
           />

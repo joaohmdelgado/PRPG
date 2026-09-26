@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePrograma, programaPath } from './ProgramaContext';
 import Icone from '../Icone';
+import Imagem from '../Imagem';
 import RouteFocusManager from '../ui/RouteFocusManager';
 import useAssociarRotulos from '../../hooks/useAssociarRotulos';
 import AreaErrorBoundary from '../ui/AreaErrorBoundary';
@@ -96,7 +97,7 @@ export default function ProgramaLayout({ children }) {
         <div className="container mx-auto px-4 py-5 flex items-center gap-4">
           <Link to={base} className="flex items-center gap-4 min-w-0">
             {programa.logo_url ? (
-              <img src={programa.logo_url} alt={programa.nome} className="h-12 md:h-14 w-auto shrink-0"
+              <Imagem src={programa.logo_url} sizes="56px" prioridade alt={programa.nome} className="h-12 md:h-14 w-auto shrink-0"
                 onError={(e) => { e.target.style.display = 'none'; }} />
             ) : (
               <span className="shrink-0 h-12 w-12 md:h-14 md:w-14 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-[var(--prog-accent)]">

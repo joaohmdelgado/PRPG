@@ -1,6 +1,7 @@
 import React from 'react';
 import { hrefContato, iconeContato, rotuloContato, iniciais, fotoPessoa } from '../hooks/useEstrutura';
 import Icone from './Icone';
+import Imagem from './Imagem';
 
 // Peças comuns de Equipe e Estrutura Organizacional (Fase H.4).
 
@@ -33,7 +34,7 @@ export function ListaContatos({ contatos, className = '', claro = false }) {
 
 export function Avatar({ membro, tamanho = 'w-16 h-16', texto = 'text-lg' }) {
   const foto = fotoPessoa(membro);
-  if (foto) return <img src={foto} alt="" loading="lazy" className={`${tamanho} rounded-xl object-cover shrink-0 bg-gray-100`} />;
+  if (foto) return <Imagem src={foto} sizes="80px" className={`${tamanho} rounded-xl object-cover shrink-0 bg-gray-100`} />;
   return (
     <span className={`${tamanho} ${texto} rounded-xl bg-ufrpe-blue/10 text-ufrpe-blue font-bold flex items-center justify-center shrink-0`} aria-hidden="true">
       {iniciais(membro.nome)}

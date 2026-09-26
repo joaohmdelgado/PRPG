@@ -11,6 +11,7 @@ import { IS_PRODUCTION, CORS_ORIGINS } from './config.js';
 import { logUnexpectedError } from './utils/logger.js';
 import { pgClientError } from './utils/httpError.js';
 import { pool } from './db/pool.js';
+import { servirVariante } from './services/imagens.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -65,6 +66,10 @@ app.use(cors(corsOptions));
 // repetitivo — /api/news tinha 88 KB trafegando sem compressão.
 app.use(compression());
 app.use(express.json({ limit: '2mb' }));
+
+// /uploads/<imagem>?w=800 devolve a versão WebP daquela largura (Fase P.3);
+// sem ?w= (ou para PDF etc.) cai no servidor estático abaixo.
+app.use('/uploads', servirVariante);
 
 // Servir a pasta de uploads de forma estática. O nosniff reforça contra a
 // interpretação de um arquivo enviado como HTML/script pelo navegador.

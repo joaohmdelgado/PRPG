@@ -2,6 +2,7 @@ import React from 'react';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero } from '../../components/programa/ProgramaUI';
 import Icone from '../../components/Icone';
+import Imagem from '../../components/Imagem';
 
 const TIPO_LABEL = {
   COMISSAO_CPG: 'Câmara/Comissão de Pós-Graduação (CPG)',
@@ -17,7 +18,7 @@ function MemberChip({ pessoa }) {
   return (
     <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 px-4 py-3 shadow-sm">
       {foto ? (
-        <img src={foto} alt={nome} className="w-9 h-9 rounded-full object-cover shrink-0" />
+        <Imagem src={foto} sizes="36px" largura={36} altura={36} alt={nome} className="w-9 h-9 rounded-full object-cover shrink-0" />
       ) : (
         <div className="w-9 h-9 rounded-full bg-[var(--prog-primary)]/10 flex items-center justify-center shrink-0">
           <Icone nome="fa-solid fa-user" className="text-[var(--prog-primary)]/40 text-sm" />

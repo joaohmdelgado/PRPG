@@ -9,6 +9,7 @@ import { pool, query } from '../db/pool.js';
 import { arquivosRepo, sha256Arquivo } from '../db/anexosRepo.js';
 import { contarUsos, listarUsos, substituirReferencias } from '../db/arquivosUsos.js';
 import { responderLista, filtrarTexto } from '../utils/listagem.js';
+import { apagarVariantes, prepararImagem } from '../services/imagens.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PASTA_UPLOADS = path.join(__dirname, '../uploads');
@@ -90,6 +91,7 @@ export const substituirArquivo = async (req, res) => {
       [urlNova, req.file.originalname, req.file.mimetype, req.file.size, sha256, req.user?.id || null, a.id]
     );
     await client.query('COMMIT');
+    await prepararImagem(req.file.filename);
     res.json({ arquivo: dto(rows[0], null), referenciasAtualizadas: alteradas, urlAnterior: a.url });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -110,6 +112,9 @@ export const deleteArquivo = async (req, res) => {
   }
   await query('DELETE FROM arquivos WHERE id = $1', [a.id]);
   const { rows } = await query('SELECT 1 FROM arquivos WHERE url = $1 LIMIT 1', [a.url]);
-  if (rows.length === 0) await fs.unlink(caminhoDe(a.url)).catch(() => {});
+  if (rows.length === 0) {
+    await fs.unlink(caminhoDe(a.url)).catch(() => {});
+    await apagarVariantes(a.url);
+  }
   res.json({ excluido: true });
 };

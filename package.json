@@ -21,6 +21,7 @@
     "planilha": "node server/scripts/importarPlanilha.mjs",
     "agendador": "node server/scripts/agendador.mjs",
     "links": "node server/scripts/verificarLinks.mjs",
+    "imagens": "node server/scripts/imagens.mjs",
     "test:front": "vitest run --config vitest.front.config.js"
   },
   "dependencies": {
@@ -43,6 +44,7 @@
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "react-router-dom": "^7.16.0",
+    "sharp": "^0.35.4",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

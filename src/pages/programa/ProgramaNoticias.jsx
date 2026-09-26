@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { API_URL, apiFetch, lerJson } from '../../api';
+import { apiFetch, lerJson } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner, formatDate, ErrorState } from '../../components/programa/ProgramaUI';
 import Icone from '../../components/Icone';
+import Imagem from '../../components/Imagem';
 
 const POR_PAGINA = 9;
 
@@ -78,7 +79,7 @@ export default function ProgramaNoticias() {
                 className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all border border-gray-100 flex flex-col">
                 {n.image && (
                   <div className="aspect-[4/3] overflow-hidden bg-gray-100 relative">
-                    <img src={n.image.startsWith('http') ? n.image : `${API_URL}${n.image}`} alt={n.title}
+                    <Imagem src={n.image} sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" alt={n.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
                     {n.category && (
                       <span className="absolute top-3 left-3 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-[var(--prog-accent)] text-[var(--prog-primary)] shadow">

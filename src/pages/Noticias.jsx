@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { API_URL, apiFetch } from '../api';
+import { apiFetch } from '../api';
 import useVocabulario, { corDe } from '../hooks/useVocabulario';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import Icone from '../components/Icone';
+import Imagem from '../components/Imagem';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -172,8 +173,9 @@ export default function Noticias() {
               {paginatedNoticias.map((item) => (
                 <div key={item.id} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 flex flex-col h-full">
                   <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-200">
-                    <img
-                      src={item.image?.startsWith('http') ? item.image : `${API_URL}${item.image}`}
+                    <Imagem
+                      src={item.image}
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
                       alt={item.imagemAlt || ""}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                     />

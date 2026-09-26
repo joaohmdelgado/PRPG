@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch, lerJson } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import Icone from '../../components/Icone';
+import Imagem from '../../components/Imagem';
 import { ErrorState } from '../../components/programa/ProgramaUI';
 
 const PAPEL_LABEL = {
@@ -14,8 +15,9 @@ function DocenteCard({ docente }) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex gap-4 hover:shadow-md transition-shadow">
       <div className="shrink-0">
         {docente.foto_url ? (
-          <img
+          <Imagem
             src={docente.foto_url}
+            sizes="64px" largura={64} altura={64}
             alt={docente.nome}
             className="w-16 h-16 rounded-full object-cover border-2 border-[var(--prog-primary)]/20"
           />

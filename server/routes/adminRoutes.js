@@ -96,6 +96,7 @@ import { getReferencias, putReferencias, getCandidatos } from '../controllers/re
 import { getPrazos, getCalendarioIcs } from '../controllers/prazosPublicosController.js';
 import { autorizarRevisao, getRevisoes, getRevisao, restaurarRevisao } from '../controllers/revisoesController.js';
 import { asyncRouter } from '../utils/asyncRouter.js';
+import { prepararImagem } from '../services/imagens.js';
 import { getMinhaConta, updateMinhaConta, updateMinhaSenha, baixarMinhaDeclaracao } from '../controllers/minhaContaController.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -254,7 +255,9 @@ router.post('/upload', uploadLimiter, protect, (req, res, next) => {
     // asyncRouter não o alcança.
     try {
       const { arquivo, reaproveitado } = await registrarUploadPublico(req.file, req.user?.id);
-      res.json({ id: arquivo.id, url: arquivo.url, originalName: req.file.originalname, reaproveitado });
+      // Fase P.3: imagem raster ganha versões WebP e devolve as dimensões.
+      const dims = await prepararImagem(path.basename(arquivo.url));
+      res.json({ id: arquivo.id, url: arquivo.url, originalName: req.file.originalname, reaproveitado, ...(dims || {}) });
     } catch (e) {
       next(e);
     }

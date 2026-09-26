@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { API_URL, apiFetch } from '../../api';
+import { apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import { Spinner, EmptyState, ErrorState, formatDate } from '../../components/programa/ProgramaUI';
 import SafeHtml from '../../components/SafeHtml';
 import AvisoPreVisualizacao from '../../components/AvisoPreVisualizacao';
 import Icone from '../../components/Icone';
+import Imagem from '../../components/Imagem';
 
 export default function ProgramaNoticia() {
   const { slug } = usePrograma();
@@ -71,7 +72,7 @@ export default function ProgramaNoticia() {
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         {noticia.image && (
           <figure className="mb-8">
-            <img src={noticia.image.startsWith('http') ? noticia.image : `${API_URL}${noticia.image}`} alt={noticia.title}
+            <Imagem src={noticia.image} prioridade sizes="(min-width: 896px) 896px, 100vw" alt={noticia.title}
               className="w-full rounded-2xl shadow-sm border border-gray-100" />
             {noticia.imageCaption && <figcaption className="text-xs text-gray-400 mt-2 text-center italic">{noticia.imageCaption}</figcaption>}
           </figure>

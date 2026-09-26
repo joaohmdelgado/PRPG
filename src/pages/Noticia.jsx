@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { API_URL, apiFetch } from '../api';
+import { apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import Relacionados from '../components/Relacionados';
 import useVocabulario, { corDe } from '../hooks/useVocabulario';
 import Icone from '../components/Icone';
+import Imagem from '../components/Imagem';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -163,8 +164,9 @@ export default function Noticia() {
           
           {/* Featured Image */}
           <figure className="mb-12 rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-            <img
-              src={newsItem.image?.startsWith('http') ? newsItem.image : `${API_URL}${newsItem.image}`}
+            <Imagem
+              src={newsItem.image} prioridade
+              sizes="(min-width: 1024px) 1024px, 100vw"
               alt={newsItem.imagemAlt || newsItem.title}
               className="w-full h-auto object-cover max-h-[500px]"
             />
@@ -229,8 +231,9 @@ export default function Noticia() {
                 className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100"
               >
                 <div className="aspect-video overflow-hidden bg-gray-200 relative">
-                  <img
-                    src={related.image?.startsWith('http') ? related.image : `${API_URL}${related.image}`}
+                  <Imagem
+                    src={related.image}
+                    sizes="(min-width: 768px) 33vw, 100vw"
                     alt={related.imagemAlt || ""}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
                   />

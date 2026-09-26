@@ -11,6 +11,8 @@ coverage/
 # (LGPD) e não devem ir para o versionamento. A pasta é recriada em runtime.
 server/uploads/*
 !server/uploads/.gitkeep
+# Versões WebP geradas das imagens (Fase P.3) — cache regenerável.
+server/uploads-derivados/
 server/private-uploads/*
 !server/private-uploads/.gitkeep
 backup-dados-vivos.sql

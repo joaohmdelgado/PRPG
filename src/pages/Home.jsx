@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { apiFetch, urlMidia } from '../api';
+import { apiFetch } from '../api';
 import { useMenu, useConfig } from '../hooks/usePortal';
 import LinkDestino from '../components/LinkDestino';
 import ProximosPrazos from '../components/ProximosPrazos';
 import Icone from '../components/Icone';
+import Imagem from '../components/Imagem';
 
 // Página inicial dirigida por dados (Fase H.2): banner, atalhos, cartões e
 // parceiros vêm de "Menus e portal"; notícias, editais, prazos e números vêm
@@ -49,7 +50,7 @@ function Capa({ noticia, className }) {
       </div>
     );
   }
-  return <img src={urlMidia(noticia.image)} alt={noticia.imagemAlt || ''} loading="lazy" className={`${className} object-cover`} />;
+  return <Imagem src={noticia.image} alt={noticia.imagemAlt || ''} sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" className={`${className} object-cover`} />;
 }
 
 export default function Home() {
@@ -79,7 +80,7 @@ export default function Home() {
       <header className="relative bg-ufrpe-blue text-white overflow-hidden flex items-center min-h-[560px]">
         {hero.imagem && (
           <div className="absolute inset-0 z-0">
-            <img src={urlMidia(hero.imagem)} className="w-full h-full object-cover object-center" alt="" />
+            <Imagem src={hero.imagem} prioridade sizes="100vw" className="w-full h-full object-cover object-center" alt="" />
           </div>
         )}
         <div className="absolute inset-0 z-10" style={{ background: 'linear-gradient(to right,#1e2b4f,rgba(30,43,79,.90),rgba(30,43,79,.40))' }}></div>
@@ -240,7 +241,7 @@ export default function Home() {
               {cursos.map((p) => (
                 <div key={p.id} className="bg-white rounded-2xl overflow-hidden flex flex-col group transition-transform hover:-translate-y-2" style={{ boxShadow: '0 8px 30px rgba(0,0,0,.40)' }}>
                   <div className="h-56 bg-gray-200 relative overflow-hidden">
-                    {p.imagem && <img src={urlMidia(p.imagem)} loading="lazy" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />}
+                    {p.imagem && <Imagem src={p.imagem} sizes="(min-width: 768px) 33vw, 100vw" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="" />}
                     <div className="absolute inset-0" style={{ background: 'linear-gradient(to top,rgba(0,0,0,.80),rgba(0,0,0,.20),transparent)' }}></div>
                     <h3 className="absolute bottom-5 left-6 text-2xl font-heading font-bold text-white">{p.rotulo}</h3>
                   </div>
@@ -281,7 +282,7 @@ export default function Home() {
               <li key={p.id}>
                 <LinkDestino destino={p.destino}>
                   {p.imagem
-                    ? <img src={urlMidia(p.imagem)} alt={p.rotulo} loading="lazy" className="max-h-12 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300" />
+                    ? <Imagem src={p.imagem} alt={p.rotulo} sizes="160px" className="max-h-12 grayscale opacity-60 hover:grayscale-0 hover:opacity-100 transition-all duration-300" />
                     : <span className="font-bold text-gray-500">{p.rotulo}</span>}
                 </LinkDestino>
               </li>

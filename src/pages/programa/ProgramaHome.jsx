@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL, apiFetch, lerJson } from '../../api';
+import { apiFetch, lerJson } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import { formatDate } from '../../components/programa/ProgramaUI';
 import ProximosPrazos from '../../components/ProximosPrazos';
 import Icone from '../../components/Icone';
+import Imagem from '../../components/Imagem';
 
 const LINHA_ICONS = ['fa-book', 'fa-landmark', 'fa-people-group', 'fa-scroll', 'fa-earth-americas', 'fa-feather'];
 
@@ -97,7 +98,7 @@ export default function ProgramaHome() {
                   className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all border border-gray-100 flex flex-col">
                   {n.image && (
                     <div className="aspect-[16/9] overflow-hidden bg-gray-100">
-                      <img src={n.image.startsWith('http') ? n.image : `${API_URL}${n.image}`} alt={n.title}
+                      <Imagem src={n.image} sizes="(min-width: 768px) 33vw, 100vw" alt={n.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
                     </div>
                   )}

@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useMenu, useConfig, linkTelefone } from '../hooks/usePortal';
 import LinkDestino from './LinkDestino';
 import Icone from './Icone';
+import Imagem from './Imagem';
 import Dialog from './ui/Dialog';
 import { getToken, destinoPadrao } from '../auth';
 
@@ -117,8 +118,8 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-4 shrink-0">
             {logo && (
-              <img
-                src={logo}
+              <Imagem
+                src={logo} sizes="64px" prioridade
                 alt="UFRPE" className="h-14 md:h-16 w-auto"
                 onError={e => e.target.style.display = 'none'}
               />
