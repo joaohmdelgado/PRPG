@@ -114,7 +114,7 @@ de 4 anos) para conferência contra o papel.
 reuniões/pauta (`camara_reunioes`/`camara_pauta_itens`), relatorias
 (`camara_relatorias`) e atos resultantes (`camara_atos`). Ver `requisitos-camara.md`
 na raiz do repositório para o levantamento completo (Fases 0-1 implementadas;
-o importador da planilha histórica ainda não existe — ver `PLANO.md` §2.2).
+o importador da planilha histórica existe desde a Fase O — ver abaixo).
 
 **Virada das planilhas (Fase O, `docs/revisao-portal-conteudo-2026-09-24.md`)**: as 4 planilhas
 (Contatos, Expedientes, Câmara, PNPD) entram por `server/services/planilhas/` (`nucleo.js`: simulação =
