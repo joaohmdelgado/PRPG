@@ -28,3 +28,16 @@ export async function filtrarPorEscopo(items, q = {}) {
   if (q.escopo === 'portal') return items.filter((i) => !i.programaId || i.destaque !== false);
   return items;
 }
+
+// Versão SQL de filtrarPorEscopo() (Fase P.2), para tabelas com programa_id
+// e destaque. Devolve a condição e acrescenta o valor a `params`.
+export async function escopoSql(q = {}, params) {
+  if (q.programa) {
+    params.push(await resolveProgramaId(String(q.programa)));
+    return `programa_id = $${params.length}`;
+  }
+  if (q.escopo === 'prpg') return 'programa_id IS NULL';
+  if (q.escopo === 'programas') return 'programa_id IS NOT NULL';
+  if (q.escopo === 'portal') return '(programa_id IS NULL OR destaque IS TRUE)';
+  return 'TRUE';
+}

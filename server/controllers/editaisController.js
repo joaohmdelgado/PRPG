@@ -82,17 +82,21 @@ const ORDENAVEIS = {
 };
 const BUSCA = ['title', 'numero', 'description', 'categoryTitle'];
 
+// Erratas e resultados (eventos) vêm numa única consulta, mas só para os
+// editais que vão na resposta — a página, não a tabela toda (Fase P.2).
+const comEventos = async (editais) => {
+  const eventosPorEdital = await eventosRepo.listByEntidades('edital', editais.map((e) => e.id));
+  return editais.map((e) => anexarEventos(e, eventosPorEdital.get(e.id) || []));
+};
+
 export const getEditais = async (req, res) => {
   let editais = await editaisRepo.getAll();
   editais = filtrarVisiveis(await filtrarPorEscopo(editais, req.query), req.user, req.query);
-  // Uma consulta de eventos para todos os editais (antes: uma por edital).
-  const eventosPorEdital = await eventosRepo.listByEntidades('edital', editais.map((e) => e.id));
-  const comEventos = editais.map((e) => anexarEventos(e, eventosPorEdital.get(e.id) || []));
   // Selo e link do programa (Fase N.1).
-  let lista = anexarPrograma(comEventos.map(calculateEditalStatus), await mapaProgramas());
+  let lista = anexarPrograma(editais.map(calculateEditalStatus), await mapaProgramas());
   // ?situacao=abertas|andamento|concluido (home e filtros da página).
   if (req.query.situacao) lista = lista.filter((e) => e.situation === req.query.situacao);
-  responderLista(res, lista, req.query, { busca: BUSCA, ordenaveis: ORDENAVEIS });
+  return responderLista(res, lista, req.query, { busca: BUSCA, ordenaveis: ORDENAVEIS, enriquecer: comEventos });
 };
 
 export const getEditalById = async (req, res) => {

@@ -14,8 +14,8 @@ export default function ProgramaHome() {
 
   useEffect(() => {
     let active = true;
-    lerJson(`/api/news?programa=${encodeURIComponent(slug)}`, { auth: false })
-      .then((d) => { if (active) setNoticias(Array.isArray(d) ? d.slice(0, 3) : []); })
+    lerJson(`/api/news?programa=${encodeURIComponent(slug)}&resumo=1&page=1&limit=3`, { auth: false })
+      .then((d) => { if (active) setNoticias(Array.isArray(d?.items) ? d.items : []); })
       .catch(() => {});
     return () => { active = false; };
   }, [slug]);

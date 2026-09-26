@@ -41,19 +41,33 @@ export function ordenarLista(items, q = {}, ordenaveis) {
     .map((x) => x.item);
 }
 
+// `enriquecer`: async (itens) => itens, aplicado só ao que vai na resposta (a
+// página, quando paginada) — para anexar dados caros (uma consulta a mais)
+// sem calculá-los para o que ficou de fora. Com ele, devolve uma Promise.
 // `extra`: campos a mais na resposta paginada (ex.: anos disponíveis para o filtro).
 // `busca`: campos do ?q= (quando o controller ainda não filtra por q sozinho).
 // `ordenaveis`: campos aceitos em ?ordenar=.
-export function responderLista(res, items, q = {}, { resumir, extra = {}, busca, ordenaveis } = {}) {
+// Página pedida (?page/?limit) limitada ao que existe: usada também pelas
+// listagens que paginam no banco (Fase P.2).
+export function paginaDe(q, total) {
+  const limit = Math.min(Math.max(Number.parseInt(q.limit, 10) || 20, 1), LIMITE_MAX);
+  const pages = Math.max(Math.ceil(total / limit), 1);
+  const page = Math.min(Math.max(Number.parseInt(q.page, 10) || 1, 1), pages);
+  return { limit, pages, page, offset: (page - 1) * limit };
+}
+
+export const pediuPagina = (q) => q.page !== undefined || q.limit !== undefined;
+
+export function responderLista(res, items, q = {}, { resumir, enriquecer, extra = {}, busca, ordenaveis } = {}) {
   let out = items;
   if (busca && q.q) out = filtrarTexto(out, q.q, busca);
   out = ordenarLista(out, q, ordenaveis);
   if (q.resumo === '1' && resumir) out = out.map(resumir);
-  if (q.page === undefined && q.limit === undefined) return res.json(out);
+  if (!pediuPagina(q)) return enriquecer ? enriquecer(out).then((itens) => res.json(itens)) : res.json(out);
 
-  const limit = Math.min(Math.max(Number.parseInt(q.limit, 10) || 20, 1), LIMITE_MAX);
   const total = out.length;
-  const pages = Math.max(Math.ceil(total / limit), 1);
-  const page = Math.min(Math.max(Number.parseInt(q.page, 10) || 1, 1), pages);
-  return res.json({ items: out.slice((page - 1) * limit, page * limit), total, page, limit, pages, ...extra });
+  const { limit, pages, page, offset } = paginaDe(q, total);
+  const pagina = out.slice(offset, offset + limit);
+  const enviar = (items) => res.json({ items, total, page, limit, pages, ...extra });
+  return enriquecer ? enriquecer(pagina).then(enviar) : enviar(pagina);
 }

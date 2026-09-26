@@ -33,3 +33,16 @@ export const sqlPublicado = (alias = '') => {
   const p = alias ? `${alias}.` : '';
   return `(${p}status = 'PUBLICADO' AND (${p}publicado_em IS NULL OR ${p}publicado_em <= now()))`;
 };
+
+// Versão SQL de visivelPara(): o que o usuário pode ver, como condição WHERE.
+// Acrescenta o programa do Gestor de Programa a `params` (placeholders $n).
+export const sqlVisivelPara = (user, params, alias = '') => {
+  const roles = user?.roles || [];
+  if (roles.includes('Administrator') || roles.includes('Gestor')) return 'TRUE';
+  const p = alias ? `${alias}.` : '';
+  if (roles.includes('GestorPrograma') && user.programaId) {
+    params.push(user.programaId);
+    return `(${sqlPublicado(alias)} OR ${p}programa_id = $${params.length})`;
+  }
+  return sqlPublicado(alias);
+};

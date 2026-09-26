@@ -54,6 +54,21 @@ export function createRepository({ table, fromRow, toRow, orderBy = 'id ASC', pu
       return rows.map(decorate);
     },
 
+    // Listagem com filtro, ordem e página feitos no banco (Fase P.2): o
+    // controller monta `where`/`params`/`ordem` só com trechos SQL próprios
+    // (nunca texto vindo da requisição) e o valor do cliente sempre entra em
+    // `params`. `colunas` permite uma listagem enxuta (sem o corpo).
+    async contar({ where = 'TRUE', params = [] } = {}) {
+      const { rows } = await query(`SELECT count(*)::int AS n FROM ${table} WHERE ${where}`, params);
+      return rows[0].n;
+    },
+
+    async listar({ colunas = '*', where = 'TRUE', params = [], ordem = orderBy, limit, offset = 0 } = {}) {
+      const pagina = limit == null ? '' : ` LIMIT ${Number(limit)} OFFSET ${Number(offset)}`;
+      const { rows } = await query(`SELECT ${colunas} FROM ${table} WHERE ${where} ORDER BY ${ordem}${pagina}`, params);
+      return rows.map(decorate);
+    },
+
     async getById(id) {
       const { rows } = await query(`SELECT * FROM ${table} WHERE id = $1`, [id]);
       return rows[0] ? decorate(rows[0]) : null;

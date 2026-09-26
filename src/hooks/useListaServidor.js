@@ -39,7 +39,8 @@ export default function useListaServidor(endpoint, {
 
   // URL da consulta. Origem: 'prpg' → escopo=prpg; 'todas' → sem filtro; id → programa=<id>.
   const url = useMemo(() => {
-    const p = new URLSearchParams({ page: String(page), limit: String(limit) });
+    // resumo=1: a tabela não exibe o corpo dos itens (Fase P.2).
+    const p = new URLSearchParams({ page: String(page), limit: String(limit), resumo: '1' });
     if (q.trim()) p.set('q', q.trim());
     if (status) p.set('status', status);
     if (ordenar) { p.set('ordenar', ordenar); p.set('dir', dir); }
