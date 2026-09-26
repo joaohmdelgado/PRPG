@@ -36,6 +36,7 @@ export const RESET_TABLES = [
   'importacao_origens', 'importacao_pendencias', 'importacao_depara', 'importacoes',
   'planilhas', // Fase O.4 (seed de 4 linhas, recriado abaixo)
   'agendador_execucoes', // Fase O.5
+  'links_verificados', // Fase O.7
 ];
 
 // Tabelas do schema que o resetDb deliberadamente NÃO toca: `unidades` é seed

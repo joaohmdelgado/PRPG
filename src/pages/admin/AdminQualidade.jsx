@@ -1,0 +1,121 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { CheckCircle2, RefreshCw, Link2Off } from 'lucide-react';
+import { apiFetch } from '../../api';
+import { TableSkeleton } from '../../components/admin/AdminUI';
+import { useToast } from '../../components/admin/Toast';
+
+// Fase O.7: o que está errado ou suspeito nos cadastros. Corrige-se na fonte
+// (o link "abrir" leva ao registro); nada é bloqueado nem apagado por aqui.
+const fmtDataHora = (iso) => (iso ? new Date(iso).toLocaleString('pt-BR') : '—');
+
+function Item({ it }) {
+  return (
+    <li className="py-1.5 text-sm">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+        {it.link ? <Link to={it.link} className="text-gray-800 hover:text-ufrpe-blue hover:underline break-all">{it.rotulo}</Link>
+          : (it.rotulo.startsWith('http') ? <a href={it.rotulo} target="_blank" rel="noopener noreferrer" className="text-gray-800 hover:underline break-all">{it.rotulo}</a> : <span className="text-gray-800">{it.rotulo}</span>)}
+        <span className="text-xs text-gray-500">{it.detalhe}</span>
+      </div>
+      {it.usos?.length > 0 && (
+        <ul className="text-xs text-gray-500 ml-3">
+          {it.usos.slice(0, 4).map((u) => (
+            <li key={`${u.tabela}-${u.id}-${u.campo}`}>em <Link to={u.rota} className="text-ufrpe-blue hover:underline">{u.titulo}</Link> ({u.campo})</li>
+          ))}
+          {it.usos.length > 4 && <li>… e mais {it.usos.length - 4} lugar(es)</li>}
+        </ul>
+      )}
+      {it.pessoas && (
+        <ul className="text-xs text-gray-600 ml-3 mt-0.5">
+          {it.pessoas.map((p) => (
+            <li key={p.id}>{p.nome} · CPF {p.cpf || '—'} · {p.email || 'sem e-mail'} · {p.vinculos} vínculo(s){p.temLogin ? ' · tem login' : ''}</li>
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
+
+function Categoria({ c, acoes }) {
+  return (
+    <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-heading font-semibold text-gray-900 text-sm flex items-center gap-2">
+          {c.titulo}
+          <span className={`text-xs px-2 py-0.5 rounded-full ${c.total ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>{c.total}</span>
+        </h2>
+        {acoes}
+      </div>
+      {c.ajuda && <p className="text-xs text-gray-500 mt-1">{c.ajuda}</p>}
+      {c.id === 'links_quebrados' && (
+        <p className="text-xs text-gray-500 mt-1">
+          {c.verificados ? `${c.verificados} link(s) verificado(s); última verificação em ${fmtDataHora(c.ultimaVerificacao)}.` : 'Nenhuma verificação feita ainda.'}
+          {c.emAndamento && ` Verificando agora: ${c.emAndamento.feitos}/${c.emAndamento.total}.`}
+        </p>
+      )}
+      {c.resumoPorPapel?.length > 0 && (
+        <p className="text-xs text-gray-500 mt-1">Sem data no total ({c.totalGeral}): {c.resumoPorPapel.map((r) => `${r.n} ${r.papel.replace(/_/g, ' ').toLowerCase()}`).join(' · ')}.</p>
+      )}
+      {c.total === 0 ? (
+        <p className="mt-2 text-sm text-gray-500 flex items-center gap-1.5"><CheckCircle2 size={14} className="text-emerald-600" aria-hidden="true" /> Nada encontrado.</p>
+      ) : (
+        <ul className="mt-2 divide-y divide-gray-50">{c.itens.map((it) => <Item key={`${it.rotulo}-${it.detalhe}`} it={it} />)}</ul>
+      )}
+      {c.total > c.itens.length && <p className="text-xs text-gray-400 mt-1">… e mais {c.total - c.itens.length}.</p>}
+    </section>
+  );
+}
+
+export default function AdminQualidade() {
+  const [dados, setDados] = useState(null);
+  const [erro, setErro] = useState(null);
+  const { toast, Toasts } = useToast();
+
+  const carregar = useCallback(async () => {
+    const res = await apiFetch('/api/painel/qualidade');
+    if (res.ok) { setDados(await res.json()); setErro(null); } else setErro('Não foi possível carregar o painel de qualidade.');
+  }, []);
+  useEffect(() => { carregar(); }, [carregar]);
+
+  // Enquanto o verificador roda, atualiza o progresso a cada poucos segundos.
+  const verificando = dados?.categorias.find((c) => c.id === 'links_quebrados')?.emAndamento;
+  useEffect(() => {
+    if (!verificando) return undefined;
+    const t = setInterval(carregar, 4000);
+    return () => clearInterval(t);
+  }, [verificando, carregar]);
+
+  const verificar = async () => {
+    const res = await apiFetch('/api/painel/qualidade/links/verificar', { method: 'POST' });
+    if (res.status === 202) { toast.success('Verificação iniciada — pode levar alguns minutos.'); setTimeout(carregar, 1500); }
+    else toast.error((await res.json().catch(() => ({}))).message || 'Não foi possível iniciar.');
+  };
+
+  if (erro) return <p className="text-sm text-red-600" role="alert">{erro}</p>;
+  if (!dados) return <TableSkeleton rows={6} cols={2} />;
+
+  return (
+    <div className="space-y-4 max-w-5xl">
+      {Toasts}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-heading text-xl font-bold text-gray-900">Qualidade dos dados</h1>
+          <p className="text-sm text-gray-500">Problemas e suspeitas nos cadastros. Corrija na fonte; nada é apagado por aqui.</p>
+        </div>
+        <button onClick={carregar} className="inline-flex items-center gap-1.5 text-sm px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50">
+          <RefreshCw size={14} /> Atualizar
+        </button>
+      </div>
+      {dados.categorias.map((c) => (
+        <Categoria
+          key={c.id} c={c}
+          acoes={c.id === 'links_quebrados' && (
+            <button onClick={verificar} disabled={!!c.emAndamento} className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40">
+              <Link2Off size={13} /> Verificar links agora
+            </button>
+          )}
+        />
+      ))}
+    </div>
+  );
+}

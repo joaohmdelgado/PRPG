@@ -60,6 +60,7 @@ import {
 import { getNotificacoes, reenviarNotificacao, enviarTeste, getAgendador, executarAgendadorManual } from '../controllers/notificacoesController.js';
 import { buscaGlobal } from '../controllers/buscaController.js';
 import { getPendencias as getPainelPendencias } from '../controllers/painelController.js';
+import { getQualidade, iniciarVerificacaoLinks } from '../controllers/qualidadeController.js';
 
 
 import { getLinhas, getLinhaById, createLinha, updateLinha, deleteLinha } from '../controllers/linhasPesquisaController.js';
@@ -596,6 +597,10 @@ router.get('/importacoes/:id', protect, requireRole(PLANILHAS), getImportacao);
 // ===================== Painel de pendências (Fase O.6) =====================
 // Admin/Gestor veem tudo; o Gestor de Programa, só o do seu programa (escopo no controller).
 router.get('/painel/pendencias', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getPainelPendencias);
+
+// Painel de qualidade de dados e verificador de links (Fase O.7) — só a PRPG.
+router.get('/painel/qualidade', protect, requireRole(['Administrator', 'Gestor']), getQualidade);
+router.post('/painel/qualidade/links/verificar', protect, requireRole(['Administrator', 'Gestor']), iniciarVerificacaoLinks);
 
 // ===================== Busca global (Fase L.10) =====================
 router.get('/busca', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), buscaGlobal);

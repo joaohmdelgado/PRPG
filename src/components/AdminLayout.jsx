@@ -40,6 +40,7 @@ const ADMINISTRACAO = [
   { to: '/admin/notificacoes', label: 'Notificações', icon: Mail },
   { to: '/admin/importacao', label: 'Importação', icon: Upload },
   { to: '/admin/planilhas', label: 'Planilhas (importação)', icon: ClipboardCheck },
+  { to: '/admin/qualidade', label: 'Qualidade dos dados', icon: DatabaseZap },
 ];
 
 // Navegação do Gestor de Programa: só conteúdo vinculável ao seu programa.
