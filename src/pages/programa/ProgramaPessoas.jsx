@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../../api';
+import { apiFetch, lerJson } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import Icone from '../../components/Icone';
+import { ErrorState } from '../../components/programa/ProgramaUI';
 
 const PAPEL_LABEL = {
   DOCENTE_PERMANENTE: 'Docente Permanente',
@@ -63,14 +64,14 @@ export default function ProgramaPessoas() {
   const { programa, slug } = usePrograma();
   const [docentes, setDocentes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [busca, setBusca] = useState('');
 
   useEffect(() => {
     setLoading(true);
-    apiFetch(`/api/programas/slug/${encodeURIComponent(slug)}/pessoas`, { auth: false })
-      .then((r) => (r.ok ? r.json() : []))
+    lerJson(`/api/programas/slug/${encodeURIComponent(slug)}/pessoas`, { auth: false })
       .then((d) => { setDocentes(Array.isArray(d) ? d : []); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch((e) => { setErro(e); setLoading(false); });
   }, [slug]);
 
   const filtered = docentes.filter((d) =>
@@ -85,6 +86,12 @@ export default function ProgramaPessoas() {
       <div className="py-20 flex justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--prog-primary)]"></div>
       </div>
+    );
+  }
+
+  if (erro) {
+    return (
+      <section className="py-10 px-4 max-w-5xl mx-auto"><ErrorState erro={erro} /></section>
     );
   }
 

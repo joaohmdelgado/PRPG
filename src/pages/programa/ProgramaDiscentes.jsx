@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../../api';
+import { apiFetch, lerJson } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import Icone from '../../components/Icone';
+import { ErrorState } from '../../components/programa/ProgramaUI';
 
 const PAPEL_LABEL = {
   DISCENTE_MESTRADO:     'Mestrando(a)',
@@ -77,14 +78,14 @@ export default function ProgramaDiscentes({ egressos = false }) {
   const { programa, slug } = usePrograma();
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [busca, setBusca] = useState('');
 
   useEffect(() => {
     setLoading(true);
-    apiFetch(`/api/programas/slug/${encodeURIComponent(slug)}/discentes`, { auth: false })
-      .then((r) => (r.ok ? r.json() : []))
+    lerJson(`/api/programas/slug/${encodeURIComponent(slug)}/discentes`, { auth: false })
       .then((d) => { setTodos(Array.isArray(d) ? d : []); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch((e) => { setErro(e); setLoading(false); });
   }, [slug]);
 
   const discentes = todos.filter((d) => (d.papel === 'EGRESSO') === egressos);
@@ -98,6 +99,12 @@ export default function ProgramaDiscentes({ egressos = false }) {
       <div className="py-20 flex justify-center">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--prog-primary)]"></div>
       </div>
+    );
+  }
+
+  if (erro) {
+    return (
+      <section className="py-10 px-4 max-w-5xl mx-auto"><ErrorState erro={erro} /></section>
     );
   }
 

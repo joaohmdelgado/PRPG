@@ -6,6 +6,7 @@ import { isProgramaGestor } from './auth';
 import PublicLayout from './components/PublicLayout';
 import AdminLayout from './components/AdminLayout';
 import RequireAuth from './components/RequireAuth';
+import { Carregando } from './components/ui/Estados';
 import Icone from './components/Icone';
 
 // Páginas carregadas sob demanda (code-splitting): o visitante público não
@@ -117,10 +118,7 @@ function NotFoundPublic() {
 // Fallback enquanto o chunk da rota carrega.
 function RouteFallback() {
   return (
-    <div className="min-h-[40vh] flex items-center justify-center text-gray-400">
-      <Icone nome="fa-solid fa-circle-notch fa-spin" className="text-2xl" aria-hidden="true" />
-      <span className="sr-only">Carregando…</span>
-    </div>
+    <Carregando className="min-h-[40vh]" />
   );
 }
 

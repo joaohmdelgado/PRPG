@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import Icone from '../../components/Icone';
+import { ErrorState } from '../../components/programa/ProgramaUI';
 
 const TIPO_META = {
   noticia:    { label: 'Notícia',    icon: 'fa-newspaper',       color: 'text-blue-600',   bg: 'bg-blue-50' },
@@ -42,6 +43,7 @@ export default function ProgramaBusca() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [erro, setErro] = useState(null);
   const inputRef = useRef(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
@@ -50,11 +52,12 @@ export default function ProgramaBusca() {
     if (q.length < 2) { setResults([]); setSearched(false); return; }
     setLoading(true);
     setSearched(false);
+    setErro(null);
     const ctrl = new AbortController();
     apiFetch(`/api/programas/slug/${encodeURIComponent(slug)}/busca?q=${encodeURIComponent(q)}`, { auth: false, signal: ctrl.signal })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((d) => { setResults(Array.isArray(d) ? d : []); setSearched(true); })
-      .catch(() => {})
+      .then((r) => { if (!r.ok) throw new Error(`Falha na busca (${r.status}).`); return r.json(); })
+      .then((d) => { setResults(Array.isArray(d) ? d : []); setSearched(true); setErro(null); })
+      .catch((e) => { if (e.name !== 'AbortError') setErro(e); })
       .finally(() => setLoading(false));
     return () => ctrl.abort();
   }, [q, slug]);
@@ -92,7 +95,9 @@ export default function ProgramaBusca() {
         </div>
       )}
 
-      {!loading && searched && q.length >= 2 && (
+      {!loading && erro && <ErrorState erro={erro} />}
+
+      {!loading && !erro && searched && q.length >= 2 && (
         <p className="text-sm text-gray-500 mb-4">
           {results.length === 0
             ? `Nenhum resultado para "${q}".`

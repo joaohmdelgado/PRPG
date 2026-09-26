@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
-import { Spinner, EmptyState } from '../../components/programa/ProgramaUI';
+import { Spinner, EmptyState, ErrorState } from '../../components/programa/ProgramaUI';
 import InstitutionalPageContent from '../../components/InstitutionalPageContent';
 import Icone from '../../components/Icone';
 
@@ -28,7 +28,7 @@ export default function ProgramaPagina() {
     // pagesController.js), senão duas páginas de programas diferentes com o
     // mesmo nome (ex.: "Regimento") poderiam colidir.
     apiFetch(`/api/pages/slug/${encodeURIComponent(pageSlug)}?programa=${encodeURIComponent(programa.id)}`)
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => { if (r.status === 404) return null; if (!r.ok) throw new Error(`Falha ao carregar (${r.status}).`); return r.json(); })
       .then((data) => {
         if (!active) return;
         if (data) {
@@ -38,11 +38,15 @@ export default function ProgramaPagina() {
           setStatus('notfound');
         }
       })
-      .catch(() => { if (active) setStatus('notfound'); });
+      .catch(() => { if (active) setStatus('error'); });
     return () => { active = false; };
   }, [pageSlug, programa.id]);
 
   if (status === 'loading') return <Spinner />;
+
+  if (status === 'error') {
+    return <div className="container mx-auto px-4 py-16"><ErrorState erro="Não foi possível carregar a página." /></div>;
+  }
 
   if (status === 'vazia') {
     return (

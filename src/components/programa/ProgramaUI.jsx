@@ -50,7 +50,25 @@ export function EmptyState({ icon = 'fa-inbox', title, hint, titulo, descricao }
 export function Spinner() {
   return (
     <div className="flex justify-center items-center py-24">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--prog-primary)]"></div>
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--prog-primary)]" role="status"><span className="sr-only">Carregando…</span></div>
+    </div>
+  );
+}
+
+// Falha de carregamento (rede, 401/403/500): diferente de "não há nada" — a
+// pessoa precisa saber que a lista não chegou, e não achar que está vazia
+// (Fase U.6). Sem `onRetry`, recarrega a página.
+export function ErrorState({ erro, onRetry }) {
+  const detalhe = erro instanceof Error ? erro.message : '';
+  return (
+    <div role="alert" className="bg-white rounded-2xl p-12 text-center border border-red-100 shadow-sm">
+      <Icone nome="triangle-exclamation" className="text-red-400 text-5xl mb-4" />
+      <h3 className="font-heading font-bold text-xl text-gray-700 mb-2">Não foi possível carregar</h3>
+      <p className="text-gray-600">Isto é uma falha de comunicação, não uma lista vazia.{detalhe ? ` (${detalhe})` : ''}</p>
+      <button type="button" onClick={onRetry || (() => window.location.reload())}
+        className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--prog-primary)] text-white text-sm font-semibold hover:opacity-90">
+        <Icone nome="circle-notch" /> Tentar de novo
+      </button>
     </div>
   );
 }

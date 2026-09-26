@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import { apiFetch } from '../api';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import Icone from '../components/Icone';
+import { Carregando, EstadoErro } from '../components/ui/Estados';
 
 const getCampusId = (campusName) => {
   return campusName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -48,15 +49,17 @@ export default function ProgramasStrictoSensu() {
   const [programasData, setProgramasData] = useState({});
   const [allProgramas, setAllProgramas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
 
   useEffect(() => {
     const fetchProgramas = async () => {
       try {
         const response = await apiFetch('/api/programas', { auth: false });
+        if (!response.ok) throw new Error(`Falha ao carregar (${response.status}).`);
         const data = await response.json();
         setAllProgramas(data);
       } catch (error) {
-        console.error('Erro ao buscar programas:', error);
+        setErro(error);
       } finally {
         setLoading(false);
       }
@@ -156,13 +159,9 @@ export default function ProgramasStrictoSensu() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ufrpe-blue"></div>
-      </div>
-    );
-  }
+  if (loading) return <Carregando className="h-64" />;
+
+  if (erro) return <EstadoErro erro={erro} onTentar={() => window.location.reload()} />;
 
   return (
     <>

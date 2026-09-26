@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../../api';
+import { apiFetch, lerJson } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
-import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
+import { PageHero, EmptyState, Spinner, ErrorState } from '../../components/programa/ProgramaUI';
 import Icone from '../../components/Icone';
 
 const TIPOS = { M: 'Mestrado', D: 'Doutorado', P: 'Mestrado Profissional' };
@@ -10,14 +10,14 @@ export default function ProgramaTeses() {
   const { programa, slug } = usePrograma();
   const [teses, setTeses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [busca, setBusca] = useState('');
   const [tipo, setTipo] = useState('');
 
   useEffect(() => {
-    apiFetch(`/api/teses-dissertacoes?programa=${encodeURIComponent(slug)}`, { auth: false })
-      .then((r) => (r.ok ? r.json() : []))
+    lerJson(`/api/teses-dissertacoes?programa=${encodeURIComponent(slug)}`, { auth: false })
       .then((d) => setTeses(Array.isArray(d) ? d : []))
-      .catch(() => setTeses([]))
+      .catch((e) => setErro(e))
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -56,7 +56,7 @@ export default function ProgramaTeses() {
           )}
         </div>
 
-        {loading ? <Spinner /> : filtFinal.length === 0 ? (
+        {loading ? <Spinner /> : erro ? <ErrorState erro={erro} /> : filtFinal.length === 0 ? (
           <EmptyState icon="fa-graduation-cap" titulo="Nenhuma produção encontrada" descricao="Tente outros filtros ou acesse o repositório institucional." />
         ) : (
           <div className="space-y-3">

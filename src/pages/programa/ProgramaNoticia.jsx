@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { API_URL, apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
-import { Spinner, EmptyState, formatDate } from '../../components/programa/ProgramaUI';
+import { Spinner, EmptyState, ErrorState, formatDate } from '../../components/programa/ProgramaUI';
 import SafeHtml from '../../components/SafeHtml';
 import AvisoPreVisualizacao from '../../components/AvisoPreVisualizacao';
 import Icone from '../../components/Icone';
@@ -12,19 +12,23 @@ export default function ProgramaNoticia() {
   const { id } = useParams();
   const [noticia, setNoticia] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setErro(null);
     apiFetch(`/api/news/${encodeURIComponent(id)}`)
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => { if (r.status === 404) return null; if (!r.ok) throw new Error(`Falha ao carregar (${r.status}).`); return r.json(); })
       .then((d) => { if (active) setNoticia(d); })
-      .catch(() => {})
+      .catch((e) => { if (active) setErro(e); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [id]);
 
   if (loading) return <Spinner />;
+
+  if (erro) return <div className="container mx-auto px-4 py-16"><ErrorState erro={erro} /></div>;
 
   if (!noticia) {
     return (

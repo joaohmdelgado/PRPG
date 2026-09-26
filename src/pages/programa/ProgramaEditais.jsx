@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL } from '../../api';
+import { API_URL, lerJson } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
-import { PageHero, EmptyState, Spinner, formatDate } from '../../components/programa/ProgramaUI';
+import { PageHero, EmptyState, ErrorState, Spinner, formatDate } from '../../components/programa/ProgramaUI';
 import SafeHtml from '../../components/SafeHtml';
 import Icone from '../../components/Icone';
 
@@ -16,6 +16,7 @@ export default function ProgramaEditais() {
   const { programa, slug } = usePrograma();
   const [editais, setEditais] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [periodoAberto, setPeriodoAberto] = useState(null);
 
   useEffect(() => {
@@ -28,10 +29,10 @@ export default function ProgramaEditais() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    fetch(`${API_URL}/api/editais?programa=${encodeURIComponent(slug)}`)
-      .then((r) => (r.ok ? r.json() : []))
+    setErro(null);
+    lerJson(`/api/editais?programa=${encodeURIComponent(slug)}`, { auth: false })
       .then((d) => { if (active) setEditais(Array.isArray(d) ? d : []); })
-      .catch(() => {})
+      .catch((e) => { if (active) setErro(e); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [slug]);
@@ -44,6 +45,8 @@ export default function ProgramaEditais() {
       <div className="container mx-auto px-4 py-12 max-w-4xl">
         {loading ? (
           <Spinner />
+        ) : erro ? (
+          <ErrorState erro={erro} />
         ) : editais.length === 0 ? (
           <EmptyState icon="fa-folder-open" title="Nenhum edital publicado"
             hint="Quando houver processos seletivos abertos, eles aparecerão aqui." />

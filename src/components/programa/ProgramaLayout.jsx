@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePrograma, programaPath } from './ProgramaContext';
 import Icone from '../Icone';
 import RouteFocusManager from '../ui/RouteFocusManager';
+import AreaErrorBoundary from '../ui/AreaErrorBoundary';
 
 // O menu vem montado do servidor (programa.menu — server/utils/micrositeMenu.js,
 // Fase S.1): 4 grupos (O Programa / Pessoas / Produção / Admissão) com
@@ -238,7 +239,7 @@ export default function ProgramaLayout({ children }) {
         )}
       </nav>
 
-      <main id="conteudo-programa" tabIndex={-1} className="flex-1 outline-none">{children}</main>
+      <main id="conteudo-programa" tabIndex={-1} className="flex-1 outline-none"><AreaErrorBoundary area="esta página do programa">{children}</AreaErrorBoundary></main>
 
       {/* Footer do programa */}
       <footer className="bg-[var(--prog-primary)] text-white/80 mt-auto border-t-4 border-[var(--prog-accent)]">

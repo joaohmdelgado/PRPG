@@ -4,11 +4,13 @@ import SafeHtml from '../components/SafeHtml';
 import useScrollToHash from '../hooks/useScrollToHash';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import Icone from '../components/Icone';
+import { Carregando, EstadoErro } from '../components/ui/Estados';
 
 export default function Formularios() {
   const [searchTerm, setSearchTerm] = useState('');
   const [formulariosData, setFormulariosData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   useScrollToHash(!loading);
 
   useEffect(() => {
@@ -19,6 +21,7 @@ export default function Formularios() {
           apiFetch('/api/vocabularios?dominio=documento.secao', { auth: false })
             .then((r) => (r.ok ? r.json() : [])).catch(() => []),
         ]);
+        if (!response.ok) throw new Error(`Falha ao carregar (${response.status}).`);
         const data = await response.json();
 
         // Ordem e títulos das seções vêm das Classificações do painel (Fase
@@ -81,7 +84,7 @@ export default function Formularios() {
 
         setFormulariosData(structuredData);
       } catch (error) {
-        console.error('Erro ao buscar formulários:', error);
+        setErro(error);
       } finally {
         setLoading(false);
       }
@@ -103,13 +106,9 @@ export default function Formularios() {
     return { ...section, categories: filteredCategories };
   }).filter(section => section.categories.length > 0);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ufrpe-blue"></div>
-      </div>
-    );
-  }
+  if (loading) return <Carregando className="h-64" />;
+
+  if (erro) return <EstadoErro erro={erro} onTentar={() => window.location.reload()} />;
 
   return (
     <>

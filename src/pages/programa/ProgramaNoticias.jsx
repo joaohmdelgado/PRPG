@@ -1,23 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL, apiFetch } from '../../api';
+import { API_URL, apiFetch, lerJson } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
-import { PageHero, EmptyState, Spinner, formatDate } from '../../components/programa/ProgramaUI';
+import { PageHero, EmptyState, Spinner, formatDate, ErrorState } from '../../components/programa/ProgramaUI';
 import Icone from '../../components/Icone';
 
 export default function ProgramaNoticias() {
   const { programa, slug } = usePrograma();
   const [noticias, setNoticias] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
     let active = true;
     setLoading(true);
-    apiFetch(`/api/news?programa=${encodeURIComponent(slug)}`, { auth: false })
-      .then((r) => (r.ok ? r.json() : []))
+    lerJson(`/api/news?programa=${encodeURIComponent(slug)}`, { auth: false })
       .then((d) => { if (active) setNoticias(Array.isArray(d) ? d : []); })
-      .catch(() => {})
+      .catch((e) => { if (active) setErro(e); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [slug]);
@@ -43,6 +43,8 @@ export default function ProgramaNoticias() {
 
         {loading ? (
           <Spinner />
+        ) : erro ? (
+          <ErrorState erro={erro} />
         ) : filtered.length === 0 ? (
           <EmptyState icon="fa-newspaper" title="Nenhuma notícia encontrada"
             hint={search ? 'Tente outro termo de busca.' : 'Ainda não há notícias publicadas para este programa.'} />

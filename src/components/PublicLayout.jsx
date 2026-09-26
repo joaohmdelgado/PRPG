@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Navbar from './Navbar';
 import Footer from './Footer';
 import RouteFocusManager from './ui/RouteFocusManager';
+import AreaErrorBoundary from './ui/AreaErrorBoundary';
 import useAssociarRotulos from '../hooks/useAssociarRotulos';
 
 // Layout do site público da PRPG: Navbar + conteúdo + Footer.
@@ -20,7 +21,9 @@ export default function PublicLayout() {
       <RouteFocusManager alvoId="conteudo" />
       <Navbar />
       <main id="conteudo" ref={mainRef} tabIndex={-1} className="flex-1 outline-none">
+        <AreaErrorBoundary area="esta página do portal">
           <Outlet />
+        </AreaErrorBoundary>
       </main>
       <Footer />
     </div>

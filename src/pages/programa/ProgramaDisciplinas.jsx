@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../../api';
+import { apiFetch, lerJson } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
-import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
+import { PageHero, EmptyState, Spinner, ErrorState } from '../../components/programa/ProgramaUI';
 import Icone from '../../components/Icone';
 
 const TIPOS = { OB: 'Obrigatória', OP: 'Optativa', EL: 'Eletiva' };
@@ -10,14 +10,14 @@ export default function ProgramaDisciplinas() {
   const { programa, slug } = usePrograma();
   const [disciplinas, setDisciplinas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [busca, setBusca] = useState('');
   const [tipo, setTipo] = useState('');
 
   useEffect(() => {
-    apiFetch(`/api/disciplinas?programa=${encodeURIComponent(slug)}`, { auth: false })
-      .then((r) => (r.ok ? r.json() : []))
+    lerJson(`/api/disciplinas?programa=${encodeURIComponent(slug)}`, { auth: false })
       .then((d) => setDisciplinas(Array.isArray(d) ? d : []))
-      .catch(() => setDisciplinas([]))
+      .catch((e) => setErro(e))
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -54,7 +54,7 @@ export default function ProgramaDisciplinas() {
           )}
         </div>
 
-        {loading ? <Spinner /> : filtradas.length === 0 ? (
+        {loading ? <Spinner /> : erro ? <ErrorState erro={erro} /> : filtradas.length === 0 ? (
           <EmptyState icon="fa-book-open" titulo="Nenhuma disciplina encontrada" descricao={busca || tipo ? 'Tente outros filtros.' : 'Este programa ainda não cadastrou disciplinas.'} />
         ) : (
           <div className="space-y-3">

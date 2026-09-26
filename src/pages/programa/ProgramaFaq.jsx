@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../../api';
+import { apiFetch, lerJson } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
-import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
+import { PageHero, EmptyState, Spinner, ErrorState } from '../../components/programa/ProgramaUI';
 import Icone from '../../components/Icone';
 
 function Accordion({ item }) {
@@ -34,13 +34,13 @@ export default function ProgramaFaq() {
   const { programa, slug } = usePrograma();
   const [faqs, setFaqs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
   const [busca, setBusca] = useState('');
 
   useEffect(() => {
-    apiFetch(`/api/faq?programa=${encodeURIComponent(slug)}`, { auth: false })
-      .then((r) => (r.ok ? r.json() : []))
+    lerJson(`/api/faq?programa=${encodeURIComponent(slug)}`, { auth: false })
       .then((d) => setFaqs(Array.isArray(d) ? d : []))
-      .catch(() => setFaqs([]))
+      .catch((e) => setErro(e))
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -61,7 +61,7 @@ export default function ProgramaFaq() {
           className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm mb-8 focus:ring-2 focus:ring-[var(--prog-primary)] focus:border-transparent"
         />
 
-        {loading ? <Spinner /> : filtradas.length === 0 ? (
+        {loading ? <Spinner /> : erro ? <ErrorState erro={erro} /> : filtradas.length === 0 ? (
           <EmptyState icon="fa-circle-question" titulo="Nenhuma pergunta encontrada" descricao="Entre em contato com a secretaria do programa." />
         ) : (
           <div className="space-y-3">

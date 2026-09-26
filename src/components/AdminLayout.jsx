@@ -4,6 +4,7 @@ import { LogOut, ExternalLink, ChevronDown, Menu as MenuIcon, X } from 'lucide-r
 import { isProgramaGestor, getGestorPrograma, clearSession } from '../auth';
 import { INICIO, gruposDoPainel } from './admin/menuPainel';
 import RouteFocusManager from './ui/RouteFocusManager';
+import AreaErrorBoundary from './ui/AreaErrorBoundary';
 import useFocusTrap from '../hooks/useFocusTrap';
 import useMediaQuery from '../hooks/useMediaQuery';
 import useAssociarRotulos from '../hooks/useAssociarRotulos';
@@ -203,7 +204,9 @@ const AdminLayout = () => {
         </header>
 
         <main id="conteudo-painel" ref={mainRef} tabIndex={-1} className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 outline-none">
-          <Outlet />
+          <AreaErrorBoundary area="esta tela do painel" compacto>
+            <Outlet />
+          </AreaErrorBoundary>
         </main>
       </div>
     </div>

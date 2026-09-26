@@ -4,6 +4,7 @@ import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import Icone from '../components/Icone';
+import { Carregando, EstadoErro } from '../components/ui/Estados';
 
 // Data de hoje no fuso local, 'YYYY-MM-DD' (compara com dataInicio/dataFim dos marcos).
 const hojeLocal = () => {
@@ -15,15 +16,17 @@ export default function CalendarioAcademico() {
   const hoje = hojeLocal();
   const [calendariosData, setCalendariosData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
 
   useEffect(() => {
     const fetchCalendarios = async () => {
       try {
         const response = await apiFetch('/api/calendarios', { auth: false });
+        if (!response.ok) throw new Error(`Falha ao carregar (${response.status}).`);
         const data = await response.json();
         setCalendariosData(data);
       } catch (error) {
-        console.error('Erro ao buscar calendários:', error);
+        setErro(error);
       } finally {
         setLoading(false);
       }
@@ -34,13 +37,9 @@ export default function CalendarioAcademico() {
   const currentCalendar = calendariosData.find(c => c.isCurrent);
   const pastCalendars = calendariosData.filter(c => !c.isCurrent);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ufrpe-blue"></div>
-      </div>
-    );
-  }
+  if (loading) return <Carregando className="h-64" />;
+
+  if (erro) return <EstadoErro erro={erro} onTentar={() => window.location.reload()} />;
 
   return (
     <>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { API_URL, apiFetch } from '../../api';
+import { API_URL, apiFetch, lerJson } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import { formatDate } from '../../components/programa/ProgramaUI';
 import ProximosPrazos from '../../components/ProximosPrazos';
@@ -14,8 +14,7 @@ export default function ProgramaHome() {
 
   useEffect(() => {
     let active = true;
-    apiFetch(`/api/news?programa=${encodeURIComponent(slug)}`, { auth: false })
-      .then((r) => (r.ok ? r.json() : []))
+    lerJson(`/api/news?programa=${encodeURIComponent(slug)}`, { auth: false })
       .then((d) => { if (active) setNoticias(Array.isArray(d) ? d.slice(0, 3) : []); })
       .catch(() => {});
     return () => { active = false; };

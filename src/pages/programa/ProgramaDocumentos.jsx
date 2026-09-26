@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL, apiFetch } from '../../api';
+import { API_URL, lerJson } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
-import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
+import { PageHero, EmptyState, ErrorState, Spinner } from '../../components/programa/ProgramaUI';
 import Icone from '../../components/Icone';
 
 function SecaoDocumentos({ titulo, icone, itens }) {
@@ -38,18 +38,19 @@ export default function ProgramaDocumentos() {
   const [resolucoes, setResolucoes] = useState([]);
   const [formularios, setFormularios] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState(null);
 
   useEffect(() => {
     const enc = encodeURIComponent(slug);
     Promise.all([
-      apiFetch(`/api/resolucoes?programa=${enc}`, { auth: false }).then((r) => (r.ok ? r.json() : [])),
-      apiFetch(`/api/formularios?programa=${enc}`, { auth: false }).then((r) => (r.ok ? r.json() : [])),
+      lerJson(`/api/resolucoes?programa=${enc}`, { auth: false }),
+      lerJson(`/api/formularios?programa=${enc}`, { auth: false }),
     ])
       .then(([res, form]) => {
         setResolucoes(Array.isArray(res) ? res : []);
         setFormularios(Array.isArray(form) ? form : []);
       })
-      .catch(() => {})
+      .catch((e) => setErro(e))
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -60,7 +61,7 @@ export default function ProgramaDocumentos() {
       <PageHero icon="fa-folder-open" eyebrow={programa.sigla} title="Documentos" subtitle="Resoluções e formulários do programa" />
 
       <div className="container mx-auto px-4 py-10 max-w-4xl">
-        {loading ? <Spinner /> : total === 0 ? (
+        {loading ? <Spinner /> : erro ? <ErrorState erro={erro} /> : total === 0 ? (
           <EmptyState icon="fa-folder-open" titulo="Nenhum documento disponível" descricao="Os documentos deste programa serão listados aqui em breve." />
         ) : (
           <>
