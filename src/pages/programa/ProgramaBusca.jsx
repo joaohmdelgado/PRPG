@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
+import Icone from '../../components/Icone';
 
 const TIPO_META = {
   noticia:    { label: 'Notícia',    icon: 'fa-newspaper',       color: 'text-blue-600',   bg: 'bg-blue-50' },
@@ -69,7 +70,7 @@ export default function ProgramaBusca() {
 
       <form onSubmit={handleSearch} className="flex gap-2 mb-8">
         <div className="relative flex-1">
-          <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <Icone nome="fa-solid fa-magnifying-glass" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             ref={inputRef}
             type="text"
@@ -110,7 +111,7 @@ export default function ProgramaBusca() {
                   className="block bg-white rounded-xl border border-gray-100 hover:border-[var(--prog-primary)]/20 hover:shadow-md transition-all p-4">
                   <div className="flex items-start gap-3">
                     <span className={`shrink-0 mt-0.5 w-7 h-7 rounded-lg ${meta.bg} ${meta.color} flex items-center justify-center text-xs`}>
-                      <i className={`fa-solid ${meta.icon}`}></i>
+                      <Icone nome={meta.icon} />
                     </span>
                     <div className="min-w-0">
                       <span className={`text-[10px] font-bold uppercase tracking-wider ${meta.color}`}>{meta.label}</span>
@@ -131,7 +132,7 @@ export default function ProgramaBusca() {
 
       {!loading && !searched && q.length < 2 && (
         <div className="text-center py-16 text-gray-400">
-          <i className="fa-solid fa-magnifying-glass text-4xl mb-4 block opacity-30"></i>
+          <Icone nome="fa-solid fa-magnifying-glass" className="text-4xl mb-4 block opacity-30" />
           <p className="text-sm">Digite ao menos 2 caracteres para buscar.</p>
         </div>
       )}

@@ -5,6 +5,7 @@ import CabecalhoPagina from '../components/CabecalhoPagina';
 import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
 import SafeHtml from '../components/SafeHtml';
 import Relacionados from '../components/Relacionados';
+import Icone from '../components/Icone';
 
 // Página de conteúdo da PRPG vinda do painel ("Páginas"). Atende às páginas
 // institucionais de endereço fixo (Fase H.3 — /sobre, /historico...: antes um
@@ -62,7 +63,7 @@ export default function PaginaInstitucional({ slug: slugFixo }) {
   if (estado !== 'ok') {
     return (
       <div className="container mx-auto px-4 py-24 text-center">
-        <i className="fa-solid fa-circle-exclamation text-gray-300 text-6xl mb-4" aria-hidden="true"></i>
+        <Icone nome="fa-solid fa-circle-exclamation" className="text-gray-300 text-6xl mb-4" aria-hidden="true" />
         <h1 className="font-heading font-bold text-3xl text-ufrpe-blue mb-4">
           {estado === 'erro' ? 'Não foi possível carregar a página' : 'Página não encontrada'}
         </h1>
@@ -70,7 +71,7 @@ export default function PaginaInstitucional({ slug: slugFixo }) {
           {estado === 'erro' ? 'Tente novamente em alguns instantes.' : 'A página solicitada não existe ou foi removida.'}
         </p>
         <Link to="/" className="inline-flex items-center gap-2 px-6 py-3 bg-ufrpe-blue hover:bg-ufrpe-yellow hover:text-ufrpe-blue text-white font-bold rounded-xl transition-all">
-          <i className="fa-solid fa-arrow-left" aria-hidden="true"></i> Voltar para o Início
+          <Icone nome="fa-solid fa-arrow-left" aria-hidden="true" /> Voltar para o Início
         </Link>
       </div>
     );

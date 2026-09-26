@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useMenu } from '../hooks/usePortal';
+import Icone from './Icone';
 
 // Cabeçalho único das páginas do portal (Fase H.6): faixa azul com ícone,
 // breadcrumb, título e subtítulo. Antes, cada página copiava esse bloco com
@@ -58,7 +59,7 @@ export default function CabecalhoPagina({ titulo, atual, subtitulo, trilha, icon
 
   return (
     <div className="bg-ufrpe-blue text-white py-16 relative overflow-hidden">
-      {icone && <i className={`${icone} text-[20rem] text-white/5 -bottom-20 -right-20 absolute rotate-12 pointer-events-none`} aria-hidden="true"></i>}
+      {icone && <Icone nome={icone} className="text-[20rem] text-white/5 -bottom-20 -right-20 absolute rotate-12 pointer-events-none" />}
       <div className="container mx-auto px-4 relative">
         <nav className="flex text-white/60 text-sm mb-4" aria-label="Breadcrumb">
           <ol className="inline-flex flex-wrap items-center gap-y-1 space-x-1 md:space-x-3">
@@ -67,7 +68,7 @@ export default function CabecalhoPagina({ titulo, atual, subtitulo, trilha, icon
             </li>
             {passos.map((p) => (
               <li key={`${p.rotulo}-${p.destino}`} className="flex items-center">
-                <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50" aria-hidden="true"></i>
+                <Icone nome="fa-solid fa-chevron-right" className="text-[10px] mx-2 opacity-50" aria-hidden="true" />
                 {p.destino && !/^https?:/i.test(p.destino) && normalizar(p.destino) !== normalizar(pathname)
                   ? <Link to={p.destino} className="hover:text-ufrpe-yellow transition-colors">{p.rotulo}</Link>
                   : <span className="text-white">{p.rotulo}</span>}
@@ -75,7 +76,7 @@ export default function CabecalhoPagina({ titulo, atual, subtitulo, trilha, icon
             ))}
             {rotuloAtual && (
               <li aria-current="page" className="flex items-center">
-                <i className="fa-solid fa-chevron-right text-[10px] mx-2 opacity-50" aria-hidden="true"></i>
+                <Icone nome="fa-solid fa-chevron-right" className="text-[10px] mx-2 opacity-50" aria-hidden="true" />
                 <span className="text-ufrpe-yellow font-medium truncate max-w-[220px] md:max-w-md">{rotuloAtual}</span>
               </li>
             )}

@@ -6,6 +6,7 @@ import { isProgramaGestor } from './auth';
 import PublicLayout from './components/PublicLayout';
 import AdminLayout from './components/AdminLayout';
 import RequireAuth from './components/RequireAuth';
+import Icone from './components/Icone';
 
 // Páginas carregadas sob demanda (code-splitting): o visitante público não
 // baixa o código do painel admin, e cada rota vira um chunk separado.
@@ -103,11 +104,11 @@ const ProgramaPublico = lazy(() => import('./pages/ProgramaPublico'));
 function NotFoundPublic() {
   return (
     <div className="container mx-auto px-4 py-24 text-center min-h-[50vh] flex flex-col items-center justify-center">
-      <i className="fa-solid fa-compass text-gray-300 text-6xl mb-5"></i>
+      <Icone nome="fa-solid fa-compass" className="text-gray-300 text-6xl mb-5" />
       <h1 className="font-heading font-bold text-3xl text-ufrpe-blue mb-3">Página não encontrada</h1>
       <p className="text-gray-600 mb-8">O endereço acessado não existe no portal da PRPG.</p>
       <Link to="/" className="px-6 py-3 bg-ufrpe-blue hover:bg-ufrpe-yellow hover:text-ufrpe-blue text-white font-bold rounded-xl transition-all">
-        <i className="fa-solid fa-arrow-left mr-2"></i> Voltar para o Início
+        <Icone nome="fa-solid fa-arrow-left" className="mr-2" /> Voltar para o Início
       </Link>
     </div>
   );
@@ -117,7 +118,7 @@ function NotFoundPublic() {
 function RouteFallback() {
   return (
     <div className="min-h-[40vh] flex items-center justify-center text-gray-400">
-      <i className="fa-solid fa-circle-notch fa-spin text-2xl" aria-hidden="true"></i>
+      <Icone nome="fa-solid fa-circle-notch fa-spin" className="text-2xl" aria-hidden="true" />
       <span className="sr-only">Carregando…</span>
     </div>
   );

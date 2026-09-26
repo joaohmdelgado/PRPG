@@ -2,6 +2,7 @@ import React from 'react';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import useEstrutura from '../hooks/useEstrutura';
 import { CartaoMembro, ListaContatos } from '../components/EstruturaUI';
+import Icone from '../components/Icone';
 
 // Equipe da PRPG (Fase H.4): gerada dos setores e vínculos cadastrados em
 // "Equipe e estrutura" no painel — antes eram nomes, fotos e telefones fixos
@@ -54,7 +55,7 @@ export default function Equipe() {
                     {setores.map((s) => (
                       <li key={s.id}>
                         <a href={`#${ancora(s.id)}`} className="flex gap-2 p-2 rounded-lg hover:bg-gray-50 text-sm text-gray-700 hover:text-ufrpe-blue">
-                          <i className="fa-solid fa-chevron-right text-ufrpe-yellow text-xs mt-1" aria-hidden="true"></i>
+                          <Icone nome="fa-solid fa-chevron-right" className="text-ufrpe-yellow text-xs mt-1" aria-hidden="true" />
                           <span className="leading-snug">{s.id === raiz.id ? 'Pró-Reitoria' : s.nome}</span>
                         </a>
                       </li>

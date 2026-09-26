@@ -3,6 +3,7 @@ import { apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 import useScrollToHash from '../hooks/useScrollToHash';
 import CabecalhoPagina from '../components/CabecalhoPagina';
+import Icone from '../components/Icone';
 
 export default function Formularios() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -129,7 +130,7 @@ export default function Formularios() {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-28">
                 <div className="bg-gray-50 text-gray-800 p-5 border-b border-gray-100">
                   <h3 className="font-heading font-bold text-lg m-0">
-                    <i className="fa-solid fa-list mr-2 text-ufrpe-blue opacity-70"></i> Sumário
+                    <Icone nome="fa-solid fa-list" className="mr-2 text-ufrpe-blue opacity-70" /> Sumário
                   </h3>
                 </div>
                 <div className="p-6 overflow-y-auto max-h-[calc(100vh-200px)]">
@@ -140,7 +141,7 @@ export default function Formularios() {
                         href={`#${section.id}`}
                         className="flex gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 hover:text-ufrpe-blue group"
                       >
-                        <i className="fa-solid fa-chevron-right text-ufrpe-yellow mt-1 group-hover:translate-x-1 transition-transform"></i>
+                        <Icone nome="fa-solid fa-chevron-right" className="text-ufrpe-yellow mt-1 group-hover:translate-x-1 transition-transform" />
                         <span className="leading-snug">{section.title}</span>
                       </a>
                     ))}
@@ -155,7 +156,7 @@ export default function Formularios() {
               {/* Search Bar */}
               <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                 <div className="relative">
-                  <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                  <Icone nome="fa-solid fa-magnifying-glass" className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Digite para buscar formulários pelo título ou descrição..."
@@ -176,7 +177,7 @@ export default function Formularios() {
 
               {filteredData.length === 0 ? (
                 <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
-                  <i className="fa-solid fa-folder-open text-gray-300 text-5xl mb-4"></i>
+                  <Icone nome="fa-solid fa-folder-open" className="text-gray-300 text-5xl mb-4" />
                   <h3 className="font-heading font-bold text-xl text-gray-700 mb-2">Nenhum formulário encontrado</h3>
                   <p className="text-gray-500">Tente buscar por termos mais genéricos.</p>
                 </div>
@@ -197,7 +198,7 @@ export default function Formularios() {
                           <summary className="p-5 font-bold text-gray-800 cursor-pointer list-none flex justify-between items-center hover:bg-gray-50 transition border-b border-transparent group-open:border-gray-100 group-open:bg-gray-50 group-open:text-ufrpe-blue">
                             {cat.title}
                             <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 group-open:bg-ufrpe-yellow group-open:text-white text-gray-500 transition-colors">
-                              <i className="fa-solid fa-chevron-down transition-transform duration-300 group-open:rotate-180"></i>
+                              <Icone nome="fa-solid fa-chevron-down" className="transition-transform duration-300 group-open:rotate-180" />
                             </span>
                           </summary>
                           <div className="p-6 bg-white space-y-6 border-t border-gray-100">
@@ -219,7 +220,7 @@ export default function Formularios() {
                                   rel="noopener noreferrer"
                                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-ufrpe-cyan hover:bg-ufrpe-blue text-white text-sm font-bold rounded-lg transition-colors cursor-pointer"
                                 >
-                                  <i className="fa-solid fa-download"></i> Baixar Documento
+                                  <Icone nome="fa-solid fa-download" /> Baixar Documento
                                 </a>
                               </div>
                             ))}

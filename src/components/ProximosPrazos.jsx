@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
+import Icone from './Icone';
 
 // "Próximos prazos" (Fase N.6): fim das inscrições dos editais abertos +
 // marcos do calendário acadêmico vigente, com as datas de verdade dos marcos.
@@ -28,7 +29,7 @@ export default function ProximosPrazos({ prazos: recebidos, programa = null, lim
   return (
     <aside aria-labelledby={idTitulo} className={`bg-white rounded-2xl p-6 shadow-sm h-fit ${className}`}>
       <h3 id={idTitulo} className="font-heading font-bold text-lg text-ufrpe-blue mb-4 flex items-center gap-2">
-        <i className="fa-regular fa-clock text-ufrpe-yellow" aria-hidden="true"></i>{titulo}
+        <Icone nome="fa-regular fa-clock" className="text-ufrpe-yellow" aria-hidden="true" />{titulo}
       </h3>
       {prazos.length === 0 ? (
         <p className="text-sm text-gray-500">Nenhum prazo nos próximos dias. <Link to="/calendario-academico" className="text-ufrpe-blue underline">Calendário acadêmico</Link>.</p>
@@ -49,7 +50,7 @@ export default function ProximosPrazos({ prazos: recebidos, programa = null, lim
         </ol>
       )}
       <a href={ics} className="mt-5 inline-flex items-center gap-2 text-xs font-semibold text-ufrpe-blue hover:underline">
-        <i className="fa-regular fa-calendar-plus" aria-hidden="true"></i> Adicionar à minha agenda (.ics)
+        <Icone nome="fa-regular fa-calendar-plus" aria-hidden="true" /> Adicionar à minha agenda (.ics)
       </a>
     </aside>
   );

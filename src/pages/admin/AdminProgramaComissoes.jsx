@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { apiFetch } from '../../api';
+import Icone from '../../components/Icone';
 
 const TIPOS = {
   COMISSAO_CPG: 'Câmara/CPG',
@@ -130,7 +131,7 @@ export default function AdminProgramaComissoes() {
                         <img src={m.foto_url} alt="" className="w-8 h-8 rounded-full object-cover" />
                       ) : (
                         <div className="w-8 h-8 rounded-full bg-ufrpe-blue/10 flex items-center justify-center">
-                          <i className="fa-solid fa-user text-ufrpe-blue/40 text-xs"></i>
+                          <Icone nome="fa-solid fa-user" className="text-ufrpe-blue/40 text-xs" />
                         </div>
                       )}
                       <span className="text-sm font-medium text-gray-800">{m.nome}</span>

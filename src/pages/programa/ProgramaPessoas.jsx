@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
+import Icone from '../../components/Icone';
 
 const PAPEL_LABEL = {
   DOCENTE_PERMANENTE: 'Docente Permanente',
@@ -19,7 +20,7 @@ function DocenteCard({ docente }) {
           />
         ) : (
           <div className="w-16 h-16 rounded-full bg-[var(--prog-primary)]/10 flex items-center justify-center">
-            <i className="fa-solid fa-user text-2xl text-[var(--prog-primary)]/40"></i>
+            <Icone nome="fa-solid fa-user" className="text-2xl text-[var(--prog-primary)]/40" />
           </div>
         )}
       </div>
@@ -30,26 +31,26 @@ function DocenteCard({ docente }) {
         </span>
         {docente.email_funcao && (
           <p className="mt-1.5 text-xs text-gray-500 truncate">
-            <i className="fa-solid fa-envelope mr-1"></i>{docente.email_funcao}
+            <Icone nome="fa-solid fa-envelope" className="mr-1" />{docente.email_funcao}
           </p>
         )}
         <div className="flex gap-3 mt-2 flex-wrap">
           {docente.lattes && (
             <a href={docente.lattes} target="_blank" rel="noopener noreferrer"
                className="text-xs text-[var(--prog-primary)] hover:underline flex items-center gap-1">
-              <i className="fa-solid fa-graduation-cap text-[10px]"></i> Lattes
+              <Icone nome="fa-solid fa-graduation-cap" className="text-[10px]" /> Lattes
             </a>
           )}
           {docente.orcid && (
             <a href={`https://orcid.org/${docente.orcid}`} target="_blank" rel="noopener noreferrer"
                className="text-xs text-[var(--prog-primary)] hover:underline flex items-center gap-1">
-              <i className="fa-brands fa-orcid text-[10px]"></i> ORCID
+              <Icone nome="fa-brands fa-orcid" className="text-[10px]" /> ORCID
             </a>
           )}
           {docente.google_scholar && (
             <a href={docente.google_scholar} target="_blank" rel="noopener noreferrer"
                className="text-xs text-[var(--prog-primary)] hover:underline flex items-center gap-1">
-              <i className="fa-brands fa-google text-[10px]"></i> Scholar
+              <Icone nome="fa-brands fa-google" className="text-[10px]" /> Scholar
             </a>
           )}
         </div>
@@ -96,7 +97,7 @@ export default function ProgramaPessoas() {
 
       {docentes.length > 4 && (
         <div className="relative mb-6">
-          <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <Icone nome="fa-solid fa-magnifying-glass" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
           <input
             type="text"
             placeholder="Buscar docente..."
@@ -109,7 +110,7 @@ export default function ProgramaPessoas() {
 
       {docentes.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
-          <i className="fa-solid fa-users text-5xl mb-4 block"></i>
+          <Icone nome="fa-solid fa-users" className="text-5xl mb-4 block" />
           <p>Nenhum docente cadastrado neste programa.</p>
         </div>
       ) : (
@@ -117,7 +118,7 @@ export default function ProgramaPessoas() {
           {permanentes.length > 0 && (
             <div className="mb-8">
               <h2 className="font-semibold text-lg text-gray-700 mb-4 flex items-center gap-2">
-                <i className="fa-solid fa-star text-[var(--prog-accent)] text-sm"></i>
+                <Icone nome="fa-solid fa-star" className="text-[var(--prog-accent)] text-sm" />
                 Docentes Permanentes
                 <span className="text-xs font-normal text-gray-400">({permanentes.length})</span>
               </h2>
@@ -130,7 +131,7 @@ export default function ProgramaPessoas() {
           {colaboradores.length > 0 && (
             <div>
               <h2 className="font-semibold text-lg text-gray-700 mb-4 flex items-center gap-2">
-                <i className="fa-solid fa-handshake text-[var(--prog-primary)]/60 text-sm"></i>
+                <Icone nome="fa-solid fa-handshake" className="text-[var(--prog-primary)]/60 text-sm" />
                 Docentes Colaboradores
                 <span className="text-xs font-normal text-gray-400">({colaboradores.length})</span>
               </h2>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { apiFetch } from '../api';
 import LinkDestino from './LinkDestino';
+import Icone from './Icone';
 
 // Bloco "Relacionados" (Fase N.5): conteúdos ligados a este no painel
 // (edital -> resolução, notícia -> edital...). Some quando não há nenhum.
@@ -25,12 +26,12 @@ export default function Relacionados({ tipo, id, className = '' }) {
   return (
     <section className={`bg-white rounded-2xl border border-gray-100 shadow-sm p-6 ${className}`} aria-labelledby={`relacionados-${tipo}-${id}`}>
       <h2 id={`relacionados-${tipo}-${id}`} className="font-heading font-bold text-lg text-ufrpe-blue mb-4 flex items-center gap-2">
-        <i className="fa-solid fa-link text-ufrpe-yellow" aria-hidden="true"></i> Relacionados
+        <Icone nome="fa-solid fa-link" className="text-ufrpe-yellow" aria-hidden="true" /> Relacionados
       </h2>
       <ul className="space-y-3">
         {itens.map((i) => (
           <li key={`${i.tipo}-${i.id}`} className="flex gap-3">
-            <i className={`${ICONES[i.tipo] || 'fa-solid fa-link'} text-ufrpe-blue/50 mt-1 w-4 text-center`} aria-hidden="true"></i>
+            <Icone nome={ICONES[i.tipo] || 'fa-solid fa-link'} className="text-ufrpe-blue/50 mt-1 w-4 text-center" />
             <div>
               <LinkDestino destino={i.destino} className="font-semibold text-gray-800 hover:text-ufrpe-blue hover:underline">{i.titulo}</LinkDestino>
               <p className="text-xs text-gray-500">{i.rotuloTipo}{i.status && i.status !== 'PUBLICADO' ? ` · ${i.status.toLowerCase()}` : ''}</p>

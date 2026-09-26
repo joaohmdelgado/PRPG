@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { API_URL, apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner, formatDate } from '../../components/programa/ProgramaUI';
+import Icone from '../../components/Icone';
 
 export default function ProgramaNoticias() {
   const { programa, slug } = usePrograma();
@@ -32,7 +33,7 @@ export default function ProgramaNoticias() {
 
       <main className="container mx-auto px-4 py-12">
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-8 relative max-w-xl">
-          <i className="fa-solid fa-search absolute left-7 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <Icone nome="fa-solid fa-search" className="absolute left-7 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text" value={search} onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar notícia..."
@@ -62,11 +63,11 @@ export default function ProgramaNoticias() {
                   </div>
                 )}
                 <div className="p-5 flex flex-col flex-grow">
-                  <span className="text-xs text-gray-400 mb-2"><i className="fa-regular fa-calendar mr-1.5"></i>{formatDate(n.date)}</span>
+                  <span className="text-xs text-gray-400 mb-2"><Icone nome="fa-regular fa-calendar" className="mr-1.5" />{formatDate(n.date)}</span>
                   <h3 className="font-heading font-bold text-[var(--prog-primary)] leading-snug mb-2 group-hover:opacity-80">{n.title}</h3>
                   {n.excerpt && <p className="text-sm text-gray-600 line-clamp-3 mb-3">{n.excerpt}</p>}
                   <span className="mt-auto text-sm font-semibold text-[var(--prog-primary)] flex items-center gap-2 group-hover:translate-x-1 transition-transform">
-                    Ler notícia <i className="fa-solid fa-arrow-right text-xs"></i>
+                    Ler notícia <Icone nome="fa-solid fa-arrow-right" className="text-xs" />
                   </span>
                 </div>
               </Link>

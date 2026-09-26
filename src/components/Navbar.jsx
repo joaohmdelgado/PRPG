@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useMenu, useConfig, linkTelefone } from '../hooks/usePortal';
 import LinkDestino from './LinkDestino';
+import Icone from './Icone';
 
 // Itens do menu, links da faixa superior, contato e logo vêm do banco
 // (Fase H.1 — editados no painel em "Menus e portal").
@@ -15,17 +16,17 @@ export function Topbar({ onOpenMap }) {
         <div className="flex gap-6">
           {contato.email && (
             <a href={`mailto:${contato.email}`} className="flex items-center gap-2 hover:text-ufrpe-yellow transition">
-              <i className="fa-solid fa-envelope text-ufrpe-yellow" aria-hidden="true"></i> {contato.email}
+              <Icone nome="fa-solid fa-envelope" className="text-ufrpe-yellow" aria-hidden="true" /> {contato.email}
             </a>
           )}
           {contato.telefone && (
             <a href={linkTelefone(contato.telefone)} className="flex items-center gap-2 hover:text-ufrpe-yellow transition">
-              <i className="fa-solid fa-phone text-ufrpe-yellow" aria-hidden="true"></i> {contato.telefone}
+              <Icone nome="fa-solid fa-phone" className="text-ufrpe-yellow" aria-hidden="true" /> {contato.telefone}
             </a>
           )}
           {contato.mapa && (
             <button id="map-toggle" onClick={onOpenMap} className="hidden lg:flex items-center gap-2 hover:text-ufrpe-yellow transition cursor-pointer">
-              <i className="fa-solid fa-location-dot text-ufrpe-yellow" aria-hidden="true"></i> Localização
+              <Icone nome="fa-solid fa-location-dot" className="text-ufrpe-yellow" aria-hidden="true" /> Localização
             </button>
           )}
         </div>
@@ -132,7 +133,7 @@ export default function Navbar() {
                 const filhos = item.filhos || [];
                 const ativo = item.destino && (currentPage === item.destino || (item.destino !== '/' && currentPage.startsWith(`${item.destino}/`)));
                 const classe = `hover:text-ufrpe-yellow transition flex items-center gap-1 ${ativo ? 'text-ufrpe-yellow font-bold' : ''}`;
-                const seta = filhos.length > 0 && <i className="fa-solid fa-chevron-down" style={{ fontSize: 10, opacity: 0.5 }} aria-hidden="true"></i>;
+                const seta = filhos.length > 0 && <Icone nome="fa-solid fa-chevron-down" style={{ fontSize: 10, opacity: 0.5 }} aria-hidden="true" />;
                 return (
                   <li key={item.id} className="relative group px-3 py-4">
                     {item.destino ? (
@@ -176,7 +177,7 @@ export default function Navbar() {
                 onClick={() => setSearchOpen(!searchOpen)}
                 className="hidden lg:flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full hover:bg-ufrpe-yellow hover:text-white transition text-ufrpe-blue cursor-pointer"
               >
-                <i className="fa-solid fa-search"></i>
+                <Icone nome="fa-solid fa-search" />
               </button>
 
               {/* Search Modal Overlay (Local) */}
@@ -194,7 +195,7 @@ export default function Navbar() {
                       className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow outline-none text-sm transition-all"
                     />
                     <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-ufrpe-blue text-white rounded-lg hover:bg-ufrpe-yellow transition-colors cursor-pointer">
-                      <i className="fa-solid fa-arrow-right text-xs"></i>
+                      <Icone nome="fa-solid fa-arrow-right" className="text-xs" />
                     </button>
                   </form>
                   <p className="text-[10px] text-gray-400 mt-3 px-1">Pressione Enter para pesquisar</p>
@@ -208,7 +209,7 @@ export default function Navbar() {
               aria-expanded={mobileOpen}
               className="lg:hidden text-2xl text-ufrpe-blue"
             >
-              <i className={`fa-solid ${mobileOpen ? 'fa-xmark' : 'fa-bars'}`}></i>
+              <Icone nome={mobileOpen ? 'fa-xmark' : 'fa-bars'} />
             </button>
           </div>
         </div>
@@ -226,7 +227,7 @@ export default function Navbar() {
                 aria-label="Buscar no portal"
                 className="flex-1 min-w-0 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
               />
-              <button type="submit" aria-label="Buscar" className="px-3 bg-ufrpe-blue text-white rounded-lg"><i className="fa-solid fa-search" aria-hidden="true"></i></button>
+              <button type="submit" aria-label="Buscar" className="px-3 bg-ufrpe-blue text-white rounded-lg"><Icone nome="fa-solid fa-search" aria-hidden="true" /></button>
             </form>
             <ul className="flex flex-col text-ufrpe-blue font-medium text-sm">
               {principal.map((item) => {
@@ -280,7 +281,7 @@ export default function Navbar() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative z-10 overflow-hidden animate-in zoom-in duration-300">
             <div className="flex justify-between items-center p-4 border-b border-gray-100">
               <h3 className="font-bold text-ufrpe-blue flex items-center gap-2">
-                <i className="fa-solid fa-location-dot text-ufrpe-yellow"></i> 
+                <Icone nome="fa-solid fa-location-dot" className="text-ufrpe-yellow" /> 
                 Nossa Localização
               </h3>
               <button 
@@ -288,7 +289,7 @@ export default function Navbar() {
                 id="close-map" 
                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors cursor-pointer"
               >
-                <i className="fa-solid fa-xmark"></i>
+                <Icone nome="fa-solid fa-xmark" />
               </button>
             </div>
             <div className="aspect-video w-full">

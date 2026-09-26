@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Plus, Trash2, IndentIncrease, IndentDecrease, Save,
 import { apiFetch, urlMidia } from '../../api';
 import MediaPicker from './MediaPicker';
 import { recarregarPortal } from '../../hooks/usePortal';
+import Icone, { ICONES_ESCOLHA, chaveDoIcone } from '../Icone';
 
 // Editor de uma lista do portal (Fase H.1): o editor trabalha numa cópia da
 // árvore e manda tudo de uma vez ao salvar (PUT /api/menus/:chave).
@@ -118,15 +119,22 @@ export default function MenuEditor({ menu, destinos = [], onSalvo }) {
           </div>
           {campos.has('icone') && (
             <div className="min-w-[180px]">
-              <label htmlFor={`${id}-icone`} className="block text-xs font-medium text-gray-600 mb-1">
-                Ícone <a href="https://fontawesome.com/search?o=r&m=free" target="_blank" rel="noopener noreferrer" className="text-ufrpe-blue underline font-normal">(catálogo)</a>
-              </label>
+              <label htmlFor={`${id}-icone`} className="block text-xs font-medium text-gray-600 mb-1">Ícone</label>
               <div className="flex items-center gap-2">
                 <span className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-ufrpe-blue shrink-0" aria-hidden="true">
-                  <i className={item.icone || 'fa-solid fa-link'}></i>
+                  <Icone nome={item.icone || 'link'} />
                 </span>
-                <input id={`${id}-icone`} value={item.icone} onChange={(e) => alterar(caminho, 'icone', e.target.value)}
-                  placeholder="fa-solid fa-gavel" className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-sm font-mono" />
+                {/* Valores antigos (classes do Font Awesome) continuam valendo; o
+                    seletor mostra o equivalente e só grava a forma curta ao trocar. */}
+                <select id={`${id}-icone`} value={chaveDoIcone(item.icone)}
+                  onChange={(e) => alterar(caminho, 'icone', e.target.value)}
+                  className="w-full px-2.5 py-1.5 border border-gray-300 rounded-md text-sm bg-white">
+                  <option value="">Padrão (link)</option>
+                  {chaveDoIcone(item.icone) && !ICONES_ESCOLHA.some(([k]) => k === chaveDoIcone(item.icone)) && (
+                    <option value={chaveDoIcone(item.icone)}>{chaveDoIcone(item.icone)} (atual)</option>
+                  )}
+                  {ICONES_ESCOLHA.map(([chave, rotulo]) => <option key={chave} value={chave}>{rotulo}</option>)}
+                </select>
               </div>
             </div>
           )}

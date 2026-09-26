@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
+import Icone from '../../components/Icone';
 
 const TIPOS = { M: 'Mestrado', D: 'Doutorado', P: 'Mestrado Profissional' };
 
@@ -63,13 +64,13 @@ export default function ProgramaTeses() {
               <div key={t.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-sm transition-all">
                 <div className="flex items-start gap-4">
                   <span className="shrink-0 w-10 h-10 rounded-lg bg-[var(--prog-primary)]/10 flex items-center justify-center text-[var(--prog-primary)]">
-                    <i className="fa-solid fa-scroll text-sm"></i>
+                    <Icone nome="fa-solid fa-scroll" className="text-sm" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-gray-900 text-sm leading-snug mb-1">{t.title}</p>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
-                      {t.autor?.nome && <span><i className="fa-solid fa-user mr-1"></i>{t.autor.nome}</span>}
-                      {t.ano && <span><i className="fa-solid fa-calendar mr-1"></i>{t.ano}</span>}
+                      {t.autor?.nome && <span><Icone nome="fa-solid fa-user" className="mr-1" />{t.autor.nome}</span>}
+                      {t.ano && <span><Icone nome="fa-solid fa-calendar" className="mr-1" />{t.ano}</span>}
                       {t.tipo && (
                         <span className="px-2 py-0.5 rounded-full bg-[var(--prog-primary)]/10 text-[var(--prog-primary)] font-medium">
                           {TIPOS[t.tipo] || t.tipo}
@@ -80,7 +81,7 @@ export default function ProgramaTeses() {
                   {t.arquivoUrl && (
                     <a href={t.arquivoUrl} target="_blank" rel="noopener noreferrer"
                       className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-[var(--prog-primary)] hover:underline">
-                      <i className="fa-solid fa-download"></i> PDF
+                      <Icone nome="fa-solid fa-download" /> PDF
                     </a>
                   )}
                 </div>

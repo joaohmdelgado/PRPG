@@ -1,4 +1,5 @@
 import React from 'react';
+import Icone from './Icone';
 
 // Faixa exibida quando quem edita abre um conteúdo que o público ainda não vê
 // (rascunho, arquivado ou agendado). A API só entrega esses itens a quem pode
@@ -14,7 +15,7 @@ export default function AvisoPreVisualizacao({ item }) {
 
   return (
     <div role="status" className="bg-amber-100 text-amber-900 text-sm text-center px-4 py-2 border-b border-amber-200">
-      <i className="fa-solid fa-eye mr-2" aria-hidden="true"></i>
+      <Icone nome="fa-solid fa-eye" className="mr-2" aria-hidden="true" />
       Pré-visualização ({texto}): este conteúdo ainda não está visível ao público.
     </div>
   );

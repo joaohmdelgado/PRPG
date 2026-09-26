@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { apiFetch, urlMidia } from '../api';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import { linkTelefone } from '../hooks/usePortal';
+import Icone from '../components/Icone';
 
 // Página pública automática de um programa (Fase N.2): todo programa tem
 // endereço no portal (/programas/<slug>), com ou sem microsite — antes, 40
@@ -16,7 +17,7 @@ function Bloco({ titulo, icone, children }) {
   return (
     <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6" aria-label={titulo}>
       <h2 className="font-heading font-bold text-lg text-ufrpe-blue mb-4 flex items-center gap-2">
-        <i className={`${icone} text-ufrpe-yellow`} aria-hidden="true"></i> {titulo}
+        <Icone nome={icone} className="text-ufrpe-yellow" /> {titulo}
       </h2>
       {children}
     </section>
@@ -129,7 +130,7 @@ export default function ProgramaPublico() {
       >
         {p.siteUrl && (
           <Link to={p.siteUrl} className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-ufrpe-yellow text-ufrpe-blue font-bold rounded-xl hover:bg-white transition">
-            Acessar o site do programa <i className="fa-solid fa-arrow-right" aria-hidden="true"></i>
+            Acessar o site do programa <Icone nome="fa-solid fa-arrow-right" aria-hidden="true" />
           </Link>
         )}
       </CabecalhoPagina>
@@ -217,7 +218,7 @@ export default function ProgramaPublico() {
                 <ul className="space-y-2 text-sm">
                   {contatos.map((c) => (
                     <li key={c.texto} className="flex gap-2 text-gray-700">
-                      <i className={`${c.icone} w-4 mt-1 text-ufrpe-yellow`} aria-hidden="true"></i>
+                      <Icone nome={c.icone} className="w-4 mt-1 text-ufrpe-yellow" />
                       {c.href ? <a href={c.href} className="hover:text-ufrpe-blue break-all">{c.texto}</a> : <span>{c.texto}</span>}
                     </li>
                   ))}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { apiFetch, urlMidia } from '../api';
 import CabecalhoPagina from '../components/CabecalhoPagina';
+import Icone from '../components/Icone';
 
 // Repositório de teses e dissertações de todos os programas (Fase N.3):
 // antes só existia a lista de cada microsite (2 programas). Filtros no
@@ -120,7 +121,7 @@ export default function RepositorioTeses() {
                   </div>
                   <h2 className="font-semibold text-gray-900 leading-snug">
                     {t.arquivoUrl
-                      ? <a href={urlMidia(t.arquivoUrl)} target="_blank" rel="noopener noreferrer" className="hover:text-ufrpe-blue hover:underline">{t.title} <i className="fa-regular fa-file-pdf text-red-500 text-sm" aria-hidden="true"></i><span className="sr-only"> (PDF, abre em nova aba)</span></a>
+                      ? <a href={urlMidia(t.arquivoUrl)} target="_blank" rel="noopener noreferrer" className="hover:text-ufrpe-blue hover:underline">{t.title} <Icone nome="fa-regular fa-file-pdf" className="text-red-500 text-sm" aria-hidden="true" /><span className="sr-only"> (PDF, abre em nova aba)</span></a>
                       : t.title}
                   </h2>
                   <p className="text-sm text-gray-600 mt-1">

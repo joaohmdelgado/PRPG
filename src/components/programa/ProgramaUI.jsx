@@ -1,4 +1,5 @@
 import React from 'react';
+import Icone from '../Icone';
 
 // Formata datas 'YYYY-MM-DD' para "D de Mês, AAAA"; demais formatos passam direto.
 export const formatDate = (dateStr) => {
@@ -17,7 +18,7 @@ export function PageHero({ icon, eyebrow, title, subtitle }) {
   return (
     <div className="bg-[var(--prog-primary)] text-white py-12 md:py-14 relative overflow-hidden">
       {icon && (
-        <i className={`fa-solid ${icon} text-[15rem] text-white/5 -bottom-16 -right-8 absolute rotate-12 pointer-events-none`}></i>
+        <Icone nome={icon} className="text-[15rem] text-white/5 -bottom-16 -right-8 absolute rotate-12 pointer-events-none" />
       )}
       <div className="container mx-auto px-4 relative">
         {eyebrow && (
@@ -39,7 +40,7 @@ export function EmptyState({ icon = 'fa-inbox', title, hint, titulo, descricao }
   hint = hint ?? descricao;
   return (
     <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm">
-      <i className={`fa-solid ${icon} text-gray-300 text-5xl mb-4`}></i>
+      <Icone nome={icon} className="text-gray-300 text-5xl mb-4" />
       <h3 className="font-heading font-bold text-xl text-gray-700 mb-2">{title}</h3>
       {hint && <p className="text-gray-500">{hint}</p>}
     </div>

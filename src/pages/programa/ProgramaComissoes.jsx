@@ -1,6 +1,7 @@
 import React from 'react';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero } from '../../components/programa/ProgramaUI';
+import Icone from '../../components/Icone';
 
 const TIPO_LABEL = {
   COMISSAO_CPG: 'Câmara/Comissão de Pós-Graduação (CPG)',
@@ -19,7 +20,7 @@ function MemberChip({ pessoa }) {
         <img src={foto} alt={nome} className="w-9 h-9 rounded-full object-cover shrink-0" />
       ) : (
         <div className="w-9 h-9 rounded-full bg-[var(--prog-primary)]/10 flex items-center justify-center shrink-0">
-          <i className="fa-solid fa-user text-[var(--prog-primary)]/40 text-sm"></i>
+          <Icone nome="fa-solid fa-user" className="text-[var(--prog-primary)]/40 text-sm" />
         </div>
       )}
       <span className="text-sm font-medium text-gray-800 truncate">{nome}</span>
@@ -42,7 +43,7 @@ export default function ProgramaComissoes() {
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         {tipos.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
-            <i className="fa-solid fa-users-gear text-5xl mb-4 block opacity-30"></i>
+            <Icone nome="fa-solid fa-users-gear" className="text-5xl mb-4 block opacity-30" />
             <p>Nenhuma comissão cadastrada.</p>
           </div>
         ) : (
@@ -50,7 +51,7 @@ export default function ProgramaComissoes() {
             {tipos.map((tipo) => (
               <section key={tipo} className="bg-gray-50 rounded-2xl p-6">
                 <h2 className="font-heading font-bold text-lg text-[var(--prog-primary)] mb-4 flex items-center gap-2">
-                  <i className="fa-solid fa-circle-chevron-right text-[var(--prog-accent)] text-sm"></i>
+                  <Icone nome="fa-solid fa-circle-chevron-right" className="text-[var(--prog-accent)] text-sm" />
                   {TIPO_LABEL[tipo] || tipo.replace('COMISSAO_', '').replace('_', ' ')}
                   <span className="text-xs font-normal text-gray-400">({comissoes[tipo].length})</span>
                 </h2>

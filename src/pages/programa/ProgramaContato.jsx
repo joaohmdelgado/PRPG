@@ -1,12 +1,13 @@
 import React from 'react';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero } from '../../components/programa/ProgramaUI';
+import Icone from '../../components/Icone';
 
 function InfoCard({ icon, label, children }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-start gap-4">
       <span className="shrink-0 h-11 w-11 rounded-xl bg-[var(--prog-primary)]/5 text-[var(--prog-primary)] flex items-center justify-center">
-        <i className={`fa-solid ${icon}`}></i>
+        <Icone nome={icon} />
       </span>
       <div className="min-w-0">
         <p className="text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">{label}</p>

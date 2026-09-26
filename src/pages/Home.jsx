@@ -4,6 +4,7 @@ import { apiFetch, urlMidia } from '../api';
 import { useMenu, useConfig } from '../hooks/usePortal';
 import LinkDestino from '../components/LinkDestino';
 import ProximosPrazos from '../components/ProximosPrazos';
+import Icone from '../components/Icone';
 
 // Página inicial dirigida por dados (Fase H.2): banner, atalhos, cartões e
 // parceiros vêm de "Menus e portal"; notícias, editais, prazos e números vêm
@@ -44,7 +45,7 @@ function Capa({ noticia, className }) {
   if (!noticia.image) {
     return (
       <div className={`${className} bg-ufrpe-blue/5 flex items-center justify-center text-ufrpe-blue/30`} aria-hidden="true">
-        <i className="fa-regular fa-newspaper text-4xl"></i>
+        <Icone nome="fa-regular fa-newspaper" className="text-4xl" />
       </div>
     );
   }
@@ -105,7 +106,7 @@ export default function Home() {
               <li key={q.id}>
                 <LinkDestino destino={q.destino} className="group flex flex-col items-center gap-3">
                   <span className="w-14 h-14 rounded-2xl bg-ufrpe-blue/5 text-ufrpe-blue flex items-center justify-center text-xl group-hover:bg-ufrpe-yellow group-hover:text-white transition-all transform group-hover:-translate-y-1">
-                    <i className={q.icone || 'fa-solid fa-link'} aria-hidden="true"></i>
+                    <Icone nome={q.icone || 'fa-solid fa-link'} aria-hidden="true" />
                   </span>
                   <span className="text-xs font-semibold text-gray-700 group-hover:text-ufrpe-blue leading-tight">{q.rotulo}</span>
                 </LinkDestino>
@@ -120,7 +121,7 @@ export default function Home() {
         <section className="py-20 bg-white" aria-labelledby="home-noticias">
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-end mb-12 border-b-2 border-ufrpe-yellow pb-4">
-              <h2 id="home-noticias" className="font-heading font-bold text-3xl md:text-4xl text-ufrpe-blue flex items-center gap-3"><i className="fa-regular fa-newspaper text-ufrpe-yellow" aria-hidden="true"></i>Últimas Notícias</h2>
+              <h2 id="home-noticias" className="font-heading font-bold text-3xl md:text-4xl text-ufrpe-blue flex items-center gap-3"><Icone nome="fa-regular fa-newspaper" className="text-ufrpe-yellow" aria-hidden="true" />Últimas Notícias</h2>
               <Link to="/noticias" className="text-sm font-bold text-ufrpe-blue hover:text-ufrpe-yellow transition uppercase tracking-wider">Ver todas</Link>
             </div>
             {erro && <p className="text-gray-500 text-center">Não foi possível carregar as notícias agora. <Link to="/noticias" className="text-ufrpe-blue underline">Abrir a página de notícias</Link>.</p>}
@@ -134,12 +135,12 @@ export default function Home() {
                     </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-3 mb-3 text-xs font-bold text-ufrpe-yellow uppercase tracking-widest">
-                        <span><i className="fa-regular fa-clock mr-1" aria-hidden="true"></i>{dataLonga(destaque.date)}</span>
+                        <span><Icone nome="fa-regular fa-clock" className="mr-1" aria-hidden="true" />{dataLonga(destaque.date)}</span>
                         <SeloPrograma programa={destaque.programa} />
                       </div>
                       <h3 className="font-heading font-bold text-2xl md:text-3xl text-ufrpe-blue group-hover:text-ufrpe-red transition-colors mb-4 leading-tight">{destaque.title}</h3>
                       {destaque.excerpt && <p className="text-gray-600 mb-6 leading-relaxed line-clamp-4">{destaque.excerpt}</p>}
-                      <span className="inline-flex items-center gap-2 text-ufrpe-blue font-bold text-sm">Ler matéria completa <i className="fa-solid fa-chevron-right text-[10px]" aria-hidden="true"></i></span>
+                      <span className="inline-flex items-center gap-2 text-ufrpe-blue font-bold text-sm">Ler matéria completa <Icone nome="fa-solid fa-chevron-right" className="text-[10px]" aria-hidden="true" /></span>
                     </div>
                   </Link>
                 </article>
@@ -174,17 +175,17 @@ export default function Home() {
         <section className="py-20 bg-gray-50" aria-labelledby="home-jornada">
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-end mb-12 border-b-2 border-ufrpe-yellow pb-4">
-              <h2 id="home-jornada" className="font-heading font-bold text-3xl text-ufrpe-blue flex items-center gap-3"><i className="fa-solid fa-compass text-ufrpe-yellow" aria-hidden="true"></i>Jornada do Aluno</h2>
+              <h2 id="home-jornada" className="font-heading font-bold text-3xl text-ufrpe-blue flex items-center gap-3"><Icone nome="fa-solid fa-compass" className="text-ufrpe-yellow" aria-hidden="true" />Jornada do Aluno</h2>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {jornada.map((s, i) => {
                 const cor = CORES_JORNADA[i % CORES_JORNADA.length];
                 return (
                   <LinkDestino key={s.id} destino={s.destino} className="block bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all hover:-translate-y-1 group">
-                    <span className={`w-12 h-12 ${cor.bg} ${cor.c} rounded-xl flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform`}><i className={s.icone || 'fa-solid fa-link'} aria-hidden="true"></i></span>
+                    <span className={`w-12 h-12 ${cor.bg} ${cor.c} rounded-xl flex items-center justify-center text-xl mb-6 group-hover:scale-110 transition-transform`}><Icone nome={s.icone || 'fa-solid fa-link'} aria-hidden="true" /></span>
                     <h3 className="font-heading font-bold text-xl text-ufrpe-blue mb-3">{s.rotulo}</h3>
                     {s.descricao && <p className="text-sm text-gray-600 mb-6">{s.descricao}</p>}
-                    <span className={`${cor.c} font-semibold text-sm flex items-center gap-2`}>Explorar <i className="fa-solid fa-arrow-right text-xs" aria-hidden="true"></i></span>
+                    <span className={`${cor.c} font-semibold text-sm flex items-center gap-2`}>Explorar <Icone nome="fa-solid fa-arrow-right" className="text-xs" aria-hidden="true" /></span>
                   </LinkDestino>
                 );
               })}
@@ -198,7 +199,7 @@ export default function Home() {
         <section className="py-20 bg-gray-100" aria-labelledby="home-editais">
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-end mb-10 border-b-2 border-ufrpe-cyan pb-4">
-              <h2 id="home-editais" className="font-heading font-bold text-3xl text-ufrpe-blue flex items-center gap-3"><i className="fa-solid fa-bullhorn text-ufrpe-cyan" aria-hidden="true"></i>Editais</h2>
+              <h2 id="home-editais" className="font-heading font-bold text-3xl text-ufrpe-blue flex items-center gap-3"><Icone nome="fa-solid fa-bullhorn" className="text-ufrpe-cyan" aria-hidden="true" />Editais</h2>
               <Link to="/editais" className="text-sm font-bold text-ufrpe-cyan hover:underline uppercase tracking-wider">Todos os editais</Link>
             </div>
             <div className="grid lg:grid-cols-3 gap-8">
@@ -212,7 +213,7 @@ export default function Home() {
                     <article key={e.id} className={`bg-white p-6 rounded-2xl shadow-sm ${cor.borda} hover:shadow-md transition group`} style={{ borderLeftWidth: 8 }}>
                       <div className="flex flex-wrap items-center gap-3 mb-2">
                         <span className={`${cor.selo} text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider`}>{e.situationLabel}</span>
-                        {e.dataFim && e.situation === 'abertas' && <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-md"><i className="fa-regular fa-calendar mr-1" aria-hidden="true"></i>até {dataCurta(e.dataFim)}</span>}
+                        {e.dataFim && e.situation === 'abertas' && <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-md"><Icone nome="fa-regular fa-calendar" className="mr-1" aria-hidden="true" />até {dataCurta(e.dataFim)}</span>}
                         <SeloPrograma programa={e.programa} link />
                       </div>
                       <h3 className="font-heading font-bold text-xl text-ufrpe-blue leading-snug">

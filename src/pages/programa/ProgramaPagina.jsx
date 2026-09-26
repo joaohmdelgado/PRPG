@@ -4,6 +4,7 @@ import { apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import { Spinner, EmptyState } from '../../components/programa/ProgramaUI';
 import InstitutionalPageContent from '../../components/InstitutionalPageContent';
+import Icone from '../../components/Icone';
 
 // Texto de verdade no HTML do editor — mesmo critério de temTexto() em
 // server/utils/micrositeMenu.js ("<p>&nbsp;</p>" é vazio).
@@ -65,7 +66,7 @@ export default function ProgramaPagina() {
         />
         <div className="text-center mt-6">
           <Link to={programaPath(slug)} className="text-[var(--prog-primary)] font-semibold hover:opacity-70">
-            <i className="fa-solid fa-arrow-left mr-2"></i> Voltar para o início
+            <Icone nome="fa-solid fa-arrow-left" className="mr-2" /> Voltar para o início
           </Link>
         </div>
       </main>

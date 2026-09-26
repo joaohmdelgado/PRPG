@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePrograma, programaPath } from './ProgramaContext';
+import Icone from '../Icone';
 
 // O menu vem montado do servidor (programa.menu — server/utils/micrositeMenu.js,
 // Fase S.1): 4 grupos (O Programa / Pessoas / Produção / Admissão) com
@@ -70,11 +71,11 @@ export default function ProgramaLayout({ children }) {
       <div className="bg-ufrpe-blue text-white/80 text-xs">
         <div className="container mx-auto px-4 h-9 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 hover:text-ufrpe-yellow transition-colors">
-            <i className="fa-solid fa-arrow-left text-[10px]"></i>
+            <Icone nome="fa-solid fa-arrow-left" className="text-[10px]" />
             <span>Portal da Pós-Graduação · <strong className="font-semibold">PRPG/UFRPE</strong></span>
           </Link>
           <Link to="/programas" className="hidden sm:flex items-center gap-2 hover:text-ufrpe-yellow transition-colors">
-            <i className="fa-solid fa-graduation-cap text-[10px]"></i>
+            <Icone nome="fa-solid fa-graduation-cap" className="text-[10px]" />
             <span>Todos os Programas</span>
           </Link>
         </div>
@@ -89,7 +90,7 @@ export default function ProgramaLayout({ children }) {
                 onError={(e) => { e.target.style.display = 'none'; }} />
             ) : (
               <span className="shrink-0 h-12 w-12 md:h-14 md:w-14 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-[var(--prog-accent)]">
-                <i className="fa-solid fa-landmark text-xl"></i>
+                <Icone nome="fa-solid fa-landmark" className="text-xl" />
               </span>
             )}
             <span className="flex flex-col min-w-0">
@@ -120,9 +121,9 @@ export default function ProgramaLayout({ children }) {
                       aria-haspopup="true"
                       className={linkClasse(isGroupActive(item))}
                     >
-                      <i className={`fa-solid ${item.icone} text-xs opacity-70`} aria-hidden="true"></i>
+                      <Icone nome={item.icone} className="text-xs opacity-70" aria-hidden="true" />
                       {item.rotulo}
-                      <i className={`fa-solid fa-chevron-down text-[9px] opacity-60 transition-transform ${aberto ? 'rotate-180' : ''}`} aria-hidden="true"></i>
+                      <Icone nome={'fa-chevron-down'} className={`text-[9px] opacity-60 transition-transform ${aberto ? 'rotate-180' : ''}`} aria-hidden="true" />
                     </button>
                     {aberto && (
                       <ul className="absolute left-0 top-full bg-white rounded-b-lg shadow-lg border border-gray-100 border-t-0 py-2 min-w-[240px] z-50">
@@ -146,7 +147,7 @@ export default function ProgramaLayout({ children }) {
               return (
                 <li key={item.chave}>
                   <Link to={programaPath(slug, item.sub)} className={linkClasse(isActive(item.sub))}>
-                    <i className={`fa-solid ${item.icone} text-xs opacity-70`} aria-hidden="true"></i>
+                    <Icone nome={item.icone} className="text-xs opacity-70" aria-hidden="true" />
                     {item.rotulo}
                   </Link>
                 </li>
@@ -169,18 +170,18 @@ export default function ProgramaLayout({ children }) {
                 />
                 <button type="button" onClick={() => { setSearchOpen(false); setSearchVal(''); }}
                   className="text-gray-400 hover:text-gray-600 p-1" aria-label="Fechar busca">
-                  <i className="fa-solid fa-xmark"></i>
+                  <Icone nome="fa-solid fa-xmark" />
                 </button>
               </form>
             ) : (
               <button onClick={() => setSearchOpen(true)}
                 className="p-2 text-gray-500 hover:text-[var(--prog-primary)] transition-colors" aria-label="Buscar">
-                <i className="fa-solid fa-magnifying-glass text-sm"></i>
+                <Icone nome="fa-solid fa-magnifying-glass" className="text-sm" />
               </button>
             )}
             {/* Mobile toggle */}
             <button onClick={() => setOpen(!open)} aria-expanded={open} className="lg:hidden py-3 px-1 text-xl text-[var(--prog-primary)]" aria-label="Menu">
-              <i className={`fa-solid ${open ? 'fa-xmark' : 'fa-bars'}`}></i>
+              <Icone nome={open ? 'fa-xmark' : 'fa-bars'} />
             </button>
           </div>
         </div>
@@ -191,7 +192,7 @@ export default function ProgramaLayout({ children }) {
                 return (
                   <li key={item.chave} className="border-b border-gray-50 last:border-0">
                     <p className="flex items-center gap-3 px-5 pt-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                      <i className={`fa-solid ${item.icone} text-xs opacity-70 w-4`} aria-hidden="true"></i>
+                      <Icone nome={item.icone} className="text-xs opacity-70 w-4" aria-hidden="true" />
                       {item.rotulo}
                     </p>
                     <ul>
@@ -221,7 +222,7 @@ export default function ProgramaLayout({ children }) {
                       isActive(item.sub) ? 'text-[var(--prog-primary)] font-semibold bg-gray-50' : 'text-gray-600'
                     }`}
                   >
-                    <i className={`fa-solid ${item.icone} text-xs opacity-70 w-4`} aria-hidden="true"></i>
+                    <Icone nome={item.icone} className="text-xs opacity-70 w-4" aria-hidden="true" />
                     {item.rotulo}
                   </Link>
                 </li>
@@ -247,7 +248,7 @@ export default function ProgramaLayout({ children }) {
               {SOCIALS.filter((s) => programa[s.key]).map((s) => (
                 <a key={s.key} href={programa[s.key]} target="_blank" rel="noopener noreferrer"
                   className="w-9 h-9 rounded-full flex items-center justify-center bg-white/10 hover:bg-[var(--prog-accent)] hover:text-[var(--prog-primary)] transition-colors">
-                  <i className={`fa-brands ${s.icon}`}></i>
+                  <Icone nome={s.icon} />
                 </a>
               ))}
             </div>
@@ -257,17 +258,17 @@ export default function ProgramaLayout({ children }) {
             <h4 className="font-bold text-white mb-4 text-sm uppercase tracking-wider">Contato</h4>
             <ul className="space-y-3 text-sm text-white/70">
               {programa.endereco && (
-                <li className="flex items-start gap-3"><i className="fa-solid fa-location-dot text-[var(--prog-accent)] mt-1"></i><span>{programa.endereco}</span></li>
+                <li className="flex items-start gap-3"><Icone nome="fa-solid fa-location-dot" className="text-[var(--prog-accent)] mt-1" /><span>{programa.endereco}</span></li>
               )}
               {programa.email_programa && (
-                <li className="flex items-center gap-3"><i className="fa-solid fa-envelope text-[var(--prog-accent)]"></i>
+                <li className="flex items-center gap-3"><Icone nome="fa-solid fa-envelope" className="text-[var(--prog-accent)]" />
                   <a href={`mailto:${programa.email_programa}`} className="hover:text-white break-all">{programa.email_programa}</a></li>
               )}
               {programa.telefone_secretaria && (
-                <li className="flex items-center gap-3"><i className="fa-solid fa-phone text-[var(--prog-accent)]"></i><span>{programa.telefone_secretaria}</span></li>
+                <li className="flex items-center gap-3"><Icone nome="fa-solid fa-phone" className="text-[var(--prog-accent)]" /><span>{programa.telefone_secretaria}</span></li>
               )}
               {programa.whatsapp && (
-                <li className="flex items-center gap-3"><i className="fa-brands fa-whatsapp text-[var(--prog-accent)]"></i><span>{programa.whatsapp}</span></li>
+                <li className="flex items-center gap-3"><Icone nome="fa-brands fa-whatsapp" className="text-[var(--prog-accent)]" /><span>{programa.whatsapp}</span></li>
               )}
             </ul>
           </div>
@@ -278,7 +279,7 @@ export default function ProgramaLayout({ children }) {
               {NAV_FLAT.map((item) => (
                 <li key={item.chave} className="break-inside-avoid">
                   <Link to={programaPath(slug, item.sub)} className="hover:text-white transition-colors flex items-center gap-2">
-                    <i className="fa-solid fa-angle-right text-[10px] text-[var(--prog-accent)]"></i>{item.rotulo}
+                    <Icone nome="fa-solid fa-angle-right" className="text-[10px] text-[var(--prog-accent)]" />{item.rotulo}
                   </Link>
                 </li>
               ))}
@@ -289,7 +290,7 @@ export default function ProgramaLayout({ children }) {
           <div className="container mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50">
             <span>© {new Date().getFullYear()} {programa.nome} — UFRPE</span>
             <Link to="/" className="hover:text-white transition-colors flex items-center gap-2">
-              <i className="fa-solid fa-arrow-left text-[10px]"></i> Parte do portal da PRPG/UFRPE
+              <Icone nome="fa-solid fa-arrow-left" className="text-[10px]" /> Parte do portal da PRPG/UFRPE
             </Link>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
+import Icone from '../../components/Icone';
 
 const PAPEL_LABEL = {
   DISCENTE_MESTRADO:     'Mestrando(a)',
@@ -28,33 +29,33 @@ function DiscenteCard({ discente }) {
           />
         ) : (
           <div className="w-14 h-14 rounded-full bg-[var(--prog-primary)]/10 flex items-center justify-center">
-            <i className="fa-solid fa-user-graduate text-xl text-[var(--prog-primary)]/40"></i>
+            <Icone nome="fa-solid fa-user-graduate" className="text-xl text-[var(--prog-primary)]/40" />
           </div>
         )}
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-gray-900 text-sm leading-snug truncate">{discente.nome}</p>
         <span className="inline-flex items-center gap-1 mt-0.5 text-xs px-2 py-0.5 rounded-full bg-[var(--prog-accent)]/15 text-[var(--prog-primary)] font-medium">
-          <i className={`fa-solid ${PAPEL_ICON[discente.papel] || 'fa-user'} text-[10px]`}></i>
+          <Icone nome={PAPEL_ICON[discente.papel] || 'fa-user'} className="text-[10px]" />
           {PAPEL_LABEL[discente.papel] || discente.papel}
         </span>
         <div className="flex gap-3 mt-2 flex-wrap">
           {discente.lattes && (
             <a href={discente.lattes} target="_blank" rel="noopener noreferrer"
                className="text-xs text-[var(--prog-primary)] hover:underline flex items-center gap-1">
-              <i className="fa-solid fa-graduation-cap text-[10px]"></i> Lattes
+              <Icone nome="fa-solid fa-graduation-cap" className="text-[10px]" /> Lattes
             </a>
           )}
           {discente.orcid && (
             <a href={`https://orcid.org/${discente.orcid}`} target="_blank" rel="noopener noreferrer"
                className="text-xs text-[var(--prog-primary)] hover:underline flex items-center gap-1">
-              <i className="fa-brands fa-orcid text-[10px]"></i> ORCID
+              <Icone nome="fa-brands fa-orcid" className="text-[10px]" /> ORCID
             </a>
           )}
           {discente.google_scholar && (
             <a href={discente.google_scholar} target="_blank" rel="noopener noreferrer"
                className="text-xs text-[var(--prog-primary)] hover:underline flex items-center gap-1">
-              <i className="fa-brands fa-google text-[10px]"></i> Scholar
+              <Icone nome="fa-brands fa-google" className="text-[10px]" /> Scholar
             </a>
           )}
         </div>
@@ -109,7 +110,7 @@ export default function ProgramaDiscentes({ egressos = false }) {
 
       {discentes.length > 6 && (
         <div className="relative mb-6">
-          <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <Icone nome="fa-solid fa-magnifying-glass" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
           <input
             type="text"
             placeholder={egressos ? 'Buscar egresso...' : 'Buscar discente...'}
@@ -123,7 +124,7 @@ export default function ProgramaDiscentes({ egressos = false }) {
 
       {discentes.length === 0 ? (
         <div className="text-center py-20 text-gray-400">
-          <i className="fa-solid fa-user-graduate text-5xl mb-4 block"></i>
+          <Icone nome="fa-solid fa-user-graduate" className="text-5xl mb-4 block" />
           <p>{egressos ? 'Nenhum egresso cadastrado neste programa.' : 'Nenhum discente cadastrado neste programa.'}</p>
         </div>
       ) : (
@@ -134,7 +135,7 @@ export default function ProgramaDiscentes({ egressos = false }) {
             return (
               <div key={papel}>
                 <h2 className="font-semibold text-lg text-gray-700 mb-4 flex items-center gap-2">
-                  <i className={`fa-solid ${icon} ${cor} text-sm`}></i>
+                  <Icone nome={icon} className={`${cor} text-sm`} />
                   {PAPEL_LABEL[papel]}
                   <span className="text-xs font-normal text-gray-400">({grupo.length})</span>
                 </h2>

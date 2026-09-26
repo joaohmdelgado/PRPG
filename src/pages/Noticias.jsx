@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
 import useVocabulario, { corDe } from '../hooks/useVocabulario';
 import CabecalhoPagina from '../components/CabecalhoPagina';
+import Icone from '../components/Icone';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -107,7 +108,7 @@ export default function Noticias() {
                   Buscar notícia
                 </label>
                 <div className="relative">
-                  <i className="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                  <Icone nome="fa-solid fa-search" className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     value={search}
@@ -132,7 +133,7 @@ export default function Noticias() {
                   <option value="">Todas</option>
                   {categorias.map((c) => <option key={c.valor} value={c.valor}>{c.rotulo}</option>)}
                 </select>
-                <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                <Icone nome="fa-solid fa-chevron-down" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs" />
               </div>
 
               <div className="w-full md:w-32 relative pt-2">
@@ -148,7 +149,7 @@ export default function Noticias() {
                   <option value="">Todos</option>
                   {(resultado.anos || []).map((a) => <option key={a} value={a}>{a}</option>)}
                 </select>
-                <i className="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs"></i>
+                <Icone nome="fa-solid fa-chevron-down" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-xs" />
               </div>
             </div>
           </div>
@@ -156,13 +157,13 @@ export default function Noticias() {
           {/* News Grid */}
           {erro ? (
             <div role="alert" className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm max-w-lg mx-auto">
-              <i className="fa-solid fa-triangle-exclamation text-gray-300 text-5xl mb-4" aria-hidden="true"></i>
+              <Icone nome="fa-solid fa-triangle-exclamation" className="text-gray-300 text-5xl mb-4" aria-hidden="true" />
               <h3 className="font-heading font-bold text-xl text-gray-700 mb-2">Não foi possível carregar as notícias</h3>
               <p className="text-gray-500">Tente novamente em alguns instantes.</p>
             </div>
           ) : paginatedNoticias.length === 0 ? (
             <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm max-w-lg mx-auto">
-              <i className="fa-solid fa-newspaper text-gray-300 text-5xl mb-4"></i>
+              <Icone nome="fa-solid fa-newspaper" className="text-gray-300 text-5xl mb-4" />
               <h3 className="font-heading font-bold text-xl text-gray-700 mb-2">Nenhuma notícia encontrada</h3>
               <p className="text-gray-500">Tente ajustar seus filtros de busca.</p>
             </div>
@@ -184,7 +185,7 @@ export default function Noticias() {
                   </div>
                   <div className="p-6 flex flex-col flex-grow">
                     <div className="text-xs text-gray-500 mb-3 flex items-center gap-2">
-                      <i className="fa-regular fa-calendar"></i> {formatDate(item.date)}
+                      <Icone nome="fa-regular fa-calendar" /> {formatDate(item.date)}
                     </div>
                     
                     <h3 className="font-heading font-bold text-xl text-ufrpe-blue mb-3 group-hover:text-ufrpe-cyan transition leading-tight">
@@ -199,7 +200,7 @@ export default function Noticias() {
                       to={`/noticia/${item.id}`}
                       className={`mt-auto font-semibold text-sm flex items-center gap-2 group-hover:translate-x-1 transition-transform text-ufrpe-blue`}
                     >
-                      Ler notícia <i className="fa-solid fa-arrow-right text-xs"></i>
+                      Ler notícia <Icone nome="fa-solid fa-arrow-right" className="text-xs" />
                     </Link>
                   </div>
                 </div>
@@ -216,7 +217,7 @@ export default function Noticias() {
                   disabled={currentPage === 1}
                   className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  <i className="fa-solid fa-chevron-left text-xs"></i>
+                  <Icone nome="fa-solid fa-chevron-left" className="text-xs" />
                 </button>
                 
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
@@ -238,7 +239,7 @@ export default function Noticias() {
                   disabled={currentPage === totalPages}
                   className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  <i className="fa-solid fa-chevron-right text-xs"></i>
+                  <Icone nome="fa-solid fa-chevron-right" className="text-xs" />
                 </button>
               </nav>
             </div>

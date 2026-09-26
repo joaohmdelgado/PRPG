@@ -5,6 +5,7 @@ import SafeHtml from '../components/SafeHtml';
 import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import Relacionados from '../components/Relacionados';
+import Icone from '../components/Icone';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -76,14 +77,14 @@ export default function Edital() {
   if (error || !edital) {
     return (
       <div className="container mx-auto px-4 py-24 text-center">
-        <i className="fa-solid fa-circle-exclamation text-gray-300 text-6xl mb-4"></i>
+        <Icone nome="fa-solid fa-circle-exclamation" className="text-gray-300 text-6xl mb-4" />
         <h2 className="font-heading font-bold text-3xl text-ufrpe-blue mb-4">Edital não encontrado</h2>
         <p className="text-gray-600 mb-8">{error || 'O edital solicitado não existe ou foi removido.'}</p>
         <Link
           to="/editais"
           className="inline-flex items-center gap-2 px-6 py-3 bg-ufrpe-blue hover:bg-ufrpe-yellow hover:text-ufrpe-blue text-white font-bold rounded-xl transition-all"
         >
-          <i className="fa-solid fa-arrow-left"></i> Voltar para Editais
+          <Icone nome="fa-solid fa-arrow-left" /> Voltar para Editais
         </Link>
       </div>
     );
@@ -118,7 +119,7 @@ export default function Edital() {
             <div className="lg:w-2/3 space-y-8">
               <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                 <h2 className="text-xl font-bold text-ufrpe-blue mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
-                  <i className="fa-solid fa-file-lines text-ufrpe-yellow"></i> Descrição / Detalhes do Edital
+                  <Icone nome="fa-solid fa-file-lines" className="text-ufrpe-yellow" /> Descrição / Detalhes do Edital
                 </h2>
                 <SafeHtml
                   className="text-gray-700 leading-relaxed html-content prose prose-blue max-w-none"
@@ -129,7 +130,7 @@ export default function Edital() {
               {/* Documentos Relacionados */}
               <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
                 <h2 className="text-xl font-bold text-ufrpe-blue mb-6 pb-2 border-b border-gray-100 flex items-center gap-2">
-                  <i className="fa-solid fa-paperclip text-ufrpe-yellow"></i> Documentos Relacionados
+                  <Icone nome="fa-solid fa-paperclip" className="text-ufrpe-yellow" /> Documentos Relacionados
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -137,7 +138,7 @@ export default function Edital() {
                   {edital.downloadLink && (
                     <div className="flex items-center gap-4 bg-blue-50/50 p-4 border border-blue-100 rounded-xl hover:bg-blue-50 transition-colors group">
                       <div className="w-12 h-12 rounded-lg bg-blue-500 text-white flex items-center justify-center shrink-0">
-                        <i className="fa-solid fa-file-pdf text-xl"></i>
+                        <Icone nome="fa-solid fa-file-pdf" className="text-xl" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm text-ufrpe-blue truncate">Edital Oficial</h4>
@@ -150,7 +151,7 @@ export default function Edital() {
                         className="p-2 bg-white text-blue-600 hover:text-white hover:bg-blue-600 border border-blue-200 rounded-lg transition-all"
                         title="Baixar PDF"
                       >
-                        <i className="fa-solid fa-download"></i>
+                        <Icone nome="fa-solid fa-download" />
                       </a>
                     </div>
                   )}
@@ -159,7 +160,7 @@ export default function Edital() {
                   {edital.resultadoParcial && (
                     <div className="flex items-center gap-4 bg-amber-50/30 p-4 border border-amber-100 rounded-xl hover:bg-amber-50/65 transition-colors group">
                       <div className="w-12 h-12 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0">
-                        <i className="fa-solid fa-file-pdf text-xl"></i>
+                        <Icone nome="fa-solid fa-file-pdf" className="text-xl" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm text-amber-900 truncate">Resultado Parcial</h4>
@@ -172,7 +173,7 @@ export default function Edital() {
                         className="p-2 bg-white text-amber-700 hover:text-white hover:bg-amber-600 border border-amber-200 rounded-lg transition-all"
                         title="Baixar PDF"
                       >
-                        <i className="fa-solid fa-download"></i>
+                        <Icone nome="fa-solid fa-download" />
                       </a>
                     </div>
                   )}
@@ -181,7 +182,7 @@ export default function Edital() {
                   {edital.resultadoFinal && (
                     <div className="flex items-center gap-4 bg-emerald-50/30 p-4 border border-emerald-100 rounded-xl hover:bg-emerald-50/65 transition-colors group">
                       <div className="w-12 h-12 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                        <i className="fa-solid fa-file-pdf text-xl"></i>
+                        <Icone nome="fa-solid fa-file-pdf" className="text-xl" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm text-emerald-950 truncate">Resultado Final</h4>
@@ -194,7 +195,7 @@ export default function Edital() {
                         className="p-2 bg-white text-emerald-700 hover:text-white hover:bg-emerald-600 border border-emerald-200 rounded-lg transition-all"
                         title="Baixar PDF"
                       >
-                        <i className="fa-solid fa-download"></i>
+                        <Icone nome="fa-solid fa-download" />
                       </a>
                     </div>
                   )}
@@ -211,7 +212,7 @@ export default function Edital() {
                         errata.downloadLink && (
                           <div key={errata.id || idx} className="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-150 hover:bg-gray-100 transition-colors">
                             <div className="flex items-center gap-3">
-                              <i className="fa-regular fa-file-pdf text-red-500 text-lg"></i>
+                              <Icone nome="fa-regular fa-file-pdf" className="text-red-500 text-lg" />
                               <span className="text-sm font-semibold text-gray-700">
                                 Errata {errata.numero || (idx + 1).toString().padStart(2, '0')}
                               </span>
@@ -222,7 +223,7 @@ export default function Edital() {
                               rel="noopener noreferrer"
                               className="text-xs font-bold text-ufrpe-blue hover:text-ufrpe-yellow transition flex items-center gap-1"
                             >
-                              <i className="fa-solid fa-download"></i> Baixar Arquivo
+                              <Icone nome="fa-solid fa-download" /> Baixar Arquivo
                             </a>
                           </div>
                         )
@@ -288,7 +289,7 @@ export default function Edital() {
                     rel="noopener noreferrer"
                     className="w-full py-3 bg-ufrpe-cyan hover:bg-ufrpe-blue text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                   >
-                    <i className="fa-solid fa-file-arrow-down"></i>
+                    <Icone nome="fa-solid fa-file-arrow-down" />
                     Baixar Edital Completo
                   </a>
                 )}
@@ -298,7 +299,7 @@ export default function Edital() {
                     to="/editais"
                     className="text-sm font-bold text-gray-500 hover:text-ufrpe-blue transition flex items-center justify-center gap-2"
                   >
-                    <i className="fa-solid fa-arrow-left text-xs"></i>
+                    <Icone nome="fa-solid fa-arrow-left" className="text-xs" />
                     Voltar para todos os Editais
                   </Link>
                 </div>

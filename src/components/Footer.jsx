@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useMenu, useConfig, linkTelefone } from '../hooks/usePortal';
 import LinkDestino from './LinkDestino';
+import Icone from './Icone';
 
 // Colunas de links, redes sociais e contato vêm do banco (Fase H.1 —
 // editados no painel em "Menus e portal"). Cada item de primeiro nível do
@@ -31,7 +32,7 @@ export default function Footer() {
                   <li key={r.id}>
                     <LinkDestino destino={r.destino} aria-label={r.rotulo} title={r.rotulo}
                       className="w-9 h-9 rounded-full bg-white/10 hover:bg-ufrpe-yellow hover:text-ufrpe-blue flex items-center justify-center transition">
-                      <i className={r.icone || 'fa-solid fa-link'} aria-hidden="true"></i>
+                      <Icone nome={r.icone || 'fa-solid fa-link'} aria-hidden="true" />
                     </LinkDestino>
                   </li>
                 ))}
@@ -46,7 +47,7 @@ export default function Footer() {
                 {(coluna.filhos || []).map((item) => (
                   <li key={item.id}>
                     <LinkDestino destino={item.destino} className="hover:text-ufrpe-yellow transition flex items-center text-left">
-                      <i className="fa-solid fa-angle-right text-[10px] mr-2 text-ufrpe-yellow opacity-70" aria-hidden="true"></i>
+                      <Icone nome="fa-solid fa-angle-right" className="text-[10px] mr-2 text-ufrpe-yellow opacity-70" aria-hidden="true" />
                       {item.rotulo}
                     </LinkDestino>
                   </li>
@@ -63,7 +64,7 @@ export default function Footer() {
                 <li className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded flex items-center justify-center text-ufrpe-yellow shrink-0"
                     style={{ background: 'rgba(254,189,17,0.10)' }}>
-                    <i className="fa-solid fa-envelope" aria-hidden="true"></i>
+                    <Icone nome="fa-solid fa-envelope" aria-hidden="true" />
                   </div>
                   <div>
                     <span className="block font-semibold text-white mb-0.5">Secretaria PRPG</span>
@@ -75,7 +76,7 @@ export default function Footer() {
                 <li className="flex items-start gap-3">
                   <div className="w-8 h-8 rounded flex items-center justify-center text-ufrpe-yellow shrink-0"
                     style={{ background: 'rgba(254,189,17,0.10)' }}>
-                    <i className="fa-brands fa-whatsapp text-lg" aria-hidden="true"></i>
+                    <Icone nome="fa-brands fa-whatsapp" className="text-lg" aria-hidden="true" />
                   </div>
                   <div>
                     <span className="block font-semibold text-white mb-0.5">WhatsApp Institucional</span>

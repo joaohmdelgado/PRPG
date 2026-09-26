@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Trash2, UserPlus, Search, Pencil } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
+import Icone from '../../components/Icone';
 
 // Gerenciador de pessoas vinculadas a um programa (discentes ou docentes).
 // Além de vincular usuários já cadastrados, permite CADASTRAR um novo aluno/
@@ -339,7 +340,7 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
                             <img src={m.foto_url} alt="" className="w-8 h-8 rounded-full object-cover" />
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-ufrpe-blue/10 flex items-center justify-center">
-                              <i className="fa-solid fa-user text-ufrpe-blue/40 text-xs"></i>
+                              <Icone nome="fa-solid fa-user" className="text-ufrpe-blue/40 text-xs" />
                             </div>
                           )}
                           <p className="text-sm font-medium text-gray-800">{m.nome}</p>

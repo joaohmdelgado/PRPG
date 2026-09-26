@@ -1,5 +1,6 @@
 import React from 'react';
 import { hrefContato, iconeContato, rotuloContato, iniciais, fotoPessoa } from '../hooks/useEstrutura';
+import Icone from './Icone';
 
 // Peças comuns de Equipe e Estrutura Organizacional (Fase H.4).
 
@@ -13,7 +14,7 @@ export function ListaContatos({ contatos, className = '', claro = false }) {
         const externo = href && /^https?:/i.test(href);
         const conteudo = (
           <>
-            <i className={`${iconeContato(c.tipo)} w-4 text-center text-ufrpe-yellow`} aria-hidden="true"></i>
+            <Icone nome={iconeContato(c.tipo)} className="w-4 text-center text-ufrpe-yellow" />
             <span className="sr-only">{rotuloContato(c.tipo)}: </span>
             <span className="break-all">{c.exibicao}</span>
           </>

@@ -23,6 +23,7 @@ import ProgramaComissoes from './ProgramaComissoes';
 import ProgramaDiscentes from './ProgramaDiscentes';
 import ProgramaPagina from './ProgramaPagina';
 import ProgramaLinhas from './ProgramaLinhas';
+import Icone from '../../components/Icone';
 
 function FullScreen({ children }) {
   return (
@@ -145,7 +146,7 @@ export default function ProgramaSite() {
   if (status === 'notfound' || status === 'error') {
     return (
       <FullScreen>
-        <i className="fa-solid fa-compass text-gray-300 text-6xl mb-5"></i>
+        <Icone nome="fa-solid fa-compass" className="text-gray-300 text-6xl mb-5" />
         <h1 className="font-heading font-bold text-3xl text-ufrpe-blue mb-3">Página não encontrada</h1>
         <p className="text-gray-600 max-w-md mb-8">
           {status === 'error'
@@ -154,10 +155,10 @@ export default function ProgramaSite() {
         </p>
         <div className="flex flex-wrap gap-3 justify-center">
           <Link to="/programas" className="px-6 py-3 bg-ufrpe-blue hover:bg-ufrpe-yellow hover:text-ufrpe-blue text-white font-bold rounded-xl transition-all">
-            <i className="fa-solid fa-graduation-cap mr-2"></i> Ver todos os programas
+            <Icone nome="fa-solid fa-graduation-cap" className="mr-2" /> Ver todos os programas
           </Link>
           <Link to="/" className="px-6 py-3 border border-gray-200 text-ufrpe-blue font-bold rounded-xl hover:bg-white transition-all">
-            <i className="fa-solid fa-arrow-left mr-2"></i> Portal da PRPG
+            <Icone nome="fa-solid fa-arrow-left" className="mr-2" /> Portal da PRPG
           </Link>
         </div>
       </FullScreen>
@@ -168,7 +169,7 @@ export default function ProgramaSite() {
     <ProgramaContext.Provider value={{ programa, slug: programaSlug }}>
       {!programa.microsite_ativo && (
         <div role="status" className="bg-amber-100 text-amber-900 text-sm text-center px-4 py-2 border-b border-amber-200">
-          <i className="fa-solid fa-eye mr-2" aria-hidden="true"></i>
+          <Icone nome="fa-solid fa-eye" className="mr-2" aria-hidden="true" />
           Pré-visualização: este microsite ainda não está publicado e só é visível para quem o administra.
         </div>
       )}

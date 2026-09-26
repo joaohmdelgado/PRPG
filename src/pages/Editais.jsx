@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { API_URL } from '../api';
 import SafeHtml from '../components/SafeHtml';
 import CabecalhoPagina from '../components/CabecalhoPagina';
+import Icone from '../components/Icone';
 
 // Editais da PRPG e dos programas numa página só (Fase N.1): selo e link do
 // programa, filtros por origem/programa/situação/ano guardados no endereço
@@ -140,13 +141,13 @@ export default function Editais() {
             <div className="lg:w-1/4 shrink-0">
               <nav aria-label="Categorias de edital" className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden lg:sticky lg:top-28">
                 <h2 className="bg-gray-50 text-gray-800 m-0 p-5 border-b border-gray-100 font-heading font-bold text-lg">
-                  <i className="fa-solid fa-list mr-2 text-ufrpe-blue opacity-70" aria-hidden="true"></i> Categorias
+                  <Icone nome="fa-solid fa-list" className="mr-2 text-ufrpe-blue opacity-70" aria-hidden="true" /> Categorias
                 </h2>
                 <ul className="p-6 space-y-2">
                   {filteredData.map((section) => (
                     <li key={section.id}>
                       <a href={`#${section.id}`} className="flex gap-3 w-full text-left p-2.5 rounded-lg transition text-sm text-gray-700 hover:bg-gray-50 hover:text-ufrpe-blue group">
-                        <i className="fa-solid fa-chevron-right text-ufrpe-yellow mt-1 group-hover:translate-x-1 transition-transform" aria-hidden="true"></i>
+                        <Icone nome="fa-solid fa-chevron-right" className="text-ufrpe-yellow mt-1 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
                         <span className="leading-snug">{section.title}</span>
                       </a>
                     </li>
@@ -174,7 +175,7 @@ export default function Editais() {
                   <div className="relative pt-2">
                     <label htmlFor="filtro-q" className={rotuloCampo}>Buscar edital</label>
                     <div className="relative">
-                      <i className="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true"></i>
+                      <Icone nome="fa-solid fa-search" className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
                       <input id="filtro-q" type="search" value={search} onChange={(e) => alterar({ q: e.target.value })}
                         placeholder="Ex.: Proext, Seleção Mestrado, PGH..." className={`${campo} pl-10 pr-4`} />
                     </div>
@@ -233,7 +234,7 @@ export default function Editais() {
                   </p>
                 ) : totalFilteredCount === 0 ? (
                   <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center text-gray-500">
-                    <i className="fa-solid fa-folder-open text-4xl mb-4 text-gray-300" aria-hidden="true"></i>
+                    <Icone nome="fa-solid fa-folder-open" className="text-4xl mb-4 text-gray-300" aria-hidden="true" />
                     <p className="font-medium">
                       {situation === 'abertas' && !search && !programa && !origem && !year
                         ? 'Nenhuma seleção com inscrições abertas no momento.'
@@ -274,21 +275,21 @@ export default function Editais() {
                                     {edital.programa && (
                                       <Link to={edital.programa.link || '/programas'} title={`Programa: ${edital.programa.nome}`}
                                         className="text-xs font-bold bg-ufrpe-yellow/20 text-ufrpe-blue px-2.5 py-1 rounded-md hover:bg-ufrpe-yellow/40">
-                                        <i className="fa-solid fa-graduation-cap mr-1" aria-hidden="true"></i>{edital.programa.sigla || edital.programa.nome}
+                                        <Icone nome="fa-solid fa-graduation-cap" className="mr-1" aria-hidden="true" />{edital.programa.sigla || edital.programa.nome}
                                       </Link>
                                     )}
                                     {edital.publishedAt && (
                                       <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-md">
-                                        <i className="fa-regular fa-calendar mr-1" aria-hidden="true"></i> Publicado em: {formatDate(edital.publishedAt)}
+                                        <Icone nome="fa-regular fa-calendar" className="mr-1" aria-hidden="true" /> Publicado em: {formatDate(edital.publishedAt)}
                                       </span>
                                     )}
                                     {periodo.data_inicio && periodo.data_fim ? (
                                       <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-md">
-                                        <i className="fa-regular fa-clock mr-1" aria-hidden="true"></i> Inscrições: {formatDate(periodo.data_inicio)} a {formatDate(periodo.data_fim)}
+                                        <Icone nome="fa-regular fa-clock" className="mr-1" aria-hidden="true" /> Inscrições: {formatDate(periodo.data_inicio)} a {formatDate(periodo.data_fim)}
                                       </span>
                                     ) : edital.deadline ? (
                                       <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-md">
-                                        <i className="fa-regular fa-clock mr-1" aria-hidden="true"></i> Inscrições até: {formatDate(edital.deadline)}
+                                        <Icone nome="fa-regular fa-clock" className="mr-1" aria-hidden="true" /> Inscrições até: {formatDate(edital.deadline)}
                                       </span>
                                     ) : null}
                                   </div>
@@ -300,25 +301,25 @@ export default function Editais() {
                                   {(edital.resultadoParcial || edital.resultadoFinal || edital.erratas?.length > 0) && (
                                     <div className="mt-4 pt-4 border-t border-gray-100">
                                       <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                                        <i className="fa-solid fa-paperclip mr-1.5 text-ufrpe-blue opacity-70" aria-hidden="true"></i> Documentos do Processo
+                                        <Icone nome="fa-solid fa-paperclip" className="mr-1.5 text-ufrpe-blue opacity-70" aria-hidden="true" /> Documentos do Processo
                                       </h4>
                                       <div className="flex flex-wrap gap-2">
                                         {edital.resultadoParcial && (
                                           <a href={getLinkUrl(edital.resultadoParcial)} target="_blank" rel="noopener noreferrer"
                                             className="inline-flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-medium transition-colors">
-                                            <i className="fa-regular fa-file-pdf text-red-500" aria-hidden="true"></i> Resultado Parcial
+                                            <Icone nome="fa-regular fa-file-pdf" className="text-red-500" aria-hidden="true" /> Resultado Parcial
                                           </a>
                                         )}
                                         {edital.resultadoFinal && (
                                           <a href={getLinkUrl(edital.resultadoFinal)} target="_blank" rel="noopener noreferrer"
                                             className="inline-flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg font-medium transition-colors">
-                                            <i className="fa-regular fa-file-pdf text-red-500" aria-hidden="true"></i> Resultado Final
+                                            <Icone nome="fa-regular fa-file-pdf" className="text-red-500" aria-hidden="true" /> Resultado Final
                                           </a>
                                         )}
                                         {edital.erratas?.map((errata) => errata.downloadLink && (
                                           <a key={errata.id} href={getLinkUrl(errata.downloadLink)} target="_blank" rel="noopener noreferrer"
                                             className="inline-flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg font-medium transition-colors">
-                                            <i className="fa-regular fa-file-pdf text-red-500" aria-hidden="true"></i> {errata.numero ? `Errata ${errata.numero}` : (errata.title || 'Errata')}
+                                            <Icone nome="fa-regular fa-file-pdf" className="text-red-500" aria-hidden="true" /> {errata.numero ? `Errata ${errata.numero}` : (errata.title || 'Errata')}
                                           </a>
                                         ))}
                                       </div>
@@ -329,13 +330,13 @@ export default function Editais() {
                                   {edital.proficiencia && periodoAberto && periodoAberto.id === edital.id && (
                                     <Link to="/proficiencia/inscricao"
                                       className="px-5 py-2.5 bg-emerald-600 text-white text-sm font-bold rounded-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2 w-full lg:w-auto">
-                                      <i className="fa-solid fa-pen-to-square" aria-hidden="true"></i> Fazer Inscrição
+                                      <Icone nome="fa-solid fa-pen-to-square" aria-hidden="true" /> Fazer Inscrição
                                     </Link>
                                   )}
                                   {edital.downloadLink && (
                                     <a href={getLinkUrl(edital.downloadLink)} target="_blank" rel="noopener noreferrer"
                                       className="px-5 py-2.5 bg-ufrpe-cyan text-white text-sm font-bold rounded-lg hover:bg-ufrpe-blue transition-colors flex items-center justify-center gap-2 w-full lg:w-auto">
-                                      <i className="fa-solid fa-download" aria-hidden="true"></i> Baixar Edital
+                                      <Icone nome="fa-solid fa-download" aria-hidden="true" /> Baixar Edital
                                     </a>
                                   )}
                                   <Link to={`/editais/${edital.id}`}

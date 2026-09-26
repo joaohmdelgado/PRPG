@@ -4,6 +4,7 @@ import { API_URL, apiFetch } from '../../api';
 import { usePrograma, programaPath } from '../../components/programa/ProgramaContext';
 import { formatDate } from '../../components/programa/ProgramaUI';
 import ProximosPrazos from '../../components/ProximosPrazos';
+import Icone from '../../components/Icone';
 
 const LINHA_ICONS = ['fa-book', 'fa-landmark', 'fa-people-group', 'fa-scroll', 'fa-earth-americas', 'fa-feather'];
 
@@ -30,7 +31,7 @@ export default function ProgramaHome() {
         className="relative text-white overflow-hidden"
         style={{ background: 'linear-gradient(135deg, var(--prog-primary), color-mix(in srgb, var(--prog-primary) 70%, black))' }}
       >
-        <i className="fa-solid fa-landmark text-[22rem] text-white/5 -bottom-24 -right-16 absolute rotate-12 pointer-events-none"></i>
+        <Icone nome="fa-solid fa-landmark" className="text-[22rem] text-white/5 -bottom-24 -right-16 absolute rotate-12 pointer-events-none" />
         <div className="container mx-auto px-4 py-16 md:py-24 relative max-w-4xl">
           {programa.area_conhecimento && (
             <p className="text-[var(--prog-accent)] font-semibold uppercase tracking-wider text-sm mb-3">
@@ -48,11 +49,11 @@ export default function ProgramaHome() {
           <div className="flex flex-wrap gap-3">
             <Link to={programaPath(slug, 'sobre')}
               className="px-6 py-3 bg-[var(--prog-accent)] text-[var(--prog-primary)] font-bold rounded-xl hover:brightness-95 transition-all">
-              <i className="fa-solid fa-circle-info mr-2"></i> Conheça o Programa
+              <Icone nome="fa-solid fa-circle-info" className="mr-2" /> Conheça o Programa
             </Link>
             <Link to={programaPath(slug, 'editais')}
               className="px-6 py-3 bg-white/10 border border-white/20 text-white font-bold rounded-xl hover:bg-white/20 transition-all">
-              <i className="fa-solid fa-file-lines mr-2"></i> Editais e Seleções
+              <Icone nome="fa-solid fa-file-lines" className="mr-2" /> Editais e Seleções
             </Link>
           </div>
         </div>
@@ -82,12 +83,12 @@ export default function ProgramaHome() {
               <h2 className="font-heading font-black text-2xl md:text-3xl text-[var(--prog-primary)]">Últimas Notícias</h2>
             </div>
             <Link to={programaPath(slug, 'noticias')} className="text-sm font-semibold text-[var(--prog-primary)] hover:opacity-70 transition-opacity whitespace-nowrap">
-              Ver todas <i className="fa-solid fa-arrow-right text-xs ml-1"></i>
+              Ver todas <Icone nome="fa-solid fa-arrow-right" className="text-xs ml-1" />
             </Link>
           </div>
           {noticias.length === 0 ? (
             <div className="bg-white rounded-2xl p-10 text-center border border-gray-100 text-gray-500">
-              <i className="fa-solid fa-newspaper text-gray-300 text-4xl mb-3"></i>
+              <Icone nome="fa-solid fa-newspaper" className="text-gray-300 text-4xl mb-3" />
               <p>Ainda não há notícias publicadas para este programa.</p>
             </div>
           ) : (
@@ -102,7 +103,7 @@ export default function ProgramaHome() {
                     </div>
                   )}
                   <div className="p-5 flex flex-col flex-grow">
-                    <span className="text-xs text-gray-400 mb-2"><i className="fa-regular fa-calendar mr-1.5"></i>{formatDate(n.date)}</span>
+                    <span className="text-xs text-gray-400 mb-2"><Icone nome="fa-regular fa-calendar" className="mr-1.5" />{formatDate(n.date)}</span>
                     <h3 className="font-heading font-bold text-[var(--prog-primary)] leading-snug mb-2 group-hover:opacity-80">{n.title}</h3>
                     {n.excerpt && <p className="text-sm text-gray-600 line-clamp-3">{n.excerpt}</p>}
                   </div>
@@ -124,7 +125,7 @@ export default function ProgramaHome() {
               {linhas.map((linha, i) => (
                 <div key={i} className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex items-start gap-4">
                   <span className="shrink-0 h-10 w-10 rounded-lg bg-[var(--prog-primary)]/5 text-[var(--prog-primary)] flex items-center justify-center">
-                    <i className={`fa-solid ${LINHA_ICONS[i % LINHA_ICONS.length]}`}></i>
+                    <Icone nome={LINHA_ICONS[i % LINHA_ICONS.length]} />
                   </span>
                   <span className="text-sm font-medium text-gray-700 leading-snug">{linha.nome || linha.label || linha}</span>
                 </div>
@@ -158,7 +159,7 @@ export default function ProgramaHome() {
               <div className={`grid gap-4 grid-cols-2 md:grid-cols-${cols}`}>
                 {stats.map((s) => (
                   <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 text-center">
-                    <i className={`fa-solid ${s.icon} text-2xl text-[var(--prog-accent)] mb-3 block`}></i>
+                    <Icone nome={s.icon} className="text-2xl text-[var(--prog-accent)] mb-3 block" />
                     <p className="font-heading font-black text-4xl text-[var(--prog-primary)]">{s.value}</p>
                     <p className="text-xs text-gray-500 mt-1 font-medium">{s.label}</p>
                   </div>
@@ -174,13 +175,13 @@ export default function ProgramaHome() {
             <div>
               <h2 className="font-heading font-black text-2xl text-[var(--prog-primary)] mb-3">Fale com a Secretaria</h2>
               <ul className="space-y-3 text-sm text-gray-600">
-                {programa.endereco && <li className="flex items-start gap-3"><i className="fa-solid fa-location-dot text-[var(--prog-accent)] mt-1"></i><span>{programa.endereco}</span></li>}
-                {programa.email_programa && <li className="flex items-center gap-3"><i className="fa-solid fa-envelope text-[var(--prog-accent)]"></i><a href={`mailto:${programa.email_programa}`} className="hover:text-[var(--prog-primary)] break-all">{programa.email_programa}</a></li>}
-                {programa.telefone_secretaria && <li className="flex items-center gap-3"><i className="fa-solid fa-phone text-[var(--prog-accent)]"></i>{programa.telefone_secretaria}</li>}
-                {programa.whatsapp && <li className="flex items-center gap-3"><i className="fa-brands fa-whatsapp text-[var(--prog-accent)]"></i>{programa.whatsapp}</li>}
+                {programa.endereco && <li className="flex items-start gap-3"><Icone nome="fa-solid fa-location-dot" className="text-[var(--prog-accent)] mt-1" /><span>{programa.endereco}</span></li>}
+                {programa.email_programa && <li className="flex items-center gap-3"><Icone nome="fa-solid fa-envelope" className="text-[var(--prog-accent)]" /><a href={`mailto:${programa.email_programa}`} className="hover:text-[var(--prog-primary)] break-all">{programa.email_programa}</a></li>}
+                {programa.telefone_secretaria && <li className="flex items-center gap-3"><Icone nome="fa-solid fa-phone" className="text-[var(--prog-accent)]" />{programa.telefone_secretaria}</li>}
+                {programa.whatsapp && <li className="flex items-center gap-3"><Icone nome="fa-brands fa-whatsapp" className="text-[var(--prog-accent)]" />{programa.whatsapp}</li>}
               </ul>
               <Link to={programaPath(slug, 'contato')} className="inline-flex items-center gap-2 mt-6 text-sm font-bold text-[var(--prog-primary)] hover:opacity-70">
-                Página de contato <i className="fa-solid fa-arrow-right text-xs"></i>
+                Página de contato <Icone nome="fa-solid fa-arrow-right" className="text-xs" />
               </Link>
             </div>
             {programa.coordenador_atual?.nome && (

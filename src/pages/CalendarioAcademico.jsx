@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
 import SafeHtml from '../components/SafeHtml';
 import CabecalhoPagina from '../components/CabecalhoPagina';
+import Icone from '../components/Icone';
 
 // Data de hoje no fuso local, 'YYYY-MM-DD' (compara com dataInicio/dataFim dos marcos).
 const hojeLocal = () => {
@@ -59,17 +60,17 @@ export default function CalendarioAcademico() {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-28">
                 <div className="bg-gray-50 text-gray-800 p-5 border-b border-gray-100">
                   <h3 className="font-heading font-bold text-lg m-0">
-                    <i className="fa-solid fa-list mr-2 text-ufrpe-blue opacity-70"></i> Sumário
+                    <Icone nome="fa-solid fa-list" className="mr-2 text-ufrpe-blue opacity-70" /> Sumário
                   </h3>
                 </div>
                 <div className="p-6 overflow-y-auto max-h-[calc(100vh-200px)]">
                   <div className="space-y-2">
                     <a href="#ano-corrente" className="flex gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 hover:text-ufrpe-blue group">
-                      <i className="fa-solid fa-chevron-right text-ufrpe-yellow mt-1 group-hover:translate-x-1 transition-transform"></i>
+                      <Icone nome="fa-solid fa-chevron-right" className="text-ufrpe-yellow mt-1 group-hover:translate-x-1 transition-transform" />
                       <span className="leading-snug">Ano Corrente ({currentCalendar?.ano})</span>
                     </a>
                     <a href="#anos-anteriores" className="flex gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 hover:text-ufrpe-blue group">
-                      <i className="fa-solid fa-chevron-right text-ufrpe-yellow mt-1 group-hover:translate-x-1 transition-transform"></i>
+                      <Icone nome="fa-solid fa-chevron-right" className="text-ufrpe-yellow mt-1 group-hover:translate-x-1 transition-transform" />
                       <span className="leading-snug">Anos Anteriores</span>
                     </a>
                   </div>
@@ -99,7 +100,7 @@ export default function CalendarioAcademico() {
                         href={`${API_URL}/api/portal/calendario.ics`}
                         className="px-5 py-3 border border-ufrpe-blue/30 text-ufrpe-blue font-bold rounded-xl hover:bg-ufrpe-blue/5 transition-all flex items-center gap-2 shrink-0"
                       >
-                        <i className="fa-regular fa-calendar-plus" aria-hidden="true"></i> Adicionar à minha agenda
+                        <Icone nome="fa-regular fa-calendar-plus" aria-hidden="true" /> Adicionar à minha agenda
                       </a>
                       {currentCalendar.pdfLink && (
                       <a
@@ -108,7 +109,7 @@ export default function CalendarioAcademico() {
                         rel="noopener noreferrer"
                         className="px-6 py-3 bg-ufrpe-blue hover:bg-ufrpe-yellow text-white hover:text-ufrpe-blue font-bold rounded-xl transition-all shadow-md flex items-center gap-2 shrink-0 cursor-pointer"
                       >
-                        <i className="fa-solid fa-file-pdf"></i> Baixar PDF Completo
+                        <Icone nome="fa-solid fa-file-pdf" /> Baixar PDF Completo
                       </a>
                       )}
                       </div>
@@ -124,7 +125,7 @@ export default function CalendarioAcademico() {
                       {currentCalendar.milestones && currentCalendar.milestones.length > 0 && (
                         <>
                           <h3 className="font-heading font-bold text-xl text-ufrpe-blue mb-6 flex items-center gap-2">
-                            <i className="fa-solid fa-calendar-check text-ufrpe-yellow"></i> Principais Prazos e Datas
+                            <Icone nome="fa-solid fa-calendar-check" className="text-ufrpe-yellow" /> Principais Prazos e Datas
                           </h3>
 
                           <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
@@ -145,7 +146,7 @@ export default function CalendarioAcademico() {
                                       {encerrado && <span className="ml-2 text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Encerrado</span>}
                                     </div>
                                     <div className="mt-1 md:mt-0 text-gray-500 flex items-center gap-2">
-                                      <i className="fa-regular fa-clock text-xs text-ufrpe-yellow" aria-hidden="true"></i> {m.date}
+                                      <Icone nome="fa-regular fa-clock" className="text-xs text-ufrpe-yellow" aria-hidden="true" /> {m.date}
                                     </div>
                                   </div>
                                 );
@@ -188,7 +189,7 @@ export default function CalendarioAcademico() {
                           rel="noopener noreferrer"
                           className="w-full text-center py-2.5 bg-gray-50 border border-gray-100 text-ufrpe-blue font-bold text-sm rounded-lg hover:bg-ufrpe-blue hover:text-white transition-all cursor-pointer"
                         >
-                          <i className="fa-solid fa-download mr-2 opacity-50"></i> Baixar PDF ({c.ano})
+                          <Icone nome="fa-solid fa-download" className="mr-2 opacity-50" /> Baixar PDF ({c.ano})
                         </a>
                       </div>
                     ))}

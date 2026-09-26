@@ -6,6 +6,7 @@ import AvisoPreVisualizacao from '../components/AvisoPreVisualizacao';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import Relacionados from '../components/Relacionados';
 import useVocabulario, { corDe } from '../hooks/useVocabulario';
+import Icone from '../components/Icone';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '';
@@ -72,14 +73,14 @@ export default function Noticia() {
   if (estado !== 'ok' || !newsItem) {
     return (
       <div className="container mx-auto px-4 py-24 text-center">
-        <i className="fa-solid fa-circle-exclamation text-gray-300 text-6xl mb-4"></i>
+        <Icone nome="fa-solid fa-circle-exclamation" className="text-gray-300 text-6xl mb-4" />
         <h2 className="font-heading font-bold text-3xl text-ufrpe-blue mb-4">{estado === 'erro' ? 'Não foi possível carregar a notícia' : 'Notícia não encontrada'}</h2>
         <p className="text-gray-600 mb-8">{estado === 'erro' ? 'Tente novamente em alguns instantes.' : 'O artigo solicitado não existe ou foi removido.'}</p>
         <Link
           to="/noticias"
           className="inline-flex items-center gap-2 px-6 py-3 bg-ufrpe-blue hover:bg-ufrpe-yellow hover:text-ufrpe-blue text-white font-bold rounded-xl transition-all"
         >
-          <i className="fa-solid fa-arrow-left"></i> Voltar para Notícias
+          <Icone nome="fa-solid fa-arrow-left" /> Voltar para Notícias
         </Link>
       </div>
     );
@@ -103,7 +104,7 @@ export default function Noticia() {
                     {newsItem.category}
                   </span>
                   <span className="text-white/60 text-sm flex items-center gap-2">
-                    <i className="fa-regular fa-calendar"></i> {formatDate(newsItem.date)}
+                    <Icone nome="fa-regular fa-calendar" /> {formatDate(newsItem.date)}
                   </span>
                 </div>
             )}
@@ -113,7 +114,7 @@ export default function Noticia() {
               {newsItem.author ? (
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/60">
-                    <i className="fa-solid fa-user"></i>
+                    <Icone nome="fa-solid fa-user" />
                   </div>
                   <div>
                     <div className="text-sm font-bold text-white">{newsItem.author}</div>
@@ -133,7 +134,7 @@ export default function Noticia() {
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-white/10 hover:bg-ufrpe-yellow hover:text-ufrpe-blue transition-colors text-white/60 flex items-center justify-center cursor-pointer"
                 >
-                  <i className="fa-brands fa-whatsapp"></i>
+                  <Icone nome="fa-brands fa-whatsapp" />
                 </a>
                 <a
                   aria-label="Compartilhar no LinkedIn"
@@ -142,7 +143,7 @@ export default function Noticia() {
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-white/10 hover:bg-ufrpe-yellow hover:text-ufrpe-blue transition-colors text-white/60 flex items-center justify-center cursor-pointer"
                 >
-                  <i className="fa-brands fa-linkedin-in"></i>
+                  <Icone nome="fa-brands fa-linkedin-in" />
                 </a>
                 <a
                   aria-label="Compartilhar no X (Twitter)"
@@ -151,7 +152,7 @@ export default function Noticia() {
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-white/10 hover:bg-ufrpe-yellow hover:text-ufrpe-blue transition-colors text-white/60 flex items-center justify-center cursor-pointer"
                 >
-                  <i className="fa-brands fa-twitter"></i>
+                  <Icone nome="fa-brands fa-twitter" />
                 </a>
               </div>
             </div>
@@ -217,7 +218,7 @@ export default function Noticia() {
       <section className="bg-gray-50 py-16 border-t border-gray-200">
         <div className="container mx-auto px-4">
           <h3 className="font-heading font-bold text-2xl text-ufrpe-blue mb-8 text-center flex items-center justify-center gap-2">
-            <i className="fa-solid fa-newspaper text-ufrpe-cyan"></i> Pode interessar também
+            <Icone nome="fa-solid fa-newspaper" className="text-ufrpe-cyan" /> Pode interessar também
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
@@ -252,7 +253,7 @@ export default function Noticia() {
               to="/noticias"
               className="inline-flex items-center gap-2 px-6 py-2.5 bg-white border-2 border-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-200 transition-colors"
             >
-              <i className="fa-solid fa-arrow-left"></i> Voltar para Notícias
+              <Icone nome="fa-solid fa-arrow-left" /> Voltar para Notícias
             </Link>
           </div>
         </div>

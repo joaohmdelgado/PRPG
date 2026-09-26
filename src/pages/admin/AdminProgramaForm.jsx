@@ -7,6 +7,7 @@ import { avaliarCores, normalizarHex, COR_PRIMARIA_PADRAO, COR_DESTAQUE_PADRAO }
 import AuditInfo, { AuditHeader } from '../../components/AuditInfo';
 import { Link as LinkIcon } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma } from '../../auth';
+import Icone from '../../components/Icone';
 
 // Aviso ao vivo do contraste das cores do microsite (Fase S.5). A regra é a
 // mesma que o servidor aplica ao salvar (server/utils/contraste.js).
@@ -937,7 +938,7 @@ const AdminProgramaForm = () => {
       {isEditing && (
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
           <p className="text-sm font-semibold text-ufrpe-blue mb-1 flex items-center gap-2">
-            <i className="fa-solid fa-file-lines"></i> Páginas institucionais
+            <Icone nome="fa-solid fa-file-lines" /> Páginas institucionais
           </p>
           <p className="text-xs text-blue-700 mb-3">
             A aba "Sobre" deste microsite já tem uma página fixa e editável (criada
@@ -950,7 +951,7 @@ const AdminProgramaForm = () => {
             to={`/admin/programas/${id}/site`}
             className="inline-flex items-center gap-2 text-sm font-medium text-ufrpe-blue bg-white border border-ufrpe-blue/30 px-4 py-2 rounded-lg hover:bg-ufrpe-blue/5 transition-colors"
           >
-            <i className="fa-solid fa-layer-group text-xs"></i> Ir para o Site do Programa
+            <Icone nome="fa-solid fa-layer-group" className="text-xs" /> Ir para o Site do Programa
           </Link>
         </div>
       )}
@@ -968,7 +969,7 @@ const AdminProgramaForm = () => {
         <h3 className="text-lg font-medium border-b pb-2">{titulo}</h3>
         {!isEditing ? (
           <div className="bg-blue-50 text-ufrpe-blue p-4 rounded-md text-sm">
-            <i className="fa-solid fa-circle-info mr-2"></i>
+            <Icone nome="fa-solid fa-circle-info" className="mr-2" />
             Salve o programa primeiro para poder gerenciar vínculos.
           </div>
         ) : (
@@ -1023,7 +1024,7 @@ const AdminProgramaForm = () => {
                           <img src={m.foto_url} alt="" className="w-8 h-8 rounded-full object-cover" />
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-ufrpe-blue/10 flex items-center justify-center">
-                            <i className="fa-solid fa-user text-ufrpe-blue/40 text-xs"></i>
+                            <Icone nome="fa-solid fa-user" className="text-ufrpe-blue/40 text-xs" />
                           </div>
                         )}
                         <div>
@@ -1033,7 +1034,7 @@ const AdminProgramaForm = () => {
                       </div>
                       <button type="button" onClick={() => onRemove(m.id)}
                         className="text-red-500 hover:bg-red-50 rounded p-1.5 transition-colors text-xs">
-                        <i className="fa-solid fa-trash-can"></i>
+                        <Icone nome="fa-solid fa-trash-can" />
                       </button>
                     </div>
                   ))}

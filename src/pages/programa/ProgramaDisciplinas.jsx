@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
+import Icone from '../../components/Icone';
 
 const TIPOS = { OB: 'Obrigatória', OP: 'Optativa', EL: 'Eletiva' };
 
@@ -64,7 +65,7 @@ export default function ProgramaDisciplinas() {
                     <h3 className="font-semibold text-gray-900 text-sm mb-1">{d.title}</h3>
                     {d.docente?.nome && (
                       <p className="text-xs text-gray-500 flex items-center gap-1.5">
-                        <i className="fa-solid fa-chalkboard-teacher text-[var(--prog-primary)]"></i>
+                        <Icone nome="fa-solid fa-chalkboard-teacher" className="text-[var(--prog-primary)]" />
                         {d.docente.nome}
                       </p>
                     )}

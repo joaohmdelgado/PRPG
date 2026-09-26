@@ -4,6 +4,7 @@ import { apiFetch } from '../api';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import LinkDestino from '../components/LinkDestino';
 import SafeHtml from '../components/SafeHtml';
+import Icone from '../components/Icone';
 
 // Busca do portal (Fase H.5): notícias, editais, páginas, documentos,
 // programas e teses publicados, agrupados por tipo (/api/portal/busca).
@@ -73,7 +74,7 @@ export default function Busca() {
           {estado === 'pronto' && resultado?.grupos.map((g) => (
             <section key={g.tipo} className="mb-10" aria-labelledby={`busca-${g.tipo}`}>
               <h2 id={`busca-${g.tipo}`} className="font-heading font-bold text-xl text-ufrpe-blue mb-4 flex items-center gap-2">
-                <i className={`${ICONES[g.tipo]} text-ufrpe-yellow`} aria-hidden="true"></i> {g.rotulo}
+                <Icone nome={ICONES[g.tipo]} className="text-ufrpe-yellow" /> {g.rotulo}
                 <span className="text-sm font-normal text-gray-500">({g.total})</span>
               </h2>
               <ul className="space-y-3">

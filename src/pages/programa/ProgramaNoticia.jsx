@@ -5,6 +5,7 @@ import { usePrograma, programaPath } from '../../components/programa/ProgramaCon
 import { Spinner, EmptyState, formatDate } from '../../components/programa/ProgramaUI';
 import SafeHtml from '../../components/SafeHtml';
 import AvisoPreVisualizacao from '../../components/AvisoPreVisualizacao';
+import Icone from '../../components/Icone';
 
 export default function ProgramaNoticia() {
   const { slug } = usePrograma();
@@ -32,7 +33,7 @@ export default function ProgramaNoticia() {
           hint="A notícia solicitada não existe ou foi removida." />
         <div className="text-center mt-6">
           <Link to={programaPath(slug, 'noticias')} className="text-[var(--prog-primary)] font-semibold hover:opacity-70">
-            <i className="fa-solid fa-arrow-left mr-2"></i> Voltar para Notícias
+            <Icone nome="fa-solid fa-arrow-left" className="mr-2" /> Voltar para Notícias
           </Link>
         </div>
       </main>
@@ -48,7 +49,7 @@ export default function ProgramaNoticia() {
       <div className="bg-[var(--prog-primary)] text-white py-12">
         <div className="container mx-auto px-4 max-w-4xl">
           <Link to={programaPath(slug, 'noticias')} className="inline-flex items-center gap-2 text-white/70 hover:text-[var(--prog-accent)] text-sm mb-5 transition-colors">
-            <i className="fa-solid fa-arrow-left text-xs"></i> Notícias
+            <Icone nome="fa-solid fa-arrow-left" className="text-xs" /> Notícias
           </Link>
           {noticia.category && (
             <span className="inline-block text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider bg-[var(--prog-accent)] text-[var(--prog-primary)] mb-4">
@@ -57,8 +58,8 @@ export default function ProgramaNoticia() {
           )}
           <h1 className="font-heading font-extrabold text-3xl md:text-4xl leading-tight">{noticia.title}</h1>
           <div className="flex flex-wrap items-center gap-4 text-white/60 text-sm mt-4">
-            {noticia.date && <span><i className="fa-regular fa-calendar mr-2"></i>{formatDate(noticia.date)}</span>}
-            {noticia.author && <span><i className="fa-regular fa-user mr-2"></i>{noticia.author}</span>}
+            {noticia.date && <span><Icone nome="fa-regular fa-calendar" className="mr-2" />{formatDate(noticia.date)}</span>}
+            {noticia.author && <span><Icone nome="fa-regular fa-user" className="mr-2" />{noticia.author}</span>}
           </div>
         </div>
       </div>

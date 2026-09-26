@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
+import Icone from '../../components/Icone';
 
 function Accordion({ item }) {
   const [open, setOpen] = useState(false);
@@ -13,7 +14,7 @@ function Accordion({ item }) {
         className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left bg-white hover:bg-gray-50 transition-colors"
       >
         <span className="font-medium text-gray-900 text-sm">{item.title}</span>
-        <i className={`fa-solid fa-chevron-${open ? 'up' : 'down'} text-[var(--prog-primary)] text-xs shrink-0`}></i>
+        <Icone nome={`fa-chevron-${open ? 'up' : 'down'}`} className="text-[var(--prog-primary)] text-xs shrink-0" />
       </button>
       {open && (
         <div className="px-5 pb-5 bg-white border-t border-gray-100">

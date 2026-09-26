@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { apiFetch } from '../api';
 import CabecalhoPagina from '../components/CabecalhoPagina';
+import Icone from '../components/Icone';
 
 const getCampusId = (campusName) => {
   return campusName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -181,7 +182,7 @@ export default function ProgramasStrictoSensu() {
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden sticky top-28">
                 <div className="bg-gray-50 text-gray-800 p-5 border-b border-gray-100">
                   <h3 className="font-heading font-bold text-lg m-0">
-                    <i className="fa-solid fa-list mr-2 text-ufrpe-blue opacity-70"></i> Sumário
+                    <Icone nome="fa-solid fa-list" className="mr-2 text-ufrpe-blue opacity-70" /> Sumário
                   </h3>
                 </div>
                 <div className="p-6 overflow-y-auto max-h-[calc(100vh-200px)]">
@@ -192,7 +193,7 @@ export default function ProgramasStrictoSensu() {
                         href={`#${getCampusId(campus)}`}
                         className="flex gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition text-sm text-gray-700 hover:text-ufrpe-blue group"
                       >
-                        <i className="fa-solid fa-chevron-right text-ufrpe-yellow mt-1 group-hover:translate-x-1 transition-transform"></i>
+                        <Icone nome="fa-solid fa-chevron-right" className="text-ufrpe-yellow mt-1 group-hover:translate-x-1 transition-transform" />
                         <span className="leading-snug">{campus}</span>
                       </a>
                     ))}
@@ -207,7 +208,7 @@ export default function ProgramasStrictoSensu() {
               {/* Search Bar and Export */}
               <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row gap-4 justify-between">
                 <div className="relative flex-1">
-                  <i className="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                  <Icone nome="fa-solid fa-magnifying-glass" className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Buscar programas, sigla, áreas ou linhas..."
@@ -235,10 +236,10 @@ export default function ProgramasStrictoSensu() {
                     <option value="NAO">Sem Rede</option>
                   </select>
                   <button onClick={() => handleExport('excel')} className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-xl text-sm font-medium transition-colors">
-                    <i className="fa-solid fa-file-excel mr-2"></i> Excel
+                    <Icone nome="fa-solid fa-file-excel" className="mr-2" /> Excel
                   </button>
                   <button onClick={() => handleExport('csv')} className="bg-gray-800 hover:bg-gray-900 text-white px-4 py-3 rounded-xl text-sm font-medium transition-colors">
-                    <i className="fa-solid fa-file-csv mr-2"></i> CSV
+                    <Icone nome="fa-solid fa-file-csv" className="mr-2" /> CSV
                   </button>
                 </div>
               </div>
@@ -266,7 +267,7 @@ export default function ProgramasStrictoSensu() {
 
               {Object.keys(programasData).length === 0 ? (
                 <div className="bg-white rounded-2xl p-12 text-center border border-gray-100 shadow-sm animate-in fade-in duration-300">
-                  <i className="fa-solid fa-graduation-cap text-gray-300 text-5xl mb-4"></i>
+                  <Icone nome="fa-solid fa-graduation-cap" className="text-gray-300 text-5xl mb-4" />
                   <h3 className="text-xl font-bold text-ufrpe-blue mb-2">Nenhum programa encontrado</h3>
                   <p className="text-gray-500">Experimente buscar por outros termos ou limpar a busca.</p>
                 </div>
@@ -329,7 +330,7 @@ export default function ProgramasStrictoSensu() {
                                   {prog.linhas.map((linha, liIdx) => (
                                     <li key={liIdx} className="relative pl-3 text-sm text-gray-600 mb-1">
                                       <span className="absolute left-0 top-1 text-ufrpe-yellow text-[8px]">
-                                        <i className="fa-solid fa-circle"></i>
+                                        <Icone nome="fa-solid fa-circle" />
                                       </span>
                                       {linha.nome || linha.label || linha}
                                     </li>
@@ -359,16 +360,16 @@ export default function ProgramasStrictoSensu() {
                             {(prog.bloco || prog.sala || prog.telefone_secretaria || prog.horario_atendimento || prog.email_programa) && (
                               <div className="mt-4 pt-4 border-t border-gray-100 space-y-1.5 text-xs text-gray-600">
                                 {(prog.bloco || prog.sala) && (
-                                  <div><i className="fa-solid fa-location-dot text-ufrpe-yellow mr-2 w-3.5"></i>{[prog.bloco, prog.sala && `Sala ${prog.sala}`].filter(Boolean).join(' — ')}</div>
+                                  <div><Icone nome="fa-solid fa-location-dot" className="text-ufrpe-yellow mr-2 w-3.5" />{[prog.bloco, prog.sala && `Sala ${prog.sala}`].filter(Boolean).join(' — ')}</div>
                                 )}
                                 {prog.telefone_secretaria && (
-                                  <div><i className="fa-solid fa-phone text-ufrpe-yellow mr-2 w-3.5"></i>{prog.telefone_secretaria}</div>
+                                  <div><Icone nome="fa-solid fa-phone" className="text-ufrpe-yellow mr-2 w-3.5" />{prog.telefone_secretaria}</div>
                                 )}
                                 {prog.horario_atendimento && (
-                                  <div><i className="fa-solid fa-clock text-ufrpe-yellow mr-2 w-3.5"></i>{prog.horario_atendimento}</div>
+                                  <div><Icone nome="fa-solid fa-clock" className="text-ufrpe-yellow mr-2 w-3.5" />{prog.horario_atendimento}</div>
                                 )}
                                 {prog.email_programa && (
-                                  <div><i className="fa-solid fa-envelope text-ufrpe-yellow mr-2 w-3.5"></i><a href={`mailto:${prog.email_programa}`} className="hover:text-ufrpe-blue break-all">{prog.email_programa}</a></div>
+                                  <div><Icone nome="fa-solid fa-envelope" className="text-ufrpe-yellow mr-2 w-3.5" /><a href={`mailto:${prog.email_programa}`} className="hover:text-ufrpe-blue break-all">{prog.email_programa}</a></div>
                                 )}
                               </div>
                             )}
@@ -384,17 +385,17 @@ export default function ProgramasStrictoSensu() {
                               <div className="flex flex-wrap gap-2 mb-3">
                                 {prog.regimento_url && (
                                   <a href={prog.regimento_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-ufrpe-blue hover:bg-gray-100 transition-colors">
-                                    <i className="fa-solid fa-file-lines mr-1.5 opacity-60"></i>Regimento
+                                    <Icone nome="fa-solid fa-file-lines" className="mr-1.5 opacity-60" />Regimento
                                   </a>
                                 )}
                                 {prog.regulamento_url && (
                                   <a href={prog.regulamento_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-ufrpe-blue hover:bg-gray-100 transition-colors">
-                                    <i className="fa-solid fa-file-signature mr-1.5 opacity-60"></i>Regulamento
+                                    <Icone nome="fa-solid fa-file-signature" className="mr-1.5 opacity-60" />Regulamento
                                   </a>
                                 )}
                                 {prog.sucupira_url && (
                                   <a href={prog.sucupira_url} target="_blank" rel="noopener noreferrer" className="text-xs px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-ufrpe-blue hover:bg-gray-100 transition-colors">
-                                    <i className="fa-solid fa-chart-column mr-1.5 opacity-60"></i>Sucupira
+                                    <Icone nome="fa-solid fa-chart-column" className="mr-1.5 opacity-60" />Sucupira
                                   </a>
                                 )}
                               </div>

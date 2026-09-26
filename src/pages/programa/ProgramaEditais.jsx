@@ -4,6 +4,7 @@ import { API_URL } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner, formatDate } from '../../components/programa/ProgramaUI';
 import SafeHtml from '../../components/SafeHtml';
+import Icone from '../../components/Icone';
 
 const STATUS_CLS = {
   abertas: 'bg-green-100 text-green-700',
@@ -60,27 +61,27 @@ export default function ProgramaEditais() {
                 </div>
                 {e.description && <SafeHtml className="text-sm text-gray-600 mb-4 prose prose-sm max-w-none html-content" html={e.description} />}
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-gray-500 mb-4">
-                  {e.publishedAt && <span><i className="fa-regular fa-calendar mr-1.5 text-[var(--prog-accent)]"></i>Publicado: {formatDate(e.publishedAt)}</span>}
-                  {e.deadline && <span><i className="fa-regular fa-clock mr-1.5 text-[var(--prog-accent)]"></i>Prazo: {formatDate(e.deadline)}</span>}
-                  {e.numero && <span><i className="fa-solid fa-hashtag mr-1.5 text-[var(--prog-accent)]"></i>{e.numero}</span>}
+                  {e.publishedAt && <span><Icone nome="fa-regular fa-calendar" className="mr-1.5 text-[var(--prog-accent)]" />Publicado: {formatDate(e.publishedAt)}</span>}
+                  {e.deadline && <span><Icone nome="fa-regular fa-clock" className="mr-1.5 text-[var(--prog-accent)]" />Prazo: {formatDate(e.deadline)}</span>}
+                  {e.numero && <span><Icone nome="fa-solid fa-hashtag" className="mr-1.5 text-[var(--prog-accent)]" />{e.numero}</span>}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {e.proficiencia && periodoAberto && periodoAberto.id === e.id && (
                     <Link to="/proficiencia/inscricao"
                       className="text-sm px-4 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition-colors flex items-center gap-2">
-                      <i className="fa-solid fa-pen-to-square"></i>Fazer Inscrição
+                      <Icone nome="fa-solid fa-pen-to-square" />Fazer Inscrição
                     </Link>
                   )}
                   {e.downloadLink && e.downloadLink !== '#' && (
                     <a href={e.downloadLink} target="_blank" rel="noopener noreferrer"
                       className="text-sm px-4 py-2 rounded-lg bg-[var(--prog-primary)] text-white font-semibold hover:opacity-90 transition-opacity">
-                      <i className="fa-solid fa-download mr-2"></i>Edital
+                      <Icone nome="fa-solid fa-download" className="mr-2" />Edital
                     </a>
                   )}
                   {e.detailsLink && e.detailsLink !== '#' && (
                     <a href={e.detailsLink} target="_blank" rel="noopener noreferrer"
                       className="text-sm px-4 py-2 rounded-lg border border-gray-200 text-[var(--prog-primary)] font-semibold hover:bg-gray-50 transition-colors">
-                      <i className="fa-solid fa-circle-info mr-2"></i>Detalhes
+                      <Icone nome="fa-solid fa-circle-info" className="mr-2" />Detalhes
                     </a>
                   )}
                 </div>

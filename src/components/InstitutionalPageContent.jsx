@@ -1,6 +1,7 @@
 import React from 'react';
 import SafeHtml from './SafeHtml';
 import AvisoPreVisualizacao from './AvisoPreVisualizacao';
+import Icone from './Icone';
 
 // Hero + corpo de uma página vinculada a um programa (/<programaSlug>/<slug>,
 // com a cor do programa — ver ProgramaPagina.jsx). As páginas gerais da PRPG
@@ -10,7 +11,7 @@ export default function InstitutionalPageContent({ page, heroClassName = 'bg-ufr
     <>
       <AvisoPreVisualizacao item={page} />
       <div className={`${heroClassName} text-white py-16 relative overflow-hidden`}>
-        <i className="fa-solid fa-file-lines text-[20rem] text-white/5 -bottom-20 -right-20 absolute rotate-12 pointer-events-none"></i>
+        <Icone nome="fa-solid fa-file-lines" className="text-[20rem] text-white/5 -bottom-20 -right-20 absolute rotate-12 pointer-events-none" />
         <div className="container mx-auto px-4">
           {breadcrumb}
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-heading font-extrabold leading-tight">

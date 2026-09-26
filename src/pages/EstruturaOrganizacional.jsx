@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import useEstrutura from '../hooks/useEstrutura';
 import { Avatar, ListaContatos } from '../components/EstruturaUI';
+import Icone from '../components/Icone';
 
 // Estrutura Organizacional (Fase H.4): organograma gerado dos setores
 // cadastrados em "Equipe e estrutura" no painel. Os detalhes de cada setor
@@ -69,7 +70,7 @@ export default function EstruturaOrganizacional() {
                     {(s.membros.length > 0 || s.contatos.length > 0) && (
                       <details className="mt-auto group">
                         <summary className="cursor-pointer text-sm font-bold text-ufrpe-cyan hover:text-ufrpe-blue list-none flex items-center gap-2">
-                          <i className="fa-solid fa-chevron-right text-xs transition-transform group-open:rotate-90" aria-hidden="true"></i>
+                          <Icone nome="fa-solid fa-chevron-right" className="text-xs transition-transform group-open:rotate-90" aria-hidden="true" />
                           Equipe e contatos
                         </summary>
                         <div className="pt-4 space-y-4">

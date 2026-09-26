@@ -2,18 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { API_URL, apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
+import Icone from '../../components/Icone';
 
 function SecaoDocumentos({ titulo, icone, itens }) {
   if (!itens.length) return null;
   return (
     <section className="mb-10">
       <h2 className="font-heading font-bold text-lg text-gray-800 flex items-center gap-2 mb-4">
-        <i className={`fa-solid ${icone} text-[var(--prog-primary)]`}></i> {titulo}
+        <Icone nome={icone} className="text-[var(--prog-primary)]" /> {titulo}
       </h2>
       <div className="space-y-2">
         {itens.map((item) => (
           <div key={item.id} className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-4 py-3 hover:shadow-sm transition-all">
-            <i className="fa-solid fa-file-pdf text-red-500 shrink-0"></i>
+            <Icone nome="fa-solid fa-file-pdf" className="text-red-500 shrink-0" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
               {item.sectionTitle && <p className="text-xs text-gray-400">{item.sectionTitle}</p>}
@@ -22,7 +23,7 @@ function SecaoDocumentos({ titulo, icone, itens }) {
               <a href={item.link.startsWith('http') ? item.link : `${API_URL}${item.link}`}
                 target="_blank" rel="noopener noreferrer"
                 className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-[var(--prog-primary)] hover:underline">
-                <i className="fa-solid fa-download"></i> Baixar
+                <Icone nome="fa-solid fa-download" /> Baixar
               </a>
             )}
           </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch } from '../../api';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero, EmptyState, Spinner } from '../../components/programa/ProgramaUI';
+import Icone from '../../components/Icone';
 
 export default function ProgramaGrupos() {
   const { programa, slug } = usePrograma();
@@ -37,7 +38,7 @@ export default function ProgramaGrupos() {
               <div key={g.id} className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-sm transition-all">
                 <div className="flex items-start gap-4 mb-4">
                   <span className="shrink-0 w-10 h-10 rounded-lg bg-[var(--prog-primary)]/10 flex items-center justify-center text-[var(--prog-primary)]">
-                    <i className="fa-solid fa-flask text-sm"></i>
+                    <Icone nome="fa-solid fa-flask" className="text-sm" />
                   </span>
                   <h3 className="font-semibold text-gray-900 text-sm leading-snug">{g.title}</h3>
                 </div>
@@ -50,7 +51,7 @@ export default function ProgramaGrupos() {
                     <ul className="space-y-1">
                       {g.lideres.map((l) => (
                         <li key={l.id} className="flex items-center gap-2 text-xs text-gray-600">
-                          <i className="fa-solid fa-user text-[var(--prog-primary)] text-[10px]"></i>
+                          <Icone nome="fa-solid fa-user" className="text-[var(--prog-primary)] text-[10px]" />
                           {l.nome}
                         </li>
                       ))}
