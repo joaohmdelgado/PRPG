@@ -20,7 +20,8 @@
     "arquivos": "node server/scripts/arquivos.mjs",
     "planilha": "node server/scripts/importarPlanilha.mjs",
     "agendador": "node server/scripts/agendador.mjs",
-    "links": "node server/scripts/verificarLinks.mjs"
+    "links": "node server/scripts/verificarLinks.mjs",
+    "test:front": "vitest run --config vitest.front.config.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

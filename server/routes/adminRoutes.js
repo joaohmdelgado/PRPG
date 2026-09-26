@@ -96,6 +96,7 @@ import { getReferencias, putReferencias, getCandidatos } from '../controllers/re
 import { getPrazos, getCalendarioIcs } from '../controllers/prazosPublicosController.js';
 import { autorizarRevisao, getRevisoes, getRevisao, restaurarRevisao } from '../controllers/revisoesController.js';
 import { asyncRouter } from '../utils/asyncRouter.js';
+import { getMinhaConta, updateMinhaConta, updateMinhaSenha, baixarMinhaDeclaracao } from '../controllers/minhaContaController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -454,6 +455,13 @@ router.put('/camara/unidades/:id', protect, requireRole(CAMARA_ESCRITA), updateU
 router.delete('/camara/unidades/:id', protect, requireRole(CAMARA_ESCRITA), deleteUnidade);
 
 router.get('/camara/meus-processos', protect, getMeusProcessos);
+
+// Minha conta (Fase U.1): qualquer usuário logado, sempre a PRÓPRIA conta — o
+// id vem do token, nunca da URL.
+router.get('/minha-conta', protect, getMinhaConta);
+router.put('/minha-conta', protect, updateMinhaConta);
+router.put('/minha-conta/senha', loginLimiter, protect, updateMinhaSenha);
+router.get('/minha-conta/declaracoes/:id/pdf', protect, baixarMinhaDeclaracao);
 
 // Rotas específicas de reuniões ANTES da rota genérica /camara/processos/:id.
 router.get('/camara/reunioes', protect, requireRole(CAMARA_ESCRITA), getReunioes);

@@ -28,7 +28,7 @@ const PRPG_ROUTES = new Set([
   'verificar', 'relatorios-autoavaliacao', 'especializacao',
   'residencia-profissional', 'sobre-internacionalizacao', 'alunos-estrangeiros',
   'capes-print', 'mobilidade-estudantil', 'reconhecimento', 'noticias',
-  'noticia', 'p', 'admin', 'busca', 'privacidade',
+  'noticia', 'p', 'admin', 'busca', 'privacidade', 'minha-conta', 'entrar',
 ]);
 // Vem do modelo do menu (server/utils/micrositeMenu.js), que lista as
 // sub-rotas fixas do microsite.

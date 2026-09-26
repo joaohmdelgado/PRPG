@@ -4,6 +4,7 @@ import { useMenu, useConfig, linkTelefone } from '../hooks/usePortal';
 import LinkDestino from './LinkDestino';
 import Icone from './Icone';
 import Dialog from './ui/Dialog';
+import { getToken, destinoPadrao } from '../auth';
 
 // Itens do menu, links da faixa superior, contato e logo vêm do banco
 // (Fase H.1 — editados no painel em "Menus e portal").
@@ -38,6 +39,11 @@ export function Topbar({ onOpenMap }) {
               {item.rotulo}
             </LinkDestino>
           ))}
+          {/* Entrada da comunidade (Fase U.1): leva cada papel ao seu lugar. */}
+          <Link to={getToken() ? destinoPadrao() : '/admin/login'}
+            className={`hover:text-ufrpe-yellow transition ${topo.length ? 'border-l border-white/10 pl-4' : ''}`}>
+            {getToken() ? (destinoPadrao() === '/admin' ? 'Painel' : 'Minha conta') : 'Entrar'}
+          </Link>
         </div>
       </div>
     </div>

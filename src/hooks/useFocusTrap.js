@@ -5,8 +5,13 @@ const FOCAVEIS = [
   'select:not([disabled])', 'textarea:not([disabled])', '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
-export const focaveisDe = (el) =>
-  [...el.querySelectorAll(FOCAVEIS)].filter((n) => n.offsetParent !== null || n === document.activeElement);
+// Visível de verdade (checkVisibility cobre display:none em ancestral, o que
+// `offsetParent` erra para elementos position:fixed); sem ele (jsdom), só o atributo hidden/inert.
+const visivel = (n) => (typeof n.checkVisibility === 'function'
+  ? n.checkVisibility({ visibilityProperty: true })
+  : !n.closest('[hidden], [inert]'));
+
+export const focaveisDe = (el) => [...el.querySelectorAll(FOCAVEIS)].filter(visivel);
 
 // Mantém o foco do teclado dentro de `ref` enquanto `ativo` (diálogos e o
 // drawer do painel): Tab/Shift+Tab dão a volta, Escape chama `onEscape`, o foco

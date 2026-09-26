@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, ExternalLink, ChevronDown, Menu as MenuIcon, X } from 'lucide-react';
+import { LogOut, ExternalLink, ChevronDown, Menu as MenuIcon, X, UserRound } from 'lucide-react';
 import { isProgramaGestor, getGestorPrograma, clearSession } from '../auth';
 import { INICIO, gruposDoPainel } from './admin/menuPainel';
 import RouteFocusManager from './ui/RouteFocusManager';
@@ -191,6 +191,9 @@ const AdminLayout = () => {
               {gestorPrograma && programa?.slug ? 'Ver microsite' : 'Ver site'}
               <span className="sr-only"> (abre em nova aba)</span>
             </a>
+            <Link to="/minha-conta" className="hidden sm:flex items-center gap-1.5 text-sm text-gray-600 hover:text-ufrpe-blue transition-colors">
+              <UserRound size={15} aria-hidden="true" /> Minha conta
+            </Link>
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-full bg-ufrpe-blue text-white grid place-items-center font-heading font-semibold text-sm" aria-hidden="true">
                 {initial}

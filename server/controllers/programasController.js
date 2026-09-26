@@ -23,12 +23,12 @@ const normalizeStatus = (v, fallback = 'ATIVO') => (ALLOWED_STATUS.includes(v) ?
 // Slug do microsite (mesmo padrao usado em pagesController).
 // Segmentos de topo ja usados pelo site da PRPG: nao podem virar slug de programa.
 const RESERVED_SLUGS = new Set([
-  'admin', 'api', 'uploads', 'p', 'sobre', 'missao-visao-valores', 'historico',
+  'admin', 'api', 'uploads', 'p', 'entrar', 'sobre', 'missao-visao-valores', 'historico',
   'estrutura-organizacional', 'equipe', 'financeiro', 'proext-pg', 'programas',
   'calendario-academico', 'editais', 'resolucoes', 'formularios',
   'relatorios-autoavaliacao', 'especializacao', 'residencia-profissional',
   'sobre-internacionalizacao', 'alunos-estrangeiros', 'capes-print',
-  'mobilidade-estudantil', 'reconhecimento', 'noticias', 'noticia',
+  'mobilidade-estudantil', 'reconhecimento', 'noticias', 'noticia', 'minha-conta',
 ]);
 
 // Resolve um slug unico, evitando reservados e colisoes (exclui o proprio id no update).

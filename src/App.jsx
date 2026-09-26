@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
-import { isProgramaGestor } from './auth';
+import { isProgramaGestor, PAPEIS_PAINEL } from './auth';
 
 // Layouts e guardas ficam eager (envolvem todas as rotas e são pequenos).
 import PublicLayout from './components/PublicLayout';
@@ -25,6 +25,13 @@ const Edital = lazy(() => import('./pages/Edital'));
 const DeclaracaoProficiencia = lazy(() => import('./pages/DeclaracaoProficiencia'));
 const VerificarDeclaracao = lazy(() => import('./pages/VerificarDeclaracao'));
 const ProgramaSite = lazy(() => import('./pages/programa/ProgramaSite'));
+
+// Minha conta (aluno e professor)
+const MinhaContaLayout = lazy(() => import('./pages/conta/MinhaContaLayout'));
+const ContaDados = lazy(() => import('./pages/conta/ContaDados'));
+const ContaInscricoes = lazy(() => import('./pages/conta/ContaInscricoes'));
+const ContaDeclaracoes = lazy(() => import('./pages/conta/ContaDeclaracoes'));
+const ContaRelatorias = lazy(() => import('./pages/conta/ContaRelatorias'));
 
 // Admin
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
@@ -133,12 +140,23 @@ function App() {
       <Routes>
         {/* Rotas Administrativas */}
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/entrar" element={<AdminLogin />} />
         {/* Troca obrigatória de senha provisória (fora do AdminLayout para não
             entrar em laço com o guard de senha do RequireAuth). */}
         <Route path="/admin/trocar-senha" element={<RequireAuth skipPasswordCheck />}>
           <Route index element={<AdminTrocarSenha />} />
         </Route>
-        <Route path="/admin" element={<RequireAuth />}>
+        {/* Minha conta (Fase U.1): aluno e professor — separada do painel. */}
+        <Route path="/minha-conta" element={<RequireAuth />}>
+          <Route element={<MinhaContaLayout />}>
+            <Route index element={<ContaDados />} />
+            <Route path="inscricoes" element={<ContaInscricoes />} />
+            <Route path="declaracoes" element={<ContaDeclaracoes />} />
+            <Route path="relatorias" element={<ContaRelatorias />} />
+          </Route>
+        </Route>
+        {/* O painel é da equipe; aluno e professor caem em /minha-conta. */}
+        <Route path="/admin" element={<RequireAuth allowedRoles={PAPEIS_PAINEL} semAcesso="/minha-conta" />}>
           <Route element={<AdminLayout />}>
             <Route index element={<AdminPainel />} />
             <Route path="noticias" element={<AdminNoticias />} />
@@ -279,7 +297,7 @@ function App() {
             {/* Meus Processos (Fase L.4): qualquer usuário autenticado — a
                 relatoria é resolvida pelo próprio login (relator_id), sem
                 exigir papel específico da Câmara. */}
-            <Route path="meus-processos" element={<RequireAuth />}>
+            <Route path="meus-processos" element={<RequireAuth allowedRoles={PAPEIS_PAINEL} />}>
               <Route index element={<AdminMeusProcessos />} />
             </Route>
           </Route>
