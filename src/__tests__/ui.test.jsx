@@ -193,10 +193,36 @@ describe('associarRotulos (rede de segurança)', () => {
     });
   });
 
-  it('não mexe em rótulo ambíguo, que já envolve o campo ou que já tem for', () => {
+  it('não liga por for o rótulo ambíguo, o que já envolve o campo ou o que já tem for', () => {
     const r = html('<div><label>Grupo</label><div><input type="radio"><input type="radio"></div></div><label>X <input></label><label for="k">K</label><input id="k">');
-    expect(associarRotulos(r)).toBe(0);
+    associarRotulos(r);
     expect(r.querySelector('label').hasAttribute('for')).toBe(false);
+  });
+
+  it('grupo de opções vira role=group nomeado pelo rótulo', () => {
+    const r = html('<div><label>Papéis</label><div><input type="checkbox"><input type="checkbox"></div></div>');
+    expect(associarRotulos(r)).toBe(1);
+    const grupo = r.querySelector('label + div');
+    expect(grupo.getAttribute('role')).toBe('group');
+    expect(grupo.getAttribute('aria-labelledby')).toBe(r.querySelector('label').id);
+  });
+
+  it('campo de arquivo dentro de botão e editor de texto rico são nomeados pelo rótulo do bloco', () => {
+    const r = html('<div><label>Imagem de capa</label><div><label>Selecionar <input type="file"></label></div></div><div><label>Conteúdo</label><div><div contenteditable="true"></div></div></div>');
+    expect(associarRotulos(r)).toBe(2);
+    const arquivo = r.querySelector('input[type=file]');
+    const ids = arquivo.getAttribute('aria-labelledby').split(' ');
+    expect(document.getElementById(ids[0]).textContent).toBe('Imagem de capa');
+    expect(ids).toHaveLength(2);
+    const rotuloConteudo = [...r.querySelectorAll('label')].find((l) => l.textContent === 'Conteúdo');
+    expect(r.querySelector('[contenteditable]').getAttribute('aria-labelledby')).toBe(rotuloConteudo.id);
+  });
+
+  it('editor que ainda não carregou fica para a próxima passada', () => {
+    const r = html('<div><label>Descrição</label><div><div></div></div></div>');
+    expect(associarRotulos(r)).toBe(0);
+    r.querySelector('label + div > div').setAttribute('contenteditable', 'true');
+    expect(associarRotulos(r)).toBe(1);
   });
 
   it('reaproveita o id que o campo já tem', () => {

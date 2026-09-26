@@ -28,16 +28,54 @@ const controleDoRotulo = (rotulo) => {
   return null;
 };
 
+const idDe = (el, prefixo) => {
+  if (!el.id) el.id = `${prefixo}-${++contador}`;
+  return el.id;
+};
+
+// Rótulos de widgets compostos, que um `for` não resolve: um campo de arquivo
+// escondido dentro de um botão, o editor de texto rico (CKEditor) ou um grupo de
+// opções. O rótulo nomeia o widget por aria-labelledby/role=group.
+function ligarComposto(rotulo) {
+  const alvo = rotulo.nextElementSibling;
+  if (!alvo) return false;
+  const rotuloId = idDe(rotulo, 'rotulo-auto');
+
+  const arquivo = alvo.querySelectorAll('input[type="file"]');
+  if (arquivo.length === 1) {
+    const interno = arquivo[0].closest('label');
+    if (!arquivo[0].hasAttribute('aria-labelledby')) {
+      arquivo[0].setAttribute('aria-labelledby', interno ? `${rotuloId} ${idDe(interno, 'rotulo-auto')}` : rotuloId);
+    }
+    return true;
+  }
+  const editavel = alvo.querySelector('[contenteditable="true"]');
+  if (editavel) {
+    editavel.setAttribute('aria-labelledby', rotuloId);
+    return true;
+  }
+  if (alvo.querySelectorAll(CONTROLES).length > 1) {
+    if (!alvo.hasAttribute('role')) alvo.setAttribute('role', 'group');
+    if (!alvo.hasAttribute('aria-labelledby')) alvo.setAttribute('aria-labelledby', rotuloId);
+    return true;
+  }
+  return false; // ainda vazio (ex.: o editor carrega depois): tenta na próxima mutação
+}
+
 export function associarRotulos(raiz) {
   if (!raiz) return 0;
   let n = 0;
   raiz.querySelectorAll('label:not([for])').forEach((rotulo) => {
     if (rotulo.querySelector(CONTROLES)) return; // já envolve o campo
     const controle = controleDoRotulo(rotulo);
-    if (!controle) return;
-    if (!controle.id) controle.id = `campo-auto-${++contador}`;
-    rotulo.setAttribute('for', controle.id);
-    n += 1;
+    if (controle) {
+      if (!controle.id) controle.id = `campo-auto-${++contador}`;
+      rotulo.setAttribute('for', controle.id);
+      n += 1;
+    } else if (!rotulo.hasAttribute('data-rotulo-composto') && ligarComposto(rotulo)) {
+      rotulo.setAttribute('data-rotulo-composto', '');
+      n += 1;
+    }
   });
   return n;
 }
