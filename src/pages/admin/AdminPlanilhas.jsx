@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { FileSpreadsheet, Play, Upload, RotateCw, ClipboardCheck, AlertTriangle } from 'lucide-react';
+import { FileSpreadsheet, Play, Upload, RotateCw, ClipboardCheck, AlertTriangle, CheckCircle2, Circle, Lock } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { TableSkeleton } from '../../components/admin/AdminUI';
 import { useToast } from '../../components/admin/Toast';
@@ -63,6 +63,83 @@ function Resultado({ r }) {
             ))}
           </ul>
         </details>
+      )}
+    </div>
+  );
+}
+
+// Fase O.4: situação da planilha e os quatro critérios para aposentá-la.
+const SITUACAO_PLANILHA = {
+  EM_USO: { rotulo: 'Em uso — a planilha é a fonte', classes: 'bg-gray-100 text-gray-700' },
+  PARALELO: { rotulo: 'Em paralelo — registrar nos dois', classes: 'bg-sky-100 text-sky-800' },
+  SOMENTE_LEITURA: { rotulo: 'Aposentada — só leitura', classes: 'bg-emerald-100 text-emerald-800' },
+};
+
+function Aposentadoria({ fonte, a, onFeito, toast, confirm }) {
+  const [div, setDiv] = useState(null);
+  if (!a) return null;
+  const info = SITUACAO_PLANILHA[a.situacao] || SITUACAO_PLANILHA.EM_USO;
+
+  const mudar = async (situacao, pergunta) => {
+    if (pergunta && !(await confirm(pergunta, { title: 'Confirmar' }))) return;
+    const res = await apiFetch(`/api/importacoes/planilhas/${fonte}/situacao`, { method: 'PUT', json: { situacao } });
+    const corpo = await res.json().catch(() => ({}));
+    if (res.ok) { toast.success('Situação da planilha atualizada.'); onFeito(); } else toast.error(corpo.message || 'Não foi possível mudar a situação.');
+  };
+  const verDivergencias = async () => {
+    const res = await apiFetch(`/api/importacoes/planilhas/${fonte}/divergencias`);
+    if (res.ok) setDiv(await res.json());
+  };
+
+  return (
+    <div className="mt-4 border-t border-gray-100 pt-4">
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        <span className="text-sm font-medium text-gray-800">Aposentadoria</span>
+        <span className={`text-xs px-2 py-0.5 rounded-full ${info.classes}`}>{info.rotulo}</span>
+        {a.somenteLeituraDesde && <span className="text-xs text-gray-500">desde {a.somenteLeituraDesde.split('-').reverse().join('/')}</span>}
+      </div>
+      <ul className="space-y-1 text-xs">
+        {a.criterios.map((c) => (
+          <li key={c.id} className="flex items-start gap-1.5">
+            {c.ok ? <CheckCircle2 size={14} className="text-emerald-600 shrink-0 mt-px" aria-label="cumprido" /> : <Circle size={14} className="text-gray-300 shrink-0 mt-px" aria-label="pendente" />}
+            <span><span className="text-gray-800">{c.rotulo}</span> <span className="text-gray-500">— {c.detalhe}</span></span>
+          </li>
+        ))}
+      </ul>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {a.situacao === 'EM_USO' && (
+          <button onClick={() => mudar('PARALELO', 'A partir de hoje a equipe registra no sistema E na planilha, por um ciclo. Começar?')} className="text-xs px-3 py-1.5 rounded-lg border border-sky-200 text-sky-800 hover:bg-sky-50">
+            Começar o ciclo em paralelo
+          </button>
+        )}
+        {a.situacao === 'PARALELO' && (
+          <>
+            <button disabled={!a.apta} onClick={() => mudar('SOMENTE_LEITURA', 'A planilha deixa de ser a fonte. Tranque-a para edição e arquive (nunca apague). Confirmar?')} className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-emerald-600 text-white disabled:opacity-40" title={a.apta ? '' : 'Falta cumprir algum critério'}>
+              <Lock size={12} /> Aposentar (somente leitura)
+            </button>
+            <button onClick={() => mudar('PARALELO', 'Recomeçar o ciclo a partir de hoje (por exemplo, depois de conciliar uma divergência)?')} className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Recomeçar o ciclo</button>
+          </>
+        )}
+        {a.situacao !== 'EM_USO' && (
+          <button onClick={() => mudar('EM_USO', 'Voltar a planilha para "em uso"? O ciclo em paralelo é descartado.')} className="text-xs px-3 py-1.5 rounded-lg text-gray-500 hover:bg-gray-50">Voltar para em uso</button>
+        )}
+        <button onClick={verDivergencias} className="text-xs px-3 py-1.5 rounded-lg text-ufrpe-blue hover:bg-gray-50">Relatório de divergência</button>
+      </div>
+      {div && (
+        <div className="mt-2 text-xs text-gray-600">
+          {!div.importacaoId ? 'Nenhuma simulação ainda.' : div.itens.length === 0
+            ? `Sem divergência na simulação de ${fmtDataHora(div.executadoEm)}.`
+            : (
+              <>
+                <p>Simulação de {fmtDataHora(div.executadoEm)}: {div.itens.length} linha(s) que a planilha tem e o sistema não.</p>
+                <ul className="mt-1 max-h-48 overflow-auto space-y-0.5">
+                  {div.itens.map((it) => (
+                    <li key={`${it.acao}-${it.chave}`}>[{ROTULO_ACAO[it.acao]}] {it.rotulo || it.chave}{it.motivo ? ` — ${it.motivo}` : ''}{it.mudou ? ` — mudou: ${it.mudou.map((m) => m.campo).join(', ')}` : ''}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+        </div>
       )}
     </div>
   );
@@ -148,6 +225,7 @@ function CartaoPlanilha({ p, indice, onFeito }) {
         {rodando && <span className="text-xs text-gray-500" role="status">Processando…</span>}
       </div>
       {resultado && <Resultado r={resultado} />}
+      <Aposentadoria fonte={p.fonte} a={p.aposentadoria} onFeito={onFeito} toast={toast} confirm={confirm} />
     </section>
   );
 }

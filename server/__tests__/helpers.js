@@ -34,6 +34,7 @@ export const RESET_TABLES = [
   'programa_menu_itens',
   // Fase O.2: importação das planilhas (origens/pendências/de-para antes da execução).
   'importacao_origens', 'importacao_pendencias', 'importacao_depara', 'importacoes',
+  'planilhas', // Fase O.4 (seed de 4 linhas, recriado abaixo)
 ];
 
 // Tabelas do schema que o resetDb deliberadamente NÃO toca: `unidades` é seed
@@ -90,6 +91,12 @@ export async function resetDb() {
   // acima — reseeda as séries-base para os testes de atos.test.js.
   const { rows: rowsSeries } = await pool.query('SELECT count(*)::int AS n FROM ato_series');
   if (rowsSeries[0].n === 0) await reseedAtoSeries();
+
+  // planilhas (Fase O.4): as 4 linhas-seed da migração.
+  await pool.query(`INSERT INTO planilhas (fonte, nome, ciclo_dias) VALUES
+    ('contatos', 'Contatos - Coordenações de PG.xlsx', 30), ('expedientes', 'OFÍCIOS_EDITAIS_PORTARIAS_PRPG.xlsx', 30),
+    ('camara', 'Processos - Câmara de Pós Graduação.xlsx', 30), ('pnpd', 'PNPD Voluntário.xlsx', 30)
+    ON CONFLICT (fonte) DO NOTHING`);
 }
 
 async function reseedAtoSeries() {

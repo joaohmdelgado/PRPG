@@ -66,7 +66,7 @@ import { getTaxonomiaRefs, getTaxonomiaRefById, createTaxonomiaRef, updateTaxono
 import { getTiposImportacao, runImportacao } from '../controllers/importController.js';
 import {
   getPendencias, resolverPendencia, resolverLote, getOpcoes, getOrigem, getImportacoes, getImportacao,
-  importarPlanilha, reexecutarPlanilha, getPlanilhas,
+  importarPlanilha, reexecutarPlanilha, getPlanilhas, setSituacaoPlanilha, getDivergencias,
 } from '../controllers/importacoesController.js';
 
 import { login } from '../controllers/authController.js';
@@ -584,6 +584,8 @@ router.post('/importacoes/planilhas/:fonte', protect, requireRole(PLANILHAS),
   (req, res, next) => planilhaUpload.single('file')(req, res, (err) => (err ? res.status(400).json({ message: err.message }) : next())),
   importarPlanilha);
 router.post('/importacoes/planilhas/:fonte/reexecutar', protect, requireRole(PLANILHAS), reexecutarPlanilha);
+router.put('/importacoes/planilhas/:fonte/situacao', protect, requireRole(PLANILHAS), setSituacaoPlanilha);
+router.get('/importacoes/planilhas/:fonte/divergencias', protect, requireRole(PLANILHAS), getDivergencias);
 router.get('/importacoes/origem/:entidade/:entidadeId', protect, requireRole(PLANILHAS), getOrigem);
 router.get('/importacoes', protect, requireRole(PLANILHAS), getImportacoes);
 router.get('/importacoes/:id', protect, requireRole(PLANILHAS), getImportacao);

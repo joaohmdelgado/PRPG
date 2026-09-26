@@ -5,6 +5,7 @@ import { pool, query } from '../db/pool.js';
 import { TIPOS_PENDENCIA, HANDLERS, DOMINIO_DEPARA, SITUACOES } from '../services/planilhas/pendencias.js';
 import { chaveTexto, executarImportacao, lerArquivoGuardado } from '../services/planilhas/nucleo.js';
 import { getImportadorPlanilha, IMPORTADORES, ORDEM, ARQUIVOS_PADRAO } from '../services/planilhas/index.js';
+import { avaliarAposentadoria, divergencias, SITUACOES_PLANILHA } from '../services/planilhas/aposentadoria.js';
 import { STATUS_PROCESSO } from './camaraController.js';
 
 const pendenciaFromRow = (r) => ({
@@ -243,11 +244,48 @@ export const getPlanilhas = async (_req, res) => {
        FROM importacao_pendencias GROUP BY fonte`);
   const { rows: origens } = await query('SELECT fonte, count(*)::int AS n FROM importacao_origens GROUP BY fonte');
   const execucao = (r) => (r ? { id: r.id, arquivoNome: r.arquivo_nome, resumo: r.resumo, erro: r.erro, executadoEm: r.executado_em } : null);
-  res.json(ORDEM.map((fonte) => ({
+  const aposentadoria = await Promise.all(ORDEM.map((f) => avaliarAposentadoria(f)));
+  res.json(ORDEM.map((fonte, i) => ({
     fonte, rotulo: IMPORTADORES[fonte].rotulo, arquivoPadrao: ARQUIVOS_PADRAO[fonte],
+    aposentadoria: aposentadoria[i],
     ultimaSimulacao: execucao(ultimas.find((u) => u.fonte === fonte && u.simulacao)),
     ultimaImportacao: execucao(ultimas.find((u) => u.fonte === fonte && !u.simulacao)),
     registrosImportados: origens.find((o) => o.fonte === fonte)?.n || 0,
     pendenciasAbertas: pend.find((p) => p.fonte === fonte)?.abertas || 0,
   })));
+};
+
+// ============================ Aposentadoria (O.4) ============================
+// PUT /api/importacoes/planilhas/:fonte/situacao  { situacao, desde?, observacao? }
+//   PARALELO: começa (ou recomeça) o ciclo em paralelo — exige a importação gravada;
+//   SOMENTE_LEITURA: só quando os quatro critérios estão cumpridos;
+//   EM_USO: volta atrás (ex.: divergência encontrada — o ciclo recomeça depois).
+export const setSituacaoPlanilha = async (req, res) => {
+  const { fonte } = req.params;
+  const { situacao, desde, observacao } = req.body || {};
+  if (!SITUACOES_PLANILHA.includes(situacao)) return res.status(400).json({ message: 'Situação inválida.' });
+  const atual = await avaliarAposentadoria(fonte);
+  if (!atual) return res.status(404).json({ message: 'Planilha desconhecida.' });
+  if (situacao === 'PARALELO' && !atual.criterios.find((c) => c.id === 'importada').ok) {
+    return res.status(409).json({ message: 'Importe a planilha antes de começar o ciclo em paralelo.' });
+  }
+  if (situacao === 'SOMENTE_LEITURA' && !atual.apta) {
+    return res.status(409).json({ message: 'Os critérios de aposentadoria ainda não foram cumpridos.', criterios: atual.criterios });
+  }
+  if (desde != null && !/^\d{4}-\d{2}-\d{2}$/.test(String(desde))) return res.status(400).json({ message: 'Data inválida.' });
+  await query(
+    `UPDATE planilhas SET situacao = $2,
+       paralelo_desde = CASE WHEN $2 = 'PARALELO' THEN COALESCE($3::date, CURRENT_DATE) WHEN $2 = 'EM_USO' THEN NULL ELSE paralelo_desde END,
+       somente_leitura_desde = CASE WHEN $2 = 'SOMENTE_LEITURA' THEN CURRENT_DATE ELSE NULL END,
+       observacao = COALESCE($4, observacao), atualizado_em = now(), atualizado_por = $5
+     WHERE fonte = $1`,
+    [fonte, situacao, desde || null, observacao ?? null, req.user?.id]);
+  res.json(await avaliarAposentadoria(fonte));
+};
+
+// GET /api/importacoes/planilhas/:fonte/divergencias — relatório de divergência
+// da última simulação (o que a planilha tem e o sistema não).
+export const getDivergencias = async (req, res) => {
+  if (!getImportadorPlanilha(req.params.fonte)) return res.status(404).json({ message: 'Planilha desconhecida.' });
+  res.json(await divergencias(req.params.fonte) || { itens: [] });
 };

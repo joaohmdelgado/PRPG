@@ -164,3 +164,60 @@ describe('revisão da importação (O.2)', () => {
     expect(res.status).toBe(403);
   });
 });
+
+describe('aposentadoria das planilhas (O.4)', () => {
+  const situacao = (fonte, corpo) => asAdmin(request(app).put(`/api/importacoes/planilhas/${fonte}/situacao`)).send(corpo);
+
+  it('não começa o paralelo sem importação gravada, nem aposenta sem os quatro critérios', async () => {
+    const r1 = await situacao('camara', { situacao: 'PARALELO' });
+    expect(r1.status).toBe(409);
+    await executarImportacao({ importador: importadorTeste, buffer: planilha(LINHAS), simulacao: false, guardar: false });
+    expect((await situacao('camara', { situacao: 'PARALELO' })).status).toBe(200);
+    const r2 = await situacao('camara', { situacao: 'SOMENTE_LEITURA' });
+    expect(r2.status).toBe(409);
+    expect(r2.body.criterios.filter((c) => !c.ok).map((c) => c.id)).toEqual(['decisoes', 'ciclo', 'divergencia']);
+  });
+
+  it('cumpridos os quatro (decisão respondida, ciclo vencido e reunião, simulação sem divergência) aposenta', async () => {
+    await executarImportacao({ importador: importadorTeste, buffer: planilha(LINHAS), simulacao: false, guardar: false });
+    await asAdmin(request(app).post('/api/importacoes/pendencias/lote'))
+      .send({ fonte: 'camara', tipo: 'COR_SEM_LEGENDA', valorOriginal: 'B6D7A8', acao: 'descartar' });
+    await asAdmin(request(app).post('/api/importacoes/pendencias/lote'))
+      .send({ fonte: 'camara', tipo: 'COR_SEM_LEGENDA', valorOriginal: 'F4CCCC', acao: 'descartar' });
+    await situacao('camara', { situacao: 'PARALELO', desde: '2026-06-01' });
+    // Ciclo vencido, mas sem reunião no período e sem simulação: ainda não.
+    let a = (await asAdmin(request(app).get('/api/importacoes/planilhas'))).body.find((p) => p.fonte === 'camara').aposentadoria;
+    expect(a.criterios.find((c) => c.id === 'ciclo')).toMatchObject({ ok: false });
+    expect(a.criterios.find((c) => c.id === 'ciclo').detalhe).toContain('nenhuma reunião');
+
+    await pool.query(`INSERT INTO camara_reunioes (id, data, status) VALUES ('r1', '2026-06-20', 'REALIZADA')`);
+    // Simulação sem divergência: a mesma planilha já importada = tudo inalterado.
+    await executarImportacao({ importador: importadorTeste, buffer: planilha(LINHAS), simulacao: true, guardar: false });
+    a = (await asAdmin(request(app).get('/api/importacoes/planilhas'))).body.find((p) => p.fonte === 'camara').aposentadoria;
+    expect(a.criterios.map((c) => [c.id, c.ok])).toEqual([['importada', true], ['decisoes', true], ['ciclo', true], ['divergencia', true]]);
+    expect(a.apta).toBe(true);
+
+    const fim = await situacao('camara', { situacao: 'SOMENTE_LEITURA' });
+    expect(fim.status).toBe(200);
+    expect(fim.body.situacao).toBe('SOMENTE_LEITURA');
+    expect(fim.body.somenteLeituraDesde).toBeTruthy();
+  });
+
+  it('linha nova na planilha ao fim do ciclo é divergência e barra a aposentadoria', async () => {
+    await executarImportacao({ importador: importadorTeste, buffer: planilha(LINHAS), simulacao: false, guardar: false });
+    await situacao('camara', { situacao: 'PARALELO', desde: '2026-06-01' });
+    const nova = [...LINHAS, ['23082.000009/2026-09', 'F4CCCC', 'Só na planilha']];
+    await executarImportacao({ importador: importadorTeste, buffer: planilha(nova), simulacao: true, guardar: false });
+    const a = (await asAdmin(request(app).get('/api/importacoes/planilhas'))).body.find((p) => p.fonte === 'camara').aposentadoria;
+    expect(a.criterios.find((c) => c.id === 'divergencia')).toMatchObject({ ok: false, detalhe: '1 nova(s), 0 alterada(s), 0 em conflito' });
+    const div = await asAdmin(request(app).get('/api/importacoes/planilhas/camara/divergencias'));
+    expect(div.body.itens.map((i) => i.chave)).toEqual(['23082.000009/2026-09']);
+  });
+
+  it('voltar para "em uso" descarta o ciclo', async () => {
+    await executarImportacao({ importador: importadorTeste, buffer: planilha(LINHAS), simulacao: false, guardar: false });
+    await situacao('camara', { situacao: 'PARALELO' });
+    const r = await situacao('camara', { situacao: 'EM_USO' });
+    expect(r.body).toMatchObject({ situacao: 'EM_USO', paraleloDesde: null });
+  });
+});
