@@ -97,7 +97,7 @@ export default function Noticias() {
       />
 
       {/* Main Content */}
-      <main className="flex-grow py-12">
+      <div className="flex-grow py-12">
         <div className="container mx-auto px-4">
           
           {/* Filters */}
@@ -246,7 +246,7 @@ export default function Noticias() {
           )}
 
         </div>
-      </main>
+      </div>
     </>
   );
 }

@@ -57,3 +57,26 @@ export const withProgramaScope = (url) => {
   const sep = url.includes('?') ? '&' : '?';
   return `${url}${sep}programa=${encodeURIComponent(pid)}`;
 };
+
+// Papéis que entram no painel (/admin). Aluno e Professor usam /minha-conta.
+export const PAPEIS_PAINEL = ['Administrator', 'Gestor', 'GestorPrograma'];
+
+// Quem tem qualquer papel do painel.
+export const isStaff = () => hasRole(...PAPEIS_PAINEL);
+
+// Para onde o login leva cada papel (Fase U.1): a equipe vai ao painel; aluno e
+// professor, à própria conta. Quem é os dois (ex.: professor que também é
+// GestorPrograma) cai no painel e acha "Minha conta" no cabeçalho.
+export const destinoPadrao = (roles = getRoles()) =>
+  (roles || []).some((r) => PAPEIS_PAINEL.includes(r)) ? '/admin' : '/minha-conta';
+
+// Um destino pedido só vale se o perfil pode abri-lo (não manda o aluno para /admin).
+export const destinoPermitido = (destino, roles = getRoles()) => {
+  const padrao = destinoPadrao(roles);
+  if (!destino || typeof destino !== 'string' || !destino.startsWith('/') || destino.startsWith('//')) return padrao;
+  if (destino.startsWith('/admin') && padrao !== '/admin') return padrao;
+  return destino;
+};
+
+const CHAVES_SESSAO = ['token', 'username', 'roles', 'gestorPrograma', 'senhaTemporaria', 'nome'];
+export const clearSession = () => CHAVES_SESSAO.forEach((k) => localStorage.removeItem(k));

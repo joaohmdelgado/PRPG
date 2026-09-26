@@ -90,7 +90,7 @@ export default function Noticia() {
     <>
       <AvisoPreVisualizacao item={newsItem} />
       {/* Main Content */}
-      <main className="flex-grow pb-16">
+      <div className="flex-grow pb-16">
         
         <div className="mb-10">
           <CabecalhoPagina
@@ -212,7 +212,7 @@ export default function Noticia() {
           {/* Ligados a esta notícia no painel (Fase N.5). */}
           <Relacionados tipo="noticia" id={newsItem.id} className="mt-12" />
         </div>
-      </main>
+      </div>
 
       {/* Post Navigation / Related News */}
       <section className="bg-gray-50 py-16 border-t border-gray-200">

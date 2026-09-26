@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { API_URL, apiFetch } from '../api';
 import { Languages, Upload, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import CabecalhoPagina from '../components/CabecalhoPagina';
+import Dialog from '../components/ui/Dialog';
+import { Field, Input, Select, Checkbox, FileField } from '../components/ui/Field';
 
 const LINGUAS = ['Português', 'Inglês', 'Espanhol'];
 const NIVEIS = ['Mestrado', 'Doutorado'];
@@ -182,19 +184,20 @@ export default function ProficienciaInscricao() {
                   </p>
 
                   {erro && (
-                    <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-700 rounded p-3 text-sm">
+                    <div role="alert" className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-800 rounded p-3 text-sm">
                       <AlertCircle size={18} className="shrink-0 mt-0.5" /> {erro}
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">Nome completo *</label>
-                    <input
-                      type="text" value={form.nome} required
-                      onChange={(e) => setCampo('nome', e.target.value)}
-                      onBlur={verificarNome}
-                      className="w-full border p-2 rounded"
-                    />
+                    <Field label="Nome completo" required hint={verificacao !== 'ok' ? 'Preencha o nome completo exatamente como matriculado para liberar os demais campos.' : undefined}>
+                      <Input
+                        type="text" value={form.nome} autoComplete="name"
+                        onChange={(e) => setCampo('nome', e.target.value)}
+                        onBlur={verificarNome}
+                      />
+                    </Field>
+                    <div role="status" aria-live="polite">
                     {verificacao === 'checking' && (
                       <p className="flex items-center gap-1 text-xs text-gray-500 mt-1">
                         <Loader2 className="animate-spin" size={12} /> Verificando matrícula…
@@ -210,51 +213,30 @@ export default function ProficienciaInscricao() {
                         <AlertCircle size={12} /> Aluno não localizado. Só o aluno ativo do programa pode se inscrever.
                       </p>
                     )}
-                    {verificacao !== 'ok' && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Preencha o nome completo exatamente como matriculado para liberar os demais campos.
-                      </p>
-                    )}
+                    </div>
                   </div>
 
                   <fieldset disabled={!alunoVerificado} className={`space-y-5 ${alunoVerificado ? '' : 'opacity-50 pointer-events-none'}`}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">CPF *</label>
-                      <input
-                        type="text" value={form.cpf} required
-                        onChange={(e) => setCampo('cpf', e.target.value)}
-                        className="w-full border p-2 rounded"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Nível *</label>
-                      <select
-                        value={form.nivel}
-                        onChange={(e) => setCampo('nivel', e.target.value)}
-                        className="w-full border p-2 rounded bg-white"
-                      >
-                        {NIVEIS.map((n) => <option key={n} value={n}>{n}</option>)}
-                      </select>
-                    </div>
+                    <Field label="CPF" required>
+                      <Input type="text" inputMode="numeric" autoComplete="off" value={form.cpf}
+                        onChange={(e) => setCampo('cpf', e.target.value)} />
+                    </Field>
+                    <Field label="Nível" required>
+                      <Select value={form.nivel} onChange={(e) => setCampo('nivel', e.target.value)} opcoes={NIVEIS} />
+                    </Field>
                     <div className="flex items-center pt-6">
-                      <label className="flex items-center gap-2 font-medium text-sm">
-                        <input
-                          type="checkbox" checked={form.estrangeiro}
-                          onChange={(e) => setCampo('estrangeiro', e.target.checked)}
-                          className="w-5 h-5"
-                        />
-                        Sou aluno estrangeiro
-                      </label>
+                      <Checkbox label="Sou aluno estrangeiro" checked={form.estrangeiro}
+                        onChange={(e) => setCampo('estrangeiro', e.target.checked)} />
                     </div>
                   </div>
 
                   {/* Línguas */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Língua(s) de inscrição *
-                    </label>
-                    <p className="text-xs text-gray-500 mb-2">
+                  <div role="group" aria-labelledby="linguas-rotulo" aria-describedby="linguas-ajuda">
+                    <span id="linguas-rotulo" className="block text-sm font-medium text-gray-700 mb-1">
+                      Língua(s) de inscrição <span className="text-red-600" aria-hidden="true">*</span>
+                    </span>
+                    <p id="linguas-ajuda" className="text-xs text-gray-600 mb-2">
                       {form.estrangeiro
                         ? 'Estrangeiro: Português + mais uma língua.'
                         : form.nivel === 'Doutorado'
@@ -267,7 +249,7 @@ export default function ProficienciaInscricao() {
                         const travada = form.estrangeiro && l === 'Português'; // sempre marcada
                         return (
                           <button
-                            type="button" key={l}
+                            type="button" key={l} aria-pressed={sel}
                             onClick={() => !travada && toggleLingua(l)}
                             className={`px-4 py-2 rounded-full border text-sm transition-colors ${
                               sel
@@ -283,41 +265,26 @@ export default function ProficienciaInscricao() {
                   </div>
 
                   {/* Comprovante de residência */}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Comprovante de residência (PDF ou imagem) *
-                    </label>
-                    <FileInput
-                      value={form.comprovanteResidenciaUrl}
-                      uploading={uploadField === 'comprovanteResidenciaUrl'}
-                      onPick={(f) => upload(f, 'comprovanteResidenciaUrl')}
-                      onClear={() => setForm((p) => ({ ...p, comprovanteResidenciaUrl: '' }))}
-                    />
-                  </div>
+                  <FileField
+                    label="Comprovante de residência (PDF ou imagem)" required accept="application/pdf,image/*"
+                    atual={form.comprovanteResidenciaUrl ? `${API_URL}${form.comprovanteResidenciaUrl}` : ''}
+                    enviando={uploadField === 'comprovanteResidenciaUrl'}
+                    onEscolher={(f) => upload(f, 'comprovanteResidenciaUrl')}
+                    onRemover={() => setForm((p) => ({ ...p, comprovanteResidenciaUrl: '' }))}
+                  />
 
-                  <label className="flex items-center gap-2 font-medium text-sm">
-                    <input
-                      type="checkbox" checked={form.titularComprovante}
-                      onChange={(e) => setCampo('titularComprovante', e.target.checked)}
-                      className="w-5 h-5"
-                    />
-                    Sou o titular do comprovante de residência
-                  </label>
+                  <Checkbox label="Sou o titular do comprovante de residência" checked={form.titularComprovante}
+                    onChange={(e) => setCampo('titularComprovante', e.target.checked)} />
 
                   {/* Comprovante de vínculo — só quando não é titular */}
                   {!form.titularComprovante && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Comprovante de vínculo com o titular (PDF) *
-                      </label>
-                      <FileInput
-                        value={form.comprovanteVinculoUrl}
-                        uploading={uploadField === 'comprovanteVinculoUrl'}
-                        accept="application/pdf"
-                        onPick={(f) => upload(f, 'comprovanteVinculoUrl')}
-                        onClear={() => setForm((p) => ({ ...p, comprovanteVinculoUrl: '' }))}
-                      />
-                    </div>
+                    <FileField
+                      label="Comprovante de vínculo com o titular (PDF)" required accept="application/pdf"
+                      atual={form.comprovanteVinculoUrl ? `${API_URL}${form.comprovanteVinculoUrl}` : ''}
+                      enviando={uploadField === 'comprovanteVinculoUrl'}
+                      onEscolher={(f) => upload(f, 'comprovanteVinculoUrl')}
+                      onRemover={() => setForm((p) => ({ ...p, comprovanteVinculoUrl: '' }))}
+                    />
                   )}
 
                   <div className="pt-2 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
@@ -343,58 +310,18 @@ export default function ProficienciaInscricao() {
       </div>
 
       {/* Modal: aluno não localizado entre os matriculados. */}
-      {mostrarModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          role="dialog" aria-modal="true"
-          onClick={() => setMostrarModal(false)}
-        >
-          <div
-            className="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start gap-3">
-              <AlertCircle size={28} className="text-red-600 shrink-0" />
-              <div>
-                <h2 className="font-heading text-lg font-bold text-gray-900">Aluno não localizado</h2>
-                <p className="text-sm text-gray-600 mt-2">
-                  Não encontramos um aluno matriculado com o nome informado. A inscrição
-                  só pode ser realizada por aluno ativo do programa. Confira se o nome
-                  completo foi digitado exatamente como consta na matrícula.
-                </p>
-              </div>
-            </div>
-            <div className="flex justify-end mt-6">
-              <button
-                type="button"
-                onClick={() => setMostrarModal(false)}
-                className="bg-ufrpe-blue text-white px-5 py-2 rounded hover:bg-[#2a3a66]"
-              >
-                Entendi
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Dialog
+        aberto={mostrarModal} papel="alertdialog" tamanho="sm" onFechar={() => setMostrarModal(false)}
+        titulo="Aluno não localizado"
+        descricao="Não encontramos um aluno matriculado com o nome informado. A inscrição só pode ser realizada por aluno ativo do programa. Confira se o nome completo foi digitado exatamente como consta na matrícula."
+        rodape={(
+          <button type="button" onClick={() => setMostrarModal(false)}
+            className="bg-ufrpe-blue text-white px-5 py-2 rounded hover:bg-[#2a3a66]">
+            Entendi
+          </button>
+        )}
+      />
     </>
   );
 }
 
-const FileInput = ({ value, uploading, accept = 'application/pdf,image/*', onPick, onClear }) => (
-  <div>
-    {value ? (
-      <div className="flex items-center gap-3 text-sm">
-        <a href={`${API_URL}${value}`} target="_blank" rel="noopener noreferrer"
-          className="text-ufrpe-blue underline">Arquivo enviado</a>
-        <button type="button" onClick={onClear} className="text-red-600 hover:underline">Remover</button>
-      </div>
-    ) : (
-      <label className="inline-flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded cursor-pointer text-sm text-gray-600 hover:border-ufrpe-blue">
-        {uploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
-        {uploading ? 'Enviando…' : 'Selecionar arquivo'}
-        <input type="file" accept={accept} className="hidden"
-          onChange={(e) => onPick(e.target.files?.[0])} />
-      </label>
-    )}
-  </div>
-);

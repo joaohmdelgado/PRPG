@@ -1,8 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, ExternalLink, ChevronDown } from 'lucide-react';
-import { isProgramaGestor, getGestorPrograma } from '../auth';
+import { LogOut, ExternalLink, ChevronDown, Menu as MenuIcon, X } from 'lucide-react';
+import { isProgramaGestor, getGestorPrograma, clearSession } from '../auth';
 import { INICIO, gruposDoPainel } from './admin/menuPainel';
+import RouteFocusManager from './ui/RouteFocusManager';
+import useFocusTrap from '../hooks/useFocusTrap';
+import useMediaQuery from '../hooks/useMediaQuery';
+import useAssociarRotulos from '../hooks/useAssociarRotulos';
 
 const GRUPOS_ABERTOS_KEY = 'painel.gruposAbertos';
 
@@ -20,7 +24,7 @@ const AdminLayout = () => {
   const location = useLocation();
 
   const handleLogout = () => {
-    ['token', 'username', 'roles', 'gestorPrograma', 'senhaTemporaria'].forEach((k) => localStorage.removeItem(k));
+    clearSession();
     navigate('/admin/login');
   };
 
@@ -36,6 +40,18 @@ const AdminLayout = () => {
   const roleLabel = gestorPrograma ? 'Gestor de Programa' : (userRoles[0] || 'Usuário');
   const initial = username.trim().charAt(0).toUpperCase() || 'A';
   const siglaPrograma = programa?.sigla && programa.sigla !== 'S/SIGLA' ? programa.sigla : programa?.nome;
+
+  // Abaixo de 1024 px o menu vira um drawer: fechado fica fora da tela E fora da
+  // ordem de foco (inert); aberto prende o foco, Escape fecha e o foco volta ao botão.
+  const desktop = useMediaQuery('(min-width: 1024px)', true);
+  const [drawerAberto, setDrawerAberto] = useState(false);
+  const asideRef = useRef(null);
+  const mainRef = useRef(null);
+  const drawerAtivo = !desktop && drawerAberto;
+  useFocusTrap(asideRef, drawerAtivo, { onEscape: () => setDrawerAberto(false) });
+  useAssociarRotulos(mainRef);
+  useEffect(() => { setDrawerAberto(false); }, [location.pathname]);
+  useEffect(() => { if (desktop) setDrawerAberto(false); }, [desktop]);
 
   const grupos = gruposDoPainel({ superAdmin: isSuperAdmin, gestorPrograma, programaId: programa?.id, roles: userRoles });
 
@@ -78,10 +94,26 @@ const AdminLayout = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-64 bg-ufrpe-blue text-white flex flex-col shrink-0">
-        <div className="px-6 pt-6 pb-5 border-b border-white/10">
+    <div className="flex h-dvh bg-gray-100">
+      <a href="#conteudo-painel"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[80] focus:bg-white focus:text-ufrpe-blue focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg">
+        Ir para o conteúdo
+      </a>
+      <RouteFocusManager alvoId="conteudo-painel" />
+
+      {drawerAtivo && <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" aria-hidden="true" onClick={() => setDrawerAberto(false)} />}
+
+      {/* Menu: coluna fixa no desktop, drawer no celular/tablet */}
+      <aside
+        id="menu-painel"
+        ref={asideRef}
+        inert={!desktop && !drawerAberto ? true : undefined}
+        role={drawerAtivo ? 'dialog' : undefined}
+        aria-modal={drawerAtivo ? 'true' : undefined}
+        aria-label={drawerAtivo ? 'Menu do painel' : undefined}
+        className={`fixed inset-y-0 left-0 z-40 w-72 max-w-[85vw] lg:static lg:w-64 lg:max-w-none lg:z-auto bg-ufrpe-blue text-white flex flex-col shrink-0 transition-transform duration-200 motion-reduce:transition-none ${drawerAberto ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
+      >
+        <div className="px-6 pt-6 pb-5 border-b border-white/10 flex items-start justify-between">
           <Link to="/admin" className="inline-block">
             <span className="font-heading font-extrabold text-2xl text-white leading-none border-b-4 border-ufrpe-yellow pb-1 inline-block">
               PRPG
@@ -90,6 +122,10 @@ const AdminLayout = () => {
               {gestorPrograma ? `Painel do Programa${siglaPrograma ? ` · ${siglaPrograma}` : ''}` : 'Painel Administrativo'}
             </span>
           </Link>
+          <button type="button" onClick={() => setDrawerAberto(false)} aria-label="Fechar menu"
+            className="lg:hidden p-1.5 -mr-2 rounded-md text-white/75 hover:bg-white/10">
+            <X size={20} aria-hidden="true" />
+          </button>
         </div>
 
         <nav aria-label="Painel" className="flex-1 px-3 pb-4 pt-3 overflow-y-auto">
@@ -130,13 +166,20 @@ const AdminLayout = () => {
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white border-b border-gray-100 px-8 py-3.5 flex justify-between items-center shrink-0">
-          <h1 className="font-heading text-lg font-semibold text-ufrpe-blue">
+      {/* Conteúdo */}
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+        <header className="bg-white border-b border-gray-100 px-4 sm:px-8 py-3 flex justify-between items-center gap-3 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <button type="button" onClick={() => setDrawerAberto(true)}
+              aria-label="Abrir menu do painel" aria-expanded={drawerAtivo} aria-controls="menu-painel"
+              className="lg:hidden p-2 -ml-2 rounded-md text-ufrpe-blue hover:bg-gray-100">
+              <MenuIcon size={22} aria-hidden="true" />
+            </button>
+          <h1 className="font-heading text-base sm:text-lg font-semibold text-ufrpe-blue truncate">
             {gestorPrograma ? `Painel do Programa${siglaPrograma ? ` · ${siglaPrograma}` : ''}` : 'Painel de Controle'}
           </h1>
-          <div className="flex items-center gap-5">
+          </div>
+          <div className="flex items-center gap-3 sm:gap-5 shrink-0">
             <a
               href={gestorPrograma && programa?.slug ? `/${programa.slug}` : '/'}
               target="_blank"
@@ -159,10 +202,10 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-8">
+        <main id="conteudo-painel" ref={mainRef} tabIndex={-1} className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 outline-none">
           <Outlet />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

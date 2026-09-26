@@ -28,7 +28,7 @@ export default function ProgramaNoticia() {
 
   if (!noticia) {
     return (
-      <main className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16">
         <EmptyState icon="fa-circle-exclamation" title="Notícia não encontrada"
           hint="A notícia solicitada não existe ou foi removida." />
         <div className="text-center mt-6">
@@ -36,7 +36,7 @@ export default function ProgramaNoticia() {
             <Icone nome="fa-solid fa-arrow-left" className="mr-2" /> Voltar para Notícias
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -64,7 +64,7 @@ export default function ProgramaNoticia() {
         </div>
       </div>
 
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
         {noticia.image && (
           <figure className="mb-8">
             <img src={noticia.image.startsWith('http') ? noticia.image : `${API_URL}${noticia.image}`} alt={noticia.title}
@@ -96,7 +96,7 @@ export default function ProgramaNoticia() {
             </div>
           )}
         </div>
-      </main>
+      </div>
     </article>
   );
 }

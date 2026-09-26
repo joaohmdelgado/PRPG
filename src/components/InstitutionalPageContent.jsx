@@ -25,7 +25,7 @@ export default function InstitutionalPageContent({ page, heroClassName = 'bg-ufr
         </div>
       </div>
 
-      <main className="flex-grow py-12 bg-gray-50">
+      <div className="flex-grow py-12 bg-gray-50">
         <div className="container mx-auto px-4 max-w-5xl">
           <div className="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100">
             <SafeHtml
@@ -34,7 +34,7 @@ export default function InstitutionalPageContent({ page, heroClassName = 'bg-ufr
             />
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }

@@ -40,7 +40,7 @@ export default function ProgramaComissoes() {
         eyebrow="Gestão"
         title="Comissões do Programa"
       />
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
         {tipos.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
             <Icone nome="fa-solid fa-users-gear" className="text-5xl mb-4 block opacity-30" />
@@ -62,7 +62,7 @@ export default function ProgramaComissoes() {
             ))}
           </div>
         )}
-      </main>
+      </div>
     </>
   );
 }

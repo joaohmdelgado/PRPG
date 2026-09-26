@@ -120,7 +120,7 @@ export default function Resolucoes() {
       />
 
       {/* Main Content */}
-      <main className="flex-grow py-12">
+      <div className="flex-grow py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-8">
             
@@ -235,7 +235,7 @@ export default function Resolucoes() {
 
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }

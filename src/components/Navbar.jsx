@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useMenu, useConfig, linkTelefone } from '../hooks/usePortal';
 import LinkDestino from './LinkDestino';
 import Icone from './Icone';
+import Dialog from './ui/Dialog';
 
 // Itens do menu, links da faixa superior, contato e logo vêm do banco
 // (Fase H.1 — editados no painel em "Menus e portal").
@@ -270,40 +271,19 @@ export default function Navbar() {
           </div>
         )}
       </nav>
-      {/* Map Modal */}
-      {mapOpen && contato.mapa && (
-        <div id="map-modal" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-ufrpe-blue/70 backdrop-blur-sm" 
-            id="map-modal-overlay"
-            onClick={() => setMapOpen(false)}
-          ></div>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl relative z-10 overflow-hidden animate-in zoom-in duration-300">
-            <div className="flex justify-between items-center p-4 border-b border-gray-100">
-              <h3 className="font-bold text-ufrpe-blue flex items-center gap-2">
-                <Icone nome="fa-solid fa-location-dot" className="text-ufrpe-yellow" /> 
-                Nossa Localização
-              </h3>
-              <button 
-                onClick={() => setMapOpen(false)} 
-                id="close-map" 
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors cursor-pointer"
-              >
-                <Icone nome="fa-solid fa-xmark" />
-              </button>
-            </div>
-            <div className="aspect-video w-full">
-              <iframe 
-                src={contato.mapa} 
-                className="w-full h-full border-0" 
-                allowFullScreen="" 
-                loading="lazy" 
-                referrerPolicy="no-referrer-when-downgrade">
-              </iframe>
-            </div>
-          </div>
+      {/* Mapa: Dialog acessível (foco preso, Escape fecha, foco volta ao botão). */}
+      <Dialog aberto={!!(mapOpen && contato.mapa)} onFechar={() => setMapOpen(false)} titulo="Nossa Localização" tamanho="xl">
+        <div className="aspect-video w-full">
+          <iframe
+            title="Mapa da localização da PRPG"
+            src={contato.mapa}
+            className="w-full h-full border-0"
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade">
+          </iframe>
         </div>
-      )}
+      </Dialog>
     </>
   );
 }

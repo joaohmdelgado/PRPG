@@ -31,7 +31,7 @@ export default function ProgramaNoticias() {
       <PageHero icon="fa-newspaper" eyebrow="Comunicação" title="Notícias"
         subtitle={`Novidades, comunicados e eventos do programa ${programa.nome}.`} />
 
-      <main className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 py-12">
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mb-8 relative max-w-xl">
           <Icone nome="fa-solid fa-search" className="absolute left-7 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -74,7 +74,7 @@ export default function ProgramaNoticias() {
             ))}
           </div>
         )}
-      </main>
+      </div>
     </>
   );
 }

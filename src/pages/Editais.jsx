@@ -133,7 +133,7 @@ export default function Editais() {
         subtitulo="Editais, processos seletivos e chamadas públicas da Pró-Reitoria de Pós-Graduação e dos programas."
       />
 
-      <main className="flex-grow py-12">
+      <div className="flex-grow py-12">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-8">
 
@@ -356,7 +356,7 @@ export default function Editais() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </>
   );
 }

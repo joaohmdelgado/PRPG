@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { apiFetch } from '../../api';
-import { getUserId } from '../../auth';
+import { getUserId, destinoPadrao, destinoPermitido, clearSession } from '../../auth';
+import { Field, Input } from '../../components/ui/Field';
 
 // Troca obrigatória de senha no primeiro acesso (senha provisória 'Mudar123' ou
 // reset feito pelo admin). Enquanto a flag `senhaTemporaria` existir, o
@@ -12,6 +13,7 @@ const AdminTrocarSenha = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ const AdminTrocarSenha = () => {
 
       if (response.ok) {
         localStorage.removeItem('senhaTemporaria');
-        navigate('/admin');
+        navigate(destinoPermitido(location.state?.de) || destinoPadrao(), { replace: true });
       } else if (response.status === 401) {
         navigate('/admin/login');
       } else {
@@ -54,7 +56,7 @@ const AdminTrocarSenha = () => {
   };
 
   const logout = () => {
-    localStorage.clear();
+    clearSession();
     navigate('/admin/login');
   };
 
@@ -65,44 +67,30 @@ const AdminTrocarSenha = () => {
           <span className="font-heading font-extrabold text-4xl text-white leading-none border-b-4 border-ufrpe-yellow pb-1.5 inline-block">
             PRPG
           </span>
-          <p className="text-white/55 mt-4 font-heading tracking-wide">Painel Administrativo</p>
+          <p className="text-white/70 mt-4 font-heading tracking-wide">Pró-Reitoria de Pós-Graduação</p>
         </div>
 
         <div className="bg-white p-8 rounded-2xl shadow-2xl">
           <h1 className="font-heading text-xl font-semibold text-ufrpe-blue">Defina uma nova senha</h1>
-          <p className="text-sm text-gray-500 mt-1 mb-6">
+          <p className="text-sm text-gray-600 mt-1 mb-6">
             Sua senha é provisória. Por segurança, escolha uma nova senha antes de continuar.
           </p>
 
           {error && (
-            <div className="bg-red-50 text-ufrpe-red p-3 rounded-lg mb-5 text-sm">
+            <div role="alert" className="bg-red-50 text-red-800 p-3 rounded-lg mb-5 text-sm">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nova senha</label>
-              <input
-                type="password"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow outline-none transition-all"
-                autoComplete="new-password"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirme a nova senha</label>
-              <input
-                type="password"
-                value={confirma}
-                onChange={(e) => setConfirma(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ufrpe-yellow focus:border-ufrpe-yellow outline-none transition-all"
-                autoComplete="new-password"
-                required
-              />
-            </div>
+            <Field label="Nova senha" required hint="Pelo menos 8 caracteres.">
+              <Input type="password" value={senha} onChange={(e) => setSenha(e.target.value)}
+                className="px-4 py-2.5 rounded-lg" autoComplete="new-password" />
+            </Field>
+            <Field label="Confirme a nova senha" required>
+              <Input type="password" value={confirma} onChange={(e) => setConfirma(e.target.value)}
+                className="px-4 py-2.5 rounded-lg" autoComplete="new-password" />
+            </Field>
             <button
               type="submit"
               disabled={loading}
@@ -113,8 +101,9 @@ const AdminTrocarSenha = () => {
           </form>
 
           <button
+            type="button"
             onClick={logout}
-            className="w-full mt-4 text-sm text-gray-500 hover:text-ufrpe-blue transition-colors"
+            className="w-full mt-4 text-sm text-gray-600 hover:text-ufrpe-blue transition-colors"
           >
             Sair
           </button>

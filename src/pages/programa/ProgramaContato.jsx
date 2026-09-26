@@ -26,7 +26,7 @@ export default function ProgramaContato() {
       <PageHero icon="fa-envelope" eyebrow="Atendimento" title="Contato"
         subtitle={`Secretaria do programa ${programa.nome}.`} />
 
-      <main className="container mx-auto px-4 py-12 max-w-5xl">
+      <div className="container mx-auto px-4 py-12 max-w-5xl">
         <div className="grid md:grid-cols-2 gap-5 mb-8">
           {programa.endereco && (
             <InfoCard icon="fa-location-dot" label="Endereço">{programa.endereco}</InfoCard>
@@ -60,7 +60,7 @@ export default function ProgramaContato() {
               allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"></iframe>
           </div>
         )}
-      </main>
+      </div>
     </>
   );
 }

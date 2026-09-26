@@ -26,7 +26,7 @@ export default function ProgramaSobre() {
         subtitle={programa.descricao_curta}
       />
 
-      <main className="container mx-auto px-4 py-12 max-w-5xl space-y-8">
+      <div className="container mx-auto px-4 py-12 max-w-5xl space-y-8">
         {!temTexto && historico.length === 0 ? (
           <EmptyState
             icon="fa-file-pen"
@@ -71,7 +71,7 @@ export default function ProgramaSobre() {
             )}
           </>
         )}
-      </main>
+      </div>
     </>
   );
 }

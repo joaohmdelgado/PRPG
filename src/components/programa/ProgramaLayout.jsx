@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { usePrograma, programaPath } from './ProgramaContext';
 import Icone from '../Icone';
+import RouteFocusManager from '../ui/RouteFocusManager';
 
 // O menu vem montado do servidor (programa.menu — server/utils/micrositeMenu.js,
 // Fase S.1): 4 grupos (O Programa / Pessoas / Produção / Admissão) com
@@ -67,6 +68,11 @@ export default function ProgramaLayout({ children }) {
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-gray-50" style={themeStyle}>
+      <a href="#conteudo-programa"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[80] focus:bg-white focus:text-gray-900 focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg">
+        Ir para o conteúdo
+      </a>
+      <RouteFocusManager alvoId="conteudo-programa" />
       {/* Barra discreta: identifica o portal da PRPG por cima do microsite */}
       <div className="bg-ufrpe-blue text-white/80 text-xs">
         <div className="container mx-auto px-4 h-9 flex items-center justify-between">
@@ -232,7 +238,7 @@ export default function ProgramaLayout({ children }) {
         )}
       </nav>
 
-      <main className="flex-1">{children}</main>
+      <main id="conteudo-programa" tabIndex={-1} className="flex-1 outline-none">{children}</main>
 
       {/* Footer do programa */}
       <footer className="bg-[var(--prog-primary)] text-white/80 mt-auto border-t-4 border-[var(--prog-accent)]">

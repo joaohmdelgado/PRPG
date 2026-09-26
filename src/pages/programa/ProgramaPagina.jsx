@@ -46,19 +46,19 @@ export default function ProgramaPagina() {
 
   if (status === 'vazia') {
     return (
-      <main className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16">
         <EmptyState
           icon="fa-file-pen"
           title={pagina.title}
           hint="Conteúdo em construção — as informações serão publicadas em breve."
         />
-      </main>
+      </div>
     );
   }
 
   if (status === 'notfound') {
     return (
-      <main className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-16">
         <EmptyState
           icon="fa-file-circle-xmark"
           title="Página não encontrada"
@@ -69,7 +69,7 @@ export default function ProgramaPagina() {
             <Icone nome="fa-solid fa-arrow-left" className="mr-2" /> Voltar para o início
           </Link>
         </div>
-      </main>
+      </div>
     );
   }
 

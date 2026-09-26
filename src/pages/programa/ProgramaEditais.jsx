@@ -41,7 +41,7 @@ export default function ProgramaEditais() {
       <PageHero icon="fa-file-lines" eyebrow="Admissão" title="Editais e Seleções"
         subtitle={`Processos seletivos e chamadas do programa ${programa.nome}.`} />
 
-      <main className="container mx-auto px-4 py-12 max-w-4xl">
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
         {loading ? (
           <Spinner />
         ) : editais.length === 0 ? (
@@ -89,7 +89,7 @@ export default function ProgramaEditais() {
             ))}
           </div>
         )}
-      </main>
+      </div>
     </>
   );
 }

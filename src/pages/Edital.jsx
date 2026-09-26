@@ -111,7 +111,7 @@ export default function Edital() {
       />
 
       {/* Main Content */}
-      <main className="flex-grow py-12 bg-gray-50">
+      <div className="flex-grow py-12 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-8">
             
@@ -310,7 +310,7 @@ export default function Edital() {
           {/* Resoluções, formulários e notícias ligados a este edital (Fase N.5). */}
           <Relacionados tipo="edital" id={edital.id} className="mt-8" />
         </div>
-      </main>
+      </div>
     </>
   );
 }

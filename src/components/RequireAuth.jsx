@@ -1,5 +1,6 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { clearSession } from '../auth';
 
 // Decodifica o payload do JWT (sem verificar assinatura — isso é papel do
 // servidor) apenas para checar a expiração no cliente e evitar deixar o
@@ -14,21 +15,18 @@ const isTokenExpired = (token) => {
   }
 };
 
-const clearSession = () => {
-  localStorage.removeItem('token');
-  localStorage.removeItem('username');
-  localStorage.removeItem('roles');
-  localStorage.removeItem('senhaTemporaria');
-};
-
 // `skipPasswordCheck` é usado pela própria rota de troca de senha, para não
 // entrar em laço de redirecionamento enquanto a flag provisória ainda existe.
-const RequireAuth = ({ allowedRoles, skipPasswordCheck }) => {
+// `semAcesso`: para onde mandar quem está logado mas não tem o papel (padrão
+// /admin; a raiz do painel usa /minha-conta, que é o lugar de aluno e professor).
+const RequireAuth = ({ allowedRoles, skipPasswordCheck, semAcesso = '/admin' }) => {
   const token = localStorage.getItem('token');
+  const location = useLocation();
 
   if (!token || isTokenExpired(token)) {
     clearSession();
-    return <Navigate to="/admin/login" replace />;
+    // Lembra para onde a pessoa queria ir; o login volta para lá.
+    return <Navigate to="/admin/login" replace state={{ de: location.pathname + location.search }} />;
   }
 
   // Senha provisória pendente: tranca o painel na troca de senha.
@@ -41,7 +39,7 @@ const RequireAuth = ({ allowedRoles, skipPasswordCheck }) => {
       const userRoles = JSON.parse(localStorage.getItem('roles') || '[]');
       const hasAccess = allowedRoles.some(role => userRoles.includes(role));
       if (!hasAccess) {
-        return <Navigate to="/admin" replace />;
+        return <Navigate to={semAcesso} replace />;
       }
     } catch (e) {
       return <Navigate to="/admin/login" replace />;

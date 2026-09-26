@@ -11,7 +11,7 @@ export default function ProgramaLinhas() {
   return (
     <>
       <PageHero icon="fa-flask" eyebrow="O Programa" title="Linhas de Pesquisa" />
-      <main className="container mx-auto px-4 py-12 max-w-5xl">
+      <div className="container mx-auto px-4 py-12 max-w-5xl">
         {linhas.length === 0 ? (
           <EmptyState icon="fa-flask" title="Nenhuma linha de pesquisa cadastrada" />
         ) : (
@@ -26,7 +26,7 @@ export default function ProgramaLinhas() {
             ))}
           </ol>
         )}
-      </main>
+      </div>
     </>
   );
 }
