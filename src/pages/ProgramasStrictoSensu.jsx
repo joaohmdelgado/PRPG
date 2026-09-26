@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import * as XLSX from 'xlsx';
 import { apiFetch } from '../api';
 import CabecalhoPagina from '../components/CabecalhoPagina';
 import Icone from '../components/Icone';
@@ -121,7 +120,9 @@ export default function ProgramasStrictoSensu() {
     setSearchTerm(''); setFilterRede('ALL'); setFiltroArea(''); setFiltroModalidade(''); setFiltroNota(''); setFiltroCampus('');
   };
 
-  const handleExport = (format) => {
+  // A biblioteca de planilhas (~290 KB) só é baixada quando alguém exporta:
+  // o carregamento da página não paga por ela.
+  const handleExport = async (format) => {
     // Generate flat list from currently filtered programs
     const flatData = [];
     Object.values(programasData).forEach(list => {
@@ -148,6 +149,7 @@ export default function ProgramasStrictoSensu() {
 
     if (flatData.length === 0) return;
 
+    const XLSX = await import('xlsx');
     const worksheet = XLSX.utils.json_to_sheet(flatData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Programas');

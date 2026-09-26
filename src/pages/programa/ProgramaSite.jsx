@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { Routes, Route, useParams, Link, Navigate } from 'react-router-dom';
 import { apiFetch } from '../../api';
 import { ProgramaContext } from '../../components/programa/ProgramaContext';
@@ -6,24 +6,28 @@ import ProgramaLayout from '../../components/programa/ProgramaLayout';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import PaginaInstitucional from '../PaginaInstitucional';
-import ProgramaHome from './ProgramaHome';
-import ProgramaSobre from './ProgramaSobre';
-import ProgramaNoticias from './ProgramaNoticias';
-import ProgramaNoticia from './ProgramaNoticia';
-import ProgramaEditais from './ProgramaEditais';
-import ProgramaContato from './ProgramaContato';
-import ProgramaDisciplinas from './ProgramaDisciplinas';
-import ProgramaTeses from './ProgramaTeses';
-import ProgramaFaq from './ProgramaFaq';
-import ProgramaGrupos from './ProgramaGrupos';
-import ProgramaDocumentos from './ProgramaDocumentos';
-import ProgramaPessoas from './ProgramaPessoas';
-import ProgramaBusca from './ProgramaBusca';
-import ProgramaComissoes from './ProgramaComissoes';
-import ProgramaDiscentes from './ProgramaDiscentes';
-import ProgramaPagina from './ProgramaPagina';
-import ProgramaLinhas from './ProgramaLinhas';
 import Icone from '../../components/Icone';
+import { Carregando } from '../../components/ui/Estados';
+
+// Cada subpágina é um chunk próprio: quem abre a home do microsite não baixa
+// o código de Docentes, Teses, Disciplinas etc. (Fase P.1).
+const ProgramaHome = lazy(() => import('./ProgramaHome'));
+const ProgramaSobre = lazy(() => import('./ProgramaSobre'));
+const ProgramaNoticias = lazy(() => import('./ProgramaNoticias'));
+const ProgramaNoticia = lazy(() => import('./ProgramaNoticia'));
+const ProgramaEditais = lazy(() => import('./ProgramaEditais'));
+const ProgramaContato = lazy(() => import('./ProgramaContato'));
+const ProgramaDisciplinas = lazy(() => import('./ProgramaDisciplinas'));
+const ProgramaTeses = lazy(() => import('./ProgramaTeses'));
+const ProgramaFaq = lazy(() => import('./ProgramaFaq'));
+const ProgramaGrupos = lazy(() => import('./ProgramaGrupos'));
+const ProgramaDocumentos = lazy(() => import('./ProgramaDocumentos'));
+const ProgramaPessoas = lazy(() => import('./ProgramaPessoas'));
+const ProgramaBusca = lazy(() => import('./ProgramaBusca'));
+const ProgramaComissoes = lazy(() => import('./ProgramaComissoes'));
+const ProgramaDiscentes = lazy(() => import('./ProgramaDiscentes'));
+const ProgramaPagina = lazy(() => import('./ProgramaPagina'));
+const ProgramaLinhas = lazy(() => import('./ProgramaLinhas'));
 
 function FullScreen({ children }) {
   return (
@@ -174,30 +178,32 @@ export default function ProgramaSite() {
         </div>
       )}
       <ProgramaLayout>
-        <Routes>
-          <Route index element={<ProgramaHome />} />
-          <Route path="sobre" element={<ProgramaSobre />} />
-          <Route path="noticias" element={<ProgramaNoticias />} />
-          <Route path="noticias/:id" element={<ProgramaNoticia />} />
-          <Route path="editais" element={<ProgramaEditais />} />
-          <Route path="busca" element={<ProgramaBusca />} />
-          <Route path="comissoes" element={<ProgramaComissoes />} />
-          <Route path="discentes" element={<ProgramaDiscentes />} />
-          <Route path="egressos" element={<ProgramaDiscentes egressos />} />
-          <Route path="linhas-de-pesquisa" element={<ProgramaLinhas />} />
-          <Route path="pessoas" element={<ProgramaPessoas />} />
-          <Route path="disciplinas" element={<ProgramaDisciplinas />} />
-          <Route path="teses" element={<ProgramaTeses />} />
-          <Route path="faq" element={<ProgramaFaq />} />
-          <Route path="grupos-pesquisa" element={<ProgramaGrupos />} />
-          <Route path="documentos" element={<ProgramaDocumentos />} />
-          <Route path="contato" element={<ProgramaContato />} />
-          {/* Endereço próprio de uma página institucional vinculada a este
-              programa (/<programaSlug>/<pageSlug>) — precisa vir depois das
-              rotas fixas acima para não "roubar" seus nomes. */}
-          <Route path=":pageSlug" element={<ProgramaPagina />} />
-          <Route path="*" element={<ProgramaHome />} />
-        </Routes>
+        <Suspense fallback={<Carregando className="min-h-[40vh]" />}>
+          <Routes>
+            <Route index element={<ProgramaHome />} />
+            <Route path="sobre" element={<ProgramaSobre />} />
+            <Route path="noticias" element={<ProgramaNoticias />} />
+            <Route path="noticias/:id" element={<ProgramaNoticia />} />
+            <Route path="editais" element={<ProgramaEditais />} />
+            <Route path="busca" element={<ProgramaBusca />} />
+            <Route path="comissoes" element={<ProgramaComissoes />} />
+            <Route path="discentes" element={<ProgramaDiscentes />} />
+            <Route path="egressos" element={<ProgramaDiscentes egressos />} />
+            <Route path="linhas-de-pesquisa" element={<ProgramaLinhas />} />
+            <Route path="pessoas" element={<ProgramaPessoas />} />
+            <Route path="disciplinas" element={<ProgramaDisciplinas />} />
+            <Route path="teses" element={<ProgramaTeses />} />
+            <Route path="faq" element={<ProgramaFaq />} />
+            <Route path="grupos-pesquisa" element={<ProgramaGrupos />} />
+            <Route path="documentos" element={<ProgramaDocumentos />} />
+            <Route path="contato" element={<ProgramaContato />} />
+            {/* Endereço próprio de uma página institucional vinculada a este
+                programa (/<programaSlug>/<pageSlug>) — precisa vir depois das
+                rotas fixas acima para não "roubar" seus nomes. */}
+            <Route path=":pageSlug" element={<ProgramaPagina />} />
+            <Route path="*" element={<ProgramaHome />} />
+          </Routes>
+        </Suspense>
       </ProgramaLayout>
     </ProgramaContext.Provider>
   );
