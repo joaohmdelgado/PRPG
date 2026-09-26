@@ -2,9 +2,8 @@ import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import { isProgramaGestor, PAPEIS_PAINEL } from './auth';
 
-// Layouts e guardas ficam eager (envolvem todas as rotas e são pequenos).
+// Layout público e guarda ficam eager (envolvem quase todas as rotas e são pequenos).
 import PublicLayout from './components/PublicLayout';
-import AdminLayout from './components/AdminLayout';
 import RequireAuth from './components/RequireAuth';
 import { Carregando } from './components/ui/Estados';
 import Icone from './components/Icone';
@@ -32,6 +31,9 @@ const ContaDados = lazy(() => import('./pages/conta/ContaDados'));
 const ContaInscricoes = lazy(() => import('./pages/conta/ContaInscricoes'));
 const ContaDeclaracoes = lazy(() => import('./pages/conta/ContaDeclaracoes'));
 const ContaRelatorias = lazy(() => import('./pages/conta/ContaRelatorias'));
+
+// O painel (menu, paleta de busca, ícones do menu) só é baixado por quem entra nele.
+const AdminLayout = lazy(() => import('./components/AdminLayout'));
 
 // Admin
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
