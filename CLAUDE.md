@@ -27,6 +27,9 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 | `npm run db:up` | Start the PostgreSQL container (Docker Compose) |
 | `npm run db:down` | Stop the PostgreSQL container |
 | `npm run db:migrate` | (Re)create rows in the DB from the JSON seed files (TRUNCATEs first) |
+| `npm run planilha -- <fonte> <arquivo.xlsx> [--gravar]` | Importa uma das 4 planilhas (contatos, expedientes, camara, pnpd). **Simulação por padrão** (nada é gravado); `todas <pasta>` simula a sequência inteira |
+| `npm run agendador` | Avalia os prazos uma vez e sai (para cron); `-- --continuo` fica rodando. Só no painel, sem e-mail, até `AGENDADOR_EMAIL=true` |
+| `npm run links` | Verificador de links (cron semanal); resultado no painel Qualidade dos dados |
 | `npm test` | Run the Vitest suite (needs `npm run db:up`; uses an isolated `prpg_test` DB) |
 | `npm run test:watch` | Vitest in watch mode |
 
@@ -112,6 +115,22 @@ reuniões/pauta (`camara_reunioes`/`camara_pauta_itens`), relatorias
 (`camara_relatorias`) e atos resultantes (`camara_atos`). Ver `requisitos-camara.md`
 na raiz do repositório para o levantamento completo (Fases 0-1 implementadas;
 o importador da planilha histórica ainda não existe — ver `PLANO.md` §2.2).
+
+**Virada das planilhas (Fase O, `docs/revisao-portal-conteudo-2026-09-24.md`)**: as 4 planilhas
+(Contatos, Expedientes, Câmara, PNPD) entram por `server/services/planilhas/` (`nucleo.js`: simulação =
+transação desfeita, chave natural, origem por registro; um importador por planilha; `pendencias.js`: catálogo
+das pendências de revisão e o que "aplicar" faz). Princípio: **importar fielmente e marcar para revisão** — o
+importador nunca decide uma decisão do `PLANO.md` §4; o que depende dela vira linha em
+`importacao_pendencias` (com a D-xx), respondida em lote na tela Revisão da importação, e a resposta vira
+de-para (`importacao_depara`) da próxima importação. Reimportar é seguro (chave já vista = inalterado/
+divergente, nunca sobrescreve). Situação por planilha e critério de aposentadoria: tabela `planilhas` +
+`aposentadoria.js` (`docs/aposentadoria-planilhas.md`); material da oficina de decisões:
+`docs/oficina-decisoes-planilhas.md`. Painéis: `/admin` (Pendências, `painelController.js`) e
+`/admin/qualidade` (`qualidadeController.js` + verificador em `services/verificadorLinks.js`, com
+proteção contra SSRF). O agendador (`services/agendador.js`) roda fora do processo web
+(`docs/operations/agendador.md`); tabela `agendador_execucoes`. Tabelas novas: `importacoes`,
+`importacao_origens`, `importacao_pendencias`, `importacao_depara`, `planilhas`,
+`agendador_execucoes`, `links_verificados`.
 
 ## Roadmap e arquitetura de dados
 
@@ -223,6 +242,9 @@ Access at `/admin/login`. Main sections in sidebar:
 - Equipe e estrutura (`/admin/estrutura` — PRPG units/people/contacts behind /equipe and /estrutura-organizacional)
 - Classificações (editable categories/sections — `vocabularios`; ex-Taxonomias)
 - Biblioteca de Mídia (`/admin/midia` — reuse, "where used", replace a file everywhere)
+- Pendências (`/admin` — página inicial: o que está atrasado/vencendo, rascunhos, cadastros incompletos)
+- Planilhas (`/admin/planilhas` — simular/importar as 4 planilhas, critério de aposentadoria; `/admin/planilhas/revisao` — pendências de revisão)
+- Qualidade dos dados (`/admin/qualidade` — CPF inválido, pessoas duplicadas, vínculos sem data, links quebrados)
 
 ## Testing
 
@@ -248,8 +270,8 @@ Access at `/admin/login`. Main sections in sidebar:
   foundation (`publicacao`, `vocabularios`, `arquivos`, `revisoes`) and the
   data-driven portal (`portal`, `estrutura`) and content connections
   (`conexoes`), and the program microsites (`programas_microsite`: menu groups,
-  fixed pages, menu overrides, publication checklist, color contrast). ~345 tests in
-  41 files — the exact number drifts; check with `npx vitest run`.
+  fixed pages, menu overrides, publication checklist, color contrast). ~400 tests in
+  45 files — the exact number drifts; check with `npx vitest run`.
 - Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes

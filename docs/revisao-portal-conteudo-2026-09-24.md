@@ -508,13 +508,13 @@ página pública e nenhum número do site é digitado quando pode ser calculado.
 
 | | # | Ação |
 |---|---|---|
-| `[ ]` | O.1 | Uma oficina de cerca de 2 horas com secretaria e Câmara para as decisões do `PLANO.md` §4, levando uma recomendação pronta para cada uma |
-| `[ ]` | O.2 | Importar fielmente e revisar depois: o original fica nas colunas `*_original`, o registro é marcado para revisão e a interpretação acontece numa tela. **Isso destrava B.8, G.4, E.5 e C.5** sem esperar todas as respostas |
-| `[ ]` | O.3 | Importadores com simulação (dry-run), relatório e reexecução segura (chave natural: NUP, série/ano/número, CPF+período), na ordem Contatos → Expedientes → Câmara → PNPD |
-| `[ ]` | O.4 | Critério explícito para aposentar cada planilha: um ciclo em paralelo sem divergência; depois disso, a planilha fica só para leitura |
-| `[ ]` | O.5 | Ligar o agendador como processo ou cron separado, primeiro registrando só no painel; e-mail quando a D-C5 for respondida |
-| `[ ]` | O.6 | **Painel de pendências** como página inicial do admin: relatorias atrasadas, reservas de número em aberto, pós-docs vencendo, editais com prazo, rascunhos, cadastros incompletos |
-| `[ ]` | O.7 | Painel de qualidade de dados: CPF inválido, pessoas possivelmente duplicadas, vínculos sem data, links quebrados (verificador periódico) |
+| `[x]` | O.1 | Uma oficina de cerca de 2 horas com secretaria e Câmara para as decisões do `PLANO.md` §4, levando uma recomendação pronta para cada uma |
+| `[x]` | O.2 | Importar fielmente e revisar depois: o original fica nas colunas `*_original`, o registro é marcado para revisão e a interpretação acontece numa tela. **Isso destrava B.8, G.4, E.5 e C.5** sem esperar todas as respostas |
+| `[x]` | O.3 | Importadores com simulação (dry-run), relatório e reexecução segura (chave natural: NUP, série/ano/número, CPF+período), na ordem Contatos → Expedientes → Câmara → PNPD |
+| `[x]` | O.4 | Critério explícito para aposentar cada planilha: um ciclo em paralelo sem divergência; depois disso, a planilha fica só para leitura |
+| `[x]` | O.5 | Ligar o agendador como processo ou cron separado, primeiro registrando só no painel; e-mail quando a D-C5 for respondida |
+| `[x]` | O.6 | **Painel de pendências** como página inicial do admin: relatorias atrasadas, reservas de número em aberto, pós-docs vencendo, editais com prazo, rascunhos, cadastros incompletos |
+| `[x]` | O.7 | Painel de qualidade de dados: CPF inválido, pessoas possivelmente duplicadas, vínculos sem data, links quebrados (verificador periódico) |
 
 **Pronto quando:** cada uma das 4 planilhas está formalmente aposentada e a secretaria enxerga as
 pendências no sistema, não na planilha.
@@ -591,7 +591,106 @@ pendências no sistema, não na planilha.
 | H — Portal dirigido por dados | 7 | D-R1 | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase H) |
 | N — Conexões entre conteúdos | 9 | D-R1, D-R2 | 25/09/2026 | 25/09/2026 | 🟡 6/9 (N.4 ⛔ D-R2; N.7 ⛔ E.11/D-E*; N.8 ⛔ D-G1 — ver nota da Fase N) |
 | S — Microsites em 4 grupos | 6 | — | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase S; D-S1..D-S3 para a TI) |
-| O — Virada das planilhas | 7 | D-R5 + `PLANO.md` §4 | | | ⬜ não iniciada |
+| O — Virada das planilhas | 7 | D-R5 + `PLANO.md` §4 | 25/09/2026 | 25/09/2026 | 🟡 7/7 no código (400 testes verdes); **a virada em si depende da oficina (O.1) e da gravação das importações** — ver nota da Fase O |
 | U — Painel e acessibilidade | 7 | — | | | ⬜ não iniciada |
 | P — Performance e SEO | 6 | D-R4 | | | ⬜ não iniciada |
 | | **60 itens** | **5 decisões** | | | |
+
+> **Nota de execução (25/09/2026)** — os 7 itens aplicados, um commit por item (O.1 a O.7), com
+> testes em `planilhasRevisao`, `planilhasImportadores`, `painel`, `qualidade` e `prazos` (suíte:
+> ver a linha da Fase O no registro). Migrações `2026-09-25_importacao_revisao`,
+> `_planilhas_aposentadoria`, `_agendador_execucoes` e `_qualidade_links` aplicadas no banco de
+> desenvolvimento. Suíte: 400 testes em 45 arquivos, verdes. **Decisão assumida:** nenhuma das decisões do `PLANO.md` §4 foi tomada pelo
+> código — o caminho foi "importar fielmente + marcar para revisão" (O.2). **Como ficou:**
+> - O.1: [`oficina-decisoes-planilhas.md`](oficina-decisoes-planilhas.md) — uma ficha por decisão
+>   (contexto, opções, recomendação, o que o sistema faz até a resposta), pauta de 2 h priorizando o
+>   que destrava dado real (★), folha de respostas. Achado que muda a D-E3: **304 dos 306 números "em
+>   branco" são a grade pré-numerada depois do último número usado**, não reservas (os buracos reais
+>   ficam em `OFÍCIOS - 2024`). Não decide nada e não define data (D-R5 é da Pró-Reitoria).
+> - O.2: `importacoes` (execução + arquivo original guardado por hash em
+>   `server/private-uploads/importacoes/`), `importacao_origens` (chave natural → registro, com a linha
+>   como veio), `importacao_pendencias` (cada uma com a D-xx que a responde) e `importacao_depara`.
+>   Tela **Revisão da importação** (`/admin/planilhas/revisao`): pendências agrupadas por tipo e grafia;
+>   "aplicar" grava a resposta em todos os registros do grupo (ex.: cor `#B6D7A8` → situação) e vira
+>   de-para da próxima importação; "conferido"/"descartar". As fichas de processo, ato e pós-doc mostram
+>   "Importado da planilha" com a linha original. Situação nova `A_CLASSIFICAR` nos processos.
+> - O.3: os quatro importadores (`server/services/planilhas/`), `npm run planilha -- <fonte> <arquivo>
+>   [--gravar]` e `npm run planilha -- todas <pasta>` (a sequência inteira numa transação só, desfeita) e a
+>   tela **Planilhas** (`/admin/planilhas`: simular, importar, "simular de novo o último arquivo"). A
+>   simulação é a importação real numa transação desfeita, então o relatório é exatamente o que a gravação
+>   faria. **Simulado sobre as planilhas reais** (`Sites/Planilhas/`; nada gravado no banco):
+>   Contatos — 40 programas entram, 7 ficam guardados por não terem correspondência (PGMP, PGCAP, PGF,
+>   PPGPA e os 3 da UFAPE) e 29 vices ficam "a confirmar"; Expedientes — 550 atos, 17 referências entre
+>   atos ligadas (4 só em texto), 7 números repetidos entre abas (editais de 2024 duplicados em
+>   " EDITAIS PRPG 2025" e um 11/2025 que existe duas vezes) ficam para revisão; Câmara — 80 processos
+>   (79 novos + 1 que já estava no banco de dev), 8 reuniões, 48 itens de pauta, 97 eventos de
+>   tramitação, 42 relatorias; PNPD — 95 estágios (8 com período em aberto, 6 CPFs com problema, 5 sem
+>   CPF, 3 sobreposições, 6–7 grafias de programa sem correspondência). Achados de passagem: o cadastro
+>   tem outro coordenador que o da planilha no PROFIAP (vira `VINCULO_DIVERGENTE`, sem encerrar o
+>   vínculo); 4 ofícios/editais com data de ano diferente do da aba (um de 2016). **Regras:** nenhum
+>   programa é criado (D-G5/D-G6); a aba `Relatores` não é lida (D-G8); todo contato entra **não
+>   público** (D-G1); a grade pré-numerada depois do último número não entra e os buracos viram
+>   pendência que, se a resposta for "sim" (D-E3), cria os números como `CANCELADO`; período/CPF em
+>   aberto entram sem inventar dado, e o estágio sem as duas datas fica "em análise" (não conta como
+>   vigente); renovação de estágio só é sugerida.
+> - O.4: situação por planilha (em uso → paralelo → só leitura) com quatro critérios **calculados**
+>   (importação gravada; sem pendência aberta das decisões ★ da planilha; um ciclo de 30 dias em
+>   paralelo — na Câmara, com ao menos uma reunião; simulação do dia sem linha nova, alterada ou em
+>   conflito). Aposentar só com os quatro (a API responde 409 com a lista). Documento:
+>   [`aposentadoria-planilhas.md`](aposentadoria-planilhas.md). O relatório de divergência é a última
+>   simulação.
+> - O.5: `npm run agendador` (uma avaliação e sai, para cron) ou `-- --continuo`; execução registrada
+>   em `agendador_execucoes` (lock consultivo contra sobreposição), "Executar agora" e aviso de "parou
+>   de rodar" (>36 h) em Notificações. **Modo só no painel por padrão** (`SO_PAINEL`, via
+>   `AsyncLocalStorage` — não afeta requisições web): o aviso fica em `notificacoes` mesmo com SMTP
+>   configurado; `AGENDADOR_EMAIL=true` liga o envio depois da D-C5. Operação:
+>   [`operations/agendador.md`](operations/agendador.md).
+> - O.6: `/admin` passa a ser o painel de **Pendências** (`GET /api/painel/pendencias`), calculado dos
+>   dados na hora: relatorias atrasadas/vencendo, processos a classificar, números reservados e não
+>   usados (alta se >15 dias), mandatos e portarias vencendo, estágios pós-doc vencendo/sem relatório,
+>   editais com prazo em 14 dias, rascunhos e agendados (11 tabelas), programas sem sigla/coordenação,
+>   estágios com período incompleto, pendências de revisão das planilhas, agendador parado. Gestor de
+>   Programa vê só o seu programa; quem não é Admin/Gestor/Gestor de Programa continua caindo em
+>   Notícias.
+> - O.7: **Qualidade dos dados** (`/admin/qualidade`): CPF inválido (mascarado), pessoas possivelmente
+>   duplicadas (mesmo nome sem acento/caixa, ou mesmo CPF — **só sinaliza, não mescla**), vínculos de
+>   mandato sem data, contatos malformados, links quebrados. Verificador (`npm run links` por cron, ou o
+>   botão): URLs de 12 tabelas/colunas e do HTML de notícias, páginas e FAQ; `/uploads` conferido no
+>   disco; http(s) por HEAD/GET, sem seguir para host interno (proteção contra SSRF, redirecionamentos
+>   revalidados); 404/host inexistente = quebrado, 403/429/5xx/timeout = "incerto". Rodado no banco de
+>   dev: 309 URLs, **36 externas quebradas** (várias em `prpg.ufrpe.br/sites/default/files/...` —
+>   arquivos do site antigo, para a rotina de mídia da F.5) e 4 incertas.
+>
+> **Bloqueado / depende de decisão (o importador roda, a interpretação espera):**
+>
+> | Decisão | O que ficou marcado para revisão |
+> |---|---|
+> | D-B1 (cores da Câmara) | 80 processos em `A_CLASSIFICAR`, com a cor guardada; 1 pendência por processo, resolvida por cor |
+> | D-G8 | aba `Relatores` não lida |
+> | D-G2 | 29 vices como `VICE_COORDENADOR`, "a confirmar" (uma resposta troca todos) |
+> | D-G3 | nota `A` gravada como texto |
+> | D-G5/D-G6 | 7 programas da planilha não entram; nenhum é criado |
+> | D-G1 | todo contato importado é não público (G.9/N.8/B.6 seguem bloqueados) |
+> | D-E2/D-E3/D-E5 | portarias de 2025 (179 números de grade), buracos e traços viram pendência; editais do livro sem página ligada listados |
+> | D-C3/D-C8/D-C9 | 6 grafias de programa sem correspondência (ECOLOGIA), 8 períodos em aberto, sobreposições e renovações só sugeridas |
+> | D-C5 | agendador só no painel; sem e-mail |
+> | D-J1..J3, D-L1, D-K1, D-E1, D-E6..E8, D-C1/C2/C4/C6/C7 | não travam a importação; estão na oficina |
+>
+> **Ficou de fora:** as telas de importação em passos (B.9, G.8, E.10) — substituídas por Planilhas +
+> Revisão, que cobrem simular, conciliar e aplicar em lote; "desfazer importação em 24 h"
+> (`requisitos-*.md`) — não há: a segurança é simular antes, reimportar sem duplicar e não sobrescrever
+> o que foi corrigido no sistema; **mesclar pessoas duplicadas** (O.7 só lista); E.14 (preencher
+> `vinculos.ato_id` a partir das portarias) e E.11/E.12 (dependem das decisões); o de-para de pessoa em
+> Expedientes (quem expediu) cria só a pendência — as 12 pessoas precisam de cadastro/login (D-E6);
+> conciliação de editais só por link idêntico ao do site; trancar a planilha (arquivo externo — o
+> sistema só registra que foi feito); K.5/N.4/N.7/N.8.
+>
+> **Não verificado:**
+> - as telas do painel (Planilhas, Revisão, Pendências, Qualidade, fichas com "Importado da planilha",
+>   Notificações com o agendador) — exigem login; conferidas por build, typecheck e testes de API. O
+>   painel de pendências e o verificador de links foram rodados **contra o banco de dev** por script;
+> - **nenhuma importação foi gravada** no banco de dev nem em produção — só simulações (a gravação está
+>   coberta pelos testes, com planilhas sintéticas sem dado pessoal). A gravação real e a conferência de
+>   10 processos com a secretaria (B.10) são o próximo passo, depois da oficina;
+> - o envio de e-mail (sem SMTP), o cron de fato instalado em produção e o desempenho do verificador de
+>   links com milhares de URLs (309 levaram ~5 min com 6 requisições em paralelo).

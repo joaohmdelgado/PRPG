@@ -265,7 +265,7 @@ de teste alterada precisa de justificativa escrita no commit.
 | `[x]` | B.5 | **G10**: `vocabularios` + endpoint + seed; vocabulário-alvo de `vinculo.papel` seedado | `db/vocabulariosRepo.js`, `controllers/vocabulariosController.js` | ⛔ de-para real de `COORDENADOR_ATUAL`/`ANTERIOR`/`SUBSTITUTO`/`TAE` para os novos valores adiado para a Fase G (depende de D-G2) |
 | `[ ]` | B.6 | `filterSensitivePessoa` aposentada em favor de `contatos.publico` | `programasController.js` | ⛔ **adiado para a Fase G** (ver nota abaixo) |
 | `[x]` | B.7 | `camara.test.js` — cobertura do §14 de `requisitos-camara.md` | `server/__tests__/camara.test.js` | ⛔ item "importador" do §14 fora do escopo (⛔ D-B1) |
-| `[ ]` | B.8 | **Importador da Câmara** (dívida do §2.2): 102 linhas → 80 processos, 8 reuniões, histórico reconstruído | `services/importers/camaraImporter.js` | ⛔ **D-B1**, D-G8 |
+| `[x]` | B.8 | **Importador da Câmara** (dívida do §2.2): 102 linhas → 80 processos, 8 reuniões, histórico reconstruído | `services/importers/camaraImporter.js` | ⛔ **D-B1**, D-G8 |
 | `[ ]` | B.9 | Tela de importação da Câmara em 4 passos | `src/pages/admin/AdminCamaraImportar.jsx` | ⛔ D-B1 |
 | `[ ]` | B.10 | Rodar a importação e validar 10 processos com a secretaria | — | |
 
@@ -314,7 +314,7 @@ importados e validados.
 | `[x]` | G.1 | Repositório de contatos + normalização de e-mail e telefone (DDD) | `db/contatosRepo.js`, `utils/contato.js` | já existia (A.5b) |
 | `[x]` | G.2 | Controller: CRUD, agenda por cargo, "copiar e-mails do cargo" (front monta a partir da agenda), exportar XLSX | `controllers/contatosController.js` | |
 | `[x]` | G.3 | Rotas e permissões (Admin/Gestor por enquanto) | `routes/adminRoutes.js` | ⛔ escopo por `GestorPrograma` adiado — D-G7 não respondida |
-| `[ ]` | G.4 | Importador da planilha (47 programas, 113 pessoas, 157 e-mails, 72 telefones) | `services/importers/contatosImporter.js` | ⛔ D-G2..D-G6, D-G8 |
+| `[x]` | G.4 | Importador da planilha (47 programas, 113 pessoas, 157 e-mails, 72 telefones) | `services/importers/contatosImporter.js` | ⛔ D-G2..D-G6, D-G8 |
 | `[x]` | G.5 | Tela de agenda, indexada por cargo | `src/pages/admin/AdminContatos.jsx` | verificado no navegador com dado real de produção |
 | `[ ]` | G.6 | Ficha da pessoa (dados, contatos, todos os vínculos, expedientes) | `src/pages/admin/AdminPessoa.jsx` | ⛔ não é decisão pendente — deixado para depois por escopo/tempo desta sessão (ver nota) |
 | `[ ]` | G.7 | Bloco de contatos no formulário de programa e de usuário | telas existentes | ⛔ idem — a funcionalidade já existe via G.5 (ver nota) |
@@ -345,7 +345,7 @@ pessoal aparece em endpoint público (teste explícito).
 | `[x]` | E.2 | Repositório + alocação atômica de número (advisory lock) | `db/atosRepo.js` | |
 | `[x]` | E.3 | Rotas e permissões | `routes/adminRoutes.js` | ⛔ D-E6 (default Admin/Gestor para escrita, igual aos outros módulos, até a secretaria decidir quem mais reserva) |
 | `[x]` | E.4 | Seed das séries (parcial) + de-para de unidades (aliases dos 88 destinatários) | `schema.sql` | ⛔ D-E1 quanto a *completude* (memorando/circular/IN?), não às 6 já seedadas; de-para de destinatários é E.5 |
-| `[ ]` | E.5 | Importador das 11 abas (593 atos + 306 reservas) | `services/importers/atosImporter.js` | ⛔ D-E2, D-E3, D-E5 |
+| `[x]` | E.5 | Importador das 11 abas (593 atos + 306 reservas) | `services/importers/atosImporter.js` | ⛔ D-E2, D-E3, D-E5 |
 | `[x]` | E.6 | Livro de expedientes: lista + barra de séries com o próximo número | `src/pages/admin/AdminAtos.jsx` | |
 | `[x]` | E.7 | Formulário de emissão | `src/pages/admin/AdminAtoForm.jsx` | |
 | `[x]` | E.8 | Ficha com referências bidirecionais e linha do tempo | `src/pages/admin/AdminAto.jsx` | |
@@ -385,7 +385,7 @@ sistema (telas prontas, aguardando uso real); os 593 documentos históricos est�
 | `[x]` | C.2 | Papel `POS_DOUTORANDO` no vocabulário de `vinculo.papel` | seed de `vocabularios` | já existia (seedado junto da B.5) |
 | `[x]` | C.3 | Controller: CRUD, filtros, situação derivada, prorrogação, relatório, vínculo com processo | `controllers/posDoutoradoController.js` | ⛔ D-C1/D-C2/D-C6 afetam só regras de prazo/rito (Fase J) e a semântica de "pendência real" do relatório — não bloqueiam CRUD/derivação/prorrogação |
 | `[x]` | C.4 | Rotas + permissões | `routes/adminRoutes.js` | |
-| `[ ]` | C.5 | Importador (parser de período, de-para, CPF) | `services/importers/posDoutoradoImporter.js` | ⛔ D-C3, D-C8, D-C9 |
+| `[x]` | C.5 | Importador (parser de período, de-para, CPF) | `services/importers/posDoutoradoImporter.js` | ⛔ D-C3, D-C8, D-C9 |
 | `[x]` | C.6 | Lista, formulário, ficha com linha do tempo unificada | `src/pages/admin/AdminPosDoutorado*.jsx` | tela de importação (4 passos) adiada — depende de C.5 |
 | `[x]` | C.7 | Declaração de vínculo (usa o serviço da A.9) | `controllers/posDoutoradoController.js` | ⛔ **certificado de conclusão não implementado** — D-C7 (quem assina) |
 | `[x]` | C.8 | Exportação XLSX, menu, constantes | `src/constants/posDoutorado.js` | |
@@ -641,6 +641,15 @@ ofício em lote — um único ofício cobrindo vários concluintes.
 | D — Legado Drupal | 6 | D-Z3 | 29/07/2026 | 29/07/2026 | ✅ concluída (executada a pedido do usuário, apesar da recomendação de dívida; migração real de 57 teses + 36 disciplinas sem perda de dado; bug pré-existente de busca do microsite corrigido de passagem) |
 | M — Diplomas em lote | — | D-E4 | 29/07/2026 | 29/07/2026 | ✅ concluída (implementada a pedido do usuário como opção adicional ao caminho 1 da Fase E, sem forçar a decisão administrativa D-E4 — a secretaria escolhe qual caminho usar a cada expedição) |
 | | **99 itens** | **38 decisões** | | | |
+
+> **Fase O (25/09/2026, `docs/revisao-portal-conteudo-2026-09-24.md`)** — os importadores B.8, G.4, E.5 e C.5
+> foram implementados no modelo "importar fielmente + marcar para revisão" (`server/services/planilhas/`,
+> `npm run planilha`): eles rodam sem esperar as decisões, e cada decisão pendente do §4 virou uma pendência
+> de revisão respondida em lote (`/admin/planilhas/revisao`). **Simulados sobre as planilhas reais; nenhuma
+> importação foi gravada ainda** — a gravação e a validação de 10 processos com a secretaria (B.10) vêm depois
+> da oficina (`docs/oficina-decisoes-planilhas.md`). As telas em passos B.9/G.8/E.10 foram substituídas pela
+> tela Planilhas + Revisão. Critério de aposentadoria das planilhas: `docs/aposentadoria-planilhas.md`.
+> O agendador (Fase J) roda como processo/cron separado, só no painel (`docs/operations/agendador.md`).
 
 ---
 
