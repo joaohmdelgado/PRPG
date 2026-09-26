@@ -10,6 +10,7 @@ import { sqlPaginaComTexto, validarAjustes } from '../utils/micrositeMenu.js';
 import { avaliarCores, normalizarHex } from '../utils/contraste.js';
 import { contarModulos, menuDoPrograma, salvarAjustes, checklistDoPrograma } from '../db/micrositeRepo.js';
 import { visivelPara, sqlPublicado } from '../utils/publicacao.js';
+import { responderLista } from '../utils/listagem.js';
 
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
 const strOrNull = (v) => (v === '' || v == null ? null : v);
@@ -178,7 +179,12 @@ export const getProgramas = async (req, res) => {
       };
     });
 
-    res.json(result);
+    // Sem ?page/?limit continua sendo o array inteiro (site público); o painel
+    // pagina, busca e ordena no servidor (Fase U.3).
+    responderLista(res, result, req.query, {
+      busca: ['nome', 'sigla', 'campus'],
+      ordenaveis: { nome: (p) => p.nome, sigla: (p) => p.sigla, campus: (p) => p.campus },
+    });
   } catch (error) {
     serverError(res, 'Erro ao buscar programas', error);
   }

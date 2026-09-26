@@ -5,6 +5,7 @@ import { serverError } from '../utils/httpError.js';
 import { slugify } from '../utils/slug.js';
 import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
 import { responderLista } from '../utils/listagem.js';
+import { semFixasVaziasDePrograma } from '../utils/paginasFixas.js';
 import { SUBROTAS_MICROSITE } from '../utils/micrositeMenu.js';
 
 // Páginas ganham endereço próprio em /<slug> (sem programa) ou
@@ -62,8 +63,17 @@ const generateUniqueSlug = async (title, pages, currentId, programaId) => {
   return slug;
 };
 
+const ORDENAVEIS = { title: (p) => p.title, slug: (p) => p.slug, status: (p) => p.status };
+// O corpo entra na busca (o painel sempre buscou nele).
+const BUSCA = ['title', 'slug', (p) => p.body?.value];
+const OPCOES_LISTA = { busca: BUSCA, ordenaveis: ORDENAVEIS };
+
+// ?semFixasVazias=1: o painel esconde as páginas fixas de programa ainda sem texto.
 export const getPages = async (req, res) => {
-  const all = await pagesRepo.getAll();
+  let all = await pagesRepo.getAll();
+  if (req.query.semFixasVazias === '1') all = semFixasVaziasDePrograma(all);
+  // ?escopo=prpg: só as páginas gerais (sem programa) — mesmo filtro das outras listas.
+  if (req.query.escopo === 'prpg') all = all.filter((p) => !p.programaId);
   const { programa } = req.query;
   if (programa) {
     // aceita id direto ou slug (resolve via join simples)
@@ -71,9 +81,9 @@ export const getPages = async (req, res) => {
       'SELECT id FROM programas WHERE id=$1 OR slug=$1', [programa]
     )).rows[0];
     if (!prog) return res.json([]);
-    return responderLista(res, filtrarVisiveis(all.filter((p) => p.programaId === prog.id), req.user, req.query), req.query);
+    return responderLista(res, filtrarVisiveis(all.filter((p) => p.programaId === prog.id), req.user, req.query), req.query, OPCOES_LISTA);
   }
-  responderLista(res, filtrarVisiveis(all, req.user, req.query), req.query);
+  responderLista(res, filtrarVisiveis(all, req.user, req.query), req.query, OPCOES_LISTA);
 };
 
 export const getPageById = async (req, res) => {

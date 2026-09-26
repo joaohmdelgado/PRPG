@@ -19,10 +19,16 @@ const anexarResolvidos = (bolsas, byId) => bolsas.map((b) => ({
   aluno: b.pessoaId ? (byId.get(b.pessoaId) || { id: b.pessoaId, nome: 'Pessoa não encontrada' }) : null,
 }));
 
+const ORDENAVEIS = {
+  title: (b) => b.title, tipo: (b) => b.tipoBolsa, aluno: (b) => b.aluno?.nome,
+  dataInicio: (b) => b.dataInicio, dataFim: (b) => b.dataFim, status: (b) => b.status,
+};
+const BUSCA = ['title', 'tipoBolsa', (b) => b.aluno?.nome];
+
 export const getBolsas = async (req, res) => {
   const bolsas = filtrarVisiveis(await bolsasRepo.getAll(), req.user, req.query);
   const byId = await resolvePessoas(bolsas.map((b) => b.pessoaId));
-  responderLista(res, anexarResolvidos(bolsas, byId), req.query);
+  responderLista(res, anexarResolvidos(bolsas, byId), req.query, { busca: BUSCA, ordenaveis: ORDENAVEIS });
 };
 
 export const getBolsaById = async (req, res) => {

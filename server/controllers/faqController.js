@@ -5,9 +5,12 @@ import { serverError } from '../utils/httpError.js';
 import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
 import { responderLista } from '../utils/listagem.js';
 
+const ORDENAVEIS = { title: (f) => f.title, ordem: (f) => f.ordem, status: (f) => f.status };
+const BUSCA = ['title', 'resposta'];
+
 export const getFaqs = async (req, res) => {
   const all = await filtrarPorEscopo(await faqRepo.getAll(), req.query);
-  responderLista(res, filtrarVisiveis(all, req.user, req.query), req.query);
+  responderLista(res, filtrarVisiveis(all, req.user, req.query), req.query, { busca: BUSCA, ordenaveis: ORDENAVEIS });
 };
 
 export const getFaqById = async (req, res) => {

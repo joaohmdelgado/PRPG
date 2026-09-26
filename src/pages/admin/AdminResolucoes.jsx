@@ -1,145 +1,18 @@
-import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
-import { useConfirm } from '../../components/admin/ConfirmModal';
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
-import { API_URL, apiFetch } from '../../api';
-import { withProgramaScope, isProgramaGestor } from '../../auth';
-import { LastEdited } from '../../components/AuditInfo';
-import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
-import useUsers from '../../hooks/useUsers';
-import OrigemFiltro, { filtrarPorOrigem, useOrigemFiltro, useProgramasResumo, SeloPrograma, ORIGEM_TODAS } from '../../components/admin/OrigemFiltro';
+import React from 'react';
+import ListaAdmin, { CelulaTitulo, Selo } from '../../components/admin/ListaAdmin';
+import { ORIGEM_TODAS } from '../../hooks/useListaServidor';
 
-const AdminResolucoes = () => {
-  const [resolucoes, setResolucoes] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(false);
-  const navigate = useNavigate();
-  const users = useUsers();
-  const { confirm, ConfirmModal } = useConfirm();
-  const gestor = isProgramaGestor();
-  const [origem, setOrigem] = useOrigemFiltro(ORIGEM_TODAS);
-  const programas = useProgramasResumo(!gestor);
-  // Gestor de programa já recebe só o seu conteúdo (withProgramaScope).
-  const porOrigem = gestor ? resolucoes : filtrarPorOrigem(resolucoes, origem);
-  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(porOrigem);
-
-  const fetchResolucoes = async () => {
-    try {
-      const response = await apiFetch(withProgramaScope('/api/resolucoes'));
-      const data = await response.json();
-      setResolucoes(data);
-    } catch (error) {
-      console.error('Erro ao buscar resoluções:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchResolucoes();
-  }, []);
-
-  const handleDelete = async (id) => {
-    if (await confirm('Tem certeza que deseja excluir esta resolução?')) {
-      try {
-        const response = await apiFetch(`/api/resolucoes/${id}`, { method: 'DELETE' });
-
-        if (response.ok) {
-          fetchResolucoes();
-        } else if (response.status === 401) {
-          navigate('/admin/login');
-        }
-      } catch (error) {
-        console.error('Erro ao excluir resolução:', error);
-      }
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (!selectedCount) return;
-    if (!await confirm(`Excluir ${selectedCount === 1 ? 'a resolução selecionada' : `as ${selectedCount} resoluções selecionadas`}? Esta ação não pode ser desfeita.`)) return;
-    setDeleting(true);
-    await bulkDelete(`${API_URL}/api/resolucoes`, selectedIds, { onUnauthorized: () => navigate('/admin/login') });
-    setDeleting(false);
-    clear();
-    fetchResolucoes();
-  };
-
-  if (loading) return <TableSkeleton />;
-
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-heading text-xl font-semibold text-ufrpe-blue">Gerenciar Resoluções</h2>
-        <Link 
-          to="/admin/resolucoes/nova" 
-          className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors"
-        >
-          <Plus size={18} />
-          Nova Resolução
-        </Link>
-      </div>
-
-      {!gestor && <OrigemFiltro value={origem} onChange={(v) => { clear(); setOrigem(v); }} programas={programas} />}
-
-      <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-6 py-3 w-px">
-                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={porOrigem.length === 0} />
-              </th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500">Título</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500">Seção</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500">Subcategoria</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500 text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {porOrigem.map((item) => (
-              <tr key={item.id} className={`hover:bg-gray-50 ${isSelected(item.id) ? 'bg-ufrpe-blue/5' : ''}`}>
-                <td className="px-6 py-4">
-                  <RowCheckbox checked={isSelected(item.id)} onToggle={() => toggle(item.id)} label={`Selecionar ${item.title}`} />
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                  {item.title}
-                  {!gestor && <SeloPrograma programaId={item.programaId} programas={programas} />}
-                  <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ufrpe-blue/10 text-ufrpe-blue">
-                    {item.sectionTitle}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">{item.categoryTitle}</td>
-                <td className="px-6 py-4 text-sm font-medium text-right flex justify-end gap-3">
-                  <Link 
-                    to={`/admin/resolucoes/editar/${item.id}`}
-                    className="text-ufrpe-blue hover:text-ufrpe-yellow"
-                  >
-                    <Edit2 size={18} />
-                  </Link>
-                  <button 
-                    onClick={() => handleDelete(item.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {porOrigem.length === 0 && (
-              <EmptyRow colSpan={5} message="Nenhuma resolução encontrada." />
-            )}
-          </tbody>
-        </table>
-      </div>
-      {ConfirmModal}
-    </div>
-  );
-};
+const AdminResolucoes = () => (
+  <ListaAdmin
+    titulo="Gerenciar Resoluções" rotuloNovo="Nova Resolução" rotaNovo="/admin/resolucoes/nova"
+    endpoint="/api/resolucoes" rotaEditar={(r) => `/admin/resolucoes/editar/${r.id}`}
+    singular="resolução" plural="resoluções" artigo="a" origemPadrao={ORIGEM_TODAS}
+    colunas={[
+      { chave: 'title', rotulo: 'Título', ordenar: 'title', render: (r, c) => <CelulaTitulo item={r} {...c} /> },
+      { chave: 'secao', rotulo: 'Seção', ordenar: 'secao', render: (r) => (r.sectionTitle ? <Selo>{r.sectionTitle}</Selo> : '—') },
+      { chave: 'categoria', rotulo: 'Subcategoria', ordenar: 'categoria', render: (r) => r.categoryTitle || '—' },
+    ]}
+  />
+);
 
 export default AdminResolucoes;

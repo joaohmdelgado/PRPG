@@ -12,6 +12,9 @@ import { responderLista, filtrarTexto } from '../utils/listagem.js';
 //   ?categoria= slug da categoria    ?ano=  ano    ?excluir= id (relacionadas)
 //   ?destaque=1  só as marcadas como destaque
 //   ?resumo=1  sem o corpo (content) — a listagem não o exibe
+// Colunas que a listagem do painel pode ordenar (?ordenar=&dir=).
+const ORDENAVEIS = { title: (n) => n.title, category: (n) => n.category, date: (n) => n.date, status: (n) => n.status };
+
 export const getNews = async (req, res) => {
   const q = req.query;
   let items = filtrarVisiveis(await filtrarPorEscopo(await newsRepo.getAll(), q), req.user, q);
@@ -22,7 +25,7 @@ export const getNews = async (req, res) => {
   if (q.excluir) items = items.filter((n) => n.id !== q.excluir);
   if (q.destaque === '1') items = items.filter((n) => n.destaque);
   items = filtrarTexto(items, q.q, ['title', 'excerpt']);
-  responderLista(res, items, q, { resumir: ({ content, ...resto }) => resto, extra: { anos } });
+  responderLista(res, items, q, { resumir: ({ content, ...resto }) => resto, extra: { anos }, ordenaveis: ORDENAVEIS });
 };
 
 export const getNewsById = async (req, res) => {

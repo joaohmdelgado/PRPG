@@ -1,218 +1,24 @@
-import { TableSkeleton, EmptyRow } from '../../components/admin/AdminUI';
-import { useConfirm } from '../../components/admin/ConfirmModal';
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, Search, Book, FileText } from 'lucide-react';
-import { API_URL, apiFetch } from '../../api';
-import { withProgramaScope, isProgramaGestor } from '../../auth';
-import { LastEdited } from '../../components/AuditInfo';
-import { useBulkSelection, SelectAllCheckbox, RowCheckbox, BulkActionBar, bulkDelete } from '../../components/admin/BulkActions';
-import useUsers from '../../hooks/useUsers';
-import OrigemFiltro, { filtrarPorOrigem, useOrigemFiltro, useProgramasResumo, SeloPrograma, ORIGEM_TODAS } from '../../components/admin/OrigemFiltro';
+import React from 'react';
+import ListaAdmin, { CelulaTitulo, Selo, Pessoa, LinkArquivo } from '../../components/admin/ListaAdmin';
+import { ORIGEM_TODAS } from '../../hooks/useListaServidor';
 
-const AdminDisciplinasList = () => {
-  const [disciplinas, setDisciplinas] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [deleting, setDeleting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
-  const users = useUsers();
-  const { confirm, ConfirmModal } = useConfirm();
-
-  const fetchDisciplinas = async () => {
-    try {
-      const response = await apiFetch(withProgramaScope('/api/disciplinas'));
-      if (response.ok) {
-        const data = await response.json();
-        setDisciplinas(data);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar disciplinas:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDisciplinas();
-  }, []);
-
-  const handleDelete = async (id) => {
-    if (await confirm('Tem certeza que deseja excluir esta disciplina?')) {
-      try {
-        const response = await apiFetch(`/api/disciplinas/${id}`, { method: 'DELETE' });
-
-        if (response.ok) {
-          fetchDisciplinas();
-        } else if (response.status === 401) {
-          navigate('/admin/login');
-        }
-      } catch (error) {
-        console.error('Erro ao excluir disciplina:', error);
-      }
-    }
-  };
-
-  const gestor = isProgramaGestor();
-  const [origem, setOrigem] = useOrigemFiltro(ORIGEM_TODAS);
-  const programas = useProgramasResumo(!gestor);
-  // Gestor de programa já recebe só o seu conteúdo (withProgramaScope).
-  const porOrigem = gestor ? disciplinas : filtrarPorOrigem(disciplinas, origem);
-  const filteredDisciplinas = porOrigem.filter(item => {
-    const title = item.title || '';
-    const docente = item.docente?.nome || '';
-    const tipo = item.tipoDisciplina || '';
-    const query = searchQuery.toLowerCase();
-    return title.toLowerCase().includes(query) || 
-           docente.toLowerCase().includes(query) || 
-           tipo.toLowerCase().includes(query);
-  });
-
-  const { selectedIds, selectedCount, isSelected, toggle, toggleAll, clear, allSelected, someSelected } = useBulkSelection(filteredDisciplinas);
-
-  const handleBulkDelete = async () => {
-    if (!selectedCount) return;
-    if (!await confirm(`Excluir ${selectedCount === 1 ? 'a disciplina selecionada' : `as ${selectedCount} disciplinas selecionadas`}? Esta ação não pode ser desfeita.`)) return;
-    setDeleting(true);
-    await bulkDelete('/api/disciplinas', selectedIds, { onUnauthorized: () => navigate('/admin/login') });
-    setDeleting(false);
-    clear();
-    fetchDisciplinas();
-  };
-
-  if (loading) {
-    return (
-      <TableSkeleton />
-    );
-  }
-
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div>
-          <h2 className="font-heading text-xl font-semibold text-ufrpe-blue flex items-center gap-2">
-            <Book className="text-ufrpe-blue" size={24} />
-            Gerenciar Disciplinas
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            Cadastro de disciplinas, cargas horárias, docentes responsáveis e ementas
-          </p>
-        </div>
-        <Link 
-          to="/admin/disciplinas/nova" 
-          className="bg-ufrpe-blue hover:bg-[#2a3a66] text-white px-4 py-2.5 rounded-md flex items-center gap-2 transition-colors font-medium text-sm"
-        >
-          <Plus size={18} />
-          Nova Disciplina
-        </Link>
-      </div>
-
-      {/* Barra de Pesquisa */}
-      <div className="relative mb-6">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-          <Search size={18} />
-        </div>
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Buscar por título, docente ou tipo..."
-          className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-md focus:ring-ufrpe-yellow focus:border-ufrpe-yellow text-sm placeholder-gray-400"
-        />
-      </div>
-
-      {!gestor && <OrigemFiltro value={origem} onChange={(v) => { clear(); setOrigem(v); }} programas={programas} />}
-
-      <BulkActionBar count={selectedCount} onDelete={handleBulkDelete} onClear={clear} deleting={deleting} />
-
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-6 py-3 w-px">
-                <SelectAllCheckbox allSelected={allSelected} someSelected={someSelected} onToggle={toggleAll} disabled={filteredDisciplinas.length === 0} />
-              </th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500">Título</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500">Tipo</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500">Docente</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500">Carga Horária</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500">Ementa</th>
-              <th className="px-6 py-3 text-sm font-medium text-gray-500 text-right">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {filteredDisciplinas.map((item) => (
-              <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${isSelected(item.id) ? 'bg-ufrpe-blue/5' : ''}`}>
-                <td className="px-6 py-4">
-                  <RowCheckbox checked={isSelected(item.id)} onToggle={() => toggle(item.id)} label={`Selecionar ${item.title}`} />
-                </td>
-                <td className="px-6 py-4 text-sm font-medium text-gray-900 max-w-xs" title={item.title}>
-                  <div className="truncate">{item.title}</div>
-                  {!gestor && <SeloPrograma programaId={item.programaId} programas={programas} />}
-                  <LastEdited criadoPor={item.criado_por} atualizadoPor={item.atualizado_por} users={users} className="mt-0.5" />
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    item.tipoDisciplina === 'Obrigatória'
-                      ? 'bg-ufrpe-blue/10 text-ufrpe-blue'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {item.tipoDisciplina}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-900">
-                  <div>
-                    <p className="font-medium">{item.docente?.nome}</p>
-                    <p className="text-xs text-gray-500">{item.docente?.email}</p>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500 font-medium">
-                  {item.cargaHoraria}h
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500">
-                  {item.ementaUrl ? (
-                    <a
-                      href={item.ementaUrl.startsWith('http') ? item.ementaUrl : `${API_URL}${item.ementaUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-red-600 hover:text-red-800 inline-flex items-center gap-1.5 font-medium hover:underline"
-                    >
-                      <FileText size={16} />
-                      Ementa PDF
-                    </a>
-                  ) : (
-                    <span className="text-gray-400 italic">Sem arquivo</span>
-                  )}
-                </td>
-                <td className="px-6 py-4 text-sm font-medium text-right">
-                  <div className="flex justify-end gap-3">
-                    <Link 
-                      to={`/admin/disciplinas/editar/${item.id}`}
-                      className="text-ufrpe-blue hover:text-ufrpe-yellow bg-ufrpe-blue/5 hover:bg-ufrpe-blue/10 p-1.5 rounded transition-colors"
-                      title="Editar"
-                    >
-                      <Edit2 size={16} />
-                    </Link>
-                    <button 
-                      onClick={() => handleDelete(item.id)}
-                      className="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors"
-                      title="Excluir"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {filteredDisciplinas.length === 0 && (
-              <EmptyRow colSpan={7} message="Nenhuma disciplina encontrada." />
-            )}
-          </tbody>
-        </table>
-      </div>
-      {ConfirmModal}
-    </div>
-  );
-};
+const AdminDisciplinasList = () => (
+  <ListaAdmin
+    titulo="Gerenciar Disciplinas" rotuloNovo="Nova Disciplina" rotaNovo="/admin/disciplinas/nova"
+    endpoint="/api/disciplinas" rotaEditar={(d) => `/admin/disciplinas/editar/${d.id}`}
+    singular="disciplina" plural="disciplinas" artigo="a" origemPadrao={ORIGEM_TODAS}
+    rotuloBusca="Buscar por título, tipo ou docente…"
+    colunas={[
+      { chave: 'title', rotulo: 'Título', ordenar: 'title', render: (d, c) => <CelulaTitulo item={d} {...c} truncar /> },
+      {
+        chave: 'tipo', rotulo: 'Tipo', ordenar: 'tipo',
+        render: (d) => (d.tipoDisciplina ? <Selo cor={d.tipoDisciplina === 'Obrigatória' ? 'bg-ufrpe-blue/10 text-ufrpe-blue' : 'bg-yellow-100 text-yellow-900'}>{d.tipoDisciplina}</Selo> : '—'),
+      },
+      { chave: 'docente', rotulo: 'Docente', ordenar: 'docente', render: (d) => <Pessoa p={d.docente} /> },
+      { chave: 'carga', rotulo: 'Carga Horária', ordenar: 'cargaHoraria', render: (d) => (d.cargaHoraria ? `${d.cargaHoraria}h` : '—') },
+      { chave: 'ementa', rotulo: 'Ementa', render: (d) => <LinkArquivo url={d.ementaUrl} rotulo="Ementa PDF" /> },
+    ]}
+  />
+);
 
 export default AdminDisciplinasList;

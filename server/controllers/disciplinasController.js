@@ -20,11 +20,17 @@ const anexarResolvidos = (disciplinas, byId) => disciplinas.map((d) => ({
   docente: d.docentePessoaId ? (byId.get(d.docentePessoaId) || { id: d.docentePessoaId, nome: 'Pessoa não encontrada' }) : null,
 }));
 
+const ORDENAVEIS = {
+  title: (d) => d.title, cargaHoraria: (d) => Number(d.cargaHoraria) || null,
+  tipo: (d) => d.tipoDisciplina, docente: (d) => d.docente?.nome, status: (d) => d.status,
+};
+const BUSCA = ['title', 'tipoDisciplina', (d) => d.docente?.nome];
+
 export const getDisciplinas = async (req, res) => {
   let disciplinas = await disciplinasRepo.getAll();
   disciplinas = filtrarVisiveis(await filtrarPorEscopo(disciplinas, req.query), req.user, req.query);
   const byId = await resolvePessoas(disciplinas.map((d) => d.docentePessoaId));
-  responderLista(res, anexarResolvidos(disciplinas, byId), req.query);
+  responderLista(res, anexarResolvidos(disciplinas, byId), req.query, { busca: BUSCA, ordenaveis: ORDENAVEIS });
 };
 
 export const getDisciplinaById = async (req, res) => {

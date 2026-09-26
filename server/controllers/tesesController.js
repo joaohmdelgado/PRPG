@@ -56,7 +56,15 @@ export const getTeses = async (req, res) => {
   if (q.ano) lista = lista.filter((t) => anoDe(t) === String(q.ano));
   if (q.orientador) lista = lista.filter((t) => t.orientadorPessoaId === q.orientador);
   lista = filtrarTexto(lista, q.q, ['title', (t) => `${t.autor?.nome || ''} ${t.orientador?.nome || ''}`]);
-  responderLista(res, lista, q, { extra: opcoes });
+  responderLista(res, lista, q, {
+    extra: opcoes,
+    // ?ordenar= troca a ordem padrão (ano decrescente) — Fase U.3.
+    ordenaveis: {
+      title: (t) => t.title, ano: (t) => Number(anoDe(t)) || null, tipo: (t) => t.tipo,
+      autor: (t) => t.autor?.nome, orientador: (t) => t.orientador?.nome,
+      programa: (t) => t.programa?.nome, status: (t) => t.status,
+    },
+  });
 };
 
 export const getTeseById = async (req, res) => {

@@ -4,6 +4,7 @@ import { isPlainObject } from '../utils/sanitize.js';
 import { serverError } from '../utils/httpError.js';
 import { usersRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
+import { responderLista, filtrarTexto } from '../utils/listagem.js';
 import { PAPEIS_DISCENTE, PAPEIS_DOCENTE } from './programasController.js';
 
 // Papéis (docente + discente) que representam vínculo a um programa, para
@@ -51,6 +52,28 @@ const anexarProgramasVinculo = async (users) => {
   return users.map((u) => ({ ...u, programas_vinculo: porPessoa[u.id] || [] }));
 };
 
+// Colunas ordenáveis da lista do painel (?ordenar=&dir=) — Fase U.3.
+const ORDENAVEIS_USUARIOS = {
+  nome: (u) => u.perfil_geral?.nome || u.email,
+  email: (u) => u.email,
+  papeis: (u) => (u.roles || []).join(', '),
+};
+
+// Lista do painel: ?q= (nome ou e-mail), ?role=, ?programa=<id do vínculo>,
+// ?ordenar=, ?page=&limit=. Devolve também as opções dos filtros (papéis e
+// programas que existem entre os usuários visíveis, antes de filtrar).
+const responderUsuarios = (res, users, q) => {
+  const opcoes = {
+    roles: [...new Set(users.flatMap((u) => u.roles || []))].sort(),
+    programas: [...new Map(users.flatMap((u) => u.programas_vinculo || []).map((p) => [p.id, p])).values()]
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+  };
+  let lista = filtrarTexto(users, q.q, [(u) => u.perfil_geral?.nome, 'email']);
+  if (q.role) lista = lista.filter((u) => u.roles?.includes(q.role));
+  if (q.programa) lista = lista.filter((u) => u.programas_vinculo?.some((p) => String(p.id) === String(q.programa)));
+  return responderLista(res, lista, q, { extra: opcoes, ordenaveis: ORDENAVEIS_USUARIOS });
+};
+
 export const getUsers = async (req, res) => {
   try {
     // Gestor de Programa só enxerga usuários do seu programa (donos + vinculados,
@@ -58,10 +81,10 @@ export const getUsers = async (req, res) => {
     if (isProgramaScoped(req.user)) {
       if (!req.user.programaId) return res.status(403).json({ message: 'Gestor sem programa vinculado.' });
       const scoped = await usersRepo.getScopedToPrograma(req.user.programaId);
-      return res.json(await anexarProgramasVinculo(scoped.map(stripHash)));
+      return responderUsuarios(res, await anexarProgramasVinculo(scoped.map(stripHash)), req.query);
     }
     const users = await usersRepo.getAll();
-    res.json(await anexarProgramasVinculo(users.map(stripHash)));
+    responderUsuarios(res, await anexarProgramasVinculo(users.map(stripHash)), req.query);
   } catch (error) {
     serverError(res, 'Erro ao buscar usuários', error);
   }

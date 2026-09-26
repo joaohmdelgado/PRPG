@@ -44,7 +44,7 @@ export function useProgramasResumo(ativo = true) {
       .then((data) => {
         if (!vivo || !Array.isArray(data)) return;
         setProgramas(data
-          .map((p) => ({ id: p.id, rotulo: p.sigla && p.sigla !== 'S/SIGLA' ? p.sigla : p.nome }))
+          .map((p) => ({ id: p.id, slug: p.slug, rotulo: p.sigla && p.sigla !== 'S/SIGLA' ? p.sigla : p.nome }))
           .sort((a, b) => (a.rotulo || '').localeCompare(b.rotulo || '', 'pt-BR')));
       })
       .catch(() => {});

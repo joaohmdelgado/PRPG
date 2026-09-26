@@ -74,6 +74,14 @@ const anexarEventos = (edital, eventos) => {
   };
 };
 
+// Colunas ordenáveis (?ordenar=&dir=) e campos do ?q= — Fase U.3.
+const ORDENAVEIS = {
+  title: (e) => e.title, numero: (e) => e.numero, category: (e) => e.categoryTitle,
+  publishedAt: (e) => e.publishedAt, deadline: (e) => e.deadline, year: (e) => e.year,
+  situacao: (e) => e.situationLabel, status: (e) => e.status,
+};
+const BUSCA = ['title', 'numero', 'description', 'categoryTitle'];
+
 export const getEditais = async (req, res) => {
   let editais = await editaisRepo.getAll();
   editais = filtrarVisiveis(await filtrarPorEscopo(editais, req.query), req.user, req.query);
@@ -84,7 +92,7 @@ export const getEditais = async (req, res) => {
   let lista = anexarPrograma(comEventos.map(calculateEditalStatus), await mapaProgramas());
   // ?situacao=abertas|andamento|concluido (home e filtros da página).
   if (req.query.situacao) lista = lista.filter((e) => e.situation === req.query.situacao);
-  responderLista(res, lista, req.query);
+  responderLista(res, lista, req.query, { busca: BUSCA, ordenaveis: ORDENAVEIS });
 };
 
 export const getEditalById = async (req, res) => {

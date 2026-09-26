@@ -4,8 +4,11 @@ import { serverError } from '../utils/httpError.js';
 import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
 import { responderLista } from '../utils/listagem.js';
 
+const ORDENAVEIS = { ano: (c) => Number(c.ano) || null, title: (c) => c.title, status: (c) => c.status };
+const BUSCA = ['title', 'ano', 'description'];
+
 export const getCalendarios = async (req, res) => {
-  responderLista(res, filtrarVisiveis(await calendariosRepo.getAll(), req.user, req.query), req.query);
+  responderLista(res, filtrarVisiveis(await calendariosRepo.getAll(), req.user, req.query), req.query, { busca: BUSCA, ordenaveis: ORDENAVEIS });
 };
 
 export const getCalendarioById = async (req, res) => {

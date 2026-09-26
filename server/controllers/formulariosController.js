@@ -5,9 +5,16 @@ import { serverError } from '../utils/httpError.js';
 import { filtrarVisiveis, visivelPara } from '../utils/publicacao.js';
 import { responderLista } from '../utils/listagem.js';
 
+// Colunas ordenáveis (?ordenar=&dir=) e campos do ?q= — Fase U.3.
+const ORDENAVEIS = {
+  title: (d) => d.title, secao: (d) => d.sectionTitle, categoria: (d) => d.categoryTitle,
+  ordem: (d) => d.ordem, status: (d) => d.status,
+};
+const BUSCA = ['title', 'desc', 'categoryTitle', 'sectionTitle'];
+
 export const getFormularios = async (req, res) => {
   const all = await filtrarPorEscopo(await formulariosRepo.getAll(), req.query);
-  responderLista(res, filtrarVisiveis(all, req.user, req.query), req.query);
+  responderLista(res, filtrarVisiveis(all, req.user, req.query), req.query, { busca: BUSCA, ordenaveis: ORDENAVEIS });
 };
 
 export const getFormularioById = async (req, res) => {
