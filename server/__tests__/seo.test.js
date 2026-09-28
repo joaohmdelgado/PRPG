@@ -242,6 +242,60 @@ describe('P.4 — demais rotas', () => {
   });
 });
 
+describe('P.4 — menus e configurações embutidos no HTML', () => {
+  const bloco = (texto) => {
+    const m = texto.match(/<script id="dados-portal" type="application\/json">([\s\S]*?)<\/script>/);
+    return m ? JSON.parse(m[1]) : null;
+  };
+
+  // resetDb() esvazia `menus` (não é reseed automático, como vocabularios/
+  // ato_series/planilhas) — os testes de menus sempre semeiam as próprias
+  // listas (mesmo padrão de portal.test.js).
+  beforeEach(async () => {
+    await pool.query(`INSERT INTO menus (chave, nome, niveis, campos) VALUES
+      ('acesso-rapido', 'Acesso rápido', 1, '{icone}')`);
+  });
+
+  it('uma página pública traz o mesmo menu e configurações de /api/menus e /api/configuracoes', async () => {
+    const putMenu = await auth(request(app).put('/api/menus/acesso-rapido')).send({ itens: [{ rotulo: 'Editais', destino: '/editais', icone: 'gavel' }] });
+    expect(putMenu.status).toBe(200);
+    await auth(request(app).put('/api/configuracoes/contato')).send({ email: 'secretaria@ufrpe.br' });
+
+    const [portal, menusApi, configApi] = await Promise.all([
+      request(app).get('/noticias'),
+      request(app).get('/api/menus'),
+      request(app).get('/api/configuracoes'),
+    ]);
+    const dados = bloco(html(portal));
+    expect(dados).toBeTruthy();
+    expect(dados.menus).toEqual(menusApi.body);
+    expect(dados.config).toEqual(configApi.body);
+    expect(dados.menus['acesso-rapido'][0]).toMatchObject({ rotulo: 'Editais', destino: '/editais' });
+  });
+
+  it('não vai para áreas restritas (noindex) — elas não usam o menu do portal', async () => {
+    for (const caminho of ['/admin', '/entrar', '/busca']) {
+      expect(bloco(html(await request(app).get(caminho))), caminho).toBeNull();
+    }
+  });
+
+  it('rótulo de menu com "</script>" não escapa da tag nem quebra o JSON', async () => {
+    await auth(request(app).put('/api/menus/acesso-rapido')).send({ itens: [{ rotulo: '</script><img src=x onerror=alert(1)>&"\'', destino: '/editais' }] });
+    const h = html(await request(app).get('/'));
+    expect(h).not.toMatch(/<script>alert|<img src=x/);
+    const dados = bloco(h);
+    expect(dados.menus['acesso-rapido'][0].rotulo).toBe('</script><img src=x onerror=alert(1)>&"\'');
+  });
+
+  it('reflete uma mudança de configuração pouco depois de salvar (cache de 30 s)', async () => {
+    await auth(request(app).put('/api/configuracoes/contato')).send({ email: 'antes@ufrpe.br' });
+    expect(bloco(html(await request(app).get('/'))).config.contato.email).toBe('antes@ufrpe.br');
+    await auth(request(app).put('/api/configuracoes/contato')).send({ email: 'depois@ufrpe.br' });
+    limparCacheSeo();
+    expect(bloco(html(await request(app).get('/'))).config.contato.email).toBe('depois@ufrpe.br');
+  });
+});
+
 describe('P.4 — entrega do build', () => {
   it('arquivos de /assets vêm com cache de um ano; arquivo inexistente é 404 simples', async () => {
     const ok = await request(app).get('/assets/app.abc123.js');

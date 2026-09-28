@@ -119,7 +119,7 @@ export default function Navbar() {
           <Link to="/" className="flex items-center gap-4 shrink-0">
             {logo && (
               <Imagem
-                src={logo} sizes="64px" prioridade
+                src={logo} sizes="64px" largura={35} altura={56} prioridade
                 alt="UFRPE" className="h-14 md:h-16 w-auto"
                 onError={e => e.target.style.display = 'none'}
               />

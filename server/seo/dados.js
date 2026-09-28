@@ -2,6 +2,7 @@
 // montar título, descrição, imagem e JSON-LD — nunca o corpo inteiro.
 import { query } from '../db/pool.js';
 import { sqlPublicado } from '../utils/publicacao.js';
+import { menusPublicos, configuracoesPublicas } from '../controllers/portalController.js';
 
 export async function configuracoes() {
   const { rows } = await query('SELECT chave, valor FROM configuracoes');
@@ -53,4 +54,13 @@ export async function pagina(slug, programaId = null) {
     [slug, programaId],
   );
   return rows[0] || null;
+}
+
+// Menus e configurações do portal, na mesma forma das respostas de /api/menus e
+// /api/configuracoes. Vão embutidos no HTML: o site monta o menu, o cabeçalho e o
+// banner da home no primeiro desenho, sem esperar duas requisições depois do
+// JavaScript (src/hooks/usePortal.js lê este bloco).
+export async function dadosDoPortal() {
+  const [menus, config] = await Promise.all([menusPublicos(), configuracoesPublicas()]);
+  return { menus, config };
 }

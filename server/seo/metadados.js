@@ -88,7 +88,7 @@ const organizacao = (cfg) => {
 };
 
 const naoEncontrada = () => ({ status: 404, titulo: 'Página não encontrada', descricao: 'O endereço acessado não existe no portal da PRPG.', noindex: true });
-const restrita = (titulo) => ({ status: 200, titulo, noindex: true });
+const restrita = (titulo) => ({ status: 200, titulo, noindex: true, restrita: true });
 
 // Campos comuns de uma página indexável.
 const pagina = (caminho, dados) => ({ status: 200, canonical: absoluta(caminho), tipo: 'website', ...dados });

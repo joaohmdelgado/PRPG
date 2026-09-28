@@ -157,12 +157,18 @@ export const CONFIGURACOES = {
   seo: ['descricao', 'imagem'],
 };
 
-export const getConfiguracoes = async (req, res) => {
+// Só as chaves públicas (o resto de `configuracoes` é interno).
+export const configuracoesPublicas = async () => {
   const { rows } = await query('SELECT chave, valor FROM configuracoes');
   const out = {};
   for (const r of rows) if (CONFIGURACOES[r.chave]) out[r.chave] = r.valor;
-  return res.json(out);
+  return out;
 };
+
+export const getConfiguracoes = async (req, res) => res.json(await configuracoesPublicas());
+
+// Menus ativos como o site os recebe (a mesma resposta de GET /menus).
+export const menusPublicos = () => carregar({ todos: false });
 
 export const updateConfiguracao = async (req, res) => {
   const campos = CONFIGURACOES[req.params.chave];

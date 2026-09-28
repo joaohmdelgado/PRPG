@@ -18,8 +18,23 @@ const lerCache = () => {
   }
 };
 
-let estado = lerCache() || { menus: {}, config: {}, carregado: false };
-let promessa = null;
+// Menus e configurações que o servidor já pôs no HTML (server/seo/spa.js, Fase
+// P.4): o menu e o banner da home saem no primeiro desenho, sem esperar duas
+// requisições depois do JavaScript. É a versão mais nova que existe, então vale
+// mais que o cache do navegador e dispensa a busca inicial.
+const lerEmbutido = () => {
+  try {
+    const bloco = document.getElementById('dados-portal');
+    const dados = bloco ? JSON.parse(bloco.textContent) : null;
+    return dados?.menus && dados?.config ? { menus: dados.menus, config: dados.config, carregado: true } : null;
+  } catch {
+    return null;
+  }
+};
+
+const embutido = lerEmbutido();
+let estado = embutido || lerCache() || { menus: {}, config: {}, carregado: false };
+let promessa = embutido ? Promise.resolve() : null;
 const ouvintes = new Set();
 
 const carregar = () => {

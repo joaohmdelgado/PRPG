@@ -47,9 +47,9 @@ export function blocoDeMetadados(m) {
   return linhas.filter(Boolean).map((l) => `    ${l}`).join('\n');
 }
 
-export function injetarMetadados(html, m) {
+export function injetarMetadados(html, m, portal = null) {
   const titulo = m.titulo || NOME_SITE;
-  const bloco = blocoDeMetadados(m);
+  const bloco = [blocoDeMetadados(m), portal ? `    <script id="dados-portal" type="application/json">${jsonSeguro(portal)}</script>` : ''].filter(Boolean).join('\n');
   // Funções como substituto: o título vem do banco e pode conter "$&", "$'" etc.
   const comTitulo = /<title>[\s\S]*?<\/title>/i.test(html)
     ? html.replace(/<title>[\s\S]*?<\/title>/i, () => `<title>${esc(titulo)}</title>`)

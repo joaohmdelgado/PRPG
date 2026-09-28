@@ -12,6 +12,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { resolverMetadados } from './metadados.js';
+import { dadosDoPortal } from './dados.js';
 import { injetarMetadados } from './html.js';
 import { gerarSitemap, gerarRobots } from './sitemap.js';
 import { semIndexar } from './site.js';
@@ -56,7 +57,16 @@ async function metadadosDe(caminho) {
   cacheMeta.set(caminho, { meta, ate: agora + TTL_META_MS });
   return meta;
 }
-export const limparCacheSeo = () => { cacheMeta.clear(); textoEmCache.clear(); };
+export const limparCacheSeo = () => { cacheMeta.clear(); textoEmCache.clear(); portalEmCache = null; };
+
+// Menus e configurações embutidos no HTML: 30 s em memória, como os metadados.
+let portalEmCache = null;
+async function portalDe() {
+  if (portalEmCache && portalEmCache.ate > Date.now()) return portalEmCache.valor;
+  const valor = await dadosDoPortal();
+  portalEmCache = { valor, ate: Date.now() + TTL_META_MS };
+  return valor;
+}
 
 // robots.txt e sitemap.xml: 10 min em memória, 1 h para navegador/CDN.
 const textoEmCache = new Map();
@@ -130,11 +140,17 @@ export function criarRotasSpa() {
     }
     if (meta?.status === 302) return res.redirect(302, meta.redirect);
 
+    // Menus e configurações no HTML (não vale a pena na área restrita, que nem os usa).
+    let portal = null;
+    if (meta && !meta.restrita) {
+      try { portal = await portalDe(); } catch (e) { logUnexpectedError({ requestId: req.requestId, error: e }); }
+    }
+
     res.status(meta?.status || 200);
     res.setHeader('Content-Security-Policy', CSP_SPA);
     res.setHeader('Cache-Control', meta?.status === 404 ? 'no-cache' : 'public, max-age=0, must-revalidate');
     if (meta?.noindex) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-    return res.type('html').send(meta ? injetarMetadados(html, meta) : html);
+    return res.type('html').send(meta ? injetarMetadados(html, meta, portal) : html);
   });
 
   return router;
