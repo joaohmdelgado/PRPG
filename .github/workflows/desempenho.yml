@@ -1,0 +1,74 @@
+# Orçamento de desempenho (Fase P.6 de docs/revisao-portal-conteudo-2026-09-24.md):
+#  1. bundle      — tamanho do que o visitante baixa (orcamento-desempenho.json)
+#  2. lighthouse  — LCP, CLS, TBT e notas de acessibilidade/SEO nas páginas públicas
+# Enquanto o repositório não estiver num serviço com CI, os mesmos comandos rodam
+# na máquina: `npm run perf:bundle` e (com o banco no ar) `npm run build && npm run perf:lighthouse`.
+name: Desempenho
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'server/**'
+      - 'public/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'orcamento-desempenho.json'
+      - 'lighthouserc.cjs'
+      - 'scripts/**'
+  push:
+    branches: [main]
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run perf:bundle
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: prpg
+          POSTGRES_PASSWORD: prpg
+          POSTGRES_DB: prpg
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U prpg -d prpg"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://prpg:prpg@localhost:5432/prpg
+      JWT_SECRET: ci-somente-para-medir-desempenho-0123456789
+      PORT: 5000
+      PUBLIC_SITE_URL: http://localhost:5000
+      VITE_API_URL: http://localhost:5000
+      SPA_DIST_DIR: dist
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Schema e carga inicial (dados de exemplo do repositório)
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f server/db/schema.sql
+          npm run db:migrate
+      - run: npm run build
+      - name: Lighthouse CI
+        run: npx --yes @lhci/cli@0.15.x autorun --config=lighthouserc.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse
+          path: .lighthouseci

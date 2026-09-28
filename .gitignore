@@ -15,4 +15,5 @@ server/uploads/*
 server/uploads-derivados/
 server/private-uploads/*
 !server/private-uploads/.gitkeep
+.lighthouseci/
 backup-dados-vivos.sql

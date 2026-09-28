@@ -61,6 +61,7 @@ import { getNotificacoes, reenviarNotificacao, enviarTeste, getAgendador, execut
 import { buscaGlobal } from '../controllers/buscaController.js';
 import { getPendencias as getPainelPendencias } from '../controllers/painelController.js';
 import { getQualidade, iniciarVerificacaoLinks } from '../controllers/qualidadeController.js';
+import { registrarWebVitals, getResumoWebVitals } from '../controllers/webVitalsController.js';
 
 
 import { getLinhas, getLinhaById, createLinha, updateLinha, deleteLinha } from '../controllers/linhasPesquisaController.js';
@@ -612,6 +613,11 @@ router.get('/painel/pendencias', protect, requireRole(['Administrator', 'Gestor'
 // Painel de qualidade de dados e verificador de links (Fase O.7) — só a PRPG.
 router.get('/painel/qualidade', protect, requireRole(['Administrator', 'Gestor']), getQualidade);
 router.post('/painel/qualidade/links/verificar', protect, requireRole(['Administrator', 'Gestor']), iniciarVerificacaoLinks);
+
+// Desempenho real — Web Vitals (Fase P.6). POST é anônimo (o beacon do
+// navegador de quem visita, src/webVitals.js); o resumo por rota é do painel.
+router.post('/web-vitals', registrarWebVitals);
+router.get('/web-vitals/resumo', protect, requireRole(['Administrator', 'Gestor']), getResumoWebVitals);
 
 // ===================== Busca global (Fase L.10) =====================
 router.get('/busca', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), buscaGlobal);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, RefreshCw, Link2Off } from 'lucide-react';
+import { CheckCircle2, RefreshCw, Link2Off, Gauge } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { TableSkeleton } from '../../components/admin/AdminUI';
 import { useToast } from '../../components/admin/Toast';
@@ -66,6 +66,94 @@ function Categoria({ c, acoes }) {
   );
 }
 
+// Desempenho real (Fase P.6): o que quem visita o site realmente viveu
+// (biblioteca web-vitals, src/webVitals.js), agregado em p75 por família de
+// rota — diferente do Lighthouse (que mede em laboratório, uma vez).
+const METRICAS = ['LCP', 'INP', 'CLS', 'FCP', 'TTFB'];
+const COR_AVALIACAO = { good: 'text-emerald-700 bg-emerald-50', 'needs-improvement': 'text-amber-700 bg-amber-50', poor: 'text-red-700 bg-red-50' };
+const fmtMetrica = (metrica, valor) => (metrica === 'CLS' ? valor.toFixed(3) : `${Math.round(valor)} ms`);
+const OPCOES_DIAS = [7, 30, 90];
+
+function CelulaMetrica({ dado }) {
+  if (!dado) return <span className="text-gray-300">—</span>;
+  return (
+    <span className={`inline-flex flex-col items-center px-2 py-1 rounded-lg ${COR_AVALIACAO[dado.avaliacao]}`} title={`${dado.n} amostra(s)${dado.confiavel ? '' : ' — poucas amostras, número pode não ser estável'}`}>
+      <span className="text-sm font-semibold tabular-nums">
+        {dado.confiavel ? '' : '~'}{fmtMetrica(dado.metrica, dado.p75)}
+      </span>
+      <span className="text-[10px] opacity-70">{dado.n} amostra{dado.n === 1 ? '' : 's'}</span>
+    </span>
+  );
+}
+
+function DesempenhoReal() {
+  const [dias, setDias] = useState(30);
+  const [resumo, setResumo] = useState(null);
+  const [erro, setErro] = useState(null);
+
+  useEffect(() => {
+    let ativo = true;
+    setResumo(null);
+    setErro(null);
+    apiFetch(`/api/web-vitals/resumo?dias=${dias}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r)))
+      .then((d) => { if (ativo) setResumo(d); })
+      .catch(() => { if (ativo) setErro('Não foi possível carregar o desempenho real.'); });
+    return () => { ativo = false; };
+  }, [dias]);
+
+  return (
+    <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-heading font-semibold text-gray-900 text-sm flex items-center gap-2">
+          <Gauge size={15} className="text-gray-400" aria-hidden="true" /> Desempenho real
+        </h2>
+        <div className="flex items-center gap-1 text-xs" role="group" aria-label="Período">
+          {OPCOES_DIAS.map((d) => (
+            <button key={d} type="button" onClick={() => setDias(d)} aria-pressed={dias === d}
+              className={`px-2.5 py-1 rounded-lg border ${dias === d ? 'bg-ufrpe-blue text-white border-ufrpe-blue' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+              {d} dias
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 mt-1">
+        LCP, INP, CLS, FCP e TTFB reportados pelo navegador de quem visitou o site (p75) — diferente do Lighthouse, que mede uma vez, em laboratório.
+      </p>
+
+      {erro && <p className="mt-2 text-sm text-red-600" role="alert">{erro}</p>}
+      {!erro && !resumo && <div className="mt-3"><TableSkeleton rows={3} cols={5} /></div>}
+      {resumo && resumo.rotas.length === 0 && (
+        <p className="mt-2 text-sm text-gray-500 flex items-center gap-1.5">Ainda sem medições nos últimos {dias} dias.</p>
+      )}
+      {resumo && resumo.rotas.length > 0 && (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs text-gray-400 uppercase tracking-wide">
+                <th scope="col" className="pb-2 pr-3 font-medium">Página</th>
+                {METRICAS.map((m) => <th key={m} scope="col" className="pb-2 px-1 font-medium text-center">{m}</th>)}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {resumo.rotas.map((r) => (
+                <tr key={r.rota}>
+                  <th scope="row" className="py-2 pr-3 text-left font-mono text-xs text-gray-700 whitespace-nowrap">{r.rota}</th>
+                  {METRICAS.map((m) => (
+                    <td key={m} className="py-2 px-1 text-center">
+                      <CelulaMetrica dado={r.metricas[m] ? { ...r.metricas[m], metrica: m } : null} />
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function AdminQualidade() {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState(null);
@@ -106,6 +194,7 @@ export default function AdminQualidade() {
           <RefreshCw size={14} /> Atualizar
         </button>
       </div>
+      <DesempenhoReal />
       {dados.categorias.map((c) => (
         <Categoria
           key={c.id} c={c}

@@ -22,6 +22,8 @@
     "agendador": "node server/scripts/agendador.mjs",
     "links": "node server/scripts/verificarLinks.mjs",
     "imagens": "node server/scripts/imagens.mjs",
+    "perf:bundle": "node scripts/orcamento-desempenho.mjs",
+    "perf:lighthouse": "npx --yes @lhci/cli@0.15.x autorun --config=lighthouserc.cjs",
     "test:front": "vitest run --config vitest.front.config.js"
   },
   "dependencies": {
@@ -45,6 +47,7 @@
     "react-dom": "^19.0.1",
     "react-router-dom": "^7.16.0",
     "sharp": "^0.35.4",
+    "web-vitals": "^6.2.2",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

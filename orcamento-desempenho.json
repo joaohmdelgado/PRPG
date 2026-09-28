@@ -1,0 +1,47 @@
+{
+  "_comentario": "Orçamento de desempenho do front (Fase P.6). Tamanhos em KB comprimidos com gzip (nível 9), medidos no build de 28/09/2026 (com o relato de Web Vitals já incluído) com ~10% de folga: JS inicial 94,5 · CSS 15,3 · fontes 78,5. Conferido por `npm run perf:bundle` (scripts/orcamento-desempenho.mjs) e pelo workflow .github/workflows/desempenho.yml. Ao estourar, ou se corrige ou se justifica e se sobe o limite aqui, no mesmo commit.",
+  "carregamentoInicial": {
+    "jsKB": 105,
+    "cssKB": 17,
+    "fontesKB": 85
+  },
+  "chunkMaxKB": 30,
+  "chunkExcecoesKB": {
+    "index": 80,
+    "xlsx": 150
+  },
+  "proibidoNoCarregamentoInicial": [
+    "xlsx",
+    "RotasPainel",
+    "AdminLayout",
+    "ckeditor",
+    "ProgramaSite",
+    "web-vitals"
+  ],
+  "rotas": {
+    "/": {
+      "modulo": "src/pages/Home.jsx",
+      "jsKB": 110
+    },
+    "/noticias": {
+      "modulo": "src/pages/Noticias.jsx",
+      "jsKB": 110
+    },
+    "/noticia/:id": {
+      "modulo": "src/pages/Noticia.jsx",
+      "jsKB": 122
+    },
+    "/editais": {
+      "modulo": "src/pages/Editais.jsx",
+      "jsKB": 122
+    },
+    "/programas": {
+      "modulo": "src/pages/ProgramasStrictoSensu.jsx",
+      "jsKB": 110
+    },
+    "/:programa": {
+      "modulo": "src/pages/programa/ProgramaSite.jsx",
+      "jsKB": 125
+    }
+  }
+}

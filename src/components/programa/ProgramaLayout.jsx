@@ -243,7 +243,7 @@ export default function ProgramaLayout({ children }) {
         )}
       </nav>
 
-      <main id="conteudo-programa" ref={mainRef} tabIndex={-1} className="flex-1 outline-none"><AreaErrorBoundary area="esta página do programa">{children}</AreaErrorBoundary></main>
+      <main id="conteudo-programa" ref={mainRef} tabIndex={-1} className="flex-1 min-h-screen outline-none"><AreaErrorBoundary area="esta página do programa">{children}</AreaErrorBoundary></main>
 
       {/* Footer do programa */}
       <footer className="bg-[var(--prog-primary)] text-white/80 mt-auto border-t-4 border-[var(--prog-accent)]">

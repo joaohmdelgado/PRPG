@@ -37,6 +37,7 @@ export const RESET_TABLES = [
   'planilhas', // Fase O.4 (seed de 4 linhas, recriado abaixo)
   'agendador_execucoes', // Fase O.5
   'links_verificados', // Fase O.7
+  'web_vitals', // Fase P.6
 ];
 
 // Tabelas do schema que o resetDb deliberadamente NÃO toca: `unidades` é seed
@@ -59,6 +60,7 @@ export const RESET_SEQUENCES = [
   'calendario_milestones_id_seq', 'ato_diplomas_id_seq', 'linhas_pesquisa_id_seq',
   'taxonomia_refs_id_seq', 'vocabularios_id_seq', 'revisoes_id_seq',
   'menu_itens_id_seq', 'referencias_id_seq', 'agendador_execucoes_id_seq',
+  'web_vitals_id_seq', // Fase P.6
 ];
 
 export async function resetDb() {

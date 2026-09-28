@@ -2084,3 +2084,19 @@ UPDATE menus
    SET descricao = 'Ícones de redes sociais no rodapé. Escolha o ícone da rede (Instagram, LinkedIn, YouTube, Facebook, X, WhatsApp).'
  WHERE chave = 'redes-sociais'
    AND descricao = 'Ícones de redes sociais no rodapé. Ícone: classe do Font Awesome (ex.: fa-brands fa-instagram).';
+
+-- =====================================================================
+-- Fase P.6: medição real de Web Vitals (mesmo bloco da migração
+-- 2026-09-28_web_vitals.sql).
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS web_vitals (
+  id            BIGSERIAL PRIMARY KEY,
+  rota          TEXT NOT NULL CHECK (char_length(rota) <= 120),
+  metrica       TEXT NOT NULL CHECK (metrica IN ('CLS', 'FCP', 'INP', 'LCP', 'TTFB')),
+  valor         DOUBLE PRECISION NOT NULL CHECK (valor >= 0 AND valor < 1e9),
+  avaliacao     TEXT NOT NULL CHECK (avaliacao IN ('good', 'needs-improvement', 'poor')),
+  dispositivo   TEXT CHECK (dispositivo IN ('mobile', 'desktop')),
+  capturado_em  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS web_vitals_metrica_rota_idx ON web_vitals (metrica, rota, capturado_em DESC);
+CREATE INDEX IF NOT EXISTS web_vitals_capturado_em_idx ON web_vitals (capturado_em);

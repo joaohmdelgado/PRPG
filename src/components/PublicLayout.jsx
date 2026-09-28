@@ -20,7 +20,11 @@ export default function PublicLayout() {
       </a>
       <RouteFocusManager alvoId="conteudo" />
       <Navbar />
-      <main id="conteudo" ref={mainRef} tabIndex={-1} className="flex-1 outline-none">
+      {/* min-h-screen: enquanto o conteúdo carrega (a lista de notícias, por
+          exemplo, só chega depois de uma chamada à API), o rodapé fica abaixo
+          da dobra — quando o conteúdo chega, ele não pula na frente de quem
+          está lendo (medido com o Lighthouse, Fase P.6: CLS de 0,62 -> 0). */}
+      <main id="conteudo" ref={mainRef} tabIndex={-1} className="flex-1 min-h-screen outline-none">
         <AreaErrorBoundary area="esta página do portal">
           <Outlet />
         </AreaErrorBoundary>
