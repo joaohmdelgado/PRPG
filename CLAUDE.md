@@ -30,6 +30,9 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 | `npm run planilha -- <fonte> <arquivo.xlsx> [--gravar]` | Importa uma das 4 planilhas (contatos, expedientes, camara, pnpd). **Simulação por padrão** (nada é gravado); `todas <pasta>` simula a sequência inteira |
 | `npm run agendador` | Avalia os prazos uma vez e sai (para cron); `-- --continuo` fica rodando. Só no painel, sem e-mail, até `AGENDADOR_EMAIL=true` |
 | `npm run links` | Verificador de links (cron semanal); resultado no painel Qualidade dos dados |
+| `npm run imagens` | Gera as versões WebP das imagens que já estavam em `server/uploads` (novos uploads já são preparados no envio) |
+| `npm run perf:bundle` | Orçamento de performance (Fase P.6): mede o JS/CSS/fontes do carregamento inicial contra `orcamento-desempenho.json` |
+| `npm run perf:lighthouse` | Lighthouse CI (`lighthouserc.cjs`) contra o site buildado; precisa do banco com carga inicial e de `npm run build` antes |
 | `npm test` | Run the Vitest suite (needs `npm run db:up`; uses an isolated `prpg_test` DB) |
 | `npm run test:watch` | Vitest in watch mode |
 | `npm run test:front` | Component tests of the front (jsdom, no DB/API): panel menu/drawer, Ctrl+K, tabela, forms, /minha-conta |
@@ -237,6 +240,9 @@ CORS_ORIGINS=                                    # comma-separated allowlist (pr
 
 `JWT_SECRET` and `DATABASE_URL` are required — the server exits at boot if either
 is missing. `VITE_API_URL` is read by the frontend (`src/api.js`) at build time.
+`PUBLIC_SITE_URL`, `PUBLIC_API_URL`, `SPA_DIST_DIR` and `SEO_NOINDEX` control the
+per-route metadata/sitemap server (Fase P.4, see `.env.example` and
+`docs/operations/site-e-seo.md`).
 
 ## Admin Panel Navigation
 
@@ -302,12 +308,16 @@ proficiência, mídia, notificações, métricas.
   data-driven portal (`portal`, `estrutura`) and content connections
   (`conexoes`), and the program microsites (`programas_microsite`: menu groups,
   fixed pages, menu overrides, publication checklist, color contrast), /minha-conta,
-  the list contract (`listagemAdmin`) and the panel search (`buscaPainel`). ~425 tests in
-  48 files — the exact number drifts; check with `npx vitest run`.
+  the list contract (`listagemAdmin`), the panel search (`buscaPainel`), SQL-side listing/pagination
+  for news and editais (`listagemSql`), the WebP image pipeline (`imagens`), per-route SEO metadata/
+  sitemap/robots (`seo`) and real Web Vitals (`webVitals`). ~475 tests in 52 files — the exact number
+  drifts; check with `npx vitest run`.
 - **Front component tests** (`npm run test:front`, `vitest.front.config.js`, jsdom, no DB/API) live in
   `src/__tests__/`: `ui` (Field/Dialog/Toast/Icone/rede de rótulos/menu/login), `paineis` (AdminLayout drawer and
   groups, RequireAuth, estados, /minha-conta, Ctrl+K), `tabela` (DataTable: URL, sort, errors, delete, selection),
-  `formularios` (8 real forms: zero loose labels). jsdom comes transitively from `isomorphic-dompurify`.
+  `formularios` (8 real forms: zero loose labels), `Imagem`/`SafeHtml` (srcset, lazy loading), `usePortal`
+  (server-embedded menus/config), `rotaVitals`/`webVitals` (route family grouping, beacon payload). ~85 tests
+  in 9 files. jsdom comes transitively from `isomorphic-dompurify`.
 - Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes
@@ -433,6 +443,45 @@ menu and the publication checklist (`GET /api/programas/:id/checklist`) come fro
 (WCAG 4.5:1; the admin form imports the same module). `/<slug>` of an unpublished
 microsite redirects to `/programas/<slug>`; old `<sigla>.ufrpe.br` domains are mapped in
 `docs/redirecionamentos-dominios-programas.md`.
+
+**Performance and SEO (Fase P, `docs/revisao-portal-conteudo-2026-09-24.md`;
+operations detail in `docs/operations/site-e-seo.md`)**: the public site is
+still a client-rendered SPA, but the Express server (`server/seo/`) serves the
+built `dist/` (`SPA_DIST_DIR`, default `./dist`) and injects per-route SEO
+metadata into `index.html` from the DB — title, description, canonical, Open
+Graph and JSON-LD (`Organization`+`WebSite` on the home, `NewsArticle` on news,
+`BreadcrumbList` everywhere); missing/draft/scheduled content gets a real
+**404** (not the SPA's always-200), and restricted areas (`/admin`,
+`/minha-conta`, `/busca`...) get `noindex`. The same response also embeds
+menus/configuracoes as `<script id="dados-portal">` so `src/hooks/usePortal.js`
+skips its initial fetch. `robots.txt` and `sitemap.xml` are generated from the
+DB (`server/seo/sitemap.js`) and don't need the build; `SEO_NOINDEX=true`
+closes everything for staging. Without `SPA_DIST_DIR` (dev, Vite serving the
+site) only `robots.txt`/`sitemap.xml` respond from here.
+
+Uploaded raster images (`server/services/imagens.js`, `sharp`) get 5 WebP
+widths (240–1920px, never upscaled) generated on upload and on-demand for
+anything already on disk (`npm run imagens`); `/uploads/<file>?w=<width>`
+serves the WebP with a 30-day immutable cache. `server/uploads-derivados/` is
+regenerable cache — excluded from backups. `src/components/Imagem.jsx`
+(srcset/sizes, lazy by default, `prioridade` for the LCP image) replaces plain
+`<img>` across the public site; `SafeHtml` applies the same treatment to
+images inside rich-text content. Fonts (Inter, Outfit — variable, Latin
+subset) are self-hosted in `src/assets/fontes/` and preloaded, no Google
+Fonts `@import`.
+
+Performance budget: `npm run perf:bundle` (`scripts/orcamento-desempenho.mjs`)
+builds to a temp dir and checks gzip KB of the initial load, every chunk and
+each public route's total JS against `orcamento-desempenho.json`, failing the
+build if a limit is exceeded; `npm run perf:lighthouse`
+(`lighthouserc.cjs`) runs Lighthouse against the built site (needs a seeded
+DB) — both wired into `.github/workflows/desempenho.yml`. Real-user Web
+Vitals (CLS/FCP/INP/LCP/TTFB) are collected client-side in production builds
+only (`src/webVitals.js`, dynamic `import('web-vitals')` — not in the initial
+bundle) and posted anonymously to `POST /api/web-vitals`, grouped by route
+family (`src/utils/rotaVitals.js`, e.g. `/noticia/:id`); `GET
+/api/web-vitals/resumo` (Admin/Gestor) computes the p75 per route/metric,
+shown in **Qualidade dos dados → Desempenho real**.
 
 **Checking User Roles**:
 - Admin users are defined in `server/data/users.json`

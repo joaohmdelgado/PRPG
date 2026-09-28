@@ -631,12 +631,103 @@ pendências no sistema, não na planilha.
 
 | | # | Ação |
 |---|---|---|
-| `[ ]` | P.1 | Tirar o código do painel do carregamento público (ganho modesto); carregar sob demanda as subpáginas do microsite; XLSX só no clique ou exportação pelo servidor. `/programas` cai de 98 KB para cerca de 4 KB gz |
-| `[ ]` | P.2 | Listagens enxutas, paginação, gzip e ETag; eliminar o N+1 de editais (uma consulta com agregação); filtros em SQL |
-| `[ ]` | P.3 | Imagens locais em WebP com vários tamanhos gerados no upload, dimensões declaradas, carregamento tardio, hero pré-carregado |
-| `[ ]` | P.4 | Metadados por rota injetados pelo servidor no `index.html` a partir do banco (título, descrição, canonical, OG) — alternativa barata ao SSR; `sitemap.xml` e `robots.txt` gerados do banco; JSON-LD (Organization, NewsArticle, BreadcrumbList) |
-| `[ ]` | P.5 | Fontes hospedadas no próprio site, acabando com o `@import` encadeado |
-| `[ ]` | P.6 | Orçamento de performance no CI (Lighthouse) e medição real de Web Vitals |
+| `[x]` | P.1 | Tirar o código do painel do carregamento público (ganho modesto); carregar sob demanda as subpáginas do microsite; XLSX só no clique ou exportação pelo servidor. `/programas` cai de 98 KB para cerca de 4 KB gz |
+| `[x]` | P.2 | Listagens enxutas, paginação, gzip e ETag; eliminar o N+1 de editais (uma consulta com agregação); filtros em SQL |
+| `[x]` | P.3 | Imagens locais em WebP com vários tamanhos gerados no upload, dimensões declaradas, carregamento tardio, hero pré-carregado |
+| `[x]` | P.4 | Metadados por rota injetados pelo servidor no `index.html` a partir do banco (título, descrição, canonical, OG) — alternativa barata ao SSR; `sitemap.xml` e `robots.txt` gerados do banco; JSON-LD (Organization, NewsArticle, BreadcrumbList) |
+| `[x]` | P.5 | Fontes hospedadas no próprio site, acabando com o `@import` encadeado |
+| `[x]` | P.6 | Orçamento de performance no CI (Lighthouse) e medição real de Web Vitals |
+
+> **Nota de execução (28/09/2026)** — os 6 itens aplicados, um commit por item (P.1, P.2, P.5, P.3,
+> P.4, mais um commit de acabamento do P.4, P.6, nessa ordem — as fontes vieram antes das imagens
+> porque não dependiam de nada), com testes novos em `listagemSql`, `imagens`, `seo` e `webVitals`
+> (suíte do servidor: 475 testes em 52 arquivos, verdes) e em `usePortal`, `rotaVitals` e `webVitals`
+> do lado do front (suíte de componentes: 85 testes em 9 arquivos). Migração `2026-09-28_web_vitals`
+> aplicada no banco de desenvolvimento (`npm run db:migrate:apply`). **Decisão assumida:** D-R4 como
+> recomendado — injeção de metadados pelo servidor agora, sem SSR/prerender. **Como ficou:**
+> - P.1: XLSX vira `import()` dinâmico no clique de exportar (`ProgramasStrictoSensu.jsx`); as 15
+>   subpáginas do microsite (`ProgramaSite.jsx`) e as ~80 rotas do painel (novo `src/RotasPainel.jsx`,
+>   carregado só por quem entra em `/admin/*`) saem do carregamento público. Medido: `/programas`
+>   98 → 4,3 KB gz; `ProgramaSite` 15,6 → 5,3 KB gz; chunk de entrada 78,8 → 74,9 KB gz (antes das
+>   fontes/Web Vitals da P.5/P.6, que somam de volta — ver a medição final abaixo).
+> - P.2: `server/db/repository.js` ganhou `listar`/`contar` (SQL puro, sempre com `params`, nunca
+>   texto da requisição), e `newsController.getNews` foi reescrito para filtrar, ordenar (por texto
+>   sem acento/caixa) e paginar tudo no banco; `?resumo=1` tira corpo/citação/tags/legenda. Editais só
+>   buscam erratas/resultados dos itens que vão na página (antes: uma consulta por edital de todos).
+>   O painel (`useListaServidor`) passou a pedir `resumo=1`; o microsite passou a paginar as notícias
+>   do programa (antes baixava todas). Medido: `/api/news` da página de notícias (paginada) 88 → 1,4 KB
+>   gz. **Só `news` e `editais` migraram** para SQL puro — os demais controllers de listagem
+>   continuam filtrando/ordenando em JavaScript sobre `getAll()` (volume pequeno hoje; ver H.5 para o
+>   índice full-text, que já é SQL).
+> - P.3: `server/services/imagens.js` (`sharp`) gera 5 larguras WebP (240 a 1920 px, sem ampliar) no
+>   upload e sob demanda para o que já estava em `server/uploads` (`npm run imagens`);
+>   `/uploads/<arquivo>?w=` serve a versão com cache imutável de 30 dias.
+>   `src/components/Imagem.jsx` (srcset/sizes, `loading="lazy"` por padrão, `prioridade` para o LCP)
+>   substitui `<img>` em 16 lugares; `SafeHtml` aplica o mesmo tratamento às imagens dentro do texto
+>   do editor. `server/uploads-derivados/` é cache regenerável — fora do backup (`.gitignore`).
+> - P.4: `server/seo/` (`metadados.js`, `html.js`, `sitemap.js`, `spa.js`) injeta título, descrição,
+>   canonical, Open Graph e JSON-LD (`Organization`+`WebSite` na home; `NewsArticle` na notícia, com o
+>   canonical no microsite quando ele está publicado e no portal senão; `BreadcrumbList` em todas) no
+>   `index.html` do build, a partir do banco — conteúdo inexistente/rascunho/agendado responde **404**
+>   de verdade (antes: 200 sempre, é uma SPA); área restrita (`/admin`, `/minha-conta`, `/busca`...)
+>   sai como `noindex`. `sitemap.xml` e `robots.txt` também vêm do banco (só o publicado e canônico,
+>   sem duplicar programa com/sem microsite); `SEO_NOINDEX=true` fecha tudo para homologação. O mesmo
+>   HTML também embute menus e configurações (`<script id="dados-portal">`) — `usePortal` usa esse
+>   bloco em vez de esperar duas requisições depois do JavaScript, com nova descrição/imagem padrão
+>   configuráveis em "Menus e portal → Buscadores e redes". **Precisa do build (`SPA_DIST_DIR`,
+>   padrão `dist/`)** — sem ele só `robots.txt`/`sitemap.xml` respondem (documentado em
+>   `docs/operations/site-e-seo.md`).
+> - P.5: Inter e Outfit variáveis (subconjunto latino) hospedadas em `src/assets/fontes/`
+>   (licença OFL junto), pré-carregadas no `index.html`; sai o `@import` encadeado do Google Fonts —
+>   zero recurso de terceiro bloqueando a primeira renderização.
+> - P.6: `scripts/orcamento-desempenho.mjs` (`npm run perf:bundle`) builda numa pasta temporária e
+>   mede em KB gzip o JS/CSS/fontes do carregamento inicial, cada chunk e o total por rota pública,
+>   contra `orcamento-desempenho.json` — falha se estourar (CI: `.github/workflows/desempenho.yml`,
+>   que também roda `lighthouserc.cjs` com Postgres de serviço, LCP/CLS/TBT e notas de
+>   a11y/SEO/boas-práticas). `src/webVitals.js` (biblioteca `web-vitals`, `import()` dinâmico — não
+>   pesa no carregamento inicial) reporta CLS/FCP/INP/LCP/TTFB reais por família de rota
+>   (`src/utils/rotaVitals.js` agrupa `/noticia/abc` e `/noticia/xyz` em `/noticia/:id`) só no build
+>   de produção; `POST /api/web-vitals` é anônimo (sem identificador, IP nem user-agent — LGPD).
+>   `GET /api/web-vitals/resumo` (Admin/Gestor) calcula o p75 por rota e métrica (`percentile_cont`),
+>   lido em **Qualidade dos dados → Desempenho real**. Achado de passagem, corrigido: o `<main>`
+>   público e do microsite não tinha `min-h-screen` — enquanto a lista de notícias carregava, o
+>   rodapé pulava; CLS medido em `/noticias` caiu de 0,62 para 0.
+>
+> **Medido (Lighthouse local, `chrome-launcher` headless, perfil móvel simulado, banco de dev clonado
+> — não é CI real, ver "Não verificado"):** `/noticias` 64 → 88 (CLS 0,62 → 0, TBT 230 → 85 ms);
+> `/programas` 84; home 74 → 84 **com um banner sintético leve no lugar do JPEG de 405 KB do site
+> antigo** (a home real só melhora de verdade depois que a rotina de mídia da F.5 trouxer o banner
+> para `/uploads`). Chunk de entrada final (com fontes pré-carregadas e o módulo de Web Vitals): 94,5
+> KB gz — dentro do orçamento (105 KB).
+>
+> **Ficou de fora:**
+> - trazer o banner da home e o logo do topo para `/uploads` (continuam em `prpg.ufrpe.br`, sem cache
+>   nem WebP) — depende da mesma rotina de mídia (`npm run arquivos -- --externos --executar`) que as
+>   Fases F e H já deixaram para depois, por exigir autorização;
+> - AVIF (só WebP — cobre o navegador majoritário do público institucional; considerar depois, se o
+>   ganho compensar mais um formato/tamanho por imagem);
+> - contraste insuficiente que o Lighthouse aponta em `text-ufrpe-cyan`/`green-600`/`orange-600` e no
+>   rodapé — fora do escopo desta fase (a S.5 tratou só as cores por programa);
+> - retenção agendada de `web_vitals` (só a limpeza oportunista de 1 a cada 500 requisições, descrita
+>   no controller) — um cron dedicado fica para quando o volume justificar;
+> - o restante das listagens (grupos, portarias, Câmara, expedientes, pós-doc, contatos, disciplinas,
+>   bolsas, formulários, resoluções, teses) continua filtrando em JavaScript sobre `getAll()` (P.2
+>   só migrou notícias e editais, os dois medidos como críticos no diagnóstico da Fase P);
+>   endurecimento completo da CSP do HTML servido (nonce, `connect-src`, `img-src`) — fica para a
+>   Task 12 do plano de prontidão.
+>
+> **Não verificado:**
+> - nenhuma tela do painel foi aberta num navegador logado (exige login com senha) — "Desempenho
+>   real" em Qualidade dos dados foi conferido por build, typecheck e os testes de API/componente;
+> - o relato real de Web Vitals nunca rodou num navegador de visitante de verdade (só testado por
+>   mocks unitários e por `curl` manual em `/api/web-vitals`) — sem tráfego de produção o painel
+>   mostra "ainda sem medições";
+> - `npm run perf:lighthouse` (`lhci autorun` completo) não terminou limpo nesta máquina Windows — o
+>   `chrome-launcher` tenta apagar a pasta temporária do perfil do Chrome e esbarra em EPERM depois de
+>   já ter coletado os dados (`lhci assert` sobre a coleta funcionou); o workflow do CI roda em
+>   Ubuntu, onde esse problema específico não é esperado, mas não foi testado num CI de verdade (o
+>   repositório ainda não está num serviço de CI);
+> - deploy atrás de um proxy reverso/CDN de verdade (cache, CSP, `SPA_DIST_DIR` em produção).
 
 ---
 
@@ -689,7 +780,7 @@ pendências no sistema, não na planilha.
 | S — Microsites em 4 grupos | 6 | — | 25/09/2026 | 25/09/2026 | ✅ concluída (ver nota da Fase S; D-S1..D-S3 para a TI) |
 | O — Virada das planilhas | 7 | D-R5 + `PLANO.md` §4 | 25/09/2026 | 25/09/2026 | 🟡 7/7 no código (400 testes verdes); **a virada em si depende da oficina (O.1) e da gravação das importações** — ver nota da Fase O |
 | U — Painel e acessibilidade | 7 | — | 26/09/2026 | 26/09/2026 | 🟡 7/7 nos fluxos principais; migração dos ~240 rótulos e de 12 listas restantes fica para depois (ver nota da Fase U) |
-| P — Performance e SEO | 6 | D-R4 | | | ⬜ não iniciada |
+| P — Performance e SEO | 6 | D-R4 | 26/09/2026 | 28/09/2026 | ✅ concluída (ver nota da Fase P) |
 | | **60 itens** | **5 decisões** | | | |
 
 > **Nota de execução (25/09/2026)** — os 7 itens aplicados, um commit por item (O.1 a O.7), com
