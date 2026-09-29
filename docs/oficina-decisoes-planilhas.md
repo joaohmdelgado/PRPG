@@ -108,7 +108,7 @@ o que o sistema faz até lá.
 
 ### 4.1 Câmara de Pós-Graduação
 
-#### ★ D-B1 — O que significa cada cor da planilha da Câmara?
+#### ★ D-B1 — O que significa cada cor da planilha da Câmara? ✅ respondida (29/09/2026 — ver folha de respostas)
 
 - **Contexto.** A planilha não tem coluna de situação: a situação é a **cor de fundo** da linha,
   sem legenda. Contagem por cor nas 102 linhas de processo (conferida em 25/09/2026):
@@ -179,7 +179,7 @@ o que o sistema faz até lá.
 
 ### 4.2 Expedientes (ofícios, editais e portarias)
 
-#### ★ D-E2 — Por que há só 16 portarias em 2025, contra 60 em 2026?
+#### ★ D-E2 — Por que há só 16 portarias em 2025, contra 60 em 2026? ✅ respondida (29/09/2026)
 
 - **Contexto (conferido em 25/09/2026).** A aba `Portarias - 2025` tem 16 portarias preenchidas
   e **179 números pré-numerados em branco depois da última**. Isso sugere que a aba foi
@@ -191,7 +191,7 @@ o que o sistema faz até lá.
 - **Destrava:** E.5 completo para 2025, e E.14 (datas de mandato a partir das portarias).
 - **Até lá:** as 16 portarias entram. A lacuna fica registrada como pendência da série de 2025.
 
-#### ★ D-E3 — O que fazer com os números reservados em branco?
+#### ★ D-E3 — O que fazer com os números reservados em branco? ✅ respondida (29/09/2026)
 
 - **Contexto (conferido em 25/09/2026).** Dos 306 números "em branco", **304 estão depois do
   último número usado** de cada aba: 124 em `2026 ofícios`, 179 em `Portarias - 2025` e 1 em
@@ -308,7 +308,7 @@ o que o sistema faz até lá.
 
 ### 4.4 Pós-doutorado (PNPD)
 
-#### ★ D-C3 — `ECOLOGIA` (5 registros): que programa é esse?
+#### ★ D-C3 — `ECOLOGIA` (5 registros): que programa é esse? ✅ respondida (29/09/2026)
 
 - **Opções.** Programa descredenciado; o atual "Biodiversidade"; ou o nome antigo de outro.
 - **Até lá:** os 5 entram **sem programa**, com a grafia original guardada e pendência. A tela
@@ -406,15 +406,15 @@ Preencher durante a oficina. "Decidido por" é o nome ou cargo de quem respondeu
 
 | ID | Resposta | Decidido por | Observação |
 |---|---|---|---|
-| D-B1 | verde-escuro = … · verde-claro = … · rosa = … · amarelo = … · azul = … · vermelho = … | | |
+| D-B1 | verde-escuro (56, "ARQUIVADO") = já passou na reunião, finalizado/arquivado · verde-claro (21, "relator indicado") = **não** é "passou" — é etapa anterior (em pauta, aguardando reunião com relator já designado); fica com situação própria, não entra no bucket passou/não-passou · vermelho (1) = não passou · azul (2) = desconsiderado, mantido "a classificar" individualmente · rosa (19) e amarelo (3) = mantidos "a classificar" individualmente — os textos ao lado variam demais dentro da própria cor ("enviado ao PPG/Reitoria", "retirado de pauta", "troca de relator" para rosa; "encaminhado ao CONSU" para amarelo) para virar uma única situação | usuário (autorizou Claude a decidir onde a cor não bastasse) | Só verde-escuro e vermelho vieram como instrução direta do usuário; o resto (verde-claro, rosa, amarelo) foi julgamento sobre os textos da planilha — conferir antes de aplicar em produção |
 | D-G8 | | | |
 | D-J1 | | | |
 | D-J2 | | | |
 | D-J3 | | | |
 | D-L1 | | | |
 | D-E1 | | | |
-| D-E2 | | | |
-| D-E3 | | | |
+| D-E2 | (b) Foi sub-registro sem fonte recuperável: o livro de 2025 fica incompleto, com nota. Não há outra fonte a trazer. | usuário | |
+| D-E3 | (a modificada) Os 306 números "em branco" são todos a grade pré-numerada que sobrou sem uso — nenhum é reserva real. Nenhum vira `CANCELADO`; nenhum é importado. | usuário | O levantamento original separava 304 (grade) de 2 possíveis buracos reais em `OFÍCIOS - 2024` (linhas com traço); a resposta trata os 306 como a mesma coisa — conferir essas 2 linhas antes de rodar `--gravar`, caso sejam de fato diferentes |
 | D-E5 | | | |
 | D-E6 | | | |
 | D-E7 | | | |
@@ -429,7 +429,7 @@ Preencher durante a oficina. "Decidido por" é o nome ou cargo de quem respondeu
 | D-G7 | | | |
 | D-C1 | | | |
 | D-C2 | | | |
-| D-C3 | | | |
+| D-C3 | Programa descredenciado — "ECOLOGIA" não existe mais; fica só como registro histórico, sem vínculo a nenhum programa atual (nem a "Biodiversidade"). | usuário | |
 | D-C4 | | | |
 | D-C6 | | | |
 | D-C7 | | | |

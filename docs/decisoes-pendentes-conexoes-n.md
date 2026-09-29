@@ -24,7 +24,7 @@ seção N.4 abaixo.
 | | Decisão(ões) | Depois da decisão, ainda falta | Quem decide |
 |---|---|---|---|
 | **N.4** — perfil público do docente | **D-R2** (ficha nesta página) | fechar a FK de `vinculos.pessoa_id` (B.3, dívida técnica — não é decisão), ligar `linhas_pesquisa` a `pessoas`, construir a tela | encarregado de dados da UFRPE — `encarregado.lgpd@ufrpe.br` |
-| **N.7** — vigente/revogada nas resoluções | D-E2, D-E3, D-E5 (fichas em `oficina-decisoes-planilhas.md` §4.2) | gravar o importador E.5 de verdade (hoje só simulado), migrar `portarias`/`resolucoes`/`formularios` para `atos`/`documentos` (E.11 — schema pronto, dado não migrado) | oficina O.1 (secretaria de expedientes) |
+| **N.7** — vigente/revogada nas resoluções | D-E2 ✅, D-E3 ✅, **D-E5 (falta)** (fichas em `oficina-decisoes-planilhas.md` §4.2) | gravar o importador E.5 de verdade (hoje só simulado), migrar `portarias`/`resolucoes`/`formularios` para `atos`/`documentos` (E.11 — schema pronto, dado não migrado) | oficina O.1 (secretaria de expedientes) |
 | **N.8** — contatos como fonte única | D-G1 (ficha em `oficina-decisoes-planilhas.md` §4.3) | gravar o importador de contatos de verdade (hoje só simulado — a tabela `contatos` tem zero linhas), construir G.9 (seção de contato no microsite), aposentar `filterSensitivePessoa` (B.6) | oficina O.1 (quem mantém a agenda) |
 
 Em nenhum dos três a decisão sozinha resolve. **Se a oficina O.1 acontecer e alguém gravar as
@@ -123,12 +123,16 @@ Câmara já usa para atos.
 
 ### Cadeia completa
 
-1. **D-E2, D-E3, D-E5** — responder (fichas completas em
+1. **D-E2 ✅, D-E3 ✅, D-E5 (falta)** — fichas completas em
    [`oficina-decisoes-planilhas.md` §4.2](oficina-decisoes-planilhas.md#42-expedientes-ofícios-editais-e-portarias),
-   marcadas com ★ — são as três de maior impacto da oficina O.1). Resumo do que cada uma resolve:
-   - D-E2: por que 2025 tem só 16 portarias contra 60 em 2026 (sub-registro ou outra fonte).
-   - D-E3: o que fazer com os buracos reais de numeração (viram `CANCELADO`, ou ficam em aberto).
-   - D-E5: quais dos 46 editais numerados no livro viram registros publicados no site.
+   marcadas com ★ — são as três de maior impacto da oficina O.1. Resumo:
+   - D-E2 (respondida 29/09/2026): sub-registro sem fonte recuperável — o livro de 2025 fica
+     incompleto, com nota; não há outra fonte a trazer.
+   - D-E3 (respondida 29/09/2026): os 306 números "em branco" são todos a grade pré-numerada
+     sem uso — nenhum vira `CANCELADO`, nenhum é importado (ver a folha de respostas para uma
+     ressalva sobre 2 linhas que o levantamento original separou como possíveis buracos reais).
+   - D-E5 (ainda sem resposta): quais dos 46 editais numerados no livro viram registros
+     publicados no site.
 2. **Rodar o importador de expedientes de verdade** — `npm run planilha -- expedientes
    <arquivo> --gravar`. Hoje só a simulação rodou (Fase O.3: "550 atos, 17 referências entre
    atos ligadas... nada gravado no banco"). Sem isso, `atos`/`ato_referencias` continuam vazias
@@ -143,8 +147,9 @@ Câmara já usa para atos.
    `documentos`/`atos` e passa a mostrar `ato_referencias`. Esse último passo é pequeno depois
    que os três de cima estiverem prontos.
 
-**Não precisa de nenhuma decisão nova** além das três já fichadas — a cadeia inteira já está
-mapeada na oficina; falta ela acontecer (D-R5, "o quanto antes") e alguém apertar "gravar".
+**Não precisa de nenhuma decisão nova** além das três já fichadas — duas (D-E2, D-E3) já
+respondidas em 29/09/2026, sem esperar a oficina inteira acontecer; só falta **D-E5**, e depois
+alguém apertar "gravar".
 
 ---
 
