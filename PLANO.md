@@ -313,13 +313,13 @@ importados e validados.
 |---|---|---|---|---|
 | `[x]` | G.1 | Repositório de contatos + normalização de e-mail e telefone (DDD) | `db/contatosRepo.js`, `utils/contato.js` | já existia (A.5b) |
 | `[x]` | G.2 | Controller: CRUD, agenda por cargo, "copiar e-mails do cargo" (front monta a partir da agenda), exportar XLSX | `controllers/contatosController.js` | |
-| `[x]` | G.3 | Rotas e permissões (Admin/Gestor por enquanto) | `routes/adminRoutes.js` | ⛔ escopo por `GestorPrograma` adiado — D-G7 não respondida |
+| `[x]` | G.3 | Rotas e permissões (Admin/Gestor por enquanto) | `routes/adminRoutes.js` | ⛔ escopo por `GestorPrograma` adiado — D-G7 respondida (sim) em 29/09/2026, mas a extensão de rotas ainda não foi implementada |
 | `[x]` | G.4 | Importador da planilha (47 programas, 113 pessoas, 157 e-mails, 72 telefones) | `services/importers/contatosImporter.js` | ⛔ D-G2..D-G6, D-G8 |
 | `[x]` | G.5 | Tela de agenda, indexada por cargo | `src/pages/admin/AdminContatos.jsx` | verificado no navegador com dado real de produção |
 | `[ ]` | G.6 | Ficha da pessoa (dados, contatos, todos os vínculos, expedientes) | `src/pages/admin/AdminPessoa.jsx` | ⛔ não é decisão pendente — deixado para depois por escopo/tempo desta sessão (ver nota) |
 | `[ ]` | G.7 | Bloco de contatos no formulário de programa e de usuário | telas existentes | ⛔ idem — a funcionalidade já existe via G.5 (ver nota) |
 | `[ ]` | G.8 | Importação em 5 passos | `src/pages/admin/AdminContatosImportar.jsx` | ⛔ depende de G.4 |
-| `[ ]` | G.9 | Microsite: seção de contato lendo `contatos.publico` | `src/components/programa/` | ⛔ D-G1 |
+| `[x]` | G.9 | Microsite: seção de contato lendo `contatos.publico` | `src/components/programa/ContatosPublicos.jsx` | D-G1 respondida em 29/09/2026; implementada e testada em 29/09/2026 (testes automatizados + verificação manual no navegador). Soma aos campos legados de `programas`, sem substituí-los — a migração de dado (G.4 rodar com `--gravar`) ainda não aconteceu, então a tabela `contatos` segue com zero linhas em produção |
 
 **Critério de pronto**: os 31 programas sem sigla passam a ter sigla; a agenda responde "todos
 os coordenadores" em um clique, com o botão de copiar e-mails funcionando; nenhum celular
@@ -631,7 +631,7 @@ ofício em lote — um único ofício cobrindo vários concluintes.
 |---|---|---|---|---|---|
 | A — Núcleo | 18 | D-A1, D-A2, D-A3, D-A4, D-E1 | 27/07/2026 | 27/07/2026 | ✅ concluída (D-A1/D-A4 conforme recomendação; FK real de `vinculos.pessoa_id` adiada para B.3 — ver A.10) |
 | B — Refit + Câmara | 10 | D-B1, D-G8, D-A4 | 28/07/2026 | 28/07/2026 | 🟡 7/10 feitos (B.1-B.3, B.5, B.7 aplicados; B.4/B.6 investigados e adiados p/ Fase E/G; B.8-B.10 bloqueados por D-B1) |
-| G — Contatos | 9 | D-G1..D-G8 | 28/07/2026 | 28/07/2026 | 🟡 5/9 feitos (G.1-G.3, G.5 aplicados e verificados no navegador; G.6/G.7 deixados por escopo; G.4/G.8 bloqueados por D-G2..D-G8; G.9 bloqueado por D-G1) |
+| G — Contatos | 9 | D-G1..D-G8 | 28/07/2026 | 29/09/2026 | 🟡 6/9 feitos (G.1-G.5 já aplicados; G.9 aplicado e testado em 29/09/2026, depois de D-G1 respondida — ver `docs/decisoes-pendentes-conexoes-n.md`; G.6/G.7 deixados por escopo; G.8 depende de rodar G.4 com `--gravar`) |
 | E — Expedientes | 14 | D-E1..D-E3, D-E5..D-E8 | 28/07/2026 | 28/07/2026 | 🟡 9/14 feitos (E.1-E.4, E.6-E.9, E.13 aplicados e testados; E.5/E.10/E.12/E.14 bloqueados pelas decisões D-E2/D-E3/D-E5; E.11 investigada e adiada — depende do importador) |
 | C — PNPD | 8 | D-C1..D-C4, D-C6..D-C9 | 28/07/2026 | 28/07/2026 | 🟡 7/8 feitos (C.1-C.4, C.6, C.8 aplicados e testados; C.7 parcial — declaração de vínculo pronta, certificado adiado por D-C7; C.5 bloqueado por D-C3/D-C8/D-C9) |
 | I — Notificações | 6 | **D-C5** | 28/07/2026 | 28/07/2026 | ✅ concluída (D-C5 não bloqueia: o critério de pronto já previa o caminho sem SMTP como caso normal; I.5 é esqueleto sem regras — dependem da Fase J) |

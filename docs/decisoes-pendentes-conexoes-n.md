@@ -25,12 +25,13 @@ seção N.4 abaixo.
 |---|---|---|---|
 | **N.4** — perfil público do docente | ✅ **D-R2 respondida** (opt-out — visível por padrão, com opção de ocultar) | fechar a FK de `vinculos.pessoa_id` (B.3, dívida técnica — não é decisão), ligar `linhas_pesquisa` a `pessoas`, construir a tela e o interruptor em `/minha-conta` | resolvida — decidiu o encarregado de dados da UFRPE |
 | **N.7** — vigente/revogada nas resoluções | ✅ D-E2, D-E3, D-E5 — **as três respondidas** (fichas em `oficina-decisoes-planilhas.md` §4.2) | gravar o importador de expedientes de verdade (hoje só simulado), migrar `portarias`/`resolucoes`/`formularios` para `atos`/`documentos` (E.11 — schema pronto, dado não migrado) | só trabalho técnico agora |
-| **N.8** — contatos como fonte única | ✅ **todas as decisões do bloco G respondidas** (D-G1, D-G2, D-G3, D-G4, D-G5, D-G6, D-G7, D-G8 — ver folha; fichas em `oficina-decisoes-planilhas.md` §4.3) | gravar o importador de contatos de verdade (hoje só simulado — a tabela `contatos` tem zero linhas), construir G.9 (seção de contato no microsite), aposentar `filterSensitivePessoa` (B.6) | resolvida — só trabalho técnico agora |
+| **N.8** — contatos como fonte única | ✅ **todas as decisões do bloco G respondidas** (D-G1, D-G2, D-G3, D-G4, D-G5, D-G6, D-G7, D-G8 — ver folha; fichas em `oficina-decisoes-planilhas.md` §4.3) | gravar o importador de contatos de verdade (hoje só simulado — a tabela `contatos` tem zero linhas); ✅ **G.9 (seção de contato no microsite) já implementada e testada em 29/09/2026** — aparece assim que houver dado; falta aposentar `filterSensitivePessoa` (B.6), só depois de G.4 gravar de verdade | resolvida — só trabalho técnico agora |
 
 **As três decisões que travavam N.4/N.7/N.8 estão respondidas.** O que falta em todas é só
 trabalho técnico: rodar os dois importadores (expedientes e contatos) com `--gravar` — hoje só
-simulados — e construir a UI que falta em cada um (E.11, G.9, a tela de perfil do docente e o
-interruptor em `/minha-conta`). Nenhum dos três precisa mais de decisão para avançar.
+simulados — e construir a UI que falta em cada um (E.11, a tela de perfil do docente e o
+interruptor em `/minha-conta`; G.9 já está pronta). Nenhum dos três precisa mais de decisão para
+avançar.
 
 ---
 
@@ -190,8 +191,9 @@ passa a vir de `contatos`, com `publico` por registro.
    nota final: "nenhuma importação foi gravada"). A tabela `contatos` (criada desde a Fase A.5b)
    **continua com zero linhas em produção** (`PLANO.md`, nota B.6) — os 8 campos antigos
    continuam sendo a fonte real até essa gravação acontecer.
-4. **G.9** — construir a seção de contato do microsite lendo `contatos.publico`
-   (`src/components/programa/`, hoje não existe — `PLANO.md` linha 316, `[ ]`).
+4. **G.9 ✅ implementada e testada em 29/09/2026** — seção de contato do microsite lendo
+   `contatos.publico` (`src/components/programa/ContatosPublicos.jsx`). Soma aos campos legados
+   de `programas` sem substituí-los; fica vazia até o passo 3 rodar de verdade.
 5. **B.6** — aposentar `filterSensitivePessoa` (a única proteção de privacidade hoje em vigor no
    endpoint público de programas) em favor de ler `contatos` direto. Só pode acontecer **depois**
    do passo 3 — aposentar o filtro sem a tabela populada seria regressão de privacidade
