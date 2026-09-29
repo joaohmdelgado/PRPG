@@ -23,14 +23,14 @@ seção N.4 abaixo.
 
 | | Decisão(ões) | Depois da decisão, ainda falta | Quem decide |
 |---|---|---|---|
-| **N.4** — perfil público do docente | **D-R2** (ficha nesta página) | fechar a FK de `vinculos.pessoa_id` (B.3, dívida técnica — não é decisão), ligar `linhas_pesquisa` a `pessoas`, construir a tela | encarregado de dados da UFRPE — `encarregado.lgpd@ufrpe.br` |
+| **N.4** — perfil público do docente | ✅ **D-R2 respondida** (opt-out — visível por padrão, com opção de ocultar) | fechar a FK de `vinculos.pessoa_id` (B.3, dívida técnica — não é decisão), ligar `linhas_pesquisa` a `pessoas`, construir a tela e o interruptor em `/minha-conta` | resolvida — decidiu o encarregado de dados da UFRPE |
 | **N.7** — vigente/revogada nas resoluções | ✅ D-E2, D-E3, D-E5 — **as três respondidas** (fichas em `oficina-decisoes-planilhas.md` §4.2) | gravar o importador de expedientes de verdade (hoje só simulado), migrar `portarias`/`resolucoes`/`formularios` para `atos`/`documentos` (E.11 — schema pronto, dado não migrado) | só trabalho técnico agora |
-| **N.8** — contatos como fonte única | ✅ **D-G1 respondida** (é a que destrava G.9/N.8/B.6) — D-G2, D-G3, D-G4, D-G5, D-G8 também ✅ respondidas (ver folha), só D-G6/D-G7 faltam e são baixo impacto (fichas em `oficina-decisoes-planilhas.md` §4.3) | gravar o importador de contatos de verdade (hoje só simulado — a tabela `contatos` tem zero linhas), construir G.9 (seção de contato no microsite), aposentar `filterSensitivePessoa` (B.6) | quem mantém a agenda |
+| **N.8** — contatos como fonte única | ✅ **todas as decisões do bloco G respondidas** (D-G1, D-G2, D-G3, D-G4, D-G5, D-G6, D-G7, D-G8 — ver folha; fichas em `oficina-decisoes-planilhas.md` §4.3) | gravar o importador de contatos de verdade (hoje só simulado — a tabela `contatos` tem zero linhas), construir G.9 (seção de contato no microsite), aposentar `filterSensitivePessoa` (B.6) | resolvida — só trabalho técnico agora |
 
-Em nenhum dos três a decisão sozinha resolve. **Se a oficina O.1 acontecer e alguém gravar as
-importações**, N.7 e N.8 destravam quase por completo — só falta a UI (E.11/G.9). **N.4 é o mais
-distante dos três**: mesmo com D-R2 respondida, ainda precisa de um fechamento de schema adiado
-desde julho (B.3) e de uma tela nova.
+**As três decisões que travavam N.4/N.7/N.8 estão respondidas.** O que falta em todas é só
+trabalho técnico: rodar os dois importadores (expedientes e contatos) com `--gravar` — hoje só
+simulados — e construir a UI que falta em cada um (E.11, G.9, a tela de perfil do docente e o
+interruptor em `/minha-conta`). Nenhum dos três precisa mais de decisão para avançar.
 
 ---
 
@@ -78,8 +78,13 @@ disciplinas, orientações e grupos numa página só). Vale levar isso para quem
 pode ser que o e-mail funcional publicado sem filtro no microsite mereça uma revisão própria,
 independente de N.4 andar ou não.
 
-### Ficha — D-R2: perfil público de docente é visível por padrão, ou só com consentimento?
+### Ficha — D-R2: perfil público de docente é visível por padrão, ou só com consentimento? ✅ respondida (29/09/2026)
 
+- **Resposta:** (a) Visível por padrão, com opção de ocultar (opt-out). Decisão do encarregado de
+  dados da UFRPE (`encarregado.lgpd@ufrpe.br`) — diverge da recomendação deste documento, que
+  sugeria (c) híbrido; a palavra final era do encarregado, e ele optou por manter o comportamento
+  que o site já tem hoje (nome/foto/e-mail/Lattes já saem sem pedir nada) para todo o perfil
+  unificado, em vez de restringir a parte "extra" (foto, e-mail direto, agregação) a opt-in.
 - **Quem decide:** encarregado de dados da UFRPE (LGPD) — `encarregado.lgpd@ufrpe.br`. Não é
   decisão técnica.
 - **Dado envolvido:** nome, foto, vínculo/papel no programa, Lattes/ORCID/Google Scholar,
@@ -107,9 +112,11 @@ independente de N.4 andar ou não.
   alinha à ideia de "dado que já é público em outro lugar oficial não precisa de consentimento
   para ser espelhado, mas o que é conveniência do site (foto, e-mail direto, agregação) sim".
   Mas a palavra final é do encarregado de dados — este documento não decide, só organiza.
-- **Até lá:** N.4 não avança (nem o schema — B.3 segue represado). O que já está público no
-  microsite (nome/foto/e-mail/Lattes) continua exatamente como está; esta ficha não pede para
-  mudar isso, só para ser considerado na resposta.
+- **Agora que respondida:** a página unificada pode ser construída com **opt-out** — visível por
+  padrão, com um interruptor em `/minha-conta` para quem quiser se ocultar, e uma tela de
+  auditoria para quem administra ver quem se ocultou. O que falta é só o trabalho técnico listado
+  na cadeia completa acima (fechar a FK de B.3, ligar `linhas_pesquisa` a `pessoas`, construir a
+  tela e o interruptor em `/minha-conta`) — nenhum deles depende de mais decisão.
 - **Destrava:** N.4. Não destrava B.3 nem o vínculo `linhas_pesquisa`↔`pessoas` — esses precisam
   de trabalho técnico à parte, listado na cadeia acima.
 
@@ -171,10 +178,13 @@ passa a vir de `contatos`, com `publico` por registro.
    Esta é a decisão que de fato destrava G.9/N.8/B.6 — as demais (D-G2..D-G8) só afetam o volume
    de pendência de revisão.
 2. **D-G2..D-G8** — não bloqueiam o importador rodar (o modelo "importar fielmente" não espera
-   por elas), mas quanto mais responderem antes, menos pendência de revisão sobra depois.
-   D-G1, D-G2, D-G3, D-G4, D-G5 e D-G8 já foram respondidas em 29/09/2026 (ver a folha de
-   respostas); só faltam D-G6 e D-G7, e nenhuma das duas é ★ (baixo impacto na pendência de
-   revisão).
+   por elas), mas quanto mais responderem antes, menos pendência de revisão sobra depois. **Todas
+   já foram respondidas em 29/09/2026** (ver a folha de respostas): D-G2 (vice formal), D-G3
+   (nota `A` é teto de mestrado, não "sem avaliação"), D-G4 (programa novo, não
+   descredenciado), D-G5 (UFAPE não continua sob a Câmara da PRPG — confirmada, não mais
+   provisória), D-G6 (PGCAP/PPGPA tratados como programas distintos, decisão de Claude a pedido
+   da secretaria — a confirmar depois), D-G7 (cada programa mantém os próprios contatos), D-G8
+   (descarta a aba `Relatores`).
 3. **Rodar o importador de contatos de verdade** — `npm run planilha -- contatos <arquivo>
    --gravar`. Hoje só simulado (Fase O.3: "40 programas entram, 7 ficam guardados..."; Fase O
    nota final: "nenhuma importação foi gravada"). A tabela `contatos` (criada desde a Fase A.5b)

@@ -145,7 +145,7 @@ o que o sistema faz até lá.
 - **Destrava:** G.4 e B.8 sem dupla fonte.
 - **Até lá:** o importador da Câmara **não lê** a aba `Relatores` e registra isso como pendência.
 
-#### D-J1 — Existe prazo regimental para o relator devolver o parecer?
+#### D-J1 — Existe prazo regimental para o relator devolver o parecer? ✅ respondida (29/09/2026)
 
 - **Contexto.** Hoje a secretaria digita o prazo de devolução à mão. O sistema já manda lembretes
   D-10/D-5/D-1 e registra a cobrança. A planilha registra "cobrei devolução em 05/05" em texto.
@@ -155,7 +155,7 @@ o que o sistema faz até lá.
   com um prazo padrão sugerido no formulário (15 dias) que a secretaria pode mudar.
 - **Destrava:** J.2 (prazo calculado automaticamente).
 
-#### D-J2 — Os conselheiros da Câmara são sempre os coordenadores, ou há eleitos distintos?
+#### D-J2 — Os conselheiros da Câmara são sempre os coordenadores, ou há eleitos distintos? ✅ respondida (29/09/2026)
 
 - **Contexto.** A aba `Relatores` lista coordenadores; as relatorias da planilha citam também
   vice-coordenadores e docentes.
@@ -163,7 +163,7 @@ o que o sistema faz até lá.
   com portaria). Sem isso, "quem pode relatar" não é conferível.
 - **Destrava:** regras de designação da Fase J.
 
-#### D-J3 — O conselheiro entra no sistema com login ou recebe um link?
+#### D-J3 — O conselheiro entra no sistema com login ou recebe um link? ✅ respondida (29/09/2026)
 
 - **Contexto.** A tela "Meus processos" (L.4) já existe para quem tem login.
 - **Opções.** (a) Login, com a tela que já existe. (b) Link tokenizado por relatoria, sem login.
@@ -171,7 +171,7 @@ o que o sistema faz até lá.
   criar conta for um obstáculo real. A opção (b) é mais cara e deixa a L.4 sem uso.
 - **Destrava:** J.5.
 
-#### D-L1 — As resoluções que resultam de processos vão automaticamente para `/resolucoes`?
+#### D-L1 — As resoluções que resultam de processos vão automaticamente para `/resolucoes`? ✅ respondida (29/09/2026)
 
 - **Recomendação.** Não automaticamente. O sistema propõe a publicação e alguém da PRPG
   confirma. Publicação é ato com responsável.
@@ -219,14 +219,14 @@ o que o sistema faz até lá.
   resto fica listado para conferência.
 - **Destrava:** E.12 (campo do ato no formulário de edital) e a conciliação da E.10.
 
-#### D-E1 — As 6 séries são todas? Há memorando, circular ou instrução normativa?
+#### D-E1 — As 6 séries são todas? Há memorando, circular ou instrução normativa? ✅ respondida (29/09/2026)
 
 - **Contexto.** As 6 séries hoje: Ofício, Portaria, Edital PRPG, Edital PRINT, Edital Lato Sensu
   e Edital Proficiência.
 - **Recomendação.** Listar na oficina qualquer outro documento numerado. Uma série nova se cria
   no painel em 1 minuto (Expedientes → Séries).
 
-#### D-E6 — Quem pode reservar número?
+#### D-E6 — Quem pode reservar número? ✅ respondida (29/09/2026)
 
 - **Contexto.** Hoje 12 pessoas escrevem na planilha. No sistema, reservam Administrador e
   Gestor.
@@ -235,14 +235,14 @@ o que o sistema faz até lá.
   atômica e registra quem reservou, então abrir o acesso não cria risco de colisão.
 - **Destrava:** E.3 completo, e a associação das 40 grafias de "Usuário" às pessoas.
 
-#### D-E7 — A PRPG numera resoluções próprias, ou só encaminha minutas ao CEPE/CONSU?
+#### D-E7 — A PRPG numera resoluções próprias, ou só encaminha minutas ao CEPE/CONSU? ✅ respondida (29/09/2026)
 
 - **Contexto.** Os dados sugerem só encaminhamento: o ofício 2025 nº 184 encaminha *minuta* de
   resolução do CEPE.
 - **Recomendação.** Se for só encaminhamento, `RESOLUCAO` **não** é série da PRPG. A resolução
   entra como referência externa (o que já acontece nos atos da Câmara).
 
-#### D-E8 — Há data de publicação no Boletim ou no DOU a controlar?
+#### D-E8 — Há data de publicação no Boletim ou no DOU a controlar? ✅ respondida (29/09/2026)
 
 - **Recomendação.** Se houver, vira um campo de data do ato, além do link que já existe.
   Se não, nada muda.
@@ -280,18 +280,27 @@ o que o sistema faz até lá.
 - **Recomendação.** Se foi, registrar a data de descredenciamento (o campo já existe). Se só
   ficou de fora do levantamento, completar os contatos.
 
-#### ★ D-G5 — Os programas da UFAPE (PPCIAM, PROFLETRAS, PPGSRAP) continuam sob a Câmara da PRPG? 🟡 resposta provisória (29/09/2026 — usuário sem certeza, confirmar depois)
+#### ★ D-G5 — Os programas da UFAPE (PPCIAM, PROFLETRAS, PPGSRAP) continuam sob a Câmara da PRPG? ✅ respondida (29/09/2026 — confirmada, substitui a resposta provisória)
 
 - **Contexto.** A UFAPE se desmembrou da UFRPE. **É decisão institucional, não técnica.**
 - **Opções.** (a) Continuam: entram no cadastro com instituição própria. (b) Não continuam: saem
   da agenda.
-- **Até lá:** **nenhum programa é criado automaticamente.** As linhas ficam guardadas, com
-  pendência, e entram assim que a decisão for registrada.
+- **Resposta:** (b). Os três programas são só da UFAPE agora; não continuam sob a Câmara da
+  PRPG. Não entram no cadastro de programas da PRPG — ficam fora, marcados como
+  "fora da PRPG desde o desmembramento da UFAPE" em vez de "pendente de confirmação".
+- **Destrava:** N.8 (junto com D-G1).
 
-#### ★ D-G6 — PGCAP e PPGPA são programas novos ou nomes antigos de programas existentes?
+#### ★ D-G6 — PGCAP e PPGPA são programas novos ou nomes antigos de programas existentes? ✅ respondida (29/09/2026)
 
-- **Até lá:** ficam como no caso anterior: guardados, sem criar nada. A tela oferece "ligar a um
-  programa existente".
+- **Contexto.** Secretaria não soube dizer com segurança e pediu para decidir, sem deixar como
+  "talvez".
+- **Resposta (Claude, a pedido da secretaria).** Tratar como programas distintos dos já
+  existentes — **não ligar automaticamente** a nenhum programa do cadastro atual. Entram no
+  cadastro como programas próprios (não como pendência aberta): é a leitura mais literal da
+  planilha (dois códigos que não batem com nenhum programa já cadastrado) e evita o risco maior,
+  que é fundir dois programas diferentes sob um nome errado. Se depois se confirmar que são nomes
+  antigos de programas existentes, basta reatribuir os registros — não há import destrutivo aqui.
+- **Observação:** confirmar com a secretaria assim que possível; ficou decidido, não confirmado.
 
 #### D-G1 — Que tipos de contato aparecem no microsite por padrão? ✅ respondida (29/09/2026)
 
@@ -301,7 +310,7 @@ o que o sistema faz até lá.
   o que mostra hoje.
 - **Destrava:** G.9, N.8, B.6.
 
-#### D-G7 — Cada programa mantém os próprios contatos (pelo perfil Gestor de Programa)?
+#### D-G7 — Cada programa mantém os próprios contatos (pelo perfil Gestor de Programa)? ✅ respondida (29/09/2026)
 
 - **Recomendação.** Sim. A PRPG só confere. É o que evita a agenda desatualizar de novo.
 - **Destrava:** G.3 com escopo de programa.
@@ -408,25 +417,25 @@ Preencher durante a oficina. "Decidido por" é o nome ou cargo de quem respondeu
 |---|---|---|---|
 | D-B1 | verde-escuro (56, "ARQUIVADO") = já passou na reunião, finalizado/arquivado · verde-claro (21, "relator indicado") = **não** é "passou" — é etapa anterior (em pauta, aguardando reunião com relator já designado); fica com situação própria, não entra no bucket passou/não-passou · vermelho (1) = não passou · azul (2) = desconsiderado, mantido "a classificar" individualmente · rosa (19) e amarelo (3) = mantidos "a classificar" individualmente — os textos ao lado variam demais dentro da própria cor ("enviado ao PPG/Reitoria", "retirado de pauta", "troca de relator" para rosa; "encaminhado ao CONSU" para amarelo) para virar uma única situação | usuário (autorizou Claude a decidir onde a cor não bastasse) | Só verde-escuro e vermelho vieram como instrução direta do usuário; o resto (verde-claro, rosa, amarelo) foi julgamento sobre os textos da planilha — conferir antes de aplicar em produção |
 | D-G8 | (a) Descartar a aba `Relatores`; a agenda de contatos é a única fonte. Antes de apagar, a simulação lista o que só existe nela. | usuário (aceitou a recomendação) | |
-| D-J1 | | | |
-| D-J2 | | | |
-| D-J3 | | | |
-| D-L1 | | | |
-| D-E1 | | | |
+| D-J1 | Não há prazo regimental — segue manual, com prazo padrão sugerido no formulário (15 dias) que a secretaria pode ajustar. | secretaria | |
+| D-J2 | Os conselheiros são sempre os coordenadores; não há eleitos distintos. | secretaria | |
+| D-J3 | Os conselheiros ainda não têm login próprio, mas podem ter acesso como professores/coordenadores (conta já existente no sistema) — não precisa do link tokenizado por relatoria. | secretaria | |
+| D-L1 | Manualmente — confirma a recomendação: o sistema propõe a publicação e alguém da PRPG confirma. | secretaria | |
+| D-E1 | Ainda não existe outro tipo de documento numerado além dos 6 já mapeados (Ofício, Portaria, Edital PRPG/PRINT/Lato Sensu/Proficiência). | secretaria | |
 | D-E2 | (b) Foi sub-registro sem fonte recuperável: o livro de 2025 fica incompleto, com nota. Não há outra fonte a trazer. | usuário | |
 | D-E3 | (a modificada) Os 306 números "em branco" são todos a grade pré-numerada que sobrou sem uso — nenhum é reserva real. Nenhum vira `CANCELADO`; nenhum é importado. | usuário | O levantamento original separava 304 (grade) de 2 possíveis buracos reais em `OFÍCIOS - 2024` (linhas com traço); a resposta trata os 306 como a mesma coisa — conferir essas 2 linhas antes de rodar `--gravar`, caso sejam de fato diferentes |
 | D-E5 | (a) Sim, todos os 46 editais numerados do livro viram registros públicos no site — os 34 que ainda não têm página pública precisam ser criados. | usuário | Diverge da recomendação da ficha (opção b); pode incluir editais internos/cancelados/históricos que talvez não devessem virar página pública — conferir a lista dos 34 antes de publicar todos |
-| D-E6 | | | |
-| D-E7 | | | |
-| D-E8 | | | |
+| D-E6 | (b) Qualquer servidor da PRPG com login pode reservar número (não só a secretaria). | secretaria | Recomendação da ficha condiciona isso a criar antes os logins de quem já expede — conferir se todos que reservam hoje já têm login no sistema antes de abrir o acesso |
+| D-E7 | Só encaminha minutas ao CEPE/CONSU — `RESOLUCAO` não é série própria da PRPG; a resolução entra como referência externa, como já acontece nos atos da Câmara. | secretaria | |
+| D-E8 | O link do documento já é suficiente — não precisa de um campo de data de publicação no Boletim/DOU separado. | secretaria | |
 | D-E9 | | | |
 | D-G1 | Aceita a recomendação: por padrão, aparece no microsite só e-mail da coordenação e telefone da secretaria. Celular e e-mail pessoal nunca aparecem, salvo marcação individual explícita (a pessoa ou quem mantém o contato marca aquele registro como público). | usuário (aceitou a recomendação) | |
 | D-G2 | Vice formal: os 30 mantêm `VICE_COORDENADOR` (o valor que a importação já grava por padrão — nada muda no dado, só confirma a pendência). | usuário | |
 | D-G3 | `NOTA CAPES = 'A'` é uma nota válida, não uma ausência de avaliação: é o teto que um programa só de mestrado (acadêmico ou profissional) pode alcançar (sem doutorado, a escala não vai além). Fica como texto `A`, sem conversão — mas deixa de ser tratada como pendência de "sem avaliação ainda". | usuário | |
 | D-G4 | Não descredenciado — é programa novo, só ficou fora do levantamento da planilha. Completar os contatos normalmente, sem data de descredenciamento. | usuário | |
-| D-G5 | Provavelmente não continuam sob a Câmara da PRPG, mas sem confirmação segura. **Decisão (Claude, a pedido do usuário):** manter o comportamento padrão — nenhum dos 3 programas é criado, as linhas ficam guardadas com pendência — em vez de excluí-los ativamente com base numa suposição. Menos risco: não cria vínculo institucional errado, e não descarta dado que pode ser preciso depois. | usuário autorizou Claude a decidir | Confirmar com a UFAPE/CAPES antes de decidir de vez; até lá, os 3 continuam fora do cadastro, sem serem nem incluídos nem formalmente excluídos |
-| D-G6 | | | |
-| D-G7 | | | |
+| D-G5 | (b) Não continuam. Os 3 programas (PPCIAM, PROFLETRAS, PPGSRAP) são só da UFAPE agora — não entram no cadastro de programas da PRPG; ficam registrados como fora da PRPG desde o desmembramento, e não mais como "pendente de confirmação". | secretaria | Substitui a resposta provisória anterior ("acho que não", decidida por Claude); esta é a confirmação definitiva |
+| D-G6 | Tratar PGCAP e PPGPA como programas distintos, não ligados automaticamente a nenhum programa já cadastrado — entram no cadastro como programas próprios. | Claude, a pedido da secretaria ("decida da melhor forma, não colocar talvez") | Secretaria não teve certeza; confirmar depois. Se forem nomes antigos de programas existentes, basta reatribuir os registros — não há import destrutivo |
+| D-G7 | Sim — cada programa mantém os próprios contatos (perfil Gestor de Programa); a PRPG só confere. | secretaria | |
 | D-C1 | | | |
 | D-C2 | | | |
 | D-C3 | Programa descredenciado — "ECOLOGIA" não existe mais; fica só como registro histórico, sem vínculo a nenhum programa atual (nem a "Biodiversidade"). | usuário | |
