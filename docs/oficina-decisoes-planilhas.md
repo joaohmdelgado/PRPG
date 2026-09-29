@@ -365,7 +365,7 @@ o que o sistema faz até lá.
 | ID | Pergunta | Dono | Recomendação | Destrava |
 |---|---|---|---|---|
 | D-C5 | Há SMTP institucional disponível? | TI | Pedir uma conta de serviço (`naoresponda.prpg@…`). Até lá, o agendador registra os avisos **só no painel** (O.5) | e-mails das Fases I/J/L |
-| D-R2 | Perfil público de docente: por padrão, ou só com consentimento? | encarregado de dados | decisão dele (LGPD) | N.4 |
+| D-R2 | Perfil público de docente: por padrão, ou só com consentimento? | encarregado de dados | ficha completa (contexto, opções, o que já está público hoje) em [`decisoes-pendentes-conexoes-n.md`](decisoes-pendentes-conexoes-n.md#ficha--d-r2-perfil-público-de-docente-é-visível-por-padrão-ou-só-com-consentimento) | N.4 |
 | D-R4 | SEO: metadados injetados pelo servidor ou SSR? | equipe técnica | injeção pelo servidor agora | P.4 |
 | D-R5 | Data desta oficina | Pró-Reitoria | o quanto antes | toda a Fase O |
 | D-S1..D-S3 | Slugs dos microsites, preservar `/sites/default/files`, quando desligar cada Drupal | TI | ver [redirecionamentos-dominios-programas.md](redirecionamentos-dominios-programas.md) | S.6 |

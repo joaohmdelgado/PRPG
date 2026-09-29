@@ -736,7 +736,7 @@ pendências no sistema, não na planilha.
 | ID | Questão | Recomendação | Bloqueia |
 |---|---|---|---|
 | D-R1 | O portal da PRPG agrega conteúdo dos programas? | Editais sempre, com selo; notícias só quando marcadas como "destacar no portal" | R.6, H.2, N.1 |
-| D-R2 | Perfil público de docente: visível por padrão com opção de ocultar, ou só com consentimento? | Decisão do encarregado de dados (LGPD) | N.4 |
+| D-R2 | Perfil público de docente: visível por padrão com opção de ocultar, ou só com consentimento? | Decisão do encarregado de dados (LGPD) — ficha completa em [`decisoes-pendentes-conexoes-n.md`](decisoes-pendentes-conexoes-n.md#ficha--d-r2-perfil-público-de-docente-é-visível-por-padrão-ou-só-com-consentimento) | N.4 |
 | D-R3 | O Gestor de Programa publica direto ou precisa de aprovação da PRPG? | Publica direto, com a PRPG podendo despublicar, sem motor de aprovação (`arquitetura-dados.md` §4.4) | F.1, F.6 |
 | D-R4 | SEO: injeção de metadados pelo servidor agora, ou SSR/prerender completo? | Injeção pelo servidor agora; reavaliar SSR depois da Fase H | P.4 |
 | D-R5 | Data da oficina de decisões (O.1) | O quanto antes — é o item que mais atrasa o resultado de sair das planilhas | toda a Fase O |
