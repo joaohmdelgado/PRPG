@@ -58,6 +58,30 @@ describe('microsite — slug', () => {
   });
 });
 
+describe('microsite — contatos públicos (Fase G.9)', () => {
+  it('devolve em contatos_publicos só os contatos marcados publico=true do programa', async () => {
+    const { id: programaId, slug } = await criar();
+    await auth(request(app).post(`/api/contatos/programa/${programaId}`))
+      .send({ tipo: 'EMAIL', valor: 'coordenacao@ufrpe.br', rotulo: 'coordenacao', publico: true });
+    await auth(request(app).post(`/api/contatos/programa/${programaId}`))
+      .send({ tipo: 'TELEFONE', valor: '8133206460', rotulo: 'secretaria', publico: false });
+
+    const res = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(res.status).toBe(200);
+    expect(res.body.contatos_publicos).toHaveLength(1);
+    expect(res.body.contatos_publicos[0]).toMatchObject({ tipo: 'EMAIL', valor: 'coordenacao@ufrpe.br', publico: true });
+  });
+
+  it('não devolve nada quando não há contato público (padrão do importador — D-G1)', async () => {
+    const { id: programaId, slug } = await criar();
+    await auth(request(app).post(`/api/contatos/programa/${programaId}`))
+      .send({ tipo: 'CELULAR', valor: '81988079584', rotulo: 'pessoal', publico: false });
+
+    const res = await request(app).get(`/api/programas/slug/${slug}`);
+    expect(res.body.contatos_publicos).toEqual([]);
+  });
+});
+
 describe('microsite — rascunho (Fase R.4)', () => {
   it('rascunho responde 404 ao público e aparece para o admin (pré-visualização)', async () => {
     const { slug } = await criar({ slug: 'rasc', microsite_ativo: false });

@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
 import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js';
+import { contatosRepo } from '../db/contatosRepo.js';
 import { indicadoresDoPrograma } from '../db/indicadoresRepo.js';
 import { serverError } from '../utils/httpError.js';
 import { slugify } from '../utils/slug.js';
@@ -268,6 +269,9 @@ export const getProgramaBySlug = async (req, res) => {
     // "O Programa" do microsite.
     const paginas = (await pagesRepo.getByPrograma(prog.id)).filter((p) => visivelPara(req.user, p));
     const linhas = await linhasPesquisaRepo.getByPrograma(prog.id);
+    // Fase G.9: contatos públicos (contatos.publico=true) — programa e pessoas
+    // vinculadas a ele; celular/e-mail pessoal só aparecem se marcados um a um.
+    const contatosPublicos = await contatosRepo.listPublicosPrograma(prog.id);
 
     // Conteúdo por módulo (menu e contadores da home) e o menu do microsite:
     // 4 grupos + Notícias/Documentos/Contato, só com o que tem conteúdo, com
@@ -300,7 +304,7 @@ export const getProgramaBySlug = async (req, res) => {
     const metrica_recente = metricasRows[0] || null;
 
     res.json({ ...prog, modalidades: progModalidades, coordenador_atual, substituto, secretaria, pagina_sobre, paginas, linhas,
-               modulos, menu, historico_coordenadores, comissoes, metrica_recente });
+               modulos, menu, historico_coordenadores, comissoes, metrica_recente, contatos_publicos: contatosPublicos });
   } catch (error) {
     serverError(res, 'Erro ao buscar programa', error);
   }

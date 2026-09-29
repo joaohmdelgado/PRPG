@@ -1,6 +1,7 @@
 import React from 'react';
 import { usePrograma } from '../../components/programa/ProgramaContext';
 import { PageHero } from '../../components/programa/ProgramaUI';
+import ContatosPublicos from '../../components/programa/ContatosPublicos';
 import Icone from '../../components/Icone';
 
 function InfoCard({ icon, label, children }) {
@@ -19,7 +20,9 @@ function InfoCard({ icon, label, children }) {
 
 export default function ProgramaContato() {
   const { programa } = usePrograma();
-  const hasContato = programa.endereco || programa.email_programa || programa.telefone_secretaria || programa.whatsapp;
+  const contatosPublicos = programa.contatos_publicos || [];
+  const hasContato = programa.endereco || programa.email_programa || programa.telefone_secretaria
+    || programa.whatsapp || contatosPublicos.length > 0;
 
   return (
     <>
@@ -49,6 +52,12 @@ export default function ProgramaContato() {
             <InfoCard icon="fa-user-tie" label="Coordenação">{programa.coordenador_atual.nome}</InfoCard>
           )}
         </div>
+
+        {contatosPublicos.length > 0 && (
+          <div className="mb-8">
+            <ContatosPublicos contatos={contatosPublicos} />
+          </div>
+        )}
 
         {!hasContato && (
           <p className="text-gray-500 text-center py-6">Os dados de contato deste programa ainda não foram informados.</p>

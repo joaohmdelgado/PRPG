@@ -32,6 +32,23 @@ export const contatosRepo = {
     );
     return rows.map(fromRow);
   },
+  // Fase G.9: contatos marcados publico=true de um programa — os do próprio
+  // programa (entidade='programa', ex. e-mail da coordenação, telefone da
+  // secretaria) e os de pessoas vinculadas a ele (entidade='pessoa', via
+  // contatos.vinculo_id -> vinculos.programa_id) que a pessoa marcou como
+  // públicos individualmente (D-G1: celular/e-mail pessoal nunca por padrão).
+  async listPublicosPrograma(programaId) {
+    const { rows } = await query(
+      `SELECT c.* FROM contatos c
+        LEFT JOIN vinculos v ON v.id = c.vinculo_id
+       WHERE c.publico = TRUE
+         AND ((c.entidade = 'programa' AND c.entidade_id = $1)
+              OR (c.entidade = 'pessoa' AND v.programa_id = $1))
+       ORDER BY c.ordem ASC, c.criado_em ASC`,
+      [programaId]
+    );
+    return rows.map(fromRow);
+  },
   async create(o, actor) {
     const id = o.id || crypto.randomUUID();
     const { valor, valorExibicao } = normalizar(o.tipo, o.valor);
