@@ -25,7 +25,7 @@ seção N.4 abaixo.
 |---|---|---|---|
 | **N.4** — perfil público do docente | **D-R2** (ficha nesta página) | fechar a FK de `vinculos.pessoa_id` (B.3, dívida técnica — não é decisão), ligar `linhas_pesquisa` a `pessoas`, construir a tela | encarregado de dados da UFRPE — `encarregado.lgpd@ufrpe.br` |
 | **N.7** — vigente/revogada nas resoluções | ✅ D-E2, D-E3, D-E5 — **as três respondidas** (fichas em `oficina-decisoes-planilhas.md` §4.2) | gravar o importador de expedientes de verdade (hoje só simulado), migrar `portarias`/`resolucoes`/`formularios` para `atos`/`documentos` (E.11 — schema pronto, dado não migrado) | só trabalho técnico agora |
-| **N.8** — contatos como fonte única | **D-G1 (falta)** — D-G2, D-G3, D-G4, D-G5 ✅ respondidas (ver folha), reduzem bastante a pendência de revisão do G.4 mas não substituem D-G1, que é quem destrava G.9/N.8 (fichas em `oficina-decisoes-planilhas.md` §4.3) | gravar o importador de contatos de verdade (hoje só simulado — a tabela `contatos` tem zero linhas), construir G.9 (seção de contato no microsite), aposentar `filterSensitivePessoa` (B.6) | quem mantém a agenda |
+| **N.8** — contatos como fonte única | ✅ **D-G1 respondida** (é a que destrava G.9/N.8/B.6) — D-G2, D-G3, D-G4, D-G5, D-G8 também ✅ respondidas (ver folha), só D-G6/D-G7 faltam e são baixo impacto (fichas em `oficina-decisoes-planilhas.md` §4.3) | gravar o importador de contatos de verdade (hoje só simulado — a tabela `contatos` tem zero linhas), construir G.9 (seção de contato no microsite), aposentar `filterSensitivePessoa` (B.6) | quem mantém a agenda |
 
 Em nenhum dos três a decisão sozinha resolve. **Se a oficina O.1 acontecer e alguém gravar as
 importações**, N.7 e N.8 destravam quase por completo — só falta a UI (E.11/G.9). **N.4 é o mais
@@ -164,14 +164,17 @@ passa a vir de `contatos`, com `publico` por registro.
 
 ### Cadeia completa
 
-1. **D-G1** — responder: que tipos de contato aparecem no microsite por padrão? (ficha completa
-   em [`oficina-decisoes-planilhas.md` §4.3](oficina-decisoes-planilhas.md#43-agenda-de-contatos)).
-   Recomendação já registrada lá: e-mail da coordenação e telefone da secretaria sim; celular e
-   e-mail pessoal, nunca, salvo marcação individual.
+1. **D-G1 ✅ respondida em 29/09/2026** — aceitou a recomendação da ficha: por padrão, o
+   microsite mostra só e-mail da coordenação e telefone da secretaria; celular e e-mail pessoal
+   nunca aparecem, salvo marcação individual explícita naquele registro (ficha completa em
+   [`oficina-decisoes-planilhas.md` §4.3](oficina-decisoes-planilhas.md#43-agenda-de-contatos)).
+   Esta é a decisão que de fato destrava G.9/N.8/B.6 — as demais (D-G2..D-G8) só afetam o volume
+   de pendência de revisão.
 2. **D-G2..D-G8** — não bloqueiam o importador rodar (o modelo "importar fielmente" não espera
    por elas), mas quanto mais responderem antes, menos pendência de revisão sobra depois.
-   D-G2, D-G3, D-G4, D-G5 e D-G8 já foram respondidas em 29/09/2026 (ver a folha de respostas);
-   só faltam D-G6 e D-G7, e nenhuma das duas é ★ (baixo impacto na pendência de revisão).
+   D-G1, D-G2, D-G3, D-G4, D-G5 e D-G8 já foram respondidas em 29/09/2026 (ver a folha de
+   respostas); só faltam D-G6 e D-G7, e nenhuma das duas é ★ (baixo impacto na pendência de
+   revisão).
 3. **Rodar o importador de contatos de verdade** — `npm run planilha -- contatos <arquivo>
    --gravar`. Hoje só simulado (Fase O.3: "40 programas entram, 7 ficam guardados..."; Fase O
    nota final: "nenhuma importação foi gravada"). A tabela `contatos` (criada desde a Fase A.5b)

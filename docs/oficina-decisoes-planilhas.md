@@ -293,7 +293,7 @@ o que o sistema faz até lá.
 - **Até lá:** ficam como no caso anterior: guardados, sem criar nada. A tela oferece "ligar a um
   programa existente".
 
-#### D-G1 — Que tipos de contato aparecem no microsite por padrão?
+#### D-G1 — Que tipos de contato aparecem no microsite por padrão? ✅ respondida (29/09/2026)
 
 - **Recomendação.** E-mail da coordenação e telefone da secretaria, sim. Celular e e-mail
   pessoal, nunca, salvo marcação individual explícita.
@@ -420,7 +420,7 @@ Preencher durante a oficina. "Decidido por" é o nome ou cargo de quem respondeu
 | D-E7 | | | |
 | D-E8 | | | |
 | D-E9 | | | |
-| D-G1 | | | |
+| D-G1 | Aceita a recomendação: por padrão, aparece no microsite só e-mail da coordenação e telefone da secretaria. Celular e e-mail pessoal nunca aparecem, salvo marcação individual explícita (a pessoa ou quem mantém o contato marca aquele registro como público). | usuário (aceitou a recomendação) | |
 | D-G2 | Vice formal: os 30 mantêm `VICE_COORDENADOR` (o valor que a importação já grava por padrão — nada muda no dado, só confirma a pendência). | usuário | |
 | D-G3 | `NOTA CAPES = 'A'` é uma nota válida, não uma ausência de avaliação: é o teto que um programa só de mestrado (acadêmico ou profissional) pode alcançar (sem doutorado, a escala não vai além). Fica como texto `A`, sem conversão — mas deixa de ser tratada como pendência de "sem avaliação ainda". | usuário | |
 | D-G4 | Não descredenciado — é programa novo, só ficou fora do levantamento da planilha. Completar os contatos normalmente, sem data de descredenciamento. | usuário | |
