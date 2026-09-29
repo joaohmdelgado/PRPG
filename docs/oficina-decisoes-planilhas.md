@@ -133,7 +133,7 @@ o que o sistema faz até lá.
 - **Até lá:** os 80 processos entram com a situação **"A classificar (importado)"** e a cor
   original registrada. Eles não aparecem como trabalho novo nem como resolvidos.
 
-#### ★ D-G8 — A aba `Relatores` pode ser descartada depois da importação de contatos?
+#### ★ D-G8 — A aba `Relatores` pode ser descartada depois da importação de contatos? ✅ respondida (29/09/2026)
 
 - **Contexto.** São 44 coordenadores com celular pessoal, a mesma informação da planilha de
   contatos (que tem 47 programas). Hoje existem duas cópias de dados pessoais circulando sem
@@ -208,7 +208,7 @@ o que o sistema faz até lá.
   **não** são criados e ficam como pendência por série e ano. A tela oferece "importar como
   cancelados" em um clique.
 
-#### ★ D-E5 — Todos os editais numerados da planilha viram editais publicados no site?
+#### ★ D-E5 — Todos os editais numerados da planilha viram editais publicados no site? ✅ respondida (29/09/2026)
 
 - **Contexto.** São 46 editais numerados no livro (PRPG, PRINT, Lato Sensu, Proficiência) e 12
   no site. A aba ` EDITAIS PRPG 2025` mistura editais de 2022 a 2025.
@@ -257,7 +257,7 @@ o que o sistema faz até lá.
 
 ### 4.3 Agenda de contatos
 
-#### ★ D-G2 — A coluna `VICE-COORDENADOR(A)` é de vice formal ou de substituto eventual?
+#### ★ D-G2 — A coluna `VICE-COORDENADOR(A)` é de vice formal ou de substituto eventual? ✅ respondida (29/09/2026)
 
 - **Contexto.** São 30 registros. As portarias da planilha de expedientes usam "substituto
   eventual".
@@ -267,7 +267,7 @@ o que o sistema faz até lá.
   papel dos 30 de uma vez.
 - **Até lá:** entram como `VICE_COORDENADOR`, com pendência "papel a confirmar".
 
-#### ★ D-G3 — O que significa `NOTA CAPES = 'A'` em 5 programas?
+#### ★ D-G3 — O que significa `NOTA CAPES = 'A'` em 5 programas? ✅ respondida (29/09/2026)
 
 - **Opções.** Programa novo sem avaliação; aguardando a quadrienal; ou outra escala (mestrado
   profissional).
@@ -275,12 +275,12 @@ o que o sistema faz até lá.
   situação do programa. Não inventar uma nota.
 - **Até lá:** a nota entra como o texto `A`, sem conversão, com pendência.
 
-#### ★ D-G4 — O PROEF está no sistema e não na planilha: foi descredenciado?
+#### ★ D-G4 — O PROEF está no sistema e não na planilha: foi descredenciado? ✅ respondida (29/09/2026)
 
 - **Recomendação.** Se foi, registrar a data de descredenciamento (o campo já existe). Se só
   ficou de fora do levantamento, completar os contatos.
 
-#### ★ D-G5 — Os programas da UFAPE (PPCIAM, PROFLETRAS, PPGSRAP) continuam sob a Câmara da PRPG?
+#### ★ D-G5 — Os programas da UFAPE (PPCIAM, PROFLETRAS, PPGSRAP) continuam sob a Câmara da PRPG? 🟡 resposta provisória (29/09/2026 — usuário sem certeza, confirmar depois)
 
 - **Contexto.** A UFAPE se desmembrou da UFRPE. **É decisão institucional, não técnica.**
 - **Opções.** (a) Continuam: entram no cadastro com instituição própria. (b) Não continuam: saem
@@ -314,7 +314,7 @@ o que o sistema faz até lá.
 - **Até lá:** os 5 entram **sem programa**, com a grafia original guardada e pendência. A tela
   permite escolher o programa uma vez para os 5.
 
-#### ★ D-C8 — Os 3 registros sem período e os 4 com fim em aberto: o que são?
+#### ★ D-C8 — Os 3 registros sem período e os 4 com fim em aberto: o que são? ✅ respondida (29/09/2026)
 
 - **Opções.** Ativos sem prazo definido; cadastros incompletos; registros a descartar.
 - **Recomendação.** Tratar como cadastro incompleto e completar as datas a partir do processo. Só
@@ -322,7 +322,7 @@ o que o sistema faz até lá.
 - **Até lá:** entram sem as datas que faltam, com o texto original e pendência. Não são contados
   como vigentes nem como encerrados.
 
-#### ★ D-C9 — Períodos sobrepostos da mesma pessoa: erro ou prorrogação?
+#### ★ D-C9 — Períodos sobrepostos da mesma pessoa: erro ou prorrogação? ✅ respondida (29/09/2026)
 
 - **Contexto.** Dois casos de sobreposição (a lista aparece na tela de revisão), além de 5 CPFs
   com duas linhas cada.
@@ -407,7 +407,7 @@ Preencher durante a oficina. "Decidido por" é o nome ou cargo de quem respondeu
 | ID | Resposta | Decidido por | Observação |
 |---|---|---|---|
 | D-B1 | verde-escuro (56, "ARQUIVADO") = já passou na reunião, finalizado/arquivado · verde-claro (21, "relator indicado") = **não** é "passou" — é etapa anterior (em pauta, aguardando reunião com relator já designado); fica com situação própria, não entra no bucket passou/não-passou · vermelho (1) = não passou · azul (2) = desconsiderado, mantido "a classificar" individualmente · rosa (19) e amarelo (3) = mantidos "a classificar" individualmente — os textos ao lado variam demais dentro da própria cor ("enviado ao PPG/Reitoria", "retirado de pauta", "troca de relator" para rosa; "encaminhado ao CONSU" para amarelo) para virar uma única situação | usuário (autorizou Claude a decidir onde a cor não bastasse) | Só verde-escuro e vermelho vieram como instrução direta do usuário; o resto (verde-claro, rosa, amarelo) foi julgamento sobre os textos da planilha — conferir antes de aplicar em produção |
-| D-G8 | | | |
+| D-G8 | (a) Descartar a aba `Relatores`; a agenda de contatos é a única fonte. Antes de apagar, a simulação lista o que só existe nela. | usuário (aceitou a recomendação) | |
 | D-J1 | | | |
 | D-J2 | | | |
 | D-J3 | | | |
@@ -415,16 +415,16 @@ Preencher durante a oficina. "Decidido por" é o nome ou cargo de quem respondeu
 | D-E1 | | | |
 | D-E2 | (b) Foi sub-registro sem fonte recuperável: o livro de 2025 fica incompleto, com nota. Não há outra fonte a trazer. | usuário | |
 | D-E3 | (a modificada) Os 306 números "em branco" são todos a grade pré-numerada que sobrou sem uso — nenhum é reserva real. Nenhum vira `CANCELADO`; nenhum é importado. | usuário | O levantamento original separava 304 (grade) de 2 possíveis buracos reais em `OFÍCIOS - 2024` (linhas com traço); a resposta trata os 306 como a mesma coisa — conferir essas 2 linhas antes de rodar `--gravar`, caso sejam de fato diferentes |
-| D-E5 | | | |
+| D-E5 | (a) Sim, todos os 46 editais numerados do livro viram registros públicos no site — os 34 que ainda não têm página pública precisam ser criados. | usuário | Diverge da recomendação da ficha (opção b); pode incluir editais internos/cancelados/históricos que talvez não devessem virar página pública — conferir a lista dos 34 antes de publicar todos |
 | D-E6 | | | |
 | D-E7 | | | |
 | D-E8 | | | |
 | D-E9 | | | |
 | D-G1 | | | |
-| D-G2 | | | |
-| D-G3 | | | |
-| D-G4 | | | |
-| D-G5 | | | |
+| D-G2 | Vice formal: os 30 mantêm `VICE_COORDENADOR` (o valor que a importação já grava por padrão — nada muda no dado, só confirma a pendência). | usuário | |
+| D-G3 | `NOTA CAPES = 'A'` é uma nota válida, não uma ausência de avaliação: é o teto que um programa só de mestrado (acadêmico ou profissional) pode alcançar (sem doutorado, a escala não vai além). Fica como texto `A`, sem conversão — mas deixa de ser tratada como pendência de "sem avaliação ainda". | usuário | |
+| D-G4 | Não descredenciado — é programa novo, só ficou fora do levantamento da planilha. Completar os contatos normalmente, sem data de descredenciamento. | usuário | |
+| D-G5 | Provavelmente não continuam sob a Câmara da PRPG, mas sem confirmação segura. **Decisão (Claude, a pedido do usuário):** manter o comportamento padrão — nenhum dos 3 programas é criado, as linhas ficam guardadas com pendência — em vez de excluí-los ativamente com base numa suposição. Menos risco: não cria vínculo institucional errado, e não descarta dado que pode ser preciso depois. | usuário autorizou Claude a decidir | Confirmar com a UFAPE/CAPES antes de decidir de vez; até lá, os 3 continuam fora do cadastro, sem serem nem incluídos nem formalmente excluídos |
 | D-G6 | | | |
 | D-G7 | | | |
 | D-C1 | | | |
@@ -433,8 +433,8 @@ Preencher durante a oficina. "Decidido por" é o nome ou cargo de quem respondeu
 | D-C4 | | | |
 | D-C6 | | | |
 | D-C7 | | | |
-| D-C8 | | | |
-| D-C9 | | | |
+| D-C8 | Cadastro incompleto (não são ativos sem prazo nem descarte). Completar as datas a partir do processo quando possível; enquanto faltar, não contam como vigentes nem como encerrados. | usuário (aceitou a recomendação) | |
+| D-C9 | Erro de digitação, não prorrogação. A sobreposição é sinal de data errada, a corrigir a partir do processo — não deve virar sugestão de renovação. | usuário | |
 | D-K1 | | | |
 | Critério §5 | aprovado / ajustado: … | | |
 

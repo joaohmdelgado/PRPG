@@ -24,8 +24,8 @@ seção N.4 abaixo.
 | | Decisão(ões) | Depois da decisão, ainda falta | Quem decide |
 |---|---|---|---|
 | **N.4** — perfil público do docente | **D-R2** (ficha nesta página) | fechar a FK de `vinculos.pessoa_id` (B.3, dívida técnica — não é decisão), ligar `linhas_pesquisa` a `pessoas`, construir a tela | encarregado de dados da UFRPE — `encarregado.lgpd@ufrpe.br` |
-| **N.7** — vigente/revogada nas resoluções | D-E2 ✅, D-E3 ✅, **D-E5 (falta)** (fichas em `oficina-decisoes-planilhas.md` §4.2) | gravar o importador E.5 de verdade (hoje só simulado), migrar `portarias`/`resolucoes`/`formularios` para `atos`/`documentos` (E.11 — schema pronto, dado não migrado) | oficina O.1 (secretaria de expedientes) |
-| **N.8** — contatos como fonte única | D-G1 (ficha em `oficina-decisoes-planilhas.md` §4.3) | gravar o importador de contatos de verdade (hoje só simulado — a tabela `contatos` tem zero linhas), construir G.9 (seção de contato no microsite), aposentar `filterSensitivePessoa` (B.6) | oficina O.1 (quem mantém a agenda) |
+| **N.7** — vigente/revogada nas resoluções | ✅ D-E2, D-E3, D-E5 — **as três respondidas** (fichas em `oficina-decisoes-planilhas.md` §4.2) | gravar o importador de expedientes de verdade (hoje só simulado), migrar `portarias`/`resolucoes`/`formularios` para `atos`/`documentos` (E.11 — schema pronto, dado não migrado) | só trabalho técnico agora |
+| **N.8** — contatos como fonte única | **D-G1 (falta)** — D-G2, D-G3, D-G4, D-G5 ✅ respondidas (ver folha), reduzem bastante a pendência de revisão do G.4 mas não substituem D-G1, que é quem destrava G.9/N.8 (fichas em `oficina-decisoes-planilhas.md` §4.3) | gravar o importador de contatos de verdade (hoje só simulado — a tabela `contatos` tem zero linhas), construir G.9 (seção de contato no microsite), aposentar `filterSensitivePessoa` (B.6) | quem mantém a agenda |
 
 Em nenhum dos três a decisão sozinha resolve. **Se a oficina O.1 acontecer e alguém gravar as
 importações**, N.7 e N.8 destravam quase por completo — só falta a UI (E.11/G.9). **N.4 é o mais
@@ -123,16 +123,18 @@ Câmara já usa para atos.
 
 ### Cadeia completa
 
-1. **D-E2 ✅, D-E3 ✅, D-E5 (falta)** — fichas completas em
-   [`oficina-decisoes-planilhas.md` §4.2](oficina-decisoes-planilhas.md#42-expedientes-ofícios-editais-e-portarias),
-   marcadas com ★ — são as três de maior impacto da oficina O.1. Resumo:
-   - D-E2 (respondida 29/09/2026): sub-registro sem fonte recuperável — o livro de 2025 fica
-     incompleto, com nota; não há outra fonte a trazer.
-   - D-E3 (respondida 29/09/2026): os 306 números "em branco" são todos a grade pré-numerada
-     sem uso — nenhum vira `CANCELADO`, nenhum é importado (ver a folha de respostas para uma
-     ressalva sobre 2 linhas que o levantamento original separou como possíveis buracos reais).
-   - D-E5 (ainda sem resposta): quais dos 46 editais numerados no livro viram registros
-     publicados no site.
+1. **D-E2 ✅, D-E3 ✅, D-E5 ✅ — as três respondidas em 29/09/2026** (fichas completas em
+   [`oficina-decisoes-planilhas.md` §4.2](oficina-decisoes-planilhas.md#42-expedientes-ofícios-editais-e-portarias)).
+   Resumo:
+   - D-E2: sub-registro sem fonte recuperável — o livro de 2025 fica incompleto, com nota; não
+     há outra fonte a trazer.
+   - D-E3: os 306 números "em branco" são todos a grade pré-numerada sem uso — nenhum vira
+     `CANCELADO`, nenhum é importado (ver a folha de respostas para uma ressalva sobre 2 linhas
+     que o levantamento original separou como possíveis buracos reais).
+   - D-E5: sim, todos os 46 editais numerados viram registros públicos no site — diverge da
+     recomendação da ficha (que sugeria só ligar os que já têm página); os ~34 que faltam
+     precisam ser criados como páginas públicas. Conferir a lista antes de publicar (pode haver
+     edital interno/cancelado que não deveria virar página pública).
 2. **Rodar o importador de expedientes de verdade** — `npm run planilha -- expedientes
    <arquivo> --gravar`. Hoje só a simulação rodou (Fase O.3: "550 atos, 17 referências entre
    atos ligadas... nada gravado no banco"). Sem isso, `atos`/`ato_referencias` continuam vazias
@@ -147,9 +149,9 @@ Câmara já usa para atos.
    `documentos`/`atos` e passa a mostrar `ato_referencias`. Esse último passo é pequeno depois
    que os três de cima estiverem prontos.
 
-**Não precisa de nenhuma decisão nova** além das três já fichadas — duas (D-E2, D-E3) já
-respondidas em 29/09/2026, sem esperar a oficina inteira acontecer; só falta **D-E5**, e depois
-alguém apertar "gravar".
+**As três decisões estão respondidas** — não precisa esperar a oficina inteira acontecer.
+O que falta agora é só técnico: rodar o importador com `--gravar` (passo 2) e aplicar a E.11
+(passo 3).
 
 ---
 
@@ -168,6 +170,8 @@ passa a vir de `contatos`, com `publico` por registro.
    e-mail pessoal, nunca, salvo marcação individual.
 2. **D-G2..D-G8** — não bloqueiam o importador rodar (o modelo "importar fielmente" não espera
    por elas), mas quanto mais responderem antes, menos pendência de revisão sobra depois.
+   D-G2, D-G3, D-G4, D-G5 e D-G8 já foram respondidas em 29/09/2026 (ver a folha de respostas);
+   só faltam D-G6 e D-G7, e nenhuma das duas é ★ (baixo impacto na pendência de revisão).
 3. **Rodar o importador de contatos de verdade** — `npm run planilha -- contatos <arquivo>
    --gravar`. Hoje só simulado (Fase O.3: "40 programas entram, 7 ficam guardados..."; Fase O
    nota final: "nenhuma importação foi gravada"). A tabela `contatos` (criada desde a Fase A.5b)
