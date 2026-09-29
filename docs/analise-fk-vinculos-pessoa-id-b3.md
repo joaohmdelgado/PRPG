@@ -188,7 +188,9 @@ O usuário delegou a decisão; esta é a escolha, com o raciocínio:
   1. **`usersRepo.create`/`update` propagam para a `pessoas` ligada**, na mesma operação — ponto
      único por onde passam todas as edições (painel, `/minha-conta`, importadores legados,
      `removeDocente`). `create` passa a criar a `pessoas` se faltar, o que fecha a lacuna do
-     `createUser`.
+     `createUser`. Antes de criar, procura uma pessoa **sem login** com o mesmo CPF válido (e só
+     uma). Se achar, liga o usuário a ela e só preenche o que estiver vazio. Assim quem veio de
+     planilha e depois ganhou login não vira duas pessoas.
   2. **Só propaga o campo que mudou no update, e nunca sobrescreve valor preenchido com
      vazio** — assim uma foto posta pela tela de Estrutura (que só grava em `pessoas`) não é
      apagada por uma edição de telefone no `/minha-conta`.
@@ -201,8 +203,12 @@ O usuário delegou a decisão; esta é a escolha, com o raciocínio:
      telas que ainda leem `users.perfil_*` (lista e formulário de usuário, `/minha-conta`) podem
      ficar desatualizadas quando a edição vier pela Estrutura ou por importação — aceito e
      registrado, some quando a G1 terminar.
-  5. **Reconciliação única** dentro do script de migração de dado: preenche em `pessoas` o que
-     está vazio lá e preenchido em `users`. No dev a divergência real é nula.
+  5. **Reconciliação única**, numa migração própria que entra junto com a sincronização (antes
+     das leituras mudarem): até aqui só `users` era editável pelo painel e pelo `/minha-conta`, então
+     **o valor do usuário vence**. A exceção é a foto: a tela de Estrutura a grava só em `pessoas`,
+     e ali só se preenche o que estiver vazio. "Só preencher o vazio" em todos os campos, como
+     dizia a versão anterior, deixaria em `pessoas` o nome antigo de quem foi renomeado no painel.
+     No dev a divergência real é nula.
 
 **D-B11c — Excluir usuário mantém os vínculos como histórico.** Decidido pelo usuário.
 `deleteUser` deixa de apagar vínculos. A pessoa continua existindo sem login; os vínculos ativos
@@ -217,25 +223,26 @@ caminho é desativar o login, não excluir o usuário.
 
 ## 7. Plano (cada passo committável e com a suíte verde)
 
-1. **Leituras tolerantes às duas chaves.** Todas as leituras de §3.3a/b passam a resolver a
-   pessoa real (`COALESCE(u.pessoa_id, v.pessoa_id)`, ou `ANY([users.id, pessoa_id])`), inclusive
-   as checagens de duplicidade e o escopo do gestor. Atributos vêm de `pessoas` com fallback em
-   `users` via `users.pessoa_id`. A API passa a devolver `usuario_id` e o front (§3.4) migra para
-   ele. Corrige "Meus processos" (§3.6). Funciona com o dado de hoje, sem mudar nenhuma linha.
-2. **Sincronização `users → pessoas`** em `usersRepo` (D-B11b), com testes.
-3. **Escritas gravam `pessoas.id`.** Todos os pontos de §3.1 resolvem a entrada com
-   `resolverOuCriarPessoa({ pessoaId })` (a assinatura recebe objeto). `deleteUser` passa a
-   encerrar em vez de apagar (D-B11c).
-4. **Migração de dado.** Script único, em transação, idempotente: backfill de `pessoas` para
-   usuários sem ela, reconciliação (D-B11b.5), `UPDATE` de `users.id → pessoas.id` em `vinculos` e
-   `camara_relatorias`, relatório antes/depois e **aborta se sobrar id órfão**. Rodar primeiro numa
-   cópia do banco de produção.
-5. **FK.** Bloco `DO $$` no `schema.sql` (mesmo padrão de `users_pessoa_id_fkey`), `ON DELETE
-   RESTRICT` (D-B11a), mais a reordenação de `RESET_TABLES` e o ajuste dos testes (§3.7).
-6. **Simplificação.** Só aqui a tolerância às duas chaves sai: o join vira
-   `JOIN pessoas p ON p.id = v.pessoa_id LEFT JOIN users u ON u.pessoa_id = p.id` — continua
-   havendo dois joins, mas por uma chave determinística; os comentários "polimórfico" do schema e
-   do código saem.
+O detalhamento, com código, testes e comandos, está em
+[`docs/superpowers/plans/2026-09-29-b11-fk-vinculos-pessoa.md`](superpowers/plans/2026-09-29-b11-fk-vinculos-pessoa.md).
+Ordem revisada em relação à primeira versão deste roteiro: a sincronização vem **antes** das
+leituras. Assim as leituras já podem preferir `pessoas` (D-B11b) sem mostrar dado velho.
+
+1. **Módulo único de identidade** (`server/db/identidadeVinculo.js`). Tudo que lê a pessoa de um
+   vínculo passa por ele. Durante a transição aceita as duas formas; no fim, só `pessoas.id`.
+2. **Sincronização `users → pessoas`** em `usersRepo` (D-B11b), mais a **migração A**: pessoa para
+   todo usuário e reconciliação (D-B11b.5).
+3. **Leituras tolerantes às duas chaves**, em programas, front (`usuario_id`), usuários e escopo do
+   gestor, Câmara e notificações, pós-doc, demais joins e importadores legados. Corrige "Meus
+   processos" (§3.6) e o e-mail do pós-doc.
+4. **Escritas gravam `pessoas.id`**, via `pessoaCanonica` (400 para id desconhecido, validado antes de
+   qualquer gravação). `deleteUser` passa a encerrar em vez de apagar (D-B11c).
+5. **Migração B + FK**: reponta `users.id → pessoas.id`, **aborta se sobrar id órfão** e cria as FKs
+   `RESTRICT` (D-B11a). Entra como migração versionada (`npm run db:migrate:apply`, uma transação),
+   não como script avulso. No mesmo passo: `schema.sql`, ordem do `RESET_TABLES` e testes (§3.7).
+6. **Simplificação.** O módulo passa a
+   `LEFT JOIN pessoas p ON p.id = v.pessoa_id LEFT JOIN users u ON u.pessoa_id = v.pessoa_id`.
+   Continuam dois joins, mas por uma chave determinística. Os comentários "polimórfico" saem.
 
 **Critério de pronto:** as duas FKs existem; nenhum `LEFT JOIN users u ON u.id = v.pessoa_id`
 (ou `relator_id`) no código; o front usa `usuario_id` para tudo que é de login; suíte verde;
