@@ -23,7 +23,7 @@ seção N.4 abaixo.
 
 | | Decisão(ões) | Depois da decisão, ainda falta | Quem decide |
 |---|---|---|---|
-| **N.4** — perfil público do docente | **D-R2** (ficha nesta página) | fechar a FK de `vinculos.pessoa_id` (B.3, dívida técnica — não é decisão), ligar `linhas_pesquisa` a `pessoas`, construir a tela | encarregado de dados da UFRPE (LGPD) |
+| **N.4** — perfil público do docente | **D-R2** (ficha nesta página) | fechar a FK de `vinculos.pessoa_id` (B.3, dívida técnica — não é decisão), ligar `linhas_pesquisa` a `pessoas`, construir a tela | encarregado de dados da UFRPE — `encarregado.lgpd@ufrpe.br` |
 | **N.7** — vigente/revogada nas resoluções | D-E2, D-E3, D-E5 (fichas em `oficina-decisoes-planilhas.md` §4.2) | gravar o importador E.5 de verdade (hoje só simulado), migrar `portarias`/`resolucoes`/`formularios` para `atos`/`documentos` (E.11 — schema pronto, dado não migrado) | oficina O.1 (secretaria de expedientes) |
 | **N.8** — contatos como fonte única | D-G1 (ficha em `oficina-decisoes-planilhas.md` §4.3) | gravar o importador de contatos de verdade (hoje só simulado — a tabela `contatos` tem zero linhas), construir G.9 (seção de contato no microsite), aposentar `filterSensitivePessoa` (B.6) | oficina O.1 (quem mantém a agenda) |
 
@@ -80,7 +80,8 @@ independente de N.4 andar ou não.
 
 ### Ficha — D-R2: perfil público de docente é visível por padrão, ou só com consentimento?
 
-- **Quem decide:** encarregado de dados da UFRPE (LGPD). Não é decisão técnica.
+- **Quem decide:** encarregado de dados da UFRPE (LGPD) — `encarregado.lgpd@ufrpe.br`. Não é
+  decisão técnica.
 - **Dado envolvido:** nome, foto, vínculo/papel no programa, Lattes/ORCID/Google Scholar,
   linhas de pesquisa, disciplinas, orientações (teses), grupos de pesquisa, e os contatos que a
   própria pessoa marcar como públicos (`contatos.publico`, granular por contato — já existe e
