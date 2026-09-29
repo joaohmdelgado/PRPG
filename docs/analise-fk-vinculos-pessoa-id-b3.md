@@ -1,250 +1,258 @@
-# Análise — B.3: fechar a FK real de `vinculos.pessoa_id`
+# Análise — B.11: FK real de `vinculos.pessoa_id` e `camara_relatorias.relator_id`
 
 **Preparado em:** 29/09/2026, a partir de leitura de código (`server/db/schema.sql`,
 `server/controllers/`, `server/services/`, `server/__tests__/`) na worktree
-`fk-vinculos-pessoa-b3`. Não implementa nada — é o levantamento para decidir *se* e *como*
-fazer B.3.
+`fk-vinculos-pessoa-b3`.
+**Revisado em:** 29/09/2026 — reanálise contra o código em `main` e contra o banco de
+desenvolvimento (só consultas de leitura). A revisão corrigiu erros da primeira versão (§8),
+ampliou o inventário (a primeira versão cobria cerca de metade das leituras e não olhava o
+front-end) e registra as três decisões tomadas pelo usuário (§6).
+**Status:** decidido, **não implementado**.
 
-## 1. O que é o problema, em uma frase
+> Nome do item: a primeira versão chamava isto de "B.3", mas a B.3 do `PLANO.md` (apagar
+> `buildCombined`) está concluída — a FK ficou como resíduo sem item. Registrado agora como
+> **B.11** no `PLANO.md`.
 
-`vinculos.pessoa_id` (e `camara_relatorias.relator_id`, mesmo padrão) é uma coluna `TEXT` sem
-FK, porque hoje ela guarda **ora um `users.id`, ora um `pessoas.id`**, e o código decide qual é
-qual só na hora de ler — nunca há uma constraint garantindo que o valor gravado aponta pra algo
-que existe.
+## 1. O problema, em uma frase
 
-Isso não é um acidente: é uma dívida técnica assumida conscientemente na Fase A (o comentário no
-schema já avisa) porque `pessoas` como identidade única ainda não existia quando a maior parte do
-código de vínculos foi escrita. A Fase A.2 criou `pessoas` e ligou `users.pessoa_id` a ela, mas
-não migrou os consumidores de `vinculos`.
+`vinculos.pessoa_id` e `camara_relatorias.relator_id` são `TEXT` sem FK porque guardam **ora um
+`users.id`, ora um `pessoas.id`**; o código decide qual é qual na hora de ler, e nada garante que o
+valor aponte para algo que existe. É dívida assumida na Fase A (comentários em `schema.sql:8-14`,
+`:403-409` e `:1040`): `pessoas` virou a identidade na A.2, mas os consumidores de `vinculos` não
+foram migrados.
 
-## 2. Estado atual — como o polimorfismo se manifesta
+O alvo já está decidido desde a arquitetura (`arquitetura-dados.md` §5.1): **`pessoas` é a pessoa,
+`users` é só a credencial** (0..1 por pessoa, `users.pessoa_id UNIQUE`).
 
-```sql
--- schema.sql:400-409
-CREATE TABLE IF NOT EXISTS vinculos (
-  id              TEXT PRIMARY KEY,
-  programa_id     TEXT REFERENCES programas(id) ON DELETE CASCADE,
-  -- pessoa_id é polimórfico: aponta para users.id OU pessoas.id (legado),
-  -- resolvido na aplicação. FK real fica para a Fase B.3 ...
-  pessoa_id       TEXT,
-  ...
-```
+## 2. O dado hoje (banco de desenvolvimento, 29/09/2026)
 
-O mesmo vale para `camara_relatorias.relator_id` (schema.sql:1040-1041, comentário idêntico).
+| | aponta para `users.id` | aponta para `pessoas.id` | órfão / nulo |
+|---|---|---|---|
+| `vinculos` (105 linhas) | **91** — discentes, egressos, docentes, 1 coordenador | 14 — estrutura da PRPG e coordenações | 0 |
+| `camara_relatorias` | 0 linhas (a planilha da Câmara ainda não foi importada neste banco) | | |
 
-Hoje **nenhuma das duas colunas tem qualquer FK** — um `pessoa_id`/`relator_id` pode apontar para
-nada (string arbitrária) sem o banco reclamar. `usersController.deleteUser` até comenta isso
-explicitamente ao limpar manualmente (ver §5).
+- Todos os 91 usuários já têm `pessoas` (`users.pessoa_id` preenchido).
+- Nenhum `users.id` coincide com um `pessoas.id`; nenhuma pessoa tem vínculo pelos dois ids.
+- `pessoas` × `users` do mesmo humano: nomes e fotos batem (1 caso de nome `NULL` × `''`);
+  `pessoas.email_institucional` está vazio nos 91 (esperado: o e-mail de login não é e-mail
+  institucional, ver §3.5).
+- Os 91 vínculos por `users.id` vieram dos importadores legados (§3.1), que **estão ativos**.
 
-### Por que existem duas convenções
+**Antes de migrar qualquer ambiente, repetir essas contagens nele** — o banco de produção não
+foi consultado.
 
-- **`users.id`** — quando quem ocupa o vínculo tem login no sistema (coordenador, docente,
-  membro de comissão cadastrado via formulário admin). O padrão desde a Fase A original.
-- **`pessoas.id`** — quando quem ocupa o vínculo *não* tem login (relator externo, contato
-  importado da planilha, membro de estrutura só histórico) ou quando o código foi escrito depois
-  da Fase A.2 e já nasceu "do jeito certo".
+## 3. Inventário
 
-## 3. Inventário completo
+### 3.1 Escritas que gravam `users.id` (ou o que o cliente mandar)
 
-### 3.1 Onde se escreve `users.id` em `pessoa_id`/`relator_id` (o problema)
-
-| Local | Função | Chamado por |
-|---|---|---|
-| `server/controllers/usersController.js:27-33` | `vincularAoPrograma()` | `createUser` (linha 234) |
-| `server/controllers/programasController.js:355-361` | `insertVinculo()` | `handlePessoaVinculo` (315-353) — coordenador/substituto/TAE |
-| `server/controllers/programasController.js:684-689, 819-823, 889-893` | `addDocente`, `addDiscente`, `addComissaoMembro` | `req.body.pessoa_id` direto do cliente |
-| `server/services/importers/professoresImporter.js:79-96` (`garantirVinculo`) | chamada em 151/186 com `existente.id`/`created.id` | importador de professores (legado, pré-Fase O) |
-| `server/services/importers/alunosImporter.js:137-153` (`garantirVinculo`) | chamada em 216/240 | importador de alunos (legado, pré-Fase O) |
-| `server/controllers/camaraController.js:294-309` (`addRelatoria`) | — | `req.body.relatorId` direto do cliente, **sem nenhuma resolução** |
-| `server/controllers/gruposPesquisaController.js:41-50` (`substituirLideres`) | — | `req.body.liderIds` direto do cliente; o próprio comentário na linha 40 admite a ambiguidade |
-
-`addRelatoria` e `substituirLideres` são os dois piores casos: nem sequer decidem entre
-`users.id`/`pessoas.id` — só gravam o que o formulário mandar, cru.
-
-### 3.2 Onde já se escreve `pessoas.id` (o caminho certo, já em produção)
-
-Tudo que passa por `pessoas.porNome`/`porEmail`/`criar` (`server/services/planilhas/cadastro.js`)
-ou por `resolverOuCriarPessoa` (`server/db/pessoasRepo.js:45-65`, que cria uma `pessoas` sob
-demanda a partir de um `users.id` se precisar):
-
-- `server/services/planilhas/contatosImporter.js:257-284` (G.4)
-- `server/services/planilhas/camaraImporter.js:160-167`
-- `server/services/planilhas/pnpdImporter.js:108-130`
-- `server/db/estruturaPrpg.js:66-91` (`pessoaPorNome`/`adicionarMembro`)
-- `server/db/posDoutoradoRepo.js:119-125` (via `resolverOuCriarPessoa`)
-
-Ou seja: **todo o código escrito na Fase O (os 4 importadores de planilha) já segue a convenção
-correta.** Só o código mais antigo (Fase A/D, os dois importadores legados de julho e os
-controllers de programas/câmara/grupos) grava `users.id` ou aceita qualquer coisa do cliente.
-
-### 3.3 Onde se lê e resolve (o polimorfismo se paga na leitura)
-
-Todos seguem a forma `LEFT JOIN users u ON u.id = v.pessoa_id` + `LEFT JOIN pessoas p ON p.id =
-v.pessoa_id`, mas **a ordem de prioridade não é consistente entre módulos** — achado
-independente, relevante por si só:
-
-| Local | Quem "ganha" quando os dois casam (não deveria acontecer, mas o código previne) |
+| Local | O que grava |
 |---|---|
-| `programasController.js` `combinedFromRow` (98-152) | `users` |
-| `contatosController.js` `AGENDA_SELECT` (21-42) | `users`, com fallback em cadeia (`up.id, p.id, u.id`) |
-| `gruposPesquisaController.js` `listarLideres` (15-37) | `users` |
-| `posDoutoradoRepo.js` `fromRow`/`JOIN_SELECT` (17-22, 73-91) | `users` |
-| `estruturaPrpg.js` `carregarEstrutura` (135-147) | `pessoas` |
-| `server/services/prazos.js` `resolverPessoa`/`resolverEmail` (23-38) | `pessoas` |
+| `usersController.js:27` `vincularAoPrograma` ← `createUser` (:234) | `users.id` recém-criado, quando há `papelVinculo` + programa (cadastro por Gestor de Programa ou pelas telas de Docentes/Discentes). `createUser` não cria `pessoas`. |
+| `programasController.js:315` `handlePessoaVinculo` / `:355` `insertVinculo` | coordenador, substituto, TAE — `pessoa_id` vindo do formulário (`users.id`) |
+| `programasController.js:670` `addDocente`, `:809` `addDiscente`, `:879` `addComissaoMembro` | `req.body.pessoa_id` (o front manda `user.id`) |
+| `services/importers/professoresImporter.js:79` e `alunosImporter.js:137` (`garantirVinculo`) | `users.id`. **Ativos**: registrados em `services/importers/index.js`, expostos em "Importar usuários". |
+| `camaraController.js:294` `addRelatoria` | `req.body.relatorId` cru, sem resolver |
+| `gruposPesquisaController.js:41` `substituirLideres` | `req.body.liderIds` cru, sem resolver |
 
-Dois pontos leem sem resolver nada, assumindo direto `pessoa_id = users.id`:
+### 3.2 Escritas que já gravam `pessoas.id`
 
-- `camaraController.js` `getMeusProcessos` (157-168) — `WHERE r.relator_id = $1` contra
-  `req.user.id`.
-- `proficienciaController.js` `verificarAluno` (121-130) — `JOIN vinculos v ON v.pessoa_id = u.id`.
+Os importadores da Fase O (`services/planilhas/contatosImporter.js`, `camaraImporter.js:163`,
+`pnpdImporter.js`), `db/estruturaPrpg.js` e `db/posDoutoradoRepo.js` (via
+`resolverOuCriarPessoa`). A seed `server/data/vinculos.json` também já usa `pessoas.id` (42/42
+casam com `pessoas.json`), então `npm run db:migrate` não é afetado pela FK.
 
-E um ponto lê os **dois IDs em paralelo**, sem tentar decidir: `minhaContaController.js` (34-73)
-monta `ids = [user.id, user.pessoaId]` e busca `v.pessoa_id = ANY($1)` / `r.relator_id = ANY($1)`
-— a solução mais defensiva já existente no código, mas que só funciona porque não depende de FK.
+### 3.3 Leituras
 
-O próprio `programasController.js` (comentário nas linhas 98-106) já documenta que apertar a FK
-exige migrar `handlePessoaVinculo`/`insertVinculo` e o `JOIN` de `proficienciaController.js` — ou
-seja, **o time já sabia o escopo mínimo antes deste levantamento**; este documento amplia essa
-lista para o resto da base.
+**(a) Só consultam `users` — zeram em silêncio quando o id vira `pessoas.id`** (as mais perigosas):
 
-### 3.4 Limpeza ao excluir usuário
+| Local | Efeito se o id mudar sem ajustar a leitura |
+|---|---|
+| `programasController.js:591` `getProgramaDocentesPublic`, `:742` `getProgramaDiscentesPublic` | páginas públicas de docentes/discentes ficam vazias (`.filter(Boolean)`) |
+| `programasController.js:638` `getDocentesAdmin`, `:784` `getDiscentesAdmin`, `:857` `getComissoesAdmin` | nomes viram o id cru |
+| `programasController.js:712` `removeDocente` (`usersRepo.getById(pessoa_id)`) | para de sincronizar `perfil_professor.programas` — volta o "programa fantasma" |
+| `usersController.js:39` `anexarProgramasVinculo` | todos aparecem como "Sem vínculo" na lista de usuários |
+| `repositories.js:324` `getScopedToPrograma`, `:335` `isLinkedToPrograma` | **escopo de acesso do Gestor de Programa** encolhe (falha fechada, mas é regressão de permissão) |
+| checagens de duplicidade: `addDocente`/`addDiscente`/`addComissaoMembro`, `garantirVinculo` e `temVinculoDocenteAtivo` dos importadores | deixam de ver o vínculo existente e **criam duplicatas** durante a transição |
+| `proficienciaController.js:124` `verificarAluno` | aluno matriculado deixa de ser reconhecido |
+| `camaraController.js:157` `getMeusProcessos` (`relator_id = req.user.id`) | ver §3.6 — já está quebrado hoje para relatorias importadas |
 
-```js
-// server/controllers/usersController.js:333-334
-// Limpa órfãos: vinculos não têm FK em pessoa_id (polimórfico), então remove manually.
-await query('DELETE FROM vinculos WHERE pessoa_id = $1', [req.params.id]);
-```
+**(b) `LEFT JOIN users` + `LEFT JOIN pessoas` pelo mesmo id**, com prioridade inconsistente
+(uns preferem `users`, outros `pessoas`): `programasController.js:107` (`VINCULOS_JOIN_SELECT`),
+`programaPublicoController.js:23`, `contatosController.js:24`, `gruposPesquisaController.js:15`,
+`posDoutoradoRepo.js:73`, `estruturaPrpg.js:139`, `painelController.js:86`,
+`services/prazos.js:25` (`resolverPessoa`).
 
-Isso só apaga vínculos que guardam `users.id` — os que já apontam para `pessoas.id` (importados
-pela Fase O, por exemplo) **não são tocados**, o que é provavelmente correto (a pessoa continua
-existindo mesmo sem login), mas não está documentado como intencional, só acontece por
-consequência do WHERE.
+**(c) Já tolerantes às duas chaves** — os modelos para a transição:
+- `minhaContaController.js:36`: `ids = [user.id, user.pessoaId]` e `pessoa_id = ANY($1)`.
+- `planilhas/contatosImporter.js:266`: `COALESCE(u.pessoa_id, v.pessoa_id) AS pessoa_real`.
 
-`camara_relatorias.relator_id` **não tem limpeza nenhuma** — excluir um usuário que foi relator
-de algum processo deixa `relator_id` apontando para um id que não existe mais em lugar nenhum.
-Hoje isso não quebra nada porque não há FK; com FK, esse dado morto já teria impedido o DELETE ou
-precisaria de um `ON DELETE` explícito.
+**(d) Agregados** que contam `DISTINCT pessoa_id` (contariam a mesma pessoa duas vezes se ela
+tivesse vínculo pelos dois ids — no dev, 0 casos): `portalController.js:245`, a view
+`indicadores_programa_ano` (`schema.sql:1833`), `micrositeRepo.js:33`. `qualidadeController.js:22-26`
+conta vínculos só por `pessoas.id` e hoje **subconta** quem tem login.
 
-Efeito colateral relevante: `users.pessoa_id` tem `ON DELETE CASCADE` (schema.sql:375-376) — ou
-seja, excluir um `users` que já tem `pessoas` vinculada **já apaga a `pessoas` em cascata hoje**,
-antes mesmo de qualquer mudança em `vinculos`. B.3 não cria esse comportamento, mas qualquer
-migração de `vinculos.pessoa_id` para `pessoas(id)` herda esse cascade — apagar um usuário pode
-passar a apagar (ou órfão, dependendo do `ON DELETE` escolhido) os vínculos dele também,
-diferente do comportamento manual atual.
+### 3.4 Front-end
 
-### 3.5 `backfill-pessoas.mjs` — nem todo usuário tem `pessoas` hoje
+O painel trata `pessoa_id` como se fosse `users.id`:
+- envia `pessoa_id: user.id` (`AdminProgramaForm.jsx:227/458/489/508`, `AdminProgramaPessoas.jsx:60/116`,
+  `AdminProgramaComissoes.jsx:50`) e `liderIds` de professores (`AdminGrupoPesquisaForm.jsx`);
+- monta "já vinculados" comparando `m.pessoa_id` com `user.id` (`AdminProgramaPessoas.jsx:49`,
+  `AdminProgramaComissoes.jsx:40`, `AdminProgramaForm.jsx:962`);
+- linka `/admin/users/editar/${m.pessoa_id}` (`AdminProgramaPessoas.jsx:351`);
+- usa `pessoa_id` como `value` do `<select>` de usuários do coordenador (`AdminProgramaForm.jsx:715`).
 
-`server/db/migrate.mjs:14,163` chama `backfillPessoas()` ao final da carga inicial — então todo
-usuário que existia **na última vez que alguém rodou `npm run db:migrate`** tem uma `pessoas`
-correspondente.
+A API precisa devolver também **`usuario_id`** (o id de login, quando houver), e o front migra
+para ele nesses pontos. O servidor continua aceitando `users.id` na entrada e resolve para
+`pessoas.id` — o front não precisa saber `pessoas.id` para vincular.
 
-Mas `usersController.createUser` **não chama** `resolverOuCriarPessoa` nem nada equivalente
-(confirmado por leitura direta do arquivo — só grava em `users` e chama `vincularAoPrograma` com
-o `users.id` cru). Ou seja: **todo usuário criado pelo painel depois do último `db:migrate` fica
-sem `pessoas` até alguém rodar o backfill manualmente de novo.** Isso é consistente com o
-comentário em `contatosController.js` ("nem sempre presente, ex. em testes") e com o próprio
-`resolverOuCriarPessoa` existir — o código já convive com essa lacuna, criando a `pessoas` sob
-demanda onde precisa.
+### 3.5 Duas cópias dos dados da pessoa
 
-**Implicação direta para B.3:** não dá para simplesmente rodar o backfill uma vez e apertar a FK.
-Qualquer caminho de escrita que hoje grava `users.id` (§3.1) precisa passar a resolver/criar a
-`pessoas` correspondente **no momento da escrita**, senão o problema volta a aparecer a cada
-usuário novo.
+`users` ainda tem `perfil_nome`, `perfil_cpf`, `perfil_siape`, `perfil_foto_url`,
+`perfil_telefones`, `acad_lattes/orcid/google_scholar/publons`; `pessoas` tem as mesmas colunas.
+**Nenhum código propaga uma edição de `users` para `pessoas`** (`usersRepo.update` é chamado por
+`updateUser`, `minhaContaController` — telefones e Lattes/ORCID/Scholar —, `removeDocente` e os
+importadores legados); no sentido contrário, `estruturaController.js:136` e `contatosImporter.js:260`
+escrevem só em `pessoas`.
 
-### 3.6 Precedente já aplicado no próprio código
+Hoje isso quase não aparece porque os 91 vínculos apontam para `users` e a leitura pega de
+`users`. No dia em que apontarem para `pessoas`, qualquer edição posterior feita pelo painel ou
+pelo `/minha-conta` sumiria do site. E `prazos.resolverPessoa` devolveria
+`pessoas.email_institucional` (vazio) em vez do e-mail de login — **as notificações de relatoria e
+de mandato parariam de sair sem erro nenhum**. Resolvido pela decisão D-B11b (§6).
 
-`teses_dissertacoes.autor_pessoa_id` é literalmente a mesma migração, já feita:
+O casamento de identidade dos importadores da Fase O (`planilhas/cadastro.js:189`
+`carregarPessoas`) usa `COALESCE(p.nome, u.perfil_nome)` — prefere `pessoas`, então também
+depende de `pessoas` estar atualizada.
 
-```sql
--- schema.sql:662-665
--- Fase D (Legado Drupal, PLANO.md): field_* renomeados; field_autor (que já
--- guardava um users.id) virou autor_pessoa_id de verdade, com orientador_pessoa_id
--- novo (não existia no Drupal)...
-```
+### 3.6 Bug que já existe hoje
 
-Outras colunas já limpas, sem polimorfismo, todas via `resolverOuCriarPessoa`/`pessoas.porNome`:
-`eventos.pessoa_id` (383-390, `ON DELETE SET NULL`), `atos.solicitante_pessoa_id`/
-`interessado_pessoa_id` (506, 512), `processos.interessado_pessoa_id` (966),
-`disciplinas.docente_pessoa_id` (691-704), `pos_doutorados.supervisor_id`/`cossupervisor_id`
-(1080-1081), `declaracoes.pessoa_id` (618-624, com `emitida_por` como FK **separada** para
-`users(id)` — um precedente de "duas colunas, uma por identidade" em vez de uma coluna
-polimórfica).
+`getMeusProcessos` compara `relator_id` com `req.user.id`, mas o importador da Câmara grava
+`pessoas.id` (`camaraImporter.js:163`). **Relatorias importadas nunca aparecem em "Meus
+processos"**. O `/minha-conta` não tem o problema porque usa `ANY([user.id, user.pessoaId])`.
+Corrigido já no passo 1 do plano.
 
-Conclusão: **B.3 não é um problema novo a resolver do zero — é aplicar, nos lugares que
-sobraram, o mesmo padrão que o resto da base já usa.**
+### 3.7 Testes
 
-## 4. O que quebra mecanicamente se só apertar a FK (sem migrar o código)
+- 15 arquivos gravam vínculos/relatorias com `users.id` ou chamam as rotas acima:
+  `acabamento`, `conexoes`, `contatos`, `entities`, `gestor_programa`, `indicadores`, `legado`,
+  `minhaConta`, `painel`, `planilhasImportadores`, `prazos`, `programas`, `programas_microsite`,
+  `qualidade` (e `authz`, indiretamente). Exemplos de INSERT direto: `minhaConta.test.js:90`
+  (`relator_id = 'prof-1'`), `acabamento.test.js:57` (`'admin-test'`).
+- **`resetDb` quebra com a FK**: `RESET_TABLES` (`__tests__/helpers.js:22-29`) apaga `pessoas`
+  antes de `vinculos` e `camara_relatorias`. Com `ON DELETE RESTRICT`, todo `beforeEach` falharia.
+  A ordem precisa mudar junto com a FK (vínculos e relatorias antes de `pessoas`).
+- O admin semeado nos testes precisa ganhar `pessoas`.
 
-Não é hipotético — os testes atuais já inserem valores que violariam a constraint:
+### 3.8 Precedentes na base
 
-- **`server/__tests__/minhaConta.test.js:90-91`** — `INSERT INTO camara_relatorias (..., relator_id, ...) VALUES (..., 'prof-1', ...)`, onde `'prof-1'` é um `users.id` seedado, não uma `pessoas.id`. Uma `FOREIGN KEY (relator_id) REFERENCES pessoas(id)` faria esse INSERT falhar na hora.
-- **`server/__tests__/acabamento.test.js:54-64`** (teste "L.4 meus processos") — mesmo padrão, `relator_id = 'admin-test'` (o `users.id` do admin seedado), testando exatamente o caminho `getMeusProcessos` que hoje compara direto com `req.user.id`.
-- Qualquer chamada real a `POST /api/users` (cria vínculo com `users.id` cru), `POST
-  /api/camara/processos/:id/relatorias` (`addRelatoria`, client-controlled) ou
-  `PUT /api/grupos-pesquisa/:id/lideres` (`substituirLideres`) em produção.
+`teses_dissertacoes.autor_pessoa_id` fez exatamente esta migração na Fase D (`schema.sql:662`).
+Outras colunas já com FK para `pessoas`: `eventos.pessoa_id`, `atos.*_pessoa_id`,
+`processos.interessado_pessoa_id`, `disciplinas.docente_pessoa_id`, `declaracoes.pessoa_id`,
+`pos_doutorados.supervisor_id`.
 
-Ou seja: **apertar a FK amanhã, sem tocar em código, derruba a suíte de testes e quebra `POST
-/api/users` na primeira chamada.** Não é uma migração segura de se fazer isolada.
+### 3.9 Relacionado, fora deste item
 
-## 5. Plano de migração proposto (ordem sugerida, não implementado)
+`inscricoes_proficiencia.aluno_id` (`schema.sql:790`) guarda `users.id` sem FK — a arquitetura
+(§2.1) prevê FK para ela também. Não é polimórfica, então não entra aqui; fica como item à parte.
 
-1. **Backfill de segurança** — rodar `backfillPessoas()` de novo antes de qualquer mudança de
-   schema, para reduzir a superfície de usuários sem `pessoas`.
-2. **Cobrir os pontos de escrita que faltam** (§3.1) — trocar cada um para resolver via
-   `resolverOuCriarPessoa(usersId)` antes de gravar em `vinculos.pessoa_id`/
-   `camara_relatorias.relator_id`. Isso já resolve o problema **sem** mudar schema — é o passo
-   que reduz risco antes de travar a constraint.
-   - `usersController.vincularAoPrograma`
-   - `programasController.insertVinculo`/`addDocente`/`addDiscente`/`addComissaoMembro`
-   - `camaraController.addRelatoria`
-   - `gruposPesquisaController.substituirLideres`
-   - `professoresImporter.js`/`alunosImporter.js` (avaliar se ainda estão em uso — são anteriores
-     à Fase O; se os importadores de planilha os substituíram de fato, considerar aposentá-los em
-     vez de migrar)
-3. **Unificar os pontos de leitura** (§3.3) — trocar o `LEFT JOIN` duplo + prioridade
-   inconsistente por um `JOIN pessoas` simples em cada um dos 8 locais listados. Isso é
-   simplificação pura depois do passo 2 (não deveria mais existir `pessoa_id` que só bate com
-   `users`).
-4. **Migração de dado** — um script (nos moldes de `backfill-pessoas.mjs`) que percorre
-   `vinculos`/`camara_relatorias` existentes, resolve cada `pessoa_id`/`relator_id` que hoje é um
-   `users.id` para a `pessoas.id` correspondente (criando se faltar) e faz o `UPDATE`. Roda uma
-   vez, antes da constraint entrar.
-5. **Adicionar a FK** — `ALTER TABLE vinculos ADD CONSTRAINT ... FOREIGN KEY (pessoa_id)
-   REFERENCES pessoas(id)`. Decidir `ON DELETE` (provavelmente `SET NULL`, não `CASCADE` —
-   excluir uma pessoa não deveria apagar o histórico de vínculo silenciosamente; ver o precedente
-   de `eventos.pessoa_id`). Mesmo tratamento para `camara_relatorias.relator_id`.
-6. **Corrigir a limpeza de `usersController.deleteUser`** — hoje é um `DELETE FROM vinculos WHERE
-   pessoa_id = $1` manual pensado para `users.id`; com a FK apontando sempre para `pessoas`, esse
-   comportamento muda de lugar (a limpeza acontece via `pessoas`, não mais via `users.id` direto)
-   — decidir se vínculos devem sumir (`CASCADE`) ou só perder a referência (`SET NULL`) quando a
-   pessoa por trás do usuário é removida.
-7. **Atualizar os testes que seedam `users.id` direto** (`minhaConta.test.js`,
-   `acabamento.test.js`, possivelmente `indicadores.test.js` — conferir) para seedar/linkar uma
-   `pessoas` primeiro.
+## 4. Por que não dá para "só apertar a FK"
 
-## 6. Decisões em aberto (não são "D-xx" da oficina — são técnicas, mas envolvem escolha)
+Sem migrar código e dado, a FK derruba a suíte (§3.7), recusa o cadastro de usuário com vínculo,
+`addRelatoria` e `substituirLideres`. E migrar o dado sem ajustar as leituras (§3.3a) esvazia as
+páginas de docentes/discentes e o escopo do gestor. A ordem do plano (§7) existe para que **cada
+passo funcione tanto com o dado antigo quanto com o novo**.
 
-- **`ON DELETE` da nova FK**: `SET NULL` (preserva o vínculo histórico sem dono) vs. `CASCADE`
-  (remove o vínculo junto). Recomendo `SET NULL`, consistente com `eventos.pessoa_id` e
-  `declaracoes.pessoa_id`.
-- **`professoresImporter.js`/`alunosImporter.js` seguem em uso?** Se os 4 importadores da Fase O
-  já cobrem o que esses dois cobriam, migrar pode ser trabalho desperdiçado — melhor confirmar se
-  ainda há alguma rota/tela que os chama antes de decidir migrar vs. aposentar.
-- **Prioridade de resolução quando os dois IDs coexistem** (users vs. pessoas) hoje é
-  inconsistente entre módulos (§3.3) — depois da migração isso deixa de importar (só existirá
-  `pessoas.id`), mas vale registrar que essa inconsistência existe *hoje* independente de B.3
-  acontecer ou não.
+## 5. `ON DELETE` e cascata — como o schema realmente se comporta
 
-## 7. Estimativa de escopo
+`users.pessoa_id REFERENCES pessoas(id) ON DELETE CASCADE` significa: **apagar a pessoa apaga o
+usuário**. Apagar o usuário **não** apaga a pessoa. (A primeira versão desta análise dizia o
+contrário.) Nenhum código apaga `pessoas` hoje.
 
-- **~11 pontos de escrita** a migrar (2 já são "client-controlled cru", os mais arriscados).
-- **~9 pontos de leitura** a simplificar (deixam de precisar do duplo JOIN).
-- **1 ponto de limpeza** (`deleteUser`) a redesenhar.
-- **1 script de migração de dado** novo.
-- **~3 arquivos de teste** com ajuste certo (mais os que a suíte completa acusar depois de rodar
-  com a constraint aplicada em `prpg_test`).
-- Nenhuma tabela nova; a mudança é só na coluna existente + um `ALTER TABLE ... ADD CONSTRAINT`.
+## 6. Decisões (29/09/2026)
 
-Não é um trabalho de um commit só — dá pra quebrar nos passos 2 → 3 → 4 → 5/6 → 7 da seção 5,
-cada um committável e testável isoladamente, com a FK real só entrando no penúltimo passo
-(quando o dado já estiver limpo e o código já resolver certo).
+**D-B11a — `ON DELETE RESTRICT`** nas duas FKs (`vinculos.pessoa_id` e
+`camara_relatorias.relator_id` → `pessoas(id)`). Decidido pelo usuário, conforme a recomendação.
+Motivo: nada apaga `pessoas` hoje; vínculo ativo sem pessoa não tem sentido (diferente de
+`eventos`, que é log e por isso usa `SET NULL`); uma futura ferramenta de mesclar pessoas
+duplicadas fica obrigada a repontar os vínculos antes de apagar a duplicata, em vez de perdê-los
+em silêncio. Como apagar a pessoa apagaria o usuário em cascata, o `RESTRICT` também protege o
+login.
+
+**D-B11b — `pessoas` é a fonte dos dados da pessoa; `users` é cópia legada até o fim da G1.**
+O usuário delegou a decisão; esta é a escolha, com o raciocínio:
+- É o que `arquitetura-dados.md` §5.1 já decidiu (`users` = credencial). Qualquer outra escolha
+  contradiz o alvo e teria de ser desfeita depois.
+- Remover agora as colunas `perfil_*`/`acad_*` de `users` seria terminar a G1 inteira (todas as
+  telas de usuário, `/minha-conta`, importadores, JWT) — fora do escopo deste item.
+- Então, na transição:
+  1. **`usersRepo.create`/`update` propagam para a `pessoas` ligada**, na mesma operação — ponto
+     único por onde passam todas as edições (painel, `/minha-conta`, importadores legados,
+     `removeDocente`). `create` passa a criar a `pessoas` se faltar, o que fecha a lacuna do
+     `createUser`.
+  2. **Só propaga o campo que mudou no update, e nunca sobrescreve valor preenchido com
+     vazio** — assim uma foto posta pela tela de Estrutura (que só grava em `pessoas`) não é
+     apagada por uma edição de telefone no `/minha-conta`.
+  3. **O e-mail de login fica só em `users.email`** — não é copiado para
+     `pessoas.email_institucional` (pode ser pessoal; o institucional vem da planilha de
+     contatos). Quem precisa de "um e-mail para falar com essa pessoa" (notificações, agenda) lê
+     `COALESCE(p.email_institucional, u.email)` com `users u ON u.pessoa_id = p.id`, que é o
+     comportamento de hoje.
+  4. **Sem propagação `pessoas → users`.** As leituras de vínculo passam a ler de `pessoas`; as
+     telas que ainda leem `users.perfil_*` (lista e formulário de usuário, `/minha-conta`) podem
+     ficar desatualizadas quando a edição vier pela Estrutura ou por importação — aceito e
+     registrado, some quando a G1 terminar.
+  5. **Reconciliação única** dentro do script de migração de dado: preenche em `pessoas` o que
+     está vazio lá e preenchido em `users`. No dev a divergência real é nula.
+
+**D-B11c — Excluir usuário mantém os vínculos como histórico.** Decidido pelo usuário.
+`deleteUser` deixa de apagar vínculos. A pessoa continua existindo sem login; os vínculos ativos
+dela são **encerrados** (`ativo = FALSE`, `data_fim_mandato = COALESCE(data_fim_mandato,
+hoje)`, mesmo padrão de `estruturaController.js:147`) para ela não seguir listada como docente
+ou discente atual; os encerrados ficam como estão. Relatorias da Câmara ficam intactas (o
+`relator_id` aponta para a pessoa, que sobrevive; `relator_nome` já é desnormalizado) — trocar o
+relator de um processo em andamento continua sendo ato da secretaria.
+Interpretação a confirmar: "histórico" foi lido como *encerrar* os vínculos ativos, não como
+mantê-los ativos. Se a exclusão for só "tirar o acesso" de alguém que continua no programa, o
+caminho é desativar o login, não excluir o usuário.
+
+## 7. Plano (cada passo committável e com a suíte verde)
+
+1. **Leituras tolerantes às duas chaves.** Todas as leituras de §3.3a/b passam a resolver a
+   pessoa real (`COALESCE(u.pessoa_id, v.pessoa_id)`, ou `ANY([users.id, pessoa_id])`), inclusive
+   as checagens de duplicidade e o escopo do gestor. Atributos vêm de `pessoas` com fallback em
+   `users` via `users.pessoa_id`. A API passa a devolver `usuario_id` e o front (§3.4) migra para
+   ele. Corrige "Meus processos" (§3.6). Funciona com o dado de hoje, sem mudar nenhuma linha.
+2. **Sincronização `users → pessoas`** em `usersRepo` (D-B11b), com testes.
+3. **Escritas gravam `pessoas.id`.** Todos os pontos de §3.1 resolvem a entrada com
+   `resolverOuCriarPessoa({ pessoaId })` (a assinatura recebe objeto). `deleteUser` passa a
+   encerrar em vez de apagar (D-B11c).
+4. **Migração de dado.** Script único, em transação, idempotente: backfill de `pessoas` para
+   usuários sem ela, reconciliação (D-B11b.5), `UPDATE` de `users.id → pessoas.id` em `vinculos` e
+   `camara_relatorias`, relatório antes/depois e **aborta se sobrar id órfão**. Rodar primeiro numa
+   cópia do banco de produção.
+5. **FK.** Bloco `DO $$` no `schema.sql` (mesmo padrão de `users_pessoa_id_fkey`), `ON DELETE
+   RESTRICT` (D-B11a), mais a reordenação de `RESET_TABLES` e o ajuste dos testes (§3.7).
+6. **Simplificação.** Só aqui a tolerância às duas chaves sai: o join vira
+   `JOIN pessoas p ON p.id = v.pessoa_id LEFT JOIN users u ON u.pessoa_id = p.id` — continua
+   havendo dois joins, mas por uma chave determinística; os comentários "polimórfico" do schema e
+   do código saem.
+
+**Critério de pronto:** as duas FKs existem; nenhum `LEFT JOIN users u ON u.id = v.pessoa_id`
+(ou `relator_id`) no código; o front usa `usuario_id` para tudo que é de login; suíte verde;
+contagem de docentes/discentes por programa igual antes e depois da migração de dado.
+
+## 8. O que a primeira versão errava
+
+1. Dizia que apagar o usuário apagava a pessoa em cascata — é o contrário (§5).
+2. Tratava `professoresImporter`/`alunosImporter` como "talvez obsoletos" — estão ativos e geraram
+   quase todos os vínculos por `users.id`.
+3. Dizia que todas as leituras usam o `LEFT JOIN` duplo — as mais arriscadas só consultam `users`
+   (§3.3a); ficaram de fora ~15 pontos, entre eles o escopo de acesso do gestor.
+4. Não olhava o front-end (§3.4) nem a divergência de dados `users` × `pessoas` (§3.5).
+5. Propunha simplificar as leituras (passo 3) **antes** de migrar o dado (passo 4) — isso
+   esvaziaria as páginas de docentes/discentes entre um passo e outro.
+6. Propunha trocar o join duplo por um `JOIN pessoas` simples — perderia e-mail de login e as
+   edições feitas em `users`.
+7. "`POST /api/users` quebra na primeira chamada" — só quebra quando há vínculo a criar.
+8. "~3 testes" — são 15 arquivos, mais a ordem do `resetDb`.
+9. Recomendava `ON DELETE SET NULL` — trocado por `RESTRICT` (D-B11a).
