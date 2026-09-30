@@ -651,6 +651,14 @@ ofício em lote — um único ofício cobrindo vários concluintes.
 > da oficina (`docs/oficina-decisoes-planilhas.md`). As telas em passos B.9/G.8/E.10 foram substituídas pela
 > tela Planilhas + Revisão. Critério de aposentadoria das planilhas: `docs/aposentadoria-planilhas.md`.
 > O agendador (Fase J) roda como processo/cron separado, só no painel (`docs/operations/agendador.md`).
+>
+> **30/09/2026 — casamento de unidades nos importadores.** `carregarUnidades` deixava a primeira grafia
+> vencer e punha o de-para explícito do importador por último: em qualquer banco com a estrutura da PRPG
+> (`garantirEstruturaPrpg`, que cria `prpg-secretaria` com sigla "Secretaria"), o "Responsável = Secretaria"
+> da Câmara ia para a Secretaria Administrativa, contra `requisitos-camara.md` §1.3. Agora a ordem é de-para
+> do importador → siglas → nomes → aliases (desempate por id). Em Expedientes, "Secretaria" (quem expediu ou
+> destinatário) é **ambígua** — Câmara × Administrativa, os requisitos não dizem — e não casa sozinha: vira
+> pendência `SETOR_SEM_UNIDADE`/`DESTINATARIO_SEM_UNIDADE`, respondida na revisão (a resposta vira de-para).
 
 ---
 

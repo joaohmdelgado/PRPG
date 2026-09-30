@@ -151,15 +151,21 @@ export const sugerirPrograma = (programas, grafia) => {
 };
 
 // ------------------------------------------------------------ unidades -------
-export async function carregarUnidades(ctx, extras = {}) {
-  const { rows } = await ctx.q('SELECT id, sigla, nome, aliases FROM unidades WHERE ativo');
+// Grafia -> unidade; a primeira que ocupar a grafia vence, nesta ordem: o
+// de-para explícito do importador (`extras`), siglas, nomes, aliases — e, em
+// cada camada, a ordem do id. Sem isso, a sigla "Secretaria" da estrutura da
+// PRPG (prpg-secretaria) engolia o de-para "secretaria" da Câmara.
+// `ambiguas`: grafias que nunca casam sozinhas (nem como segmento) — ficam
+// para a revisão, cuja resposta volta pelo de-para da importação.
+export async function carregarUnidades(ctx, extras = {}, { ambiguas = [] } = {}) {
+  const { rows } = await ctx.q('SELECT id, sigla, nome, aliases FROM unidades WHERE ativo ORDER BY id');
   const mapa = new Map();
   const por = (k, id) => { const c = chaveTexto(k); if (c && !mapa.has(c)) mapa.set(c, id); };
-  for (const u of rows) {
-    por(u.sigla, u.id); por(u.nome, u.id);
-    for (const a of u.aliases || []) por(a, u.id);
-  }
   for (const [k, id] of Object.entries(extras)) if (rows.some((u) => u.id === id)) por(k, id);
+  for (const u of rows) por(u.sigla, u.id);
+  for (const u of rows) por(u.nome, u.id);
+  for (const u of rows) for (const a of u.aliases || []) por(a, u.id);
+  for (const k of ambiguas) mapa.delete(chaveTexto(k));
   return {
     casar(texto) {
       const c = chaveTexto(texto);

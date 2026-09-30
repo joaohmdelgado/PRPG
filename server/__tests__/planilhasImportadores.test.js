@@ -8,6 +8,7 @@ import { pool } from '../db/pool.js';
 import { resetDb, seedAdmin, loginAdmin } from './helpers.js';
 import { executarImportacao, simularSequencia, corDaCelula } from '../services/planilhas/nucleo.js';
 import { lerPeriodo, lerDataBr } from '../services/planilhas/cadastro.js';
+import { garantirEstruturaPrpg } from '../db/estruturaPrpg.js';
 import { lerTelefones, emailDaPessoa, lerNomePessoa } from '../services/planilhas/contatosImporter.js';
 import { lerRelatores } from '../services/planilhas/camaraImporter.js';
 import contatos from '../services/planilhas/contatosImporter.js';
@@ -255,6 +256,27 @@ describe('importador de expedientes (E.5)', () => {
     expect(c[0]).toEqual({ situacao: 'CANCELADO', situacao_motivo: 'reservado e não utilizado (planilha)' });
   });
 
+  it('"Secretaria" é ambígua (Câmara × Administrativa): nunca casa sozinha, vira pendência e a resposta vale na próxima importação', async () => {
+    await garantirEstruturaPrpg(); // prpg-secretaria tem sigla "Secretaria"
+    const planilha = (linhas) => xlsx({ '2026 ofícios': [CAB_OFICIOS, ...linhas] });
+    await importar(expedientes, planilha([['1', '05/01/2026', 'Secretaria', 'Encaminha processo', 'Secretaria', null]]));
+    const { rows } = await pool.query("SELECT unidade_origem_id, destinatario_unidade_id FROM atos WHERE serie_id = 'OFICIO'");
+    expect(rows).toEqual([{ unidade_origem_id: null, destinatario_unidade_id: null }]);
+    const p = (await pendencias('expedientes')).filter((x) => x.valor_original === 'Secretaria');
+    expect(p.map((x) => x.tipo)).toEqual(['DESTINATARIO_SEM_UNIDADE', 'SETOR_SEM_UNIDADE']);
+    expect(p[0].mensagem).toContain('Grafia ambígua');
+
+    const res = await asAdmin(request(app).post('/api/importacoes/pendencias/lote'))
+      .send({ fonte: 'expedientes', tipo: 'SETOR_SEM_UNIDADE', valorOriginal: 'Secretaria', acao: 'aplicar', destino: 'prpg-secretaria-camara' });
+    expect(res.body.alterados).toBe(1);
+    await importar(expedientes, planilha([
+      ['1', '05/01/2026', 'Secretaria', 'Encaminha processo', 'Secretaria', null],
+      ['2', '06/01/2026', 'Secretaria', 'Outro', null, null],
+    ]));
+    const { rows: novo } = await pool.query("SELECT unidade_origem_id FROM atos WHERE serie_id = 'OFICIO' AND sequencial = 2");
+    expect(novo[0].unidade_origem_id).toBe('prpg-secretaria-camara');
+  });
+
   it('destinatário respondido na revisão liga os atos e vira apelido da unidade', async () => {
     await importar(expedientes, planilhaExpedientes());
     const res = await asAdmin(request(app).post('/api/importacoes/pendencias/lote'))
@@ -300,6 +322,17 @@ describe('importador da Câmara (B.8)', () => {
 
     const tipos = (await pendencias('camara')).map((p) => p.tipo).sort();
     expect(tipos).toEqual(['ABA_NAO_IMPORTADA', 'COR_SEM_LEGENDA', 'COR_SEM_LEGENDA', 'NUP_FORA_DO_PADRAO', 'RESPONSAVEL_SEM_UNIDADE']);
+  });
+
+  it('o de-para do importador vence a sigla da estrutura: "Secretaria" é a da Câmara, não a Administrativa', async () => {
+    // A estrutura da PRPG (boot do servidor e db:migrate) cria prpg-secretaria
+    // com sigla "Secretaria" — que antes ganhava do RESPONSAVEIS do importador.
+    await garantirEstruturaPrpg();
+    const { rows: u } = await pool.query("SELECT sigla FROM unidades WHERE id = 'prpg-secretaria'");
+    expect(u[0].sigla).toBe('Secretaria');
+    await importar(camara, planilhaCamara());
+    const { rows } = await pool.query("SELECT unidade_responsavel_id FROM processos WHERE numero = '23082.000111/2026-11'");
+    expect(rows[0].unidade_responsavel_id).toBe('prpg-secretaria-camara');
   });
 
   it('reimportar não duplica pauta nem histórico; a cor respondida vale para o processo novo', async () => {

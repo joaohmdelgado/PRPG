@@ -40,7 +40,10 @@ const COLUNAS = {
 
 // Grafias de "quem expediu" que são setor, não pessoa.
 const SETORES = new Set(['cppg', 'cippg', 'clase', 'cgf', 'lato sensu', 'prpg', 'dadm', 'secretaria', 'cbg']);
-const UNIDADES_EXTRAS = { 'lato sensu': 'prpg-lato-sensu', 'secretaria': 'prpg-secretaria-camara', 'dadm': 'prpg-dadm' };
+const UNIDADES_EXTRAS = { 'lato sensu': 'prpg-lato-sensu', 'dadm': 'prpg-dadm' };
+// "Secretaria" pode ser a da Câmara ou a Administrativa (prpg-secretaria, cuja
+// sigla é justamente "Secretaria") — os requisitos não dizem qual; a revisão decide.
+const GRAFIAS_AMBIGUAS = { secretaria: 'pode ser a Secretaria da Câmara ou a Secretaria Administrativa da PRPG' };
 
 const TRACO = (v) => /^[-–—\s]*$/.test(String(v ?? '')) && /[-–—]/.test(String(v ?? ''));
 const vazio = (v) => limpar(v) === '' || TRACO(v);
@@ -63,7 +66,7 @@ export default {
   async importar(ctx, wb) {
     const { rows: series } = await ctx.q('SELECT id FROM ato_series');
     const seriesExistentes = new Set(series.map((s) => s.id));
-    const unidades = await carregarUnidades(ctx, UNIDADES_EXTRAS);
+    const unidades = await carregarUnidades(ctx, UNIDADES_EXTRAS, { ambiguas: Object.keys(GRAFIAS_AMBIGUAS) });
     const porValor = new Map(); // pendências por grafia: chave -> { tipo, valorOriginal, ids }
     const criados = []; // { id, serie, ano, sequencial, texto }
     const editaisSemPagina = new Map();
@@ -268,7 +271,8 @@ export default {
     for (const { tipo, valorOriginal, ids } of porValor.values()) {
       await ctx.pendencia({
         chave: `valor:${tipo}:${chaveTexto(valorOriginal)}`, tipo, valorOriginal, sugestao: { ids },
-        mensagem: `"${valorOriginal}" em ${ids.length} ato(s).`,
+        mensagem: `"${valorOriginal}" em ${ids.length} ato(s).`
+          + (GRAFIAS_AMBIGUAS[chaveTexto(valorOriginal)] ? ` Grafia ambígua: ${GRAFIAS_AMBIGUAS[chaveTexto(valorOriginal)]}.` : ''),
       });
     }
     for (const [k, e] of editaisSemPagina) {

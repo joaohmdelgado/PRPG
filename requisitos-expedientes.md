@@ -113,6 +113,11 @@ E há valores que **não são pessoas**: `CPPG`, `Lato Sensu`, `CIPPG` — setor
 do servidor. Mesma inconsistência da coluna "Responsável" da planilha da Câmara
 (`requisitos-camara.md` §1.3).
 
+> **"Secretaria" é ambígua aqui** (30/09/2026): pode ser a Secretaria da Câmara ou a Secretaria
+> Administrativa da PRPG. Diferente da Câmara (onde o "Responsável" é a da Câmara), nada neste
+> levantamento diz qual — o importador não decide: a grafia vira pendência de revisão e a resposta
+> vale para as importações seguintes (`GRAFIAS_AMBIGUAS` em `expedientesImporter.js`).
+
 Na aba ` EDITAIS PRPG 2025` a coluna de usuário **não existe** e as datas caíram na posição
 onde as outras abas têm o usuário — desalinhamento de coluna que quebra qualquer leitura
 automática ingênua.
