@@ -10,7 +10,7 @@ import { normalizarCpf, cpfValido } from '../utils/cpf.js';
 // Mesmo mapeamento de server/db/backfill-pessoas.mjs (Fase A.2/G1): cria uma
 // pessoa a partir do perfil de um usuário que ainda não tinha uma, e já
 // vincula users.pessoa_id (idempotente daí em diante).
-const criarPessoaDeUsuario = async (userId) => {
+export const criarPessoaDeUsuario = async (userId) => {
   const { rows } = await query(
     `SELECT perfil_nome, perfil_cpf, perfil_siape, perfil_foto_url, perfil_telefones,
             acad_lattes, acad_orcid, acad_google_scholar, acad_publons,

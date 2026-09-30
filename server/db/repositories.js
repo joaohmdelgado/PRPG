@@ -6,6 +6,7 @@ import { STATUS_PUBLICACAO } from '../utils/publicacao.js';
 import { query } from './pool.js';
 import { parseDataPt } from '../utils/datas.js';
 import { PAGINAS_FIXAS } from '../utils/micrositeMenu.js';
+import { sincronizarPessoaDoUsuario } from './pessoaDoUsuario.js';
 
 const toArr = (v) => (Array.isArray(v) ? v : v != null && v !== '' ? [v] : []);
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
@@ -299,8 +300,18 @@ const userToRow = (o) => ({
   criado_em: o.criado_em || new Date().toISOString(),
   atualizado_em: o.atualizado_em || new Date().toISOString(),
 });
+const usersBase = createRepository({ table: 'users', fromRow: userFromRow, toRow: userToRow, orderBy: 'criado_em ASC' });
 export const usersRepo = {
-  ...createRepository({ table: 'users', fromRow: userFromRow, toRow: userToRow, orderBy: 'criado_em ASC' }),
+  ...usersBase,
+  // B.11 / D-B11b: toda gravação de usuário leva o que mudou para a `pessoas`
+  // ligada (e cria/liga uma se faltar) — ver server/db/pessoaDoUsuario.js.
+  async create(obj, actor) {
+    return sincronizarPessoaDoUsuario(null, await usersBase.create(obj, actor));
+  },
+  async update(id, partial, actor) {
+    const antes = await usersBase.getById(id);
+    return sincronizarPessoaDoUsuario(antes, await usersBase.update(id, partial, actor));
+  },
   async findByEmail(email) {
     const { rows } = await query('SELECT * FROM users WHERE email = $1', [email]);
     return rows[0] ? userFromRow(rows[0]) : null;

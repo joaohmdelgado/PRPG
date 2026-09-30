@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../app.js';
 import { pool } from '../db/pool.js';
+import { usersRepo } from '../db/repositories.js';
 import { resetDb, seedAdmin, seedUser, seedUserComPessoa, loginAdmin, login } from './helpers.js';
 import {
   joinPessoa, pessoaReal, doUsuario, idsDaMesmaPessoa, nomePessoa,
@@ -65,5 +66,50 @@ describe('B.11 identidadeVinculo — casos fixos', () => {
     expect((await idsDaMesmaPessoa(ana.pessoaId)).sort()).toEqual(esperado);
     expect(await idsDaMesmaPessoa('ninguem')).toEqual(['ninguem']);
     expect(await idsDaMesmaPessoa(null)).toEqual([]);
+  });
+});
+
+describe('B.11 D-B11b — usersRepo leva os dados da pessoa para `pessoas`', () => {
+  const pessoaDe = async (usuarioId) => (await pool.query(
+    'SELECT p.* FROM pessoas p JOIN users u ON u.pessoa_id = p.id WHERE u.id = $1', [usuarioId]
+  )).rows[0];
+
+  it('cadastrar cria e liga a pessoa, com CPF normalizado e sem copiar o e-mail de login', async () => {
+    const u = await seedUser({ id: 'u-novo', email: 'novo@gmail.com', perfil_geral: { nome: 'Novo', cpf: '529.982.247-25' } });
+    expect(u.pessoaId).toBeTruthy();
+    expect(await pessoaDe('u-novo')).toMatchObject({
+      id: u.pessoaId, nome: 'Novo', cpf: '52998224725', cpf_valido: true, email_institucional: null,
+    });
+  });
+
+  it('cadastrar com o CPF de uma pessoa sem login liga a ela e só preenche o que falta', async () => {
+    await pool.query(`INSERT INTO pessoas (id, nome, cpf) VALUES ('pes-imp', 'NOME DA PLANILHA', '52998224725')`);
+    const u = await seedUser({
+      id: 'u-imp', email: 'imp@t.br', perfil_geral: { nome: 'Nome do Painel', cpf: '529.982.247-25', foto_url: '/uploads/f.jpg' },
+    });
+    expect(u.pessoaId).toBe('pes-imp');
+    expect(await pessoaDe('u-imp')).toMatchObject({ nome: 'NOME DA PLANILHA', foto_url: '/uploads/f.jpg' });
+  });
+
+  it('editar leva só o que mudou e nunca apaga valor preenchido em `pessoas`', async () => {
+    const u = await seedUser({ id: 'u-ed', email: 'ed@t.br', perfil_geral: { nome: 'Antes' } });
+    await pool.query(
+      `UPDATE pessoas SET foto_url = '/uploads/estrutura.jpg', lattes = 'http://lattes/1' WHERE id = $1`, [u.pessoaId]
+    );
+    await usersRepo.update('u-ed', {
+      perfil_geral: { ...u.perfil_geral, nome: 'Depois', foto_url: '' },
+      dados_academicos: { lattes: '' },
+    });
+    expect(await pessoaDe('u-ed')).toMatchObject({
+      nome: 'Depois', foto_url: '/uploads/estrutura.jpg', lattes: 'http://lattes/1',
+    });
+  });
+
+  it('usuário antigo sem pessoa ganha uma na próxima gravação', async () => {
+    await seedUser({ id: 'u-velho', email: 'velho@t.br', perfil_geral: { nome: 'Velho' } });
+    await pool.query('UPDATE users SET pessoa_id = NULL WHERE id = $1', ['u-velho']);
+    const atualizado = await usersRepo.update('u-velho', { roles: ['Aluno', 'Professor'] });
+    expect(atualizado.pessoaId).toBeTruthy();
+    expect(await pessoaDe('u-velho')).toMatchObject({ nome: 'Velho' });
   });
 });
