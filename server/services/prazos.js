@@ -37,6 +37,15 @@ export const resolverPessoa = async (id) => {
 
 export const resolverEmail = async (id) => (await resolverPessoa(id)).email;
 
+// E-mail de quem é dono de um login (users.id, como atos.criado_por): o da
+// pessoa ligada; sem pessoa, o de login.
+const resolverEmailDoUsuario = async (usuarioId) => {
+  if (!usuarioId) return null;
+  const { rows } = await query('SELECT pessoa_id, email FROM users WHERE id = $1', [usuarioId]);
+  if (!rows[0]) return null;
+  return (rows[0].pessoa_id && (await resolverEmail(rows[0].pessoa_id))) || rows[0].email || null;
+};
+
 const jaNotificado = async (tipo, entidade, entidadeId) => {
   const { rows } = await query(
     'SELECT 1 FROM notificacoes WHERE tipo = $1 AND entidade = $2 AND entidade_id = $3 LIMIT 1',
@@ -186,7 +195,7 @@ export const avaliarReservasPendentes = async () => {
   let avisos = 0;
   for (const a of rows) {
     if (await jaNotificado('RESERVA_PENDENTE', 'ato', a.id)) continue;
-    const email = await resolverEmail(a.criado_por);
+    const email = await resolverEmailDoUsuario(a.criado_por);
     if (!email) continue;
     await enviarEmail({
       destinatarioEmail: email, tipo: 'RESERVA_PENDENTE', entidade: 'ato', entidadeId: a.id,

@@ -46,7 +46,7 @@ export const resolverOuCriarPessoa = async ({ pessoaId, nome, cpf, email, telefo
   if (pessoaId) {
     const { rows } = await query('SELECT id FROM pessoas WHERE id = $1', [pessoaId]);
     if (rows[0]) return rows[0].id;
-    // pessoaId pode ser, na verdade, users.id (identidade polimórfica, como em vinculos.pessoa_id).
+    // O painel manda users.id: resolve para a pessoa ligada ao login.
     const { rows: viaUser } = await query('SELECT id, pessoa_id FROM users WHERE id = $1', [pessoaId]);
     if (viaUser[0]?.pessoa_id) return viaUser[0].pessoa_id;
     // Usuário existe mas nunca ganhou uma pessoa (backfill sob demanda) —
