@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { usersRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
-import { idsDaMesmaPessoa } from '../../db/identidadeVinculo.js';
+import { idsDaMesmaPessoa, pessoaCanonica } from '../../db/identidadeVinculo.js';
 import { PAPEIS_DOCENTE } from '../../controllers/programasController.js';
 
 // Importador de PROFESSORES a partir do export de usuários do site antigo
@@ -95,7 +95,7 @@ const garantirVinculo = async (programaId, usuarioId, papel) => {
   await query(
     `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, ativo, criado_em)
      VALUES ($1,$2,$3,$4,TRUE,$5)`,
-    [crypto.randomUUID(), programaId, usuarioId, papel, new Date().toISOString()]
+    [crypto.randomUUID(), programaId, await pessoaCanonica(usuarioId), papel, new Date().toISOString()]
   );
   return true;
 };

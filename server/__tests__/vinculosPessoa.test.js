@@ -10,6 +10,7 @@ import {
 import { resolverPessoa } from '../services/prazos.js';
 import professoresImporter from '../services/importers/professoresImporter.js';
 import alunosImporter from '../services/importers/alunosImporter.js';
+import { hojeISO } from '../utils/datas.js';
 
 // B.11 (docs/analise-fk-vinculos-pessoa-id-b3.md). Durante a transição cada
 // caso roda com o vínculo gravado pelo users.id (legado) e pelo pessoas.id; a
@@ -268,5 +269,88 @@ describe.each(FORMAS)('B.11 importadores legados — vínculo gravado por %s', (
     const m = alunosImporter.map({ name: [{ value: 'Bia' }], mail: [{ value: 'bia@t.br' }] });
     await alunosImporter.importOne(m, { programaId: 'prog-1', actor: 'admin-test', dryRun: false });
     expect(await contar('DISCENTE%')).toBe(1);
+  });
+});
+
+describe('B.11 escritas gravam pessoas.id', () => {
+  let ana;
+  beforeEach(async () => {
+    ana = await seedUserComPessoa({ id: 'u-ana', email: 'ana@t.br', nome: 'Ana' });
+  });
+
+  it('docente, discente e comissão', async () => {
+    await asAdmin(request(app).post('/api/programas/prog-1/docentes')).send({ pessoa_id: 'u-ana', papel: 'DOCENTE_PERMANENTE' });
+    await asAdmin(request(app).post('/api/programas/prog-1/discentes')).send({ pessoa_id: 'u-ana', papel: 'DISCENTE_DOUTORADO' });
+    await asAdmin(request(app).post('/api/programas/prog-1/comissoes')).send({ pessoa_id: 'u-ana', papel: 'COMISSAO_CPG' });
+    const { rows } = await pool.query(`SELECT DISTINCT pessoa_id FROM vinculos WHERE programa_id = 'prog-1'`);
+    expect(rows).toEqual([{ pessoa_id: ana.pessoaId }]);
+  });
+
+  it('coordenação pelo formulário do programa', async () => {
+    await asAdmin(request(app).put('/api/programas/prog-1')).send({ coordenador_atual: { pessoa_id: 'u-ana', portaria: 'P1' } });
+    const { rows } = await pool.query(`SELECT pessoa_id FROM vinculos WHERE papel = 'COORDENADOR_ATUAL'`);
+    expect(rows).toEqual([{ pessoa_id: ana.pessoaId }]);
+  });
+
+  it('cadastro de usuário já vinculado ao programa', async () => {
+    const r = await asAdmin(request(app).post('/api/users')).send({
+      email: 'novo@t.br', roles: ['Aluno'], programaId: 'prog-1', papelVinculo: 'DISCENTE_MESTRADO', perfil_geral: { nome: 'Novo' },
+    });
+    expect(r.status).toBe(201);
+    const { rows } = await pool.query(
+      `SELECT v.pessoa_id, u.pessoa_id AS esperado FROM vinculos v JOIN users u ON u.id = $1 WHERE v.papel = 'DISCENTE_MESTRADO'`,
+      [r.body.id]
+    );
+    expect(rows[0].pessoa_id).toBe(rows[0].esperado);
+  });
+
+  it('relatoria da Câmara', async () => {
+    const proc = await asAdmin(request(app).post('/api/camara/processos')).send({ numero: '23082.000010/2026-11', assunto: 'B.11' });
+    const r = await asAdmin(request(app).post(`/api/camara/processos/${proc.body.id}/relatorias`)).send({ relatorId: 'u-ana', relatorNome: 'Ana' });
+    expect(r.status).toBeLessThan(300);
+    const { rows } = await pool.query('SELECT relator_id FROM camara_relatorias');
+    expect(rows).toEqual([{ relator_id: ana.pessoaId }]);
+  });
+
+  it('líderes de grupo, sem mudar o id que o formulário recebe', async () => {
+    const g = await asAdmin(request(app).post('/api/grupos-pesquisa')).send({ title: 'G', body: { value: '', summary: '' }, liderIds: ['u-ana'] });
+    expect(g.body.lideres).toEqual([expect.objectContaining({ id: 'u-ana' })]);
+    const { rows } = await pool.query(`SELECT pessoa_id FROM vinculos WHERE papel = 'LIDER_GRUPO_PESQUISA'`);
+    expect(rows).toEqual([{ pessoa_id: ana.pessoaId }]);
+  });
+
+  it('id que não é de ninguém responde 400 e não grava nada', async () => {
+    const a = await asAdmin(request(app).post('/api/programas/prog-1/docentes')).send({ pessoa_id: 'ninguem', papel: 'DOCENTE_PERMANENTE' });
+    const b = await asAdmin(request(app).put('/api/programas/prog-1')).send({ coordenador_atual: { pessoa_id: 'ninguem' } });
+    const c = await asAdmin(request(app).post('/api/grupos-pesquisa')).send({ title: 'G2', liderIds: ['ninguem'] });
+    expect([a.status, b.status, c.status]).toEqual([400, 400, 400]);
+    expect((await pool.query('SELECT count(*)::int AS n FROM vinculos')).rows[0].n).toBe(0);
+    const grupos = await asAdmin(request(app).get('/api/grupos-pesquisa'));
+    expect(grupos.body.some((x) => x.title === 'G2')).toBe(false);
+  });
+});
+
+describe('B.11 D-B11c — excluir usuário mantém o histórico', () => {
+  it('encerra os vínculos ativos, preserva egresso, pessoa e relatoria', async () => {
+    const ana = await seedUserComPessoa({ id: 'u-ana', email: 'ana@t.br', nome: 'Ana' });
+    await vincular('v-doc', ana.pessoaId, 'DOCENTE_PERMANENTE');
+    await vincular('v-egr', ana.pessoaId, 'EGRESSO');
+    const proc = await asAdmin(request(app).post('/api/camara/processos')).send({ numero: '23082.000011/2026-11', assunto: 'B.11' });
+    await pool.query(
+      `INSERT INTO camara_relatorias (id, processo_id, relator_id, relator_nome, ativa) VALUES ('rel-1', $1, $2, 'Ana', TRUE)`,
+      [proc.body.id, ana.pessoaId]
+    );
+
+    const del = await asAdmin(request(app).delete('/api/users/u-ana'));
+    expect(del.status).toBe(200);
+
+    const { rows } = await pool.query('SELECT id, ativo, data_fim_mandato FROM vinculos ORDER BY id');
+    expect(rows).toEqual([
+      { id: 'v-doc', ativo: false, data_fim_mandato: hojeISO() },
+      { id: 'v-egr', ativo: true, data_fim_mandato: null },
+    ]);
+    expect((await pool.query('SELECT count(*)::int AS n FROM pessoas WHERE id = $1', [ana.pessoaId])).rows[0].n).toBe(1);
+    expect((await pool.query('SELECT relator_id, ativa FROM camara_relatorias')).rows).toEqual([{ relator_id: ana.pessoaId, ativa: true }]);
+    expect((await request(app).get('/api/programas/slug/pu/pessoas')).body).toEqual([]);
   });
 });

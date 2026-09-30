@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
 import {
-  joinPessoa, pessoaReal, nomePessoa, campoPessoa, idsDaMesmaPessoa,
+  joinPessoa, pessoaReal, nomePessoa, campoPessoa, idsDaMesmaPessoa, pessoaCanonica,
 } from '../db/identidadeVinculo.js';
 import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { contatosRepo } from '../db/contatosRepo.js';
@@ -306,6 +306,17 @@ export const getProgramaBySlug = async (req, res) => {
   }
 };
 
+// B.11: resolve (e valida) a pessoa de coordenador/substituto/secretaria antes
+// de gravar qualquer coisa — id desconhecido vira 400 sem deixar o programa
+// pela metade.
+const canonizarDirigentes = async (data) => {
+  for (const campo of ['coordenador_atual', 'substituto', 'secretaria']) {
+    if (data[campo]?.pessoa_id) {
+      data[campo] = { ...data[campo], pessoa_id: await pessoaCanonica(data[campo].pessoa_id) };
+    }
+  }
+};
+
 // Cria/atualiza/inativa o vínculo de uma pessoa num papel (regra de negócio
 // preservada da versão em JSON).
 const handlePessoaVinculo = async (payloadData, papel, programa_id) => {
@@ -375,6 +386,7 @@ export const createPrograma = async (req, res) => {
     const data = req.body || {};
     const erroCores = validarCoresPrograma(data);
     if (erroCores) return res.status(400).json({ message: erroCores, campo: 'cores' });
+    await canonizarDirigentes(data);
     const progId = crypto.randomUUID();
     const now = new Date().toISOString();
     const actor = req.user?.id || null;
@@ -433,6 +445,7 @@ export const updatePrograma = async (req, res) => {
     const data = req.body || {};
     const erroCores = validarCoresPrograma(data, existing);
     if (erroCores) return res.status(400).json({ message: erroCores, campo: 'cores' });
+    await canonizarDirigentes(data);
     const pick = (val, fallback) => (val !== undefined ? val : fallback);
     const actor = req.user?.id || null;
 
@@ -637,7 +650,8 @@ export const addDocente = async (req, res) => {
     if (!pessoa_id) return res.status(400).json({ message: 'pessoa_id é obrigatório' });
     if (!PAPEIS_DOCENTE.includes(papel)) return res.status(400).json({ message: 'papel inválido' });
 
-    const ids = await idsDaMesmaPessoa(pessoa_id);
+    const pessoaId = await pessoaCanonica(pessoa_id);
+    const ids = await idsDaMesmaPessoa(pessoaId);
     const existing = (
       await query(
         'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id = ANY($2::text[]) AND papel=ANY($3::text[]) AND ativo=TRUE',
@@ -650,7 +664,7 @@ export const addDocente = async (req, res) => {
     await query(
       `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, email_funcao, ativo, criado_em)
        VALUES ($1,$2,$3,$4,$5,TRUE,$6)`,
-      [id, req.params.id, pessoa_id, papel, email_funcao || null, new Date().toISOString()]
+      [id, req.params.id, pessoaId, papel, email_funcao || null, new Date().toISOString()]
     );
     res.status(201).json({ message: 'Docente adicionado', id });
   } catch (error) {
@@ -736,7 +750,8 @@ export const addDiscente = async (req, res) => {
     const { pessoa_id, papel } = req.body || {};
     if (!pessoa_id) return res.status(400).json({ message: 'pessoa_id obrigatório' });
     if (!PAPEIS_DISCENTE.includes(papel)) return res.status(400).json({ message: 'papel inválido' });
-    const ids = await idsDaMesmaPessoa(pessoa_id);
+    const pessoaId = await pessoaCanonica(pessoa_id);
+    const ids = await idsDaMesmaPessoa(pessoaId);
     const existing = (await query(
       'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id = ANY($2::text[]) AND papel=ANY($3::text[]) AND ativo=TRUE',
       [req.params.id, ids, PAPEIS_DISCENTE]
@@ -745,7 +760,7 @@ export const addDiscente = async (req, res) => {
     const id = crypto.randomUUID();
     await query(
       `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, ativo, criado_em) VALUES ($1,$2,$3,$4,TRUE,$5)`,
-      [id, req.params.id, pessoa_id, papel, new Date().toISOString()]
+      [id, req.params.id, pessoaId, papel, new Date().toISOString()]
     );
     res.status(201).json({ message: 'Discente adicionado', id });
   } catch (error) {
@@ -796,7 +811,8 @@ export const addComissaoMembro = async (req, res) => {
     const { pessoa_id, papel } = req.body || {};
     if (!pessoa_id) return res.status(400).json({ message: 'pessoa_id obrigatório' });
     if (!PAPEIS_COMISSAO.includes(papel)) return res.status(400).json({ message: 'papel inválido' });
-    const ids = await idsDaMesmaPessoa(pessoa_id);
+    const pessoaId = await pessoaCanonica(pessoa_id);
+    const ids = await idsDaMesmaPessoa(pessoaId);
     const existing = (await query(
       'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id = ANY($2::text[]) AND papel=$3 AND ativo=TRUE',
       [req.params.id, ids, papel]
@@ -805,7 +821,7 @@ export const addComissaoMembro = async (req, res) => {
     const id = crypto.randomUUID();
     await query(
       `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, ativo, criado_em) VALUES ($1,$2,$3,$4,TRUE,$5)`,
-      [id, req.params.id, pessoa_id, papel, new Date().toISOString()]
+      [id, req.params.id, pessoaId, papel, new Date().toISOString()]
     );
     res.status(201).json({ message: 'Membro adicionado', id });
   } catch (error) {

@@ -6,7 +6,7 @@ import { processosRepo, unidadesRepo, camaraAtosRepo } from '../db/repositories.
 import { camaraPautaItensRepo, camaraRelatoriasRepo } from '../db/camaraRepo.js';
 import { eventosRepo } from '../db/eventosRepo.js';
 import { query } from '../db/pool.js';
-import { idsDaMesmaPessoa } from '../db/identidadeVinculo.js';
+import { idsDaMesmaPessoa, pessoaCanonica } from '../db/identidadeVinculo.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { NUP_REGEX, validarNumeroProcesso } from '../utils/nup.js';
 import {
@@ -300,12 +300,13 @@ export const addRelatoria = async (req, res) => {
   }
   const processo = await processosRepo.getById(req.params.id);
   if (!processo) return res.status(404).json({ message: 'Processo não encontrado.' });
+  const relatorId = await pessoaCanonica(req.body.relatorId);
 
   const ativa = await camaraRelatoriasRepo.getAtiva(processo.id);
   if (ativa) await camaraRelatoriasRepo.substituir(ativa.id, req.body.motivoSubstituicao || 'Nova designação');
 
   const relatoria = await camaraRelatoriasRepo.create({
-    processoId: processo.id, relatorId: req.body.relatorId || null, relatorNome: req.body.relatorNome,
+    processoId: processo.id, relatorId, relatorNome: req.body.relatorNome,
     programaId: req.body.programaId || null,
     dataDesignacao: req.body.dataDesignacao || new Date().toISOString().slice(0, 10),
     prazoDevolucao: req.body.prazoDevolucao || null,

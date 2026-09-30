@@ -9,7 +9,7 @@ import { query } from './pool.js';
 import { derivarSituacao } from '../utils/vigencia.js';
 import { hojeISO } from '../utils/datas.js';
 import { resolverOuCriarPessoa } from './pessoasRepo.js';
-import { joinPessoa, pessoaReal } from './identidadeVinculo.js';
+import { joinPessoa, pessoaReal, pessoaCanonica } from './identidadeVinculo.js';
 
 // Fase D: resolverOuCriarPessoa mudou para server/db/pessoasRepo.js (reusada
 // por teses/disciplinas/bolsas). Reexportado aqui por compatibilidade.
@@ -126,7 +126,7 @@ export const posDoutoradoRepo = {
     await query(
       `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, data_inicio_mandato, data_fim_mandato, ativo, criado_em)
        VALUES ($1,$2,$3,'POS_DOUTORANDO',$4,$5,TRUE,now())`,
-      [vinculoId, data.programaId || null, data.pessoaId, data.dataInicio || null, data.dataFim || null]
+      [vinculoId, data.programaId || null, await pessoaCanonica(data.pessoaId), data.dataInicio || null, data.dataFim || null]
     );
     const id = crypto.randomUUID();
     await query(

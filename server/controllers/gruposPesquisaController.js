@@ -5,7 +5,7 @@ import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { query } from '../db/pool.js';
 import { serverError } from '../utils/httpError.js';
 import { estaPublicado } from '../utils/publicacao.js';
-import { joinPessoa } from '../db/identidadeVinculo.js';
+import { joinPessoa, pessoaCanonica } from '../db/identidadeVinculo.js';
 
 // Fase D: líderes são linhas de `vinculos` (papel='LIDER_GRUPO_PESQUISA',
 // grupo_pesquisa_id), não mais o JSONB field_lideres — substitui o
@@ -36,12 +36,18 @@ const listarLideres = async (grupoIds) => {
   return byGrupo;
 };
 
-// Substitui todos os líderes de um grupo pela lista de ids recebida
-// (users.id ou pessoas.id — mesmo polimorfismo de vinculos.pessoa_id).
-const substituirLideres = async (grupoId, liderIds) => {
+// Os ids recebidos (users.id do formulário ou pessoas.id) viram pessoas.id
+// antes de qualquer gravação — id desconhecido responde 400 sem criar nada (B.11).
+const canonizarLideres = async (liderIds) => {
+  const pessoas = [];
+  for (const id of liderIds ?? []) if (id) pessoas.push(await pessoaCanonica(id));
+  return pessoas;
+};
+
+// Substitui todos os líderes de um grupo pelas pessoas dadas (pessoas.id).
+const substituirLideres = async (grupoId, pessoaIds) => {
   await query('DELETE FROM vinculos WHERE grupo_pesquisa_id = $1 AND papel = $2', [grupoId, LIDER_PAPEL]);
-  for (const pessoaId of liderIds ?? []) {
-    if (!pessoaId) continue;
+  for (const pessoaId of pessoaIds) {
     await query(
       `INSERT INTO vinculos (id, grupo_pesquisa_id, pessoa_id, papel, ativo, criado_em)
        VALUES ($1,$2,$3,$4,TRUE,now())`,
@@ -99,8 +105,9 @@ export const createGrupoPesquisa = async (req, res) => {
   delete data.liderIds;
   if (!data.id) data.id = 'grupo-' + Date.now().toString();
   try {
+    const lideres = await canonizarLideres(liderIds);
     const criado = await gruposRepo.create(data, req.user?.id);
-    await substituirLideres(criado.id, liderIds);
+    await substituirLideres(criado.id, lideres);
     const lideresByGrupo = await listarLideres([criado.id]);
     res.status(201).json({ ...criado, lideres: lideresByGrupo.get(criado.id) || [] });
   } catch (e) {
@@ -114,9 +121,10 @@ export const updateGrupoPesquisa = async (req, res) => {
   if (data.body?.value) data.body.value = sanitizeHtml(data.body.value);
   const liderIds = data.liderIds;
   delete data.liderIds;
+  const lideres = liderIds !== undefined ? await canonizarLideres(liderIds) : undefined;
   const updated = await gruposRepo.update(req.params.id, data, req.user?.id);
   if (!updated) return res.status(404).json({ message: 'Grupo de pesquisa não encontrado' });
-  if (liderIds !== undefined) await substituirLideres(req.params.id, liderIds);
+  if (lideres !== undefined) await substituirLideres(req.params.id, lideres);
   const lideresByGrupo = await listarLideres([req.params.id]);
   res.json({ ...updated, lideres: lideresByGrupo.get(req.params.id) || [] });
 };

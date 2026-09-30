@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { usersRepo, taxonomiaRefsRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
-import { idsDaMesmaPessoa } from '../../db/identidadeVinculo.js';
+import { idsDaMesmaPessoa, pessoaCanonica } from '../../db/identidadeVinculo.js';
 import { PAPEIS_DISCENTE } from '../../controllers/programasController.js';
 import { slugify } from '../../utils/slug.js';
 
@@ -151,7 +151,7 @@ const garantirVinculo = async (programaId, usuarioId, papel, ativo) => {
   await query(
     `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, ativo, criado_em)
      VALUES ($1,$2,$3,$4,$5,$6)`,
-    [crypto.randomUUID(), programaId, usuarioId, papel, ativo, new Date().toISOString()]
+    [crypto.randomUUID(), programaId, await pessoaCanonica(usuarioId), papel, ativo, new Date().toISOString()]
   );
 };
 

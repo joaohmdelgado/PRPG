@@ -6,7 +6,8 @@ import { usersRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { responderLista, filtrarTexto } from '../utils/listagem.js';
 import { PAPEIS_DISCENTE, PAPEIS_DOCENTE } from './programasController.js';
-import { doUsuario } from '../db/identidadeVinculo.js';
+import { doUsuario, idsDaMesmaPessoa } from '../db/identidadeVinculo.js';
+import { hojeISO } from '../utils/datas.js';
 
 // Papéis (docente + discente) que representam vínculo a um programa, para
 // exibir os programas de qualquer usuário (aluno ou professor) na lista.
@@ -233,7 +234,7 @@ export const createUser = async (req, res) => {
 
     // Vincula automaticamente o aluno/professor ao programa no papel escolhido.
     if (papelVinculo && ownerProgramaId && (roles.includes('Aluno') || roles.includes('Professor'))) {
-      await vincularAoPrograma(ownerProgramaId, created.id, papelVinculo);
+      await vincularAoPrograma(ownerProgramaId, created.pessoaId, papelVinculo);
     }
 
     if (Array.isArray(data.linhas_pesquisa_ids) && data.linhas_pesquisa_ids.length > 0) {
@@ -330,10 +331,18 @@ export const updateUser = async (req, res) => {
   }
 };
 
+// D-B11c: excluir o login não apaga a pessoa nem o histórico — os vínculos
+// ativos são encerrados hoje (egresso já é histórico e fica como está);
+// relatorias da Câmara ficam intactas. Para só tirar o acesso de quem continua
+// no programa, desative o login em vez de excluir.
 export const deleteUser = async (req, res) => {
   try {
-    // Limpa órfãos: vinculos não têm FK em pessoa_id (polimórfico), então remove manually.
-    await query('DELETE FROM vinculos WHERE pessoa_id = $1', [req.params.id]);
+    const ids = await idsDaMesmaPessoa(req.params.id);
+    await query(
+      `UPDATE vinculos SET ativo = FALSE, data_fim_mandato = COALESCE(data_fim_mandato, $2::date)
+        WHERE pessoa_id = ANY($1::text[]) AND ativo IS NOT FALSE AND papel <> 'EGRESSO'`,
+      [ids, hojeISO()]
+    );
     const ok = await usersRepo.remove(req.params.id);
     if (ok) res.json({ message: 'Usuário removido com sucesso' });
     else res.status(404).json({ message: 'Usuário não encontrado' });

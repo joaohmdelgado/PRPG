@@ -5,6 +5,7 @@
 // só pessoas.id, e a Task 11 troca estes trechos pela forma final sem mexer
 // em quem os usa.
 import { query } from './pool.js';
+import { resolverOuCriarPessoa } from './pessoasRepo.js';
 
 // LEFT JOINs que resolvem o login (u) e a pessoa (p) por trás de `col`,
 // qualquer que seja a forma gravada. users.id e pessoas.id não colidem
@@ -42,4 +43,22 @@ export async function idsDaMesmaPessoa(id) {
     if (r.pessoa_id) ids.add(r.pessoa_id);
   }
   return [...ids];
+}
+
+export class PessoaNaoEncontrada extends Error {
+  constructor() {
+    super('Pessoa não encontrada: selecione um usuário ou uma pessoa já cadastrada.');
+    this.status = 400;
+    this.expose = true;
+  }
+}
+
+// Escrita (B.11): o id que chega (users.id do painel ou pessoas.id) vira o
+// pessoas.id a gravar — criando a pessoa de um usuário que ainda não tinha
+// uma. Vazio -> null; id que não é de ninguém -> PessoaNaoEncontrada (400).
+export async function pessoaCanonica(id) {
+  if (!id) return null;
+  const pessoaId = await resolverOuCriarPessoa({ pessoaId: id });
+  if (!pessoaId) throw new PessoaNaoEncontrada();
+  return pessoaId;
 }
