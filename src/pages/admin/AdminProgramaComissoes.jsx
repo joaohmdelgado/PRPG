@@ -37,7 +37,7 @@ export default function AdminProgramaComissoes() {
 
   useEffect(() => { load(); }, [id]);
 
-  const vinculadosIds = new Set(membros.filter((m) => m.papel === papel).map((m) => m.pessoa_id));
+  const vinculadosIds = new Set(membros.filter((m) => m.papel === papel).map((m) => m.usuario_id).filter(Boolean));
   const filteredUsers = users.filter((u) =>
     !vinculadosIds.has(u.id) &&
     (!busca || (u.perfil_geral?.nome || u.email || '').toLowerCase().includes(busca.toLowerCase()))

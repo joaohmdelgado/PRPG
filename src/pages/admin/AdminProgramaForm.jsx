@@ -92,7 +92,7 @@ const MODALIDADE_TIPOS = [
 const NOTAS_CAPES = ['1', '2', '3', '4', '5', '6', '7', 'A'];
 
 const emptyPessoa = {
-  pessoa_id: '', nome: '', cpf: '', siape: '', email_institucional: '', telefones: '', portaria_id: '', portaria: '', data_vencimento: '', data_inicio_mandato: '', email_funcao: '', endereco: ''
+  usuario_id: '', pessoa_id: '', nome: '', cpf: '', siape: '', email_institucional: '', telefones: '', portaria_id: '', portaria: '', data_vencimento: '', data_inicio_mandato: '', email_funcao: '', endereco: ''
 };
 
 const MOTIVO_LABELS = {
@@ -224,6 +224,7 @@ const AdminProgramaForm = () => {
         ...prev,
         [sectionName]: {
           ...prev[sectionName],
+          usuario_id: selectedUser.id,
           pessoa_id: selectedUser.id,
           nome: selectedUser.perfil_geral?.nome || selectedUser.email,
           cpf: selectedUser.perfil_geral?.cpf || '',
@@ -237,6 +238,7 @@ const AdminProgramaForm = () => {
         ...prev,
         [sectionName]: {
           ...prev[sectionName],
+          usuario_id: '',
           pessoa_id: '',
           nome: '',
           cpf: '',
@@ -712,7 +714,7 @@ const AdminProgramaForm = () => {
           <div className="md:col-span-2">
             <label className="block text-sm font-medium mb-1 text-gray-700">Vincular Usuário do Sistema</label>
             <select
-              value={data.pessoa_id || ''}
+              value={data.usuario_id || ''}
               onChange={e => handleUserSelect(sectionName, e.target.value)}
               className="w-full border p-2 rounded bg-white text-sm focus:ring-ufrpe-yellow focus:border-ufrpe-yellow"
             >
@@ -959,7 +961,7 @@ const AdminProgramaForm = () => {
   );
 
   const renderVinculoStep = ({ titulo, papeis, lista, loading: isLoading, busca, setBusca, papel, setPapel, onAdd, onRemove, papelLabel }) => {
-    const vinculadosIds = new Set(lista.map((m) => m.pessoa_id));
+    const vinculadosIds = new Set(lista.map((m) => m.usuario_id).filter(Boolean));
     const candidatos = users.filter(
       (u) => !vinculadosIds.has(u.id) &&
         (!busca || (u.perfil_geral?.nome || u.email || '').toLowerCase().includes(busca.toLowerCase()))

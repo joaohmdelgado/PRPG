@@ -46,7 +46,8 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
 
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [id]);
 
-  const vinculadosIds = new Set(membros.map((m) => m.pessoa_id));
+  // B.11: comparar pelo id de login — pessoa_id é o pessoas.id.
+  const vinculadosIds = new Set(membros.map((m) => m.usuario_id).filter(Boolean));
   const candidatos = users.filter(
     (u) => !vinculadosIds.has(u.id) &&
       (!busca || (u.perfil_geral?.nome || u.email || '').toLowerCase().includes(busca.toLowerCase()))
@@ -346,9 +347,9 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
                           <p className="text-sm font-medium text-gray-800">{m.nome}</p>
                         </div>
                         <div className="flex items-center gap-1">
-                          {m.programa_id === id && (
+                          {m.usuario_id && m.programa_id === id && (
                             <Link
-                              to={`/admin/users/editar/${m.pessoa_id}`}
+                              to={`/admin/users/editar/${m.usuario_id}`}
                               state={{ from: `/admin/programas/${id}/${recurso}` }}
                               title="Editar cadastro"
                               className="text-gray-400 hover:text-ufrpe-blue hover:bg-blue-50 rounded p-1.5 transition-colors"
