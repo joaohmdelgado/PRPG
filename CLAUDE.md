@@ -310,7 +310,7 @@ proficiência, mídia, notificações, métricas.
   fixed pages, menu overrides, publication checklist, color contrast), /minha-conta,
   the list contract (`listagemAdmin`), the panel search (`buscaPainel`), SQL-side listing/pagination
   for news and editais (`listagemSql`), the WebP image pipeline (`imagens`), per-route SEO metadata/
-  sitemap/robots (`seo`) and real Web Vitals (`webVitals`). ~475 tests in 52 files — the exact number
+  sitemap/robots (`seo`), real Web Vitals (`webVitals`), and the person behind a vínculo plus the users→pessoas sync (`vinculosPessoa`, `migracoesB11`). ~512 tests in 54 files — the exact number
   drifts; check with `npx vitest run`.
 - **Front component tests** (`npm run test:front`, `vitest.front.config.js`, jsdom, no DB/API) live in
   `src/__tests__/`: `ui` (Field/Dialog/Toast/Icone/rede de rótulos/menu/login), `paineis` (AdminLayout drawer and
@@ -344,6 +344,12 @@ proficiência, mídia, notificações, métricas.
      `programas` before the content tables that now have a real FK to it).
    - `core.js`, `anexosRepo.js`, `eventosRepo.js`, `atosRepo.js`, `contatosRepo.js`,
      `backfill-pessoas.mjs`: repositories/helpers for the tables above.
+   - `identidadeVinculo.js` (B.11): **the** way to read the person behind `vinculos.pessoa_id` /
+     `camara_relatorias.relator_id` (both FK → `pessoas`, RESTRICT). `joinPessoa(col)` gives `p` (pessoa) and `u`
+     (login, `users.pessoa_id`); `pessoaCanonica(id)` turns a panel `users.id` into the `pessoas.id` to write (400
+     if unknown). API responses carry `pessoa_id` (pessoas.id) and, panel-only, `usuario_id` (login).
+   - `pessoaDoUsuario.js` (D-B11b): `usersRepo.create/update` copy changed profile fields to the linked `pessoas`
+     (never erasing a filled value; login e-mail is not copied). `pessoas` is the source for person data.
    Controllers are thin: they call a repo and keep validation/sanitization/slug/status logic.
    A few genuinely free-form nested objects are stored as JSONB (`editais.erratas`,
    `grupos_pesquisa.field_lideres`, `users.perfil_aluno`/`perfil_professor`).

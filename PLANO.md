@@ -268,7 +268,7 @@ de teste alterada precisa de justificativa escrita no commit.
 | `[x]` | B.8 | **Importador da Câmara** (dívida do §2.2): 102 linhas → 80 processos, 8 reuniões, histórico reconstruído | `services/importers/camaraImporter.js` | ⛔ **D-B1**, D-G8 |
 | `[ ]` | B.9 | Tela de importação da Câmara em 4 passos | `src/pages/admin/AdminCamaraImportar.jsx` | ⛔ D-B1 |
 | `[ ]` | B.10 | Rodar a importação e validar 10 processos com a secretaria | — | |
-| `[ ]` | B.11 | FK real de `vinculos.pessoa_id` e `camara_relatorias.relator_id` → `pessoas(id)` (resíduo da A.10/B.3), em 6 passos: leituras tolerantes às duas chaves → sincronização `users`→`pessoas` → escritas gravam `pessoas.id` → migração de dado → FK → simplificação | `docs/analise-fk-vinculos-pessoa-id-b3.md` | decisões tomadas em 29/09/2026: **D-B11a** `ON DELETE RESTRICT`; **D-B11b** `pessoas` é a fonte dos dados da pessoa, `usersRepo` propaga para ela até o fim da G1; **D-B11c** excluir usuário encerra os vínculos e os mantém como histórico |
+| `[x]` | B.11 | FK real de `vinculos.pessoa_id` e `camara_relatorias.relator_id` → `pessoas(id)` (resíduo da A.10/B.3), em 6 passos: leituras tolerantes às duas chaves → sincronização `users`→`pessoas` → escritas gravam `pessoas.id` → migração de dado → FK → simplificação | `docs/analise-fk-vinculos-pessoa-id-b3.md` | decisões tomadas em 29/09/2026: **D-B11a** `ON DELETE RESTRICT`; **D-B11b** `pessoas` é a fonte dos dados da pessoa, `usersRepo` propaga para ela até o fim da G1; **D-B11c** excluir usuário encerra os vínculos e os mantém como histórico — implementado em 30/09/2026 (plano docs/superpowers/plans/2026-09-29-b11-fk-vinculos-pessoa.md) |
 
 > **Nota B.4** — investigada, não aplicada: migrar `portarias`/`resolucoes` para `atos` esbarra
 > no mesmo problema do `camara_atos` (B.1) — exige série/sequencial reais, bloqueados por D-E1.
@@ -631,7 +631,7 @@ ofício em lote — um único ofício cobrindo vários concluintes.
 | Fase | Itens | Decisões a responder antes | Início | Fim | Estado |
 |---|---|---|---|---|---|
 | A — Núcleo | 18 | D-A1, D-A2, D-A3, D-A4, D-E1 | 27/07/2026 | 27/07/2026 | ✅ concluída (D-A1/D-A4 conforme recomendação; FK real de `vinculos.pessoa_id` adiada para B.3 — ver A.10) |
-| B — Refit + Câmara | 11 | D-B1, D-G8, D-A4 | 28/07/2026 | 28/07/2026 | 🟡 7/11 feitos (B.1-B.3, B.5, B.7 aplicados; B.4/B.6 investigados e adiados p/ Fase E/G; B.8-B.10 bloqueados por D-B1; B.11 — FK de `vinculos.pessoa_id` — analisada e decidida em 29/09/2026, não iniciada) |
+| B — Refit + Câmara | 11 | D-B1, D-G8, D-A4 | 28/07/2026 | 28/07/2026 | 🟡 8/11 feitos (B.1-B.3, B.5, B.7 aplicados; B.4/B.6 investigados e adiados p/ Fase E/G; B.8-B.10 bloqueados por D-B1; B.11 (FK de `vinculos.pessoa_id`) aplicada em 30/09/2026) |
 | G — Contatos | 9 | D-G1..D-G8 | 28/07/2026 | 29/09/2026 | 🟡 6/9 feitos (G.1-G.5 já aplicados; G.9 aplicado e testado em 29/09/2026, depois de D-G1 respondida — ver `docs/decisoes-pendentes-conexoes-n.md`; G.6/G.7 deixados por escopo; G.8 depende de rodar G.4 com `--gravar`) |
 | E — Expedientes | 14 | D-E1..D-E3, D-E5..D-E8 | 28/07/2026 | 28/07/2026 | 🟡 9/14 feitos (E.1-E.4, E.6-E.9, E.13 aplicados e testados; E.5/E.10/E.12/E.14 bloqueados pelas decisões D-E2/D-E3/D-E5; E.11 investigada e adiada — depende do importador) |
 | C — PNPD | 8 | D-C1..D-C4, D-C6..D-C9 | 28/07/2026 | 28/07/2026 | 🟡 7/8 feitos (C.1-C.4, C.6, C.8 aplicados e testados; C.7 parcial — declaração de vínculo pronta, certificado adiado por D-C7; C.5 bloqueado por D-C3/D-C8/D-C9) |

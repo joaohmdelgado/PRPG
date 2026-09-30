@@ -7,7 +7,7 @@
 desenvolvimento (só consultas de leitura). A revisão corrigiu erros da primeira versão (§8),
 ampliou o inventário (a primeira versão cobria cerca de metade das leituras e não olhava o
 front-end) e registra as três decisões tomadas pelo usuário (§6).
-**Status:** decidido, **não implementado**.
+**Status:** implementado em 30/09/2026 — plano em docs/superpowers/plans/2026-09-29-b11-fk-vinculos-pessoa.md.
 
 > Nome do item: a primeira versão chamava isto de "B.3", mas a B.3 do `PLANO.md` (apagar
 > `buildCombined`) está concluída — a FK ficou como resíduo sem item. Registrado agora como
@@ -263,3 +263,26 @@ contagem de docentes/discentes por programa igual antes e depois da migração d
 7. "`POST /api/users` quebra na primeira chamada" — só quebra quando há vínculo a criar.
 8. "~3 testes" — são 15 arquivos, mais a ordem do `resetDb`.
 9. Recomendava `ON DELETE SET NULL` — trocado por `RESTRICT` (D-B11a).
+
+## 9. Implantação (produção)
+
+1. Rodar `docs/operations/b11-pre-verificacao.sql` numa **cópia** do banco de produção; órfãos e colisões = 0.
+2. Deploy do código até a Task 9 + `npm run db:migrate:apply` (aplica a migração A). Conferir as páginas de programa,
+   "Meus processos" e o painel de Pendências.
+3. Rodar a pré-verificação na produção; guardar a tabela por programa/papel.
+4. Deploy das Tasks 10–11 + `npm run db:migrate:apply` (migração B). Se abortar, a mensagem lista os ids órfãos:
+   corrigir (apagar o vínculo ou cadastrar a pessoa) e repetir. Nada muda enquanto isso.
+5. Rodar a pré-verificação de novo: "aponta para users.id" = 0; tabela por programa/papel idêntica.
+
+**Reversão:** as migrações são forward-only. O código das Tasks 1–9 lê as duas formas, então voltar para qualquer
+versão a partir da Task 9 é seguro depois da migração B. Voltar para antes da Task 3 **não** é: as listas de
+docentes/discentes voltariam a consultar só `users` e ficariam vazias.
+
+**Como foi no banco de desenvolvimento (30/09/2026):** migração A sem mudança de contagem (nenhum usuário estava sem
+pessoa). Migração B converteu 91 vínculos de `users.id` para `pessoas.id` (105 no total, 0 órfãos, 0 colisões). A
+contagem de vínculos ativos por programa e papel ficou idêntica. Não havia relatorias da Câmara nesse banco. No
+navegador, PROFIAP mostrou os mesmos 16 docentes e 73 discentes, e o mesmo coordenador.
+
+**Achado na execução, fora do inventário do §3.1:** `POST /api/estrutura/unidades/:id/membros` gravava o `pessoaId`
+recebido sem resolver. Passou a usar `pessoaCanonica` (commit `5bf5ec3`); sem isso, a FK recusaria um `users.id`
+vindo por essa API.
