@@ -21,6 +21,7 @@
     "planilha": "node server/scripts/importarPlanilha.mjs",
     "agendador": "node server/scripts/agendador.mjs",
     "links": "node server/scripts/verificarLinks.mjs",
+    "senhas:padrao": "node server/scripts/marcarSenhaPadrao.mjs",
     "imagens": "node server/scripts/imagens.mjs",
     "perf:bundle": "node scripts/orcamento-desempenho.mjs",
     "perf:lighthouse": "npx --yes @lhci/cli@0.15.x autorun --config=lighthouserc.cjs",

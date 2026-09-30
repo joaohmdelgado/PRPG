@@ -30,6 +30,7 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 | `npm run planilha -- <fonte> <arquivo.xlsx> [--gravar]` | Importa uma das 4 planilhas (contatos, expedientes, camara, pnpd). **Simulação por padrão** (nada é gravado); `todas <pasta>` simula a sequência inteira |
 | `npm run agendador` | Avalia os prazos uma vez e sai (para cron); `-- --continuo` fica rodando. Só no painel, sem e-mail, até `AGENDADOR_EMAIL=true` |
 | `npm run links` | Verificador de links (cron semanal); resultado no painel Qualidade dos dados |
+| `npm run senhas:padrao` | Acha (bcrypt) as contas que ainda usam a senha padrão `Mudar123` sem `senha_temporaria` e, com `-- --gravar`, marca a flag. **Simulação por padrão** |
 | `npm run imagens` | Gera as versões WebP das imagens que já estavam em `server/uploads` (novos uploads já são preparados no envio) |
 | `npm run perf:bundle` | Orçamento de performance (Fase P.6): mede o JS/CSS/fontes do carregamento inicial contra `orcamento-desempenho.json` |
 | `npm run perf:lighthouse` | Lighthouse CI (`lighthouserc.cjs`) contra o site buildado; precisa do banco com carga inicial e de `npm run build` antes |
