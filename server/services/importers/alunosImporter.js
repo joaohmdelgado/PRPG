@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { usersRepo, taxonomiaRefsRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
+import { idsDaMesmaPessoa } from '../../db/identidadeVinculo.js';
 import { PAPEIS_DISCENTE } from '../../controllers/programasController.js';
 import { slugify } from '../../utils/slug.js';
 
@@ -133,12 +134,14 @@ const vinculoParaSituacao = (situacao, nivelRaw, egressoFlag) => {
 };
 
 // Garante o vínculo discente entre o usuário e o programa, no papel/estado dados.
-// Reativa/ajusta um vínculo discente existente em vez de duplicar.
-const garantirVinculo = async (programaId, pessoaId, papel, ativo) => {
+// Reativa/ajusta um vínculo discente existente (users.id ou pessoas.id — B.11)
+// em vez de duplicar.
+const garantirVinculo = async (programaId, usuarioId, papel, ativo) => {
+  const ids = await idsDaMesmaPessoa(usuarioId);
   const existente = (
     await query(
-      'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id=$2 AND papel=ANY($3::text[]) ORDER BY ativo DESC LIMIT 1',
-      [programaId, pessoaId, PAPEIS_DISCENTE]
+      'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id = ANY($2::text[]) AND papel=ANY($3::text[]) ORDER BY ativo DESC LIMIT 1',
+      [programaId, ids, PAPEIS_DISCENTE]
     )
   ).rows[0];
   if (existente) {
@@ -148,7 +151,7 @@ const garantirVinculo = async (programaId, pessoaId, papel, ativo) => {
   await query(
     `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, ativo, criado_em)
      VALUES ($1,$2,$3,$4,$5,$6)`,
-    [crypto.randomUUID(), programaId, pessoaId, papel, ativo, new Date().toISOString()]
+    [crypto.randomUUID(), programaId, usuarioId, papel, ativo, new Date().toISOString()]
   );
 };
 

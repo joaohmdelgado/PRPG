@@ -8,6 +8,8 @@ import {
   joinPessoa, pessoaReal, doUsuario, idsDaMesmaPessoa, nomePessoa,
 } from '../db/identidadeVinculo.js';
 import { resolverPessoa } from '../services/prazos.js';
+import professoresImporter from '../services/importers/professoresImporter.js';
+import alunosImporter from '../services/importers/alunosImporter.js';
 
 // B.11 (docs/analise-fk-vinculos-pessoa-id-b3.md). Durante a transição cada
 // caso roda com o vínculo gravado pelo users.id (legado) e pelo pessoas.id; a
@@ -243,5 +245,28 @@ describe.each(FORMAS)('B.11 grupos de pesquisa — líder gravado por %s', (form
     );
     const r = await asAdmin(request(app).get('/api/grupos-pesquisa'));
     expect(r.body.find((x) => x.id === g.body.id).lideres).toEqual([expect.objectContaining({ id: 'u-ana', nome: 'Ana Líder' })]);
+  });
+});
+
+describe.each(FORMAS)('B.11 importadores legados — vínculo gravado por %s', (forma) => {
+  const contar = async (like) => (await pool.query(
+    'SELECT count(*)::int AS n FROM vinculos WHERE papel LIKE $1', [like]
+  )).rows[0].n;
+
+  it('professor já vinculado fica "inalterado", sem vínculo duplicado', async () => {
+    const ana = await seedUserComPessoa({ id: 'u-ana', email: 'ana@t.br', nome: 'Ana' });
+    await vincular('v-doc', gravado(forma, ana), 'DOCENTE_PERMANENTE');
+    const m = professoresImporter.map({ name: [{ value: 'Ana' }], mail: [{ value: 'ana@t.br' }] });
+    const r = await professoresImporter.importOne(m, { programaId: 'prog-1', actor: 'admin-test', dryRun: false });
+    expect(r.acao).toBe('inalterado');
+    expect(await contar('DOCENTE%')).toBe(1);
+  });
+
+  it('aluno reimportado reaproveita o vínculo existente', async () => {
+    const bia = await seedUserComPessoa({ id: 'u-bia', email: 'bia@t.br', nome: 'Bia', roles: ['Aluno'] });
+    await vincular('v-disc', gravado(forma, bia), 'DISCENTE_MESTRADO');
+    const m = alunosImporter.map({ name: [{ value: 'Bia' }], mail: [{ value: 'bia@t.br' }] });
+    await alunosImporter.importOne(m, { programaId: 'prog-1', actor: 'admin-test', dryRun: false });
+    expect(await contar('DISCENTE%')).toBe(1);
   });
 });

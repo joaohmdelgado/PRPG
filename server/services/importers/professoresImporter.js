@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { usersRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
+import { idsDaMesmaPessoa } from '../../db/identidadeVinculo.js';
 import { PAPEIS_DOCENTE } from '../../controllers/programasController.js';
 
 // Importador de PROFESSORES a partir do export de usuários do site antigo
@@ -65,10 +66,12 @@ const parse = (buffer) => {
 
 // Indica se a pessoa tem vínculo docente ATIVO no programa — fonte de verdade
 // para "já está neste programa" (imune a perfil_professor.programas desatualizado).
-const temVinculoDocenteAtivo = async (programaId, pessoaId) => {
+// O vínculo pode estar com o users.id ou o pessoas.id dela (B.11).
+const temVinculoDocenteAtivo = async (programaId, usuarioId) => {
+  const ids = await idsDaMesmaPessoa(usuarioId);
   const { rows } = await query(
-    'SELECT 1 FROM vinculos WHERE programa_id=$1 AND pessoa_id=$2 AND papel=ANY($3::text[]) AND ativo=TRUE',
-    [programaId, pessoaId, PAPEIS_DOCENTE]
+    'SELECT 1 FROM vinculos WHERE programa_id=$1 AND pessoa_id = ANY($2::text[]) AND papel=ANY($3::text[]) AND ativo=TRUE',
+    [programaId, ids, PAPEIS_DOCENTE]
   );
   return rows.length > 0;
 };
@@ -76,11 +79,12 @@ const temVinculoDocenteAtivo = async (programaId, pessoaId) => {
 // Garante o vínculo docente (papel permanente/colaborador) entre o usuário e o
 // programa. Se já existir um vínculo inativo (professor removido antes), reativa
 // em vez de criar uma linha duplicada.
-const garantirVinculo = async (programaId, pessoaId, papel) => {
+const garantirVinculo = async (programaId, usuarioId, papel) => {
+  const ids = await idsDaMesmaPessoa(usuarioId);
   const existente = (
     await query(
-      'SELECT id, ativo FROM vinculos WHERE programa_id=$1 AND pessoa_id=$2 AND papel=ANY($3::text[]) ORDER BY ativo DESC LIMIT 1',
-      [programaId, pessoaId, PAPEIS_DOCENTE]
+      'SELECT id, ativo FROM vinculos WHERE programa_id=$1 AND pessoa_id = ANY($2::text[]) AND papel=ANY($3::text[]) ORDER BY ativo DESC LIMIT 1',
+      [programaId, ids, PAPEIS_DOCENTE]
     )
   ).rows[0];
   if (existente) {
@@ -91,7 +95,7 @@ const garantirVinculo = async (programaId, pessoaId, papel) => {
   await query(
     `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, ativo, criado_em)
      VALUES ($1,$2,$3,$4,TRUE,$5)`,
-    [crypto.randomUUID(), programaId, pessoaId, papel, new Date().toISOString()]
+    [crypto.randomUUID(), programaId, usuarioId, papel, new Date().toISOString()]
   );
   return true;
 };
