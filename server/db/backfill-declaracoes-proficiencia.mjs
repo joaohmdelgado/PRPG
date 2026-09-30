@@ -31,10 +31,6 @@ export async function backfillDeclaracoesProficiencia() {
     const edital = r.periodo_id
       ? (await query('SELECT proficiencia_data_prova FROM editais WHERE id = $1', [r.periodo_id])).rows[0]
       : null;
-    // declaracoes.pessoa_id tem FK real para pessoas(id); r.aluno_id é users.id.
-    const alunoPessoa = r.aluno_id
-      ? (await query('SELECT pessoa_id FROM users WHERE id = $1', [r.aluno_id])).rows[0]
-      : null;
     const emissaoIso = new Date(r.emitida_em).toISOString().slice(0, 10);
     const dados = {
       nome: r.nome, cpf: r.cpf, nivel: r.nivel, linguas: r.linguas ?? [],
@@ -46,7 +42,7 @@ export async function backfillDeclaracoesProficiencia() {
       `INSERT INTO declaracoes
          (id, codigo, tipo, entidade, entidade_id, pessoa_id, dados, emitida_em, valida_ate)
        VALUES ($1,$2,'proficiencia','inscricao_proficiencia',$3,$4,$5,$6,$7)`,
-      [crypto.randomUUID(), r.codigo_verificacao, r.id, alunoPessoa?.pessoa_id || null,
+      [crypto.randomUUID(), r.codigo_verificacao, r.id, r.aluno_pessoa_id || null, // B.12: já é pessoas.id
        JSON.stringify(dados), r.emitida_em, somarAnos(emissaoIso, 4)]
     );
     criadas++;

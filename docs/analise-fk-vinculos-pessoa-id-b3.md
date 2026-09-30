@@ -152,8 +152,8 @@ Outras colunas já com FK para `pessoas`: `eventos.pessoa_id`, `atos.*_pessoa_id
 
 ### 3.9 Relacionado, fora deste item
 
-`inscricoes_proficiencia.aluno_id` (`schema.sql:790`) guarda `users.id` sem FK — a arquitetura
-(§2.1) prevê FK para ela também. Não é polimórfica, então não entra aqui; fica como item à parte.
+`inscricoes_proficiencia.aluno_id` guardava `users.id` sem FK, e a arquitetura (§2.1) prevê FK para ela também.
+Como não era polimórfica, ficou fora da B.11 e virou o item **B.12** (§10).
 
 ## 4. Por que não dá para "só apertar a FK"
 
@@ -291,3 +291,31 @@ vindo por essa API.
 `users.id`, no aviso de reserva pendente. Com o módulo na forma final, esse `users.id` deixou de ser resolvido. Ganhou
 `resolverEmailDoUsuario`: o e-mail da pessoa ligada ao login e, sem pessoa, o e-mail de login (commit `722bc1a`).
 Os demais chamadores recebem `relator_id`, `vinculos.pessoa_id` ou `solicitante_pessoa_id`, que são `pessoas.id` com FK.
+
+## 10. B.12 — `inscricoes_proficiencia.aluno_id` (30/09/2026)
+
+**Antes:** `aluno_id` guardava o `users.id` de quem se inscreveu logado, sem FK. A inscrição anônima ficava com
+`NULL`. A declaração precisava passar pelo usuário para chegar à pessoa (`users.pessoa_id`), e excluir o login deixava
+o id apontando para nada.
+
+**Decisão:** a coluna vira `aluno_pessoa_id → pessoas(id) ON DELETE SET NULL`.
+- **Por que `pessoas`:** é a mesma regra de identidade da B.11, e a mesma de `teses.autor_pessoa_id` e
+  `disciplinas.docente_pessoa_id`. Excluir o login não tira a inscrição da pessoa, o que é coerente com D-B11c.
+- **Por que `SET NULL`:** é a mesma escolha de `declaracoes.pessoa_id`, a tabela irmã. A inscrição guarda nome e CPF,
+  e a anônima já não tem aluno. O `RESTRICT` fica para os vínculos, porque vínculo sem pessoa não tem sentido.
+
+**Migração** (`server/db/migrations/2026-09-30_b12_inscricoes_aluno_pessoa.sql`):
+- renomeia a coluna;
+- troca `users.id` por `pessoas.id`;
+- zera o aluno que já não existe (login excluído antes, sem limpeza), com `NOTICE` da quantidade. É o mesmo efeito do
+  `SET NULL` e não aborta, porque a inscrição continua com nome e CPF;
+- cria a FK e renomeia o índice.
+
+**Código:** API `alunoId` → `alunoPessoaId`; nenhuma tela usava esse campo.
+- O cadastro grava a pessoa do aluno logado.
+- "Minhas inscrições" e a checagem de inscrição repetida buscam pela pessoa.
+- A declaração usa `aluno_pessoa_id` direto.
+- `/minha-conta` e o backfill de declarações passam a ler a coluna nova.
+
+**Produção:** vai junto com a B.11, pelo mesmo `npm run db:migrate:apply` (§9). O arquivo roda depois das migrações A
+e B.

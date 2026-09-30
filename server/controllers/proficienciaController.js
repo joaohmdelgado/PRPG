@@ -143,6 +143,8 @@ export const createInscricao = async (req, res) => {
 
   const alunoId = req.user?.id;
   const aluno = alunoId ? await usersRepo.getById(alunoId) : null;
+  // B.12: a inscrição aponta para a pessoa do aluno (todo login tem uma desde a B.11).
+  const alunoPessoaId = aluno?.pessoaId || null;
 
   // String(): o corpo é JSON livre — um número aqui quebraria o .trim().
   const nome = String(body.nome || aluno?.perfil_geral?.nome || '').trim();
@@ -163,8 +165,8 @@ export const createInscricao = async (req, res) => {
   const valid = validarLinguas({ linguas: body.linguas, nivel, estrangeiro });
   if (!valid.ok) return res.status(400).json({ message: valid.message });
 
-  if (alunoId) {
-    const minhas = await inscricoesProficienciaRepo.getByAluno(alunoId);
+  if (alunoPessoaId) {
+    const minhas = await inscricoesProficienciaRepo.getByAlunoPessoa(alunoPessoaId);
     if (minhas.some((i) => i.periodoId === aberto.id)) {
       return res.status(409).json({ message: 'Você já possui inscrição neste período.' });
     }
@@ -173,7 +175,7 @@ export const createInscricao = async (req, res) => {
   const data = {
     id: 'prof-insc-' + Date.now().toString(),
     periodoId: aberto.id,
-    alunoId,
+    alunoPessoaId,
     nome, cpf, nivel, estrangeiro,
     linguas: valid.linguas,
     comprovanteResidenciaUrl: body.comprovanteResidenciaUrl,
@@ -190,7 +192,8 @@ export const createInscricao = async (req, res) => {
 
 export const getMinhasInscricoes = async (req, res) => {
   if (!req.user?.id) return res.status(401).json({ message: 'Não autenticado.' });
-  res.json(await inscricoesProficienciaRepo.getByAluno(req.user.id));
+  const user = await usersRepo.getById(req.user.id);
+  res.json(await inscricoesProficienciaRepo.getByAlunoPessoa(user?.pessoaId));
 };
 
 export const getInscricoes = async (req, res) => {
@@ -303,10 +306,6 @@ export const gerarDeclaracao = async (req, res) => {
   const dataProvaIso = edital?.proficienciaDataProva || null;
   const dataProva = dataPorExtenso(dataProvaIso);
 
-  // declaracoes.pessoa_id tem FK real para pessoas(id) — insc.alunoId é
-  // users.id (nem sempre igual), então precisa resolver via users.pessoa_id.
-  const alunoUser = insc.alunoId ? await usersRepo.getById(insc.alunoId) : null;
-
   // Emissão via serviço genérico de declarações (Fase B.2, G6): código e data
   // de emissão são congelados na PRIMEIRA emissão — reemissões reaproveitam
   // os mesmos valores e apenas atualizam o snapshot em `dados`.
@@ -314,7 +313,7 @@ export const gerarDeclaracao = async (req, res) => {
     tipo: 'proficiencia',
     entidade: 'inscricao_proficiencia',
     entidadeId: insc.id,
-    pessoaId: alunoUser?.pessoaId || null,
+    pessoaId: insc.alunoPessoaId || null, // B.12: a inscrição já aponta para a pessoa
     dados: {
       nome: insc.nome, cpf: insc.cpf, nivel: insc.nivel, linguas: insc.linguas,
       nota: Number(insc.nota), resultado: insc.resultado,

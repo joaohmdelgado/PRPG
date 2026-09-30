@@ -31,8 +31,8 @@ export const getMinhaConta = async (req, res) => {
   const user = req.user?.id ? await usersRepo.getById(req.user.id) : null;
   if (!user) return res.status(404).json({ message: 'Conta não encontrada.' });
 
-  // Identidade em dois lugares (users.id e pessoas.id): vínculos, relatorias e
-  // declarações antigos podem apontar para qualquer um dos dois.
+  // Vínculos, relatorias, inscrições e declarações apontam para a pessoa
+  // (FKs da B.11/B.12); o users.id continua na lista porque a busca aceita os dois.
   const ids = [user.id, user.pessoaId].filter(Boolean);
 
   const [vinculos, inscricoes, declaracoes, relatorias] = await Promise.all([
@@ -52,7 +52,7 @@ export const getMinhaConta = async (req, res) => {
               EXISTS (SELECT 1 FROM declaracoes d WHERE d.entidade = 'inscricao_proficiencia'
                        AND d.entidade_id = i.id AND d.revogada_em IS NULL) AS declaracao_emitida
          FROM inscricoes_proficiencia i LEFT JOIN editais e ON e.id = i.periodo_id
-        WHERE i.aluno_id = ANY($1::text[]) ORDER BY i.criado_em DESC`,
+        WHERE i.aluno_pessoa_id = ANY($1::text[]) ORDER BY i.criado_em DESC`,
       [ids]
     ),
     query(
@@ -61,7 +61,7 @@ export const getMinhaConta = async (req, res) => {
          FROM declaracoes d
         WHERE d.pessoa_id = ANY($1::text[])
            OR (d.entidade = 'inscricao_proficiencia' AND d.entidade_id IN
-               (SELECT id FROM inscricoes_proficiencia WHERE aluno_id = ANY($1::text[])))
+               (SELECT id FROM inscricoes_proficiencia WHERE aluno_pessoa_id = ANY($1::text[])))
         ORDER BY d.emitida_em DESC`,
       [ids]
     ),
@@ -196,7 +196,7 @@ export const baixarMinhaDeclaracao = async (req, res) => {
   const { rows } = await query(
     `SELECT d.id FROM declaracoes d JOIN inscricoes_proficiencia i ON i.id = d.entidade_id
       WHERE d.entidade = 'inscricao_proficiencia' AND d.entidade_id = $1
-        AND d.revogada_em IS NULL AND i.aluno_id = ANY($2::text[])`,
+        AND d.revogada_em IS NULL AND i.aluno_pessoa_id = ANY($2::text[])`,
     [req.params.id, ids]
   );
   if (!rows[0]) return res.status(404).json({ message: 'Declaração não encontrada.' });

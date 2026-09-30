@@ -116,7 +116,9 @@ estrangeiro: Português + outra. Admin/Gestor gerenciam períodos, lançam a not
 (`PUT .../:id/nota` → resultado: 5–7 suficiência, >7 proficiência, <5
 insuficiente) e geram a declaração em PDF no servidor via `pdfkit`
 (`GET .../:id/declaracao`). O campo `estrangeiro`/`nacionalidade` foi adicionado
-ao `perfil_aluno` (JSONB) no cadastro do usuário.
+ao `perfil_aluno` (JSONB) no cadastro do usuário. A inscrição aponta para a
+**pessoa** do aluno (`aluno_pessoa_id` → `pessoas`, `ON DELETE SET NULL`, B.12;
+nulo na inscrição anônima), não para o login.
 
 **Autenticação da declaração**: na 1ª emissão, a declaração recebe um
 `codigo_verificacao` (UUID, `crypto.randomUUID()`) e uma data `emitida_em`

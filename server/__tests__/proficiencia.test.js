@@ -199,3 +199,48 @@ describe('avaliação e declaração', () => {
     expect(res.body.valido).toBe(false);
   });
 });
+
+// B.12 (docs/analise-fk-vinculos-pessoa-id-b3.md §10): a inscrição aponta para
+// a pessoa do aluno (aluno_pessoa_id -> pessoas, ON DELETE SET NULL), não para
+// o login — como os vínculos da B.11.
+describe('B.12 — a inscrição aponta para a pessoa do aluno', () => {
+  const pessoaDoAluno = async () => (await pool.query(`SELECT pessoa_id FROM users WHERE id = 'aluno-1'`)).rows[0].pessoa_id;
+  const inscreverComoAluno = () => asAluno(request(app).post('/api/proficiencia/inscricoes'))
+    .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/uploads/c.pdf' });
+
+  it('grava o pessoas.id do aluno logado, e a declaração sai para a mesma pessoa', async () => {
+    await criarPeriodoAberto();
+    const r = await inscreverComoAluno();
+    expect(r.status).toBe(201);
+    const pessoaId = await pessoaDoAluno();
+    const { rows } = await pool.query('SELECT aluno_pessoa_id FROM inscricoes_proficiencia WHERE id = $1', [r.body.id]);
+    expect(rows).toEqual([{ aluno_pessoa_id: pessoaId }]);
+
+    await asAdmin(request(app).put(`/api/proficiencia/inscricoes/${r.body.id}/nota`)).send({ nota: 8 });
+    await asAdmin(request(app).get(`/api/proficiencia/inscricoes/${r.body.id}/declaracao`));
+    const { rows: decl } = await pool.query(
+      "SELECT pessoa_id FROM declaracoes WHERE entidade = 'inscricao_proficiencia' AND entidade_id = $1", [r.body.id]
+    );
+    expect(decl).toEqual([{ pessoa_id: pessoaId }]);
+  });
+
+  it('inscrição anônima fica sem pessoa', async () => {
+    await criarPeriodoAberto();
+    const r = await request(app).post('/api/proficiencia/inscricoes').send({
+      nome: 'Pessoa Anônima', cpf: '123.456.789-09', nivel: 'Mestrado', linguas: ['Inglês'],
+      comprovanteResidenciaUrl: '/uploads/c.pdf',
+    });
+    expect(r.status).toBe(201);
+    const { rows } = await pool.query('SELECT aluno_pessoa_id FROM inscricoes_proficiencia WHERE id = $1', [r.body.id]);
+    expect(rows).toEqual([{ aluno_pessoa_id: null }]);
+  });
+
+  it('excluir o login mantém a inscrição ligada à pessoa', async () => {
+    await criarPeriodoAberto();
+    const r = await inscreverComoAluno();
+    const pessoaId = await pessoaDoAluno();
+    expect((await asAdmin(request(app).delete('/api/users/aluno-1'))).status).toBe(200);
+    const { rows } = await pool.query('SELECT aluno_pessoa_id FROM inscricoes_proficiencia WHERE id = $1', [r.body.id]);
+    expect(rows).toEqual([{ aluno_pessoa_id: pessoaId }]);
+  });
+});

@@ -778,7 +778,9 @@ CREATE TABLE IF NOT EXISTS taxonomias (
 CREATE TABLE IF NOT EXISTS inscricoes_proficiencia (
   id                          TEXT PRIMARY KEY,
   periodo_id                  TEXT REFERENCES editais(id) ON DELETE SET NULL, -- edital marcado como proficiencia=true
-  aluno_id                    TEXT, -- users.id (resolvido na aplicação; pode ser nulo p/ cadastro avulso)
+  -- B.12: a pessoa do aluno (nulo na inscrição anônima). SET NULL como em
+  -- declaracoes.pessoa_id: a inscrição guarda nome e CPF.
+  aluno_pessoa_id             TEXT REFERENCES pessoas(id) ON DELETE SET NULL,
   nome                        TEXT NOT NULL,
   cpf                         TEXT,
   nivel                       TEXT, -- Mestrado | Doutorado
@@ -798,7 +800,7 @@ CREATE TABLE IF NOT EXISTS inscricoes_proficiencia (
   criado_por                  TEXT,
   atualizado_por              TEXT
 );
-CREATE INDEX IF NOT EXISTS inscricoes_prof_aluno_idx   ON inscricoes_proficiencia(aluno_id);
+CREATE INDEX IF NOT EXISTS inscricoes_prof_aluno_pessoa_idx ON inscricoes_proficiencia(aluno_pessoa_id);
 CREATE INDEX IF NOT EXISTS inscricoes_prof_periodo_idx ON inscricoes_proficiencia(periodo_id);
 CREATE UNIQUE INDEX IF NOT EXISTS inscricoes_prof_codigo_idx ON inscricoes_proficiencia(codigo_verificacao);
 

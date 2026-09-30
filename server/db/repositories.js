@@ -490,7 +490,7 @@ export const metricasRepo = {
 
 // ===================== Proficiência em Línguas ====================
 const inscricaoProfFromRow = (r) => ({
-  id: r.id, periodoId: r.periodo_id, alunoId: r.aluno_id,
+  id: r.id, periodoId: r.periodo_id, alunoPessoaId: r.aluno_pessoa_id,
   nome: r.nome, cpf: r.cpf, nivel: r.nivel, estrangeiro: r.estrangeiro,
   linguas: r.linguas ?? [],
   comprovanteResidenciaUrl: r.comprovante_residencia_url,
@@ -503,7 +503,7 @@ const inscricaoProfFromRow = (r) => ({
 });
 
 const inscricaoProfToRow = (o) => ({
-  id: o.id, periodo_id: o.periodoId || null, aluno_id: o.alunoId || null,
+  id: o.id, periodo_id: o.periodoId || null, aluno_pessoa_id: o.alunoPessoaId || null,
   nome: o.nome, cpf: o.cpf ?? null, nivel: o.nivel ?? null,
   estrangeiro: !!o.estrangeiro, linguas: toArr(o.linguas),
   comprovante_residencia_url: o.comprovanteResidenciaUrl ?? null,
@@ -523,10 +523,12 @@ export const inscricoesProficienciaRepo = {
     fromRow: inscricaoProfFromRow,
     toRow: inscricaoProfToRow,
   }),
-  async getByAluno(alunoId) {
+  // Inscrições de uma pessoa (B.12: aluno_pessoa_id = pessoas.id).
+  async getByAlunoPessoa(pessoaId) {
+    if (!pessoaId) return [];
     const { rows } = await query(
-      'SELECT * FROM inscricoes_proficiencia WHERE aluno_id = $1 ORDER BY criado_em DESC',
-      [alunoId]
+      'SELECT * FROM inscricoes_proficiencia WHERE aluno_pessoa_id = $1 ORDER BY criado_em DESC',
+      [pessoaId]
     );
     return rows.map((r) => ({
       ...inscricaoProfFromRow(r),
