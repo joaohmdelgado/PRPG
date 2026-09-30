@@ -86,56 +86,51 @@ export async function resetDb() {
   // Os únicos triggers de usuário do schema são BEFORE UPDATE
   // (tocar_atualizado_em, Fase F.1) — DELETE não os dispara; e
   // limpar_dependentes() está definida mas não anexada a nenhuma tabela.
-  // Então DELETE não tem efeito colateral que o TRUNCATE não tinha. Uma única
-  // transação, um round-trip.
+  // Então DELETE não tem efeito colateral que o TRUNCATE não tinha.
+  // Tudo numa única transação, um round-trip: DELETEs, recarga de `unidades`,
+  // sequences e reseeds. Os reseeds vêm DEPOIS do RESTART das sequences, para
+  // os ids do vocabulário voltarem a começar em 1. (Até 30/09/2026 os reseeds
+  // eram 4 round-trips separados, precedidos de um count(*) que sempre dava 0
+  // — as tabelas acabaram de ser esvaziadas —, ~3x o custo dos DELETEs.)
   const deletes = RESET_TABLES.map((t) => `DELETE FROM ${t};`).join('\n  ');
   const seqResets = RESET_SEQUENCES.map((s) => `ALTER SEQUENCE ${s} RESTART;`).join('\n  ');
-  await pool.query(`BEGIN;\n  ${deletes}\n  INSERT INTO unidades SELECT * FROM seed_teste.unidades;\n  ${seqResets}\nCOMMIT;`);
+  await pool.query(`BEGIN;
+  ${deletes}
+  INSERT INTO unidades SELECT * FROM seed_teste.unidades;
+  ${seqResets}
+  ${RESEED_VOCABULARIOS};
+  ${RESEED_ATO_SERIES};
+  ${RESEED_PLANILHAS};
+COMMIT;`);
+}
 
-  // vocabularios (e taxonomia_refs) têm seed no schema.sql que some no
-  // primeiro reset — igual ao comportamento anterior, em que o TRUNCATE ...
-  // CASCADE em `programas` as arrastava por causa da FK programa_id ->
-  // programas(id). Reseeda o vocabulário global (programa_id IS NULL) mínimo
-  // se ficou vazio.
-  const { rows } = await pool.query('SELECT count(*)::int AS n FROM vocabularios');
-  if (rows[0].n === 0) await reseedVocabularios();
+// vocabularios (e taxonomia_refs) têm seed no schema.sql que some no primeiro
+// reset — igual ao comportamento anterior, em que o TRUNCATE ... CASCADE em
+// `programas` as arrastava por causa da FK programa_id -> programas(id).
+// Reseeda o vocabulário global (programa_id IS NULL) mínimo.
+const RESEED_VOCABULARIOS = `INSERT INTO vocabularios (dominio, valor, rotulo, cor, ordem) VALUES
+    ('processo.situacao', 'RECEBIDO', 'Recebido', 'bg-gray-100 text-gray-700', 0),
+    ('processo.situacao', 'APTO_PAUTA', 'Apto para pauta', 'bg-sky-100 text-sky-800', 2),
+    ('processo.situacao', 'PUBLICADO', 'Publicado', 'bg-green-100 text-green-800', 8),
+    ('processo.pauta.deliberacao', 'APROVADO', 'Aprovado', NULL, 0),
+    ('evento.tipo', 'TRAMITACAO', 'Tramitação', NULL, 0),
+    ('evento.tipo', 'STATUS', 'Status', NULL, 1),
+    ('vinculo.papel', 'COORDENADOR', 'Coordenador(a)', NULL, 0),
+    ('vinculo.papel', 'SECRETARIO', 'Secretário(a)', NULL, 3)
+  ON CONFLICT (dominio, valor, COALESCE(programa_id, '')) DO NOTHING`;
 
-  // ato_series também é esvaziada acima — reseeda as séries-base para os
-  // testes de atos.test.js.
-  const { rows: rowsSeries } = await pool.query('SELECT count(*)::int AS n FROM ato_series');
-  if (rowsSeries[0].n === 0) await reseedAtoSeries();
+// ato_series também é esvaziada — as séries-base para os testes de atos.test.js.
+const RESEED_ATO_SERIES = `INSERT INTO ato_series (id, nome, especie, sigla, exige_destinatario, publica_no_site, ordem) VALUES
+    ('OFICIO', 'Ofícios da PRPG', 'OFICIO', 'OFÍCIO', TRUE, FALSE, 0),
+    ('PORTARIA_PRPG', 'Portarias da PRPG', 'PORTARIA', 'PORTARIA', FALSE, FALSE, 1),
+    ('EDITAL_PRPG', 'Editais da PRPG', 'EDITAL', 'EDITAL', FALSE, TRUE, 2)
+  ON CONFLICT (id) DO NOTHING`;
 
-  // planilhas (Fase O.4): as 4 linhas-seed da migração.
-  await pool.query(`INSERT INTO planilhas (fonte, nome, ciclo_dias) VALUES
+// planilhas (Fase O.4): as 4 linhas-seed da migração.
+const RESEED_PLANILHAS = `INSERT INTO planilhas (fonte, nome, ciclo_dias) VALUES
     ('contatos', 'Contatos - Coordenações de PG.xlsx', 30), ('expedientes', 'OFÍCIOS_EDITAIS_PORTARIAS_PRPG.xlsx', 30),
     ('camara', 'Processos - Câmara de Pós Graduação.xlsx', 30), ('pnpd', 'PNPD Voluntário.xlsx', 30)
-    ON CONFLICT (fonte) DO NOTHING`);
-}
-
-async function reseedAtoSeries() {
-  await pool.query(`
-    INSERT INTO ato_series (id, nome, especie, sigla, exige_destinatario, publica_no_site, ordem) VALUES
-      ('OFICIO', 'Ofícios da PRPG', 'OFICIO', 'OFÍCIO', TRUE, FALSE, 0),
-      ('PORTARIA_PRPG', 'Portarias da PRPG', 'PORTARIA', 'PORTARIA', FALSE, FALSE, 1),
-      ('EDITAL_PRPG', 'Editais da PRPG', 'EDITAL', 'EDITAL', FALSE, TRUE, 2)
-    ON CONFLICT (id) DO NOTHING
-  `);
-}
-
-async function reseedVocabularios() {
-  await pool.query(`
-    INSERT INTO vocabularios (dominio, valor, rotulo, cor, ordem) VALUES
-      ('processo.situacao', 'RECEBIDO', 'Recebido', 'bg-gray-100 text-gray-700', 0),
-      ('processo.situacao', 'APTO_PAUTA', 'Apto para pauta', 'bg-sky-100 text-sky-800', 2),
-      ('processo.situacao', 'PUBLICADO', 'Publicado', 'bg-green-100 text-green-800', 8),
-      ('processo.pauta.deliberacao', 'APROVADO', 'Aprovado', NULL, 0),
-      ('evento.tipo', 'TRAMITACAO', 'Tramitação', NULL, 0),
-      ('evento.tipo', 'STATUS', 'Status', NULL, 1),
-      ('vinculo.papel', 'COORDENADOR', 'Coordenador(a)', NULL, 0),
-      ('vinculo.papel', 'SECRETARIO', 'Secretário(a)', NULL, 3)
-    ON CONFLICT (dominio, valor, COALESCE(programa_id, '')) DO NOTHING
-  `);
-}
+  ON CONFLICT (fonte) DO NOTHING`;
 
 // Cria um usuário com papel/perfil arbitrários (senha padrão "senha123").
 export async function seedUser({ id, email, roles = ['Aluno'], perfil_geral = {}, password = 'senha123' }) {
