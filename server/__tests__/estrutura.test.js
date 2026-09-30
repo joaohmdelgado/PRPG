@@ -15,8 +15,8 @@ beforeEach(async () => {
   await resetDb();
   await seedAdmin();
   adminToken = await loginAdmin();
-  // `unidades` não é esvaziada entre testes (seed persistente); a carga
-  // inicial roda de novo porque os vínculos foram apagados.
+  // O resetDb devolve `unidades` ao seed do schema.sql; a carga inicial
+  // recria os setores da PRPG e os vínculos a cada teste.
   await garantirEstruturaPrpg();
 });
 
@@ -95,7 +95,6 @@ describe('H.4 — edição no painel', () => {
     expect(novo).toBeTruthy();
     await auth(request(app).put(`/api/estrutura/unidades/${novo.id}`)).send({ descricao: 'Nova descrição', exibirNoSite: false });
     expect(setor((await request(app).get('/api/estrutura')).body, novo.id)).toBeUndefined();
-    await pool.query('DELETE FROM unidades WHERE id = $1', [novo.id]); // `unidades` não é resetada
   });
 
   it('valida e restringe a Admin/Gestor; setor fora da PRPG é 404', async () => {

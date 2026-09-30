@@ -24,5 +24,11 @@ export default async function setup() {
   const testDb = new pg.Client({ connectionString: 'postgres://prpg:prpg@localhost:5433/prpg_test' });
   await testDb.connect();
   await testDb.query(schema);
+  // Foto do seed de `unidades` como o schema.sql o deixa, fora do schema
+  // `public` (o resetDb.test.js só confere o `public`). O resetDb restaura
+  // `unidades` a partir dela: testes que criam/renomeiam unidades (a carga da
+  // estrutura da PRPG, POST de setor, apelido gravado pela revisão) deixavam
+  // o resultado dos importadores depender da ordem dos arquivos.
+  await testDb.query('CREATE SCHEMA seed_teste; CREATE TABLE seed_teste.unidades AS TABLE public.unidades');
   await testDb.end();
 }

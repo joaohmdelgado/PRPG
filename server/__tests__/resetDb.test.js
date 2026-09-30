@@ -82,6 +82,9 @@ describe('resetDb: contrato', () => {
       INSERT INTO calendarios (id) VALUES ('cal-guarda');
       INSERT INTO calendario_milestones (calendario_id, ord, event, date)
         VALUES ('cal-guarda', 0, 'x', '2026-01-01');
+      INSERT INTO unidades (id, sigla, nome) VALUES ('u-guarda', 'Secretaria', 'Guarda');
+      UPDATE unidades SET nome = 'ALTERADO', aliases = '{GUARDA}' WHERE id = 'prpg-secretaria-camara';
+      DELETE FROM unidades WHERE id = 'cepe';
     `);
 
     await resetDb();
@@ -109,8 +112,11 @@ describe('resetDb: contrato', () => {
     }
     expect(await count('SELECT min(id)::int AS n FROM vocabularios')).toBe(1);
 
-    // O seed persistente de unidades não é tocado.
+    // `unidades` volta exatamente ao seed do schema.sql: sem a criada, com a
+    // alterada e a apagada de volta como estavam.
     expect(await count('SELECT count(*)::int AS n FROM unidades')).toBe(unidadesAntes);
     expect(unidadesAntes).toBeGreaterThan(0);
+    expect(await count(`SELECT count(*)::int AS n FROM (
+      (TABLE unidades EXCEPT TABLE seed_teste.unidades) UNION ALL (TABLE seed_teste.unidades EXCEPT TABLE unidades)) d`)).toBe(0);
   });
 });

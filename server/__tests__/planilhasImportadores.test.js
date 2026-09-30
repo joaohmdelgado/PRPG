@@ -262,7 +262,6 @@ describe('importador de expedientes (E.5)', () => {
     expect(res.body.alterados).toBe(2);
     const { rows } = await pool.query("SELECT aliases FROM unidades WHERE id = 'arquivo'");
     expect(rows[0].aliases).toContain('PROTOCOLO');
-    await pool.query("UPDATE unidades SET aliases = array_remove(aliases, 'PROTOCOLO') WHERE id = 'arquivo'"); // unidades não é resetada
   });
 });
 

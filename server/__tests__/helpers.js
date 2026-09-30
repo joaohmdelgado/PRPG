@@ -4,8 +4,8 @@ import { pool } from '../db/pool.js';
 import { app } from '../app.js';
 import { usersRepo } from '../db/repositories.js';
 
-// Tudo que o resetDb esvazia a cada teste: as 48 tabelas do schema `public`
-// menos `unidades` (seed persistente, nunca tocada). São as 38 que o antigo
+// Tudo que o resetDb esvazia a cada teste: todas as tabelas do schema `public`
+// (`unidades`, a última, é recarregada do seed em seguida). São as 38 que o antigo
 // TRUNCATE listava + 5 que ele arrastava por CASCADE (linhas_pesquisa e as
 // duas tabelas de junção, taxonomia_refs e vocabularios — todas com FK para
 // programas/users). O DELETE não arrasta nada sozinho, então as 5 entram
@@ -15,7 +15,7 @@ import { usersRepo } from '../db/repositories.js';
 // ORDEM: `atos` vem antes de `ato_series` porque atos.serie_id -> ato_series
 // é a única FK NO ACTION entre estas tabelas (atos_serie_id_fkey); todas as
 // outras entre elas são ON DELETE CASCADE/SET NULL, e as demais NO ACTION
-// (processos -> unidades) apontam para `unidades`, que não é apagada.
+// (processos -> unidades) apontam para `unidades`, que por isso vem por último.
 // `pessoas` vem depois de `vinculos` e `camara_relatorias` (FKs RESTRICT da B.11).
 // resetDb.test.js confere a ordem e a cobertura contra o catálogo do banco.
 export const RESET_TABLES = [
@@ -39,11 +39,19 @@ export const RESET_TABLES = [
   'agendador_execucoes', // Fase O.5
   'links_verificados', // Fase O.7
   'web_vitals', // Fase P.6
+  // Seed do schema.sql (organograma), mas os testes a alteram: a carga da
+  // estrutura da PRPG cria `prpg-secretaria` (sigla "Secretaria") e renomeia
+  // setores, o painel cria setores, a revisão da importação grava apelidos.
+  // Quando sobrava de um arquivo para o outro, o casamento de grafias dos
+  // importadores dependia da ordem dos arquivos (o da Câmara ligava
+  // "Secretaria" a prpg-secretaria em vez de prpg-secretaria-camara).
+  // O resetDb a recarrega da foto tirada pelo globalSetup (seed_teste.unidades).
+  'unidades',
 ];
 
-// Tabelas do schema que o resetDb deliberadamente NÃO toca: `unidades` é seed
-// (organograma) que os testes apenas leem.
-export const RESET_KEEPS = ['unidades'];
+// Tabelas do schema que o resetDb deliberadamente NÃO toca. Nenhuma desde
+// 30/09/2026 (`unidades` ficava aqui; ver o comentário em RESET_TABLES).
+export const RESET_KEEPS = [];
 
 // Tabelas que podem existir no banco de teste SEM vir do schema.sql: criadas
 // sob demanda pelo runner de migrações (server/db/migrateRunner.mjs) e por
@@ -82,7 +90,7 @@ export async function resetDb() {
   // transação, um round-trip.
   const deletes = RESET_TABLES.map((t) => `DELETE FROM ${t};`).join('\n  ');
   const seqResets = RESET_SEQUENCES.map((s) => `ALTER SEQUENCE ${s} RESTART;`).join('\n  ');
-  await pool.query(`BEGIN;\n  ${deletes}\n  ${seqResets}\nCOMMIT;`);
+  await pool.query(`BEGIN;\n  ${deletes}\n  INSERT INTO unidades SELECT * FROM seed_teste.unidades;\n  ${seqResets}\nCOMMIT;`);
 
   // vocabularios (e taxonomia_refs) têm seed no schema.sql que some no
   // primeiro reset — igual ao comportamento anterior, em que o TRUNCATE ...
@@ -92,8 +100,8 @@ export async function resetDb() {
   const { rows } = await pool.query('SELECT count(*)::int AS n FROM vocabularios');
   if (rows[0].n === 0) await reseedVocabularios();
 
-  // ato_series é tabela real (não só seed como unidades) e também é esvaziada
-  // acima — reseeda as séries-base para os testes de atos.test.js.
+  // ato_series também é esvaziada acima — reseeda as séries-base para os
+  // testes de atos.test.js.
   const { rows: rowsSeries } = await pool.query('SELECT count(*)::int AS n FROM ato_series');
   if (rowsSeries[0].n === 0) await reseedAtoSeries();
 
