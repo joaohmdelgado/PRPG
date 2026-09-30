@@ -34,7 +34,7 @@
 | `programas[]` | some: um vínculo por programa; a API o deriva dos vínculos ativos |
 | `entrada`, `situacao`, `defesa`, `egresso` | `vinculos.dados` |
 | `qualificacao` | `vinculos.dados`, **descartando `2020-10-29`** (placeholder: 69/73 no dev) |
-| `orientador_id` | preservado cru em `vinculos.dados.orientador_legado`; só vira `dados.orientador_pessoa_id` quando resolve para uma pessoa |
+| `orientador_id` | guarda `users.id` de um professor (resolve em 48/48 no dev): vira `vinculos.dados.orientador_pessoa_id` (via `users.pessoa_id`); o texto cru só fica em `orientador_legado` quando **não** resolve |
 | `uid_legado`, `origem_import` | `vinculos.dados` (`uid_legado` **com** `origem_import`) |
 
 **Refinamento do "aluno sem vínculo recebe 400" (D3):** o formulário envia defaults (`nivel: 'Mestrando'`, `situacao: 'Matriculado'`) para todo aluno novo, então 400 incondicional impediria cadastrar aluno sem programa. O 400 vale só quando o payload traz **dado de vínculo de fato** (`entrada`, `qualificacao` ou `defesa` preenchidos, ou `situacao` diferente de `Matriculado`) e a pessoa **não tem** vínculo de aluno. `sexo`/`estrangeiro`/`nacionalidade` vão para `pessoas` sempre.
@@ -170,7 +170,7 @@ SELECT count(*) FROM (SELECT cpf FROM pessoas WHERE coalesce(cpf,'') <> '' GROUP
 - [ ] **Step 2: Rodar no dev e conferir que não dá erro**
 
 Run: `docker exec -i prpg-postgres psql -U prpg -d prpg < docs/operations/g1-pre-verificacao.sql`
-Expected: as 12 seções imprimem; no dev, seção 2 zerada, seção 6 = 0, seção 9 = `0 | 0`, seção 10 = `orfao 48 / vazio 25`.
+Expected: as 12 seções imprimem; no dev, seção 2 zerada, seção 6 = 0, seção 9 = `0 | 0`, seção 10 = `users.id 48 / vazio 25` (o orientador aponta para o `users.id` de um professor).
 
 - [ ] **Step 3: Commit**
 
@@ -243,14 +243,15 @@ describe('G1 migração g1a', () => {
 
   it('aluno: monta vinculos.dados (egresso guarda o nivel; placeholder de qualificacao e orientador)', async () => {
     const { usuarioId, pessoaId } = await seedUserComPessoa({ id: 'u-e', email: 'e@t.br', nome: 'Egr', roles: ['Aluno'] });
+    const { pessoaId: orientadorPessoaId } = await seedUserComPessoa({ id: 'u-orient', email: 'o@t.br', nome: 'Orientador' });
     await pool.query(`INSERT INTO vinculos (id, pessoa_id, papel, ativo) VALUES ('v-e', $1, 'EGRESSO', TRUE), ('v-m', $1, 'DISCENTE_MESTRADO', TRUE)`, [pessoaId]);
     await pool.query(`UPDATE users SET perfil_aluno = $2 WHERE id = $1`, [usuarioId, JSON.stringify({
       nivel: 'Doutor', entrada: '2019.1', situacao: 'Egresso', qualificacao: '2020-10-29', defesa: '2023-03-03',
-      egresso: true, orientador_id: 'id-que-nao-existe', uid_legado: '158', origem_import: 'profiap' })]);
+      egresso: true, orientador_id: 'u-orient', uid_legado: '158', origem_import: 'profiap' })]);
     await rodarMigracao(MIG);
     expect(await dadosDoVinculo('v-e')).toEqual({
       nivel: 'DOUTORADO', entrada: '2019.1', situacao: 'Egresso', defesa: '2023-03-03', egresso: true,
-      orientador_legado: 'id-que-nao-existe', uid_legado: '158', origem_import: 'profiap' });
+      orientador_pessoa_id: orientadorPessoaId, uid_legado: '158', origem_import: 'profiap' });
     // vínculo de aluno matriculado: o nível é o papel, então `nivel` não entra
     expect((await dadosDoVinculo('v-m')).nivel).toBeUndefined();
   });
@@ -336,10 +337,11 @@ UPDATE vinculos v SET dados = COALESCE(v.dados, '{}'::jsonb) || jsonb_strip_null
     'qualificacao', NULLIF(NULLIF(u.perfil_aluno ->> 'qualificacao', ''), '2020-10-29'),
     'defesa', NULLIF(u.perfil_aluno ->> 'defesa', ''),
     'egresso', CASE WHEN u.perfil_aluno ? 'egresso' THEN (u.perfil_aluno ->> 'egresso') = 'true' END,
-    'orientador_legado', NULLIF(u.perfil_aluno ->> 'orientador_id', ''),
+    'orientador_pessoa_id', o.pessoa_id,
+    'orientador_legado', CASE WHEN o.id IS NULL THEN NULLIF(u.perfil_aluno ->> 'orientador_id', '') END,
     'uid_legado', NULLIF(u.perfil_aluno ->> 'uid_legado', ''),
     'origem_import', NULLIF(u.perfil_aluno ->> 'origem_import', '')))
-  FROM users u
+  FROM users u LEFT JOIN users o ON o.id = u.perfil_aluno ->> 'orientador_id'
  WHERE u.pessoa_id = v.pessoa_id AND u.perfil_aluno IS NOT NULL
    AND v.papel IN ('DISCENTE_MESTRADO', 'DISCENTE_DOUTORADO', 'DISCENTE_PROFISSIONAL', 'EGRESSO');
 

@@ -56,7 +56,7 @@ de qualquer passo de dado.**
 | `entrada` | 44 preenchidos (`2023.1`, `2022.1`…), 29 vazios |
 | `qualificacao` | **69 de 73 com a mesma data, `2020-10-29`** — cara de valor-padrão da importação, não de dado real |
 | `defesa` | 24 preenchidos |
-| `orientador_id` | 48 preenchidos, **os 48 são órfãos** (não casam com nenhum `users.id`, `pessoas.id`, `vinculos` nem tese); 25 vazios |
+| `orientador_id` | 48 preenchidos, **todos = `users.id` de um professor** que existe (12 orientadores distintos, todos com vínculo docente); 25 vazios. É um id de **login**, não de pessoa |
 | `uid_legado`, `origem_import` | todos (`origem_import = profiap`); `uid_legado` único nos 89 |
 | professor `tipo` | `Permanente` 14, `Colaborador` 2 (= o papel do vínculo nos 16) |
 | professor `programas` | 1 programa em cada um dos 16; **bate 100% com os vínculos ativos** (0 divergências nos dois sentidos) |
@@ -198,9 +198,10 @@ para a estrutura, a agenda e as planilhas.
    importador escreveu; mas o formulário grava o array sem criar vínculo (só `papelVinculo` cria), e
    `removeDocente` só o mantém quando há login. A regra "professor precisa de ≥1 programa" (400) valida o
    **array**, não os vínculos.
-5. **`orientador_id` está quebrado:** 48/48 órfãos no dev. O id guardado era o `users.id` de um professor
-   (`alunosImporter.js:115-123`) que depois deixou de existir (reimportação/recriação). O `field_orientador`
-   original (`orientador_uid`) **não foi guardado**, então só dá para recuperar reimportando o arquivo.
+5. **`orientador_id` guarda `users.id`, não `pessoas.id`** (`alunosImporter.js:115-123` resolve o uid do
+   Drupal para o `users.id` do professor). Resolve em 48/48 no dev, então dá para migrá-lo para uma pessoa
+   (`users.pessoa_id`). *(A primeira versão desta análise dizia que eram órfãos — erro de medição: uma coluna sem
+   qualificador numa subconsulta sobre `users` comparava o professor com ele mesmo. Corrigido pela pré-verificação da Task 0.)*
 6. **`estrangeiro`/`nacionalidade`/`sexo` já têm coluna em `pessoas`, mas só são copiados na criação**
    (`criarPessoaDeUsuario`, migração A). `pessoaDoUsuario.CAMPOS` não os inclui: editar "Aluno estrangeiro" no
    formulário muda `perfil_aluno`, **não** `pessoas`. A proficiência lê `perfil_aluno.estrangeiro` — fonte que
@@ -254,7 +255,7 @@ removidas.
 
 1. **Pré-verificação na produção** (`docs/operations/g1-pre-verificacao.sql`, somente leitura): divergência
    `users` × `pessoas` por campo, chaves/valores dos JSONB, `programas` × vínculos, alunos sem vínculo, pessoas
-   duplicadas por CPF, `orientador_id` órfão, contas com senha padrão. Sem isso, nenhum passo de dado.
+   duplicadas por CPF, `orientador_id` que não resolve, contas com senha padrão. Sem isso, nenhum passo de dado.
 2. **Migração C (aditiva) + código espelhado.** Cria o que falta: `vinculos.dados JSONB`, as colunas de
    privacidade e o que as decisões do §7 pedirem. Preenche a partir de `users.perfil_*` (mesmo estilo da
    migração A: o usuário vence, só preenche o vazio onde `pessoas` for mais nova). **Nada lê o novo ainda.**
@@ -312,7 +313,7 @@ no passo 5 se a pré-verificação da produção mostrar surpresa. (b) deixa a c
 | `programas[]` | some: um vínculo por programa (já é a fonte de verdade) |
 | `entrada`, `situacao`, `defesa`, `egresso` | `vinculos.dados` |
 | `qualificacao` | `vinculos.dados`, **descartando o valor `2020-10-29` repetido** (perguntar se é placeholder) |
-| `orientador_id` | **preservar cru** em `vinculos.dados.orientador_legado` (nada some) e só preencher `orientador_pessoa_id` quando resolver; reimportar para recuperar os 48 |
+| `orientador_id` | **converter** para `vinculos.dados.orientador_pessoa_id` (via `users.pessoa_id` do professor); o texto cru só é guardado em `orientador_legado` quando **não** resolve |
 | `uid_legado`, `origem_import` | `vinculos.dados` (par origem + uid), busca de autor/orientador por origem |
 | aluno **sem vínculo** | exigir vínculo para gravar dados de vínculo (400 com mensagem), em vez de criar um "vínculo fantasma" |
 

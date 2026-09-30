@@ -1,7 +1,7 @@
 -- B.13 (G1) — pré-verificação (SOMENTE LEITURA). Rodar em cada banco antes de
 -- aplicar a migração 2026-09-30_g1a_pessoa_e_vinculo_dados.sql:
 --   docker exec -i prpg-postgres psql -U prpg -d prpg < docs/operations/g1-pre-verificacao.sql
--- No dev: seção 2 zerada, seção 6 = 0, seção 9 = 0 | 0, seção 10 = orfao 48 / vazio 25.
+-- No dev: seção 2 zerada, seção 6 = 0, seção 9 = 0 | 0, seção 10 = users.id 48 / vazio 25.
 \pset pager off
 \echo == 1. usuarios, pessoas e usuarios sem pessoa
 SELECT (SELECT count(*) FROM users) usuarios, (SELECT count(*) FROM pessoas) pessoas,
