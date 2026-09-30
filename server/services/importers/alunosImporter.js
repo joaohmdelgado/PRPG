@@ -232,6 +232,8 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     id: crypto.randomUUID(),
     email: m.email,
     password_hash,
+    // Senha padrão conhecida: o primeiro acesso tem de trocá-la (o login devolve senhaTemporaria).
+    senhaTemporaria: true,
     roles: ['Aluno'],
     programaId,
     privacidade: { mostrar_email: false, mostrar_telefone: false },
