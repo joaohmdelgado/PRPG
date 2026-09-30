@@ -55,7 +55,7 @@ describe('programas — filtro de campos sensíveis', () => {
     const id = await createPrograma();
 
     const asAdmin = await auth(request(app).get(`/api/programas/${id}`));
-    expect(asAdmin.body.coordenador_atual.cpf).toBe('111');
+    expect(asAdmin.body.coordenador_atual.cpf).toBe('00000000111');
 
     const asPublic = await request(app).get(`/api/programas/${id}`);
     expect(asPublic.body.coordenador_atual.cpf).toBeUndefined();
@@ -71,9 +71,9 @@ describe('programas — histórico de coordenadores', () => {
     });
 
     const res = await auth(request(app).get(`/api/programas/${id}`));
-    expect(res.body.coordenador_atual.pessoa_id).toBe('coord-b');
+    expect(res.body.coordenador_atual.usuario_id).toBe('coord-b');
     expect(res.body.historico_coordenadores).toHaveLength(1);
-    expect(res.body.historico_coordenadores[0].pessoa_id).toBe('coord-a');
+    expect(res.body.historico_coordenadores[0].usuario_id).toBe('coord-a');
   });
 });
 
@@ -142,11 +142,11 @@ describe('programas — Fase 2: mandato e histórico', () => {
     });
 
     const res = await auth(request(app).get(`/api/programas/${id}`));
-    expect(res.body.coordenador_atual.pessoa_id).toBe('coord-b');
+    expect(res.body.coordenador_atual.usuario_id).toBe('coord-b');
     expect(res.body.coordenador_atual.data_inicio_mandato).toBe('2024-01-01');
     expect(res.body.historico_coordenadores).toHaveLength(1);
     const prev = res.body.historico_coordenadores[0];
-    expect(prev.pessoa_id).toBe('coord-a');
+    expect(prev.usuario_id).toBe('coord-a');
     expect(prev.data_fim_mandato).toBeTruthy();
     expect(prev.motivo_encerramento).toBe('FIM_MANDATO');
   });

@@ -113,3 +113,61 @@ describe('B.11 D-B11b — usersRepo leva os dados da pessoa para `pessoas`', () 
     expect(await pessoaDe('u-velho')).toMatchObject({ nome: 'Velho' });
   });
 });
+
+describe.each(FORMAS)('B.11 programas — vínculo gravado por %s', (forma) => {
+  let ana;
+  beforeEach(async () => {
+    ana = await seedUserComPessoa({ id: 'u-ana', email: 'ana@t.br', nome: 'Ana Docente' });
+  });
+
+  it('lista pública e do painel mostram o docente; usuario_id só no painel', async () => {
+    await vincular('v-doc', gravado(forma, ana), 'DOCENTE_PERMANENTE');
+    const pub = await request(app).get('/api/programas/slug/pu/pessoas');
+    expect(pub.body).toEqual([expect.objectContaining({ id: 'v-doc', nome: 'Ana Docente', pessoa_id: ana.pessoaId })]);
+    expect(pub.body[0].usuario_id).toBeUndefined();
+    const adm = await asAdmin(request(app).get('/api/programas/prog-1/docentes'));
+    expect(adm.body).toEqual([expect.objectContaining({ id: 'v-doc', nome: 'Ana Docente', pessoa_id: ana.pessoaId, usuario_id: 'u-ana' })]);
+  });
+
+  it('discentes e comissões idem', async () => {
+    await vincular('v-disc', gravado(forma, ana), 'DISCENTE_DOUTORADO');
+    await vincular('v-com', gravado(forma, ana), 'COMISSAO_CPG');
+    const pub = await request(app).get('/api/programas/slug/pu/discentes');
+    expect(pub.body).toEqual([expect.objectContaining({ id: 'v-disc', nome: 'Ana Docente' })]);
+    const disc = await asAdmin(request(app).get('/api/programas/prog-1/discentes'));
+    expect(disc.body).toEqual([expect.objectContaining({ id: 'v-disc', usuario_id: 'u-ana' })]);
+    const com = await asAdmin(request(app).get('/api/programas/prog-1/comissoes'));
+    expect(com.body).toEqual([expect.objectContaining({ id: 'v-com', usuario_id: 'u-ana', nome: 'Ana Docente' })]);
+  });
+
+  it('vincular de novo a mesma pessoa pelo id de login dá 409', async () => {
+    await vincular('v-doc', gravado(forma, ana), 'DOCENTE_PERMANENTE');
+    const r = await asAdmin(request(app).post('/api/programas/prog-1/docentes'))
+      .send({ pessoa_id: 'u-ana', papel: 'DOCENTE_COLABORADOR' });
+    expect(r.status).toBe(409);
+  });
+
+  it('salvar o programa com o mesmo coordenador não encerra o mandato', async () => {
+    await vincular('v-coord', gravado(forma, ana), 'COORDENADOR_ATUAL');
+    await asAdmin(request(app).put('/api/programas/prog-1')).send({ coordenador_atual: { pessoa_id: 'u-ana', portaria: 'P2' } });
+    const r = await asAdmin(request(app).get('/api/programas/prog-1'));
+    expect(r.body.coordenador_atual).toMatchObject({ usuario_id: 'u-ana', pessoa_id: ana.pessoaId, portaria: 'P2', nome: 'Ana Docente' });
+    expect(r.body.historico_coordenadores).toEqual([]);
+  });
+
+  it('o público não recebe usuario_id do coordenador', async () => {
+    await vincular('v-coord', gravado(forma, ana), 'COORDENADOR_ATUAL');
+    const r = await request(app).get('/api/programas/prog-1');
+    expect(r.body.coordenador_atual.nome).toBe('Ana Docente');
+    expect(r.body.coordenador_atual.usuario_id).toBeUndefined();
+  });
+
+  it('remover o docente tira o programa do perfil_professor do usuário', async () => {
+    await pool.query(`UPDATE users SET perfil_professor = '{"programas": ["prog-1"]}' WHERE id = 'u-ana'`);
+    await vincular('v-doc', gravado(forma, ana), 'DOCENTE_PERMANENTE');
+    const r = await asAdmin(request(app).delete('/api/programas/prog-1/docentes/v-doc'));
+    expect(r.status).toBe(200);
+    const { rows } = await pool.query(`SELECT perfil_professor FROM users WHERE id = 'u-ana'`);
+    expect(rows[0].perfil_professor.programas).toEqual([]);
+  });
+});

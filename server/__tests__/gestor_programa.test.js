@@ -152,7 +152,7 @@ describe('cadastro de alunos/professores pelo gestor', () => {
 
     const disc = await asGestor(request(app).get(`/api/programas/${programaA}/discentes`));
     expect(disc.status).toBe(200);
-    expect(disc.body.some((d) => d.pessoa_id === res.body.id && d.papel === 'DISCENTE_MESTRADO')).toBe(true);
+    expect(disc.body.some((d) => d.usuario_id === res.body.id && d.papel === 'DISCENTE_MESTRADO')).toBe(true);
   });
 
   it('cadastra professor já vinculado como docente do programa', async () => {
@@ -164,7 +164,7 @@ describe('cadastro de alunos/professores pelo gestor', () => {
     expect(res.body.programaId).toBe(programaA);
 
     const doc = await asGestor(request(app).get(`/api/programas/${programaA}/docentes`));
-    expect(doc.body.some((d) => d.pessoa_id === res.body.id)).toBe(true);
+    expect(doc.body.some((d) => d.usuario_id === res.body.id)).toBe(true);
   });
 
   it('não pode criar papéis com poder (GestorPrograma/Administrator) (403)', async () => {
@@ -265,7 +265,7 @@ describe('cadastro de pessoa já existente (checagem de duplicidade)', () => {
     expect(link.status).toBe(201);
 
     const disc = await asGestor(request(app).get(`/api/programas/${programaA}/discentes`));
-    expect(disc.body.some((d) => d.pessoa_id === alunoB.body.id)).toBe(true);
+    expect(disc.body.some((d) => d.usuario_id === alunoB.body.id)).toBe(true);
 
     // A posse continua do programa B: o gestor de A não edita a conta.
     const put = await asGestor(request(app).put(`/api/users/${alunoB.body.id}`))

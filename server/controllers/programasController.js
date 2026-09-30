@@ -2,6 +2,9 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
+import {
+  joinPessoa, pessoaReal, nomePessoa, campoPessoa, idsDaMesmaPessoa,
+} from '../db/identidadeVinculo.js';
 import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { contatosRepo } from '../db/contatosRepo.js';
 import { indicadoresDoPrograma } from '../db/indicadoresRepo.js';
@@ -88,67 +91,60 @@ const checkAdmin = (req) => {
 const filterSensitivePessoa = (pessoa, isAdmin) => {
   if (!pessoa) return null;
   if (isAdmin) return pessoa;
-  const { cpf, siape, telefones, email_institucional, email_funcao, endereco, ...rest } = pessoa;
+  const { cpf, siape, telefones, email_institucional, email_funcao, endereco, usuario_id, ...rest } = pessoa;
   return rest;
 };
 
 // Carrega as modalidades (usadas junto com o JOIN de vínculos abaixo).
 const loadModalidades = async () => (await query('SELECT * FROM modalidades')).rows;
 
-// Fase B.3 (PLANO.md): substitui buildCombined (JS: users.find + pessoas.find
-// em arrays carregados por inteiro a cada request) por um JOIN de fato — uma
-// única query resolve pessoa (users OU pessoas, legado) e portaria por
-// vínculo. vinculos.pessoa_id continua polimórfico (TEXT sem FK): apertar a
-// FK para pessoas(id) exigiria migrar simultaneamente a criação de usuário,
-// `handlePessoaVinculo`/`insertVinculo` (escrevem users.id), a limpeza de
-// vínculos ao excluir usuário e o `JOIN vinculos ON pessoa_id = users.id` de
-// proficienciaController.verificarAluno — mesma sprawl já registrada na A.10,
-// segue adiada (ver nota lá).
+// Fase B.3 (PLANO.md): um JOIN resolve pessoa e portaria por vínculo (antes
+// era buildCombined, em JS). A pessoa vem de identidadeVinculo.js (B.11):
+// `pessoas` é a fonte dos dados (D-B11b), o usuário completa o que faltar.
 const VINCULOS_JOIN_SELECT = `
   SELECT v.*,
     u.id AS u_id, u.email AS u_email, u.perfil_nome AS u_perfil_nome,
     u.perfil_cpf AS u_perfil_cpf, u.perfil_siape AS u_perfil_siape,
     u.perfil_telefones AS u_perfil_telefones,
     row_to_json(p.*) AS p_json,
+    ${pessoaReal('v.pessoa_id')} AS pessoa_real,
     po.title AS portaria_titulo, po.download_link AS portaria_download_link
   FROM vinculos v
-  LEFT JOIN users u ON u.id = v.pessoa_id
-  LEFT JOIN pessoas p ON p.id = v.pessoa_id
+  ${joinPessoa('v.pessoa_id')}
   LEFT JOIN portarias po ON po.id = v.portaria_id
 `;
 
 const VINCULO_ROW_KEYS = [
   'u_id', 'u_email', 'u_perfil_nome', 'u_perfil_cpf', 'u_perfil_siape', 'u_perfil_telefones',
-  'p_json', 'portaria_titulo', 'portaria_download_link',
+  'p_json', 'pessoa_real', 'portaria_titulo', 'portaria_download_link',
 ];
 
-// Monta o objeto "combinado" (pessoa + vínculo + portaria) a partir de uma
-// linha do JOIN acima — mesma prioridade da antiga buildCombined: usuário do
-// sistema primeiro, pessoa legada (sem login) como fallback.
+const telefonesDoUsuario = (t) => (Array.isArray(t) ? t.join(', ') : (t || ''));
+
+// Objeto "combinado" (pessoa + vínculo + portaria) de uma linha do JOIN acima.
+// `pessoa_id` = pessoas.id; `usuario_id` = login (o painel usa para vincular
+// e editar; filterSensitivePessoa o tira da resposta pública).
 const combinedFromRow = (row) => {
+  if (!row.u_id && !row.p_json) return null;
   const resolvedPortaria = row.portaria_titulo != null
     ? { portaria_id: row.portaria_id, portaria: row.portaria_titulo, portaria_download_link: row.portaria_download_link }
     : { portaria_id: '', portaria: row.portaria || '', portaria_download_link: '' };
   const vFields = { ...row };
   for (const k of VINCULO_ROW_KEYS) delete vFields[k];
-
-  if (row.u_id) {
-    return {
-      pessoa_id: row.u_id,
-      nome: row.u_perfil_nome || row.u_email,
-      cpf: row.u_perfil_cpf || '',
-      siape: row.u_perfil_siape || '',
-      email_institucional: row.u_email,
-      telefones: Array.isArray(row.u_perfil_telefones) ? row.u_perfil_telefones.join(', ') : (row.u_perfil_telefones || ''),
-      endereco: vFields.endereco || '',
-      ...vFields,
-      ...resolvedPortaria,
-    };
-  }
-  if (row.p_json) {
-    return { ...row.p_json, pessoa_id: row.p_json.id, ...vFields, ...resolvedPortaria };
-  }
-  return null;
+  const p = row.p_json || {};
+  return {
+    ...p,
+    ...vFields,
+    ...resolvedPortaria,
+    pessoa_id: p.id ?? row.pessoa_real,
+    usuario_id: row.u_id ?? null,
+    nome: p.nome || row.u_perfil_nome || row.u_email || '',
+    cpf: p.cpf || row.u_perfil_cpf || '',
+    siape: p.siape || row.u_perfil_siape || '',
+    email_institucional: p.email_institucional || row.u_email || '',
+    telefones: p.telefones || telefonesDoUsuario(row.u_perfil_telefones),
+    endereco: vFields.endereco || '',
+  };
 };
 
 export const getProgramas = async (req, res) => {
@@ -329,7 +325,10 @@ const handlePessoaVinculo = async (payloadData, papel, programa_id) => {
     data_inicio_mandato: payloadData.data_inicio_mandato || null,
   };
 
-  if (existing && papel === 'COORDENADOR_ATUAL' && existing.pessoa_id !== pessoaId) {
+  // O painel manda users.id; o vínculo pode estar gravado com o pessoas.id da
+  // mesma pessoa (B.11) — isso não é troca de coordenador.
+  const mesmaPessoa = !!existing && (await idsDaMesmaPessoa(pessoaId)).includes(existing.pessoa_id);
+  if (existing && papel === 'COORDENADOR_ATUAL' && !mesmaPessoa) {
     // Encerra o mandato do coordenador anterior (preserva valores já gravados).
     const hoje = new Date().toISOString().slice(0, 10);
     await query(
@@ -587,48 +586,32 @@ export const buscaPrograma = async (req, res) => {
 
 export const PAPEIS_DOCENTE = ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR'];
 
+// Membros ativos de um programa em certos papéis, com a pessoa resolvida
+// (identidadeVinculo.js) — base das listas públicas e do painel.
+const membrosDoPrograma = async (programaId, papeis) => (await query(
+  `SELECT v.id, v.papel, v.email_funcao, ${pessoaReal('v.pessoa_id')} AS pessoa_id, u.id AS usuario_id,
+          COALESCE(${nomePessoa()}, v.pessoa_id) AS nome,
+          ${campoPessoa('foto_url', 'perfil_foto_url')} AS foto_url, u.programa_id,
+          ${campoPessoa('lattes', 'acad_lattes')} AS lattes,
+          ${campoPessoa('orcid', 'acad_orcid')} AS orcid,
+          ${campoPessoa('google_scholar', 'acad_google_scholar')} AS google_scholar,
+          (u.id IS NOT NULL OR p.id IS NOT NULL) AS resolvido
+     FROM vinculos v ${joinPessoa('v.pessoa_id')}
+    WHERE v.programa_id = $1 AND v.ativo = TRUE AND v.papel = ANY($2::text[])
+    ORDER BY v.papel, v.criado_em`,
+  [programaId, papeis]
+)).rows;
+
 // Endpoint público: docentes do programa por slug (sem dados sensíveis).
 export const getProgramaDocentesPublic = async (req, res) => {
   try {
     const prog = (await query('SELECT id FROM programas WHERE slug = $1', [req.params.slug])).rows[0];
     if (!prog) return res.status(404).json({ message: 'Programa não encontrado' });
-
-    const { rows: vinculos } = await query(
-      `SELECT id, pessoa_id, papel, email_funcao FROM vinculos
-       WHERE programa_id = $1 AND ativo = TRUE AND papel = ANY($2::text[])
-       ORDER BY papel, criado_em`,
-      [prog.id, PAPEIS_DOCENTE]
-    );
-
-    const ids = vinculos.map((v) => v.pessoa_id);
-    if (ids.length === 0) return res.json([]);
-
-    const { rows: usrs } = await query(
-      `SELECT id, email, perfil_nome, perfil_foto_url, acad_lattes, acad_orcid, acad_google_scholar
-       FROM users WHERE id = ANY($1::text[])`,
-      [ids]
-    );
-
-    const byId = Object.fromEntries(usrs.map((u) => [u.id, u]));
-    const docentes = vinculos
-      .map((v) => {
-        const u = byId[v.pessoa_id];
-        if (!u) return null;
-        return {
-          id: v.id,
-          pessoa_id: v.pessoa_id,
-          papel: v.papel,
-          nome: u.perfil_nome || u.email,
-          foto_url: u.perfil_foto_url || null,
-          lattes: u.acad_lattes || null,
-          orcid: u.acad_orcid || null,
-          google_scholar: u.acad_google_scholar || null,
-          email_funcao: v.email_funcao || null,
-        };
-      })
-      .filter(Boolean);
-
-    res.json(docentes);
+    const membros = await membrosDoPrograma(prog.id, PAPEIS_DOCENTE);
+    res.json(membros.filter((m) => m.resolvido).map((m) => ({
+      id: m.id, pessoa_id: m.pessoa_id, papel: m.papel, nome: m.nome, foto_url: m.foto_url,
+      lattes: m.lattes, orcid: m.orcid, google_scholar: m.google_scholar, email_funcao: m.email_funcao || null,
+    })));
   } catch (error) {
     serverError(res, 'Erro ao buscar docentes', error);
   }
@@ -637,30 +620,11 @@ export const getProgramaDocentesPublic = async (req, res) => {
 // Endpoint admin: docentes do programa por ID.
 export const getDocentesAdmin = async (req, res) => {
   try {
-    const { rows: vinculos } = await query(
-      `SELECT id, pessoa_id, papel, email_funcao FROM vinculos
-       WHERE programa_id = $1 AND ativo = TRUE AND papel = ANY($2::text[])
-       ORDER BY papel, criado_em`,
-      [req.params.id, PAPEIS_DOCENTE]
-    );
-
-    const ids = vinculos.map((v) => v.pessoa_id);
-    if (ids.length === 0) return res.json([]);
-
-    const { rows: usrs } = await query(
-      `SELECT id, email, perfil_nome, perfil_foto_url, programa_id FROM users WHERE id = ANY($1::text[])`,
-      [ids]
-    );
-    const byId = Object.fromEntries(usrs.map((u) => [u.id, u]));
-
-    res.json(
-      vinculos.map((v) => {
-        const u = byId[v.pessoa_id] || {};
-        return { id: v.id, pessoa_id: v.pessoa_id, papel: v.papel, email_funcao: v.email_funcao || '',
-                 nome: u.perfil_nome || u.email || v.pessoa_id, foto_url: u.perfil_foto_url || null,
-                 programa_id: u.programa_id || null };
-      })
-    );
+    const membros = await membrosDoPrograma(req.params.id, PAPEIS_DOCENTE);
+    res.json(membros.map((m) => ({
+      id: m.id, pessoa_id: m.pessoa_id, usuario_id: m.usuario_id, papel: m.papel,
+      email_funcao: m.email_funcao || '', nome: m.nome, foto_url: m.foto_url, programa_id: m.programa_id || null,
+    })));
   } catch (error) {
     serverError(res, 'Erro ao listar docentes', error);
   }
@@ -673,10 +637,11 @@ export const addDocente = async (req, res) => {
     if (!pessoa_id) return res.status(400).json({ message: 'pessoa_id é obrigatório' });
     if (!PAPEIS_DOCENTE.includes(papel)) return res.status(400).json({ message: 'papel inválido' });
 
+    const ids = await idsDaMesmaPessoa(pessoa_id);
     const existing = (
       await query(
-        'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id=$2 AND papel=ANY($3::text[]) AND ativo=TRUE',
-        [req.params.id, pessoa_id, PAPEIS_DOCENTE]
+        'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id = ANY($2::text[]) AND papel=ANY($3::text[]) AND ativo=TRUE',
+        [req.params.id, ids, PAPEIS_DOCENTE]
       )
     ).rows[0];
     if (existing) return res.status(409).json({ message: 'Docente já vinculado neste programa' });
@@ -700,20 +665,20 @@ export const addDocente = async (req, res) => {
 export const removeDocente = async (req, res) => {
   try {
     const { rows } = await query(
-      `SELECT pessoa_id, programa_id FROM vinculos
-       WHERE id=$1 AND programa_id=$2 AND papel=ANY($3::text[])`,
+      `SELECT v.programa_id, u.id AS usuario_id FROM vinculos v ${joinPessoa('v.pessoa_id')}
+       WHERE v.id=$1 AND v.programa_id=$2 AND v.papel=ANY($3::text[])`,
       [req.params.vinculoId, req.params.id, PAPEIS_DOCENTE]
     );
     if (rows.length === 0) return res.status(404).json({ message: 'Vínculo não encontrado' });
-    const { pessoa_id, programa_id } = rows[0];
+    const { usuario_id, programa_id } = rows[0];
 
     await query(`UPDATE vinculos SET ativo=FALSE WHERE id=$1`, [req.params.vinculoId]);
 
-    const user = await usersRepo.getById(pessoa_id);
+    const user = usuario_id ? await usersRepo.getById(usuario_id) : null;
     if (Array.isArray(user?.perfil_professor?.programas)) {
       const programas = user.perfil_professor.programas.filter((p) => p !== programa_id);
       if (programas.length !== user.perfil_professor.programas.length) {
-        await usersRepo.update(pessoa_id, {
+        await usersRepo.update(usuario_id, {
           ...user,
           perfil_professor: { ...user.perfil_professor, programas },
         });
@@ -743,38 +708,11 @@ export const getProgramaDiscentesPublic = async (req, res) => {
   try {
     const prog = (await query('SELECT id FROM programas WHERE slug=$1', [req.params.slug])).rows[0];
     if (!prog) return res.status(404).json({ message: 'Programa não encontrado' });
-
-    const { rows: vinculos } = await query(
-      `SELECT id, pessoa_id, papel FROM vinculos
-       WHERE programa_id=$1 AND ativo=TRUE AND papel=ANY($2::text[])
-       ORDER BY papel, criado_em`,
-      [prog.id, PAPEIS_DISCENTE]
-    );
-
-    const ids = vinculos.map((v) => v.pessoa_id);
-    if (ids.length === 0) return res.json([]);
-
-    const { rows: usrs } = await query(
-      `SELECT id, email, perfil_nome, perfil_foto_url, acad_lattes, acad_orcid, acad_google_scholar
-       FROM users WHERE id=ANY($1::text[])`,
-      [ids]
-    );
-    const byId = Object.fromEntries(usrs.map((u) => [u.id, u]));
-
-    res.json(
-      vinculos.map((v) => {
-        const u = byId[v.pessoa_id];
-        if (!u) return null;
-        return {
-          id: v.id, pessoa_id: v.pessoa_id, papel: v.papel,
-          nome: u.perfil_nome || u.email,
-          foto_url: u.perfil_foto_url || null,
-          lattes: u.acad_lattes || null,
-          orcid: u.acad_orcid || null,
-          google_scholar: u.acad_google_scholar || null,
-        };
-      }).filter(Boolean)
-    );
+    const membros = await membrosDoPrograma(prog.id, PAPEIS_DISCENTE);
+    res.json(membros.filter((m) => m.resolvido).map((m) => ({
+      id: m.id, pessoa_id: m.pessoa_id, papel: m.papel, nome: m.nome, foto_url: m.foto_url,
+      lattes: m.lattes, orcid: m.orcid, google_scholar: m.google_scholar,
+    })));
   } catch (error) {
     serverError(res, 'Erro ao buscar discentes', error);
   }
@@ -783,24 +721,11 @@ export const getProgramaDiscentesPublic = async (req, res) => {
 // Endpoint admin: discentes do programa por ID.
 export const getDiscentesAdmin = async (req, res) => {
   try {
-    const { rows: vinculos } = await query(
-      `SELECT id, pessoa_id, papel FROM vinculos
-       WHERE programa_id=$1 AND ativo=TRUE AND papel=ANY($2::text[])
-       ORDER BY papel, criado_em`,
-      [req.params.id, PAPEIS_DISCENTE]
-    );
-    const ids = vinculos.map((v) => v.pessoa_id);
-    if (ids.length === 0) return res.json([]);
-    const { rows: usrs } = await query(
-      `SELECT id, email, perfil_nome, perfil_foto_url, programa_id FROM users WHERE id=ANY($1::text[])`, [ids]
-    );
-    const byId = Object.fromEntries(usrs.map((u) => [u.id, u]));
-    res.json(vinculos.map((v) => {
-      const u = byId[v.pessoa_id] || {};
-      return { id: v.id, pessoa_id: v.pessoa_id, papel: v.papel,
-               nome: u.perfil_nome || u.email || v.pessoa_id, foto_url: u.perfil_foto_url || null,
-               programa_id: u.programa_id || null };
-    }));
+    const membros = await membrosDoPrograma(req.params.id, PAPEIS_DISCENTE);
+    res.json(membros.map((m) => ({
+      id: m.id, pessoa_id: m.pessoa_id, usuario_id: m.usuario_id, papel: m.papel,
+      nome: m.nome, foto_url: m.foto_url, programa_id: m.programa_id || null,
+    })));
   } catch (error) {
     serverError(res, 'Erro ao listar discentes', error);
   }
@@ -811,9 +736,10 @@ export const addDiscente = async (req, res) => {
     const { pessoa_id, papel } = req.body || {};
     if (!pessoa_id) return res.status(400).json({ message: 'pessoa_id obrigatório' });
     if (!PAPEIS_DISCENTE.includes(papel)) return res.status(400).json({ message: 'papel inválido' });
+    const ids = await idsDaMesmaPessoa(pessoa_id);
     const existing = (await query(
-      'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id=$2 AND papel=ANY($3::text[]) AND ativo=TRUE',
-      [req.params.id, pessoa_id, PAPEIS_DISCENTE]
+      'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id = ANY($2::text[]) AND papel=ANY($3::text[]) AND ativo=TRUE',
+      [req.params.id, ids, PAPEIS_DISCENTE]
     )).rows[0];
     if (existing) return res.status(409).json({ message: 'Discente já vinculado neste programa' });
     const id = crypto.randomUUID();
@@ -856,21 +782,10 @@ const PAPEIS_COMISSAO = Object.keys(TIPOS_COMISSAO);
 
 export const getComissoesAdmin = async (req, res) => {
   try {
-    const { rows: vinculos } = await query(
-      `SELECT id, pessoa_id, papel FROM vinculos WHERE programa_id=$1 AND ativo=TRUE AND papel=ANY($2::text[]) ORDER BY papel, criado_em`,
-      [req.params.id, PAPEIS_COMISSAO]
-    );
-    const ids = vinculos.map((v) => v.pessoa_id);
-    if (ids.length === 0) return res.json([]);
-    const { rows: usrs } = await query(
-      `SELECT id, email, perfil_nome, perfil_foto_url FROM users WHERE id=ANY($1::text[])`, [ids]
-    );
-    const byId = Object.fromEntries(usrs.map((u) => [u.id, u]));
-    res.json(vinculos.map((v) => {
-      const u = byId[v.pessoa_id] || {};
-      return { id: v.id, pessoa_id: v.pessoa_id, papel: v.papel,
-               nome: u.perfil_nome || u.email || v.pessoa_id, foto_url: u.perfil_foto_url || null };
-    }));
+    const membros = await membrosDoPrograma(req.params.id, PAPEIS_COMISSAO);
+    res.json(membros.map((m) => ({
+      id: m.id, pessoa_id: m.pessoa_id, usuario_id: m.usuario_id, papel: m.papel, nome: m.nome, foto_url: m.foto_url,
+    })));
   } catch (error) {
     serverError(res, 'Erro ao listar comissões', error);
   }
@@ -881,9 +796,10 @@ export const addComissaoMembro = async (req, res) => {
     const { pessoa_id, papel } = req.body || {};
     if (!pessoa_id) return res.status(400).json({ message: 'pessoa_id obrigatório' });
     if (!PAPEIS_COMISSAO.includes(papel)) return res.status(400).json({ message: 'papel inválido' });
+    const ids = await idsDaMesmaPessoa(pessoa_id);
     const existing = (await query(
-      'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id=$2 AND papel=$3 AND ativo=TRUE',
-      [req.params.id, pessoa_id, papel]
+      'SELECT id FROM vinculos WHERE programa_id=$1 AND pessoa_id = ANY($2::text[]) AND papel=$3 AND ativo=TRUE',
+      [req.params.id, ids, papel]
     )).rows[0];
     if (existing) return res.status(409).json({ message: 'Membro já vinculado nesta comissão' });
     const id = crypto.randomUUID();
