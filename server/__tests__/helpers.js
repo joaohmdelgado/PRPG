@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import fs from 'fs/promises';
 import request from 'supertest';
 import { pool } from '../db/pool.js';
 import { app } from '../app.js';
@@ -175,4 +176,20 @@ export async function seedUserComPessoa({ id, email, nome, roles = ['Professor']
   await pool.query('INSERT INTO pessoas (id, nome) VALUES ($1, $2)', [pessoaId, nome]);
   await pool.query('UPDATE users SET pessoa_id = $1 WHERE id = $2', [pessoaId, id]);
   return { usuarioId: id, pessoaId };
+}
+
+// Executa um arquivo de server/db/migrations/ como o migrateRunner: uma transação.
+export async function rodarMigracao(nome) {
+  const sql = await fs.readFile(new URL(`../db/migrations/${nome}`, import.meta.url), 'utf8');
+  const c = await pool.connect();
+  try {
+    await c.query('BEGIN');
+    await c.query(sql);
+    await c.query('COMMIT');
+  } catch (e) {
+    await c.query('ROLLBACK');
+    throw e;
+  } finally {
+    c.release();
+  }
 }

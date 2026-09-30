@@ -358,6 +358,9 @@ CREATE TABLE IF NOT EXISTS pessoas (
   orcid               TEXT,
   google_scholar      TEXT,
   publons             TEXT,
+  -- G1 (B.13): escolhas de privacidade (vinham de users.priv_*). O site público ainda não as consulta.
+  priv_mostrar_email    BOOLEAN DEFAULT FALSE,
+  priv_mostrar_telefone BOOLEAN DEFAULT FALSE,
   criado_em           TIMESTAMPTZ DEFAULT now(),
   atualizado_em       TIMESTAMPTZ DEFAULT now(),
   criado_por          TEXT,
@@ -421,7 +424,11 @@ CREATE TABLE IF NOT EXISTS vinculos (
   -- quando o vínculo é com um grupo, não com um programa. Substitui
   -- grupos_pesquisa.field_lideres (JSONB solto, sem período/situação). FK real
   -- só pode ser adicionada mais abaixo, depois que grupos_pesquisa existe.
-  grupo_pesquisa_id TEXT
+  grupo_pesquisa_id TEXT,
+  -- G1 (B.13): o que era users.perfil_aluno/perfil_professor e é do vínculo.
+  -- Chaves: nivel (só egresso: MESTRADO|DOUTORADO), entrada, situacao, qualificacao, defesa, egresso,
+  -- orientador_legado, orientador_pessoa_id, uid_legado + origem_import (chave da importação).
+  dados JSONB
 );
 CREATE INDEX IF NOT EXISTS vinculos_grupo_pesquisa_idx ON vinculos(grupo_pesquisa_id);
 
