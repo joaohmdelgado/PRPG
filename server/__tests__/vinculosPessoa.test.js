@@ -7,6 +7,7 @@ import { resetDb, seedAdmin, seedUser, seedUserComPessoa, loginAdmin, login } fr
 import {
   joinPessoa, pessoaReal, doUsuario, idsDaMesmaPessoa, nomePessoa,
 } from '../db/identidadeVinculo.js';
+import { resolverPessoa } from '../services/prazos.js';
 
 // B.11 (docs/analise-fk-vinculos-pessoa-id-b3.md). Durante a transição cada
 // caso roda com o vínculo gravado pelo users.id (legado) e pelo pessoas.id; a
@@ -196,5 +197,38 @@ describe.each(FORMAS)('B.11 usuários e escopo — vínculo gravado por %s', (fo
   it('a proficiência reconhece o aluno matriculado', async () => {
     const r = await request(app).post('/api/proficiencia/verificar-aluno').send({ nome: 'Ana Aluna' });
     expect(r.body).toEqual({ encontrado: true });
+  });
+});
+
+describe.each(FORMAS)('B.11 Câmara e notificações — gravado por %s', (forma) => {
+  let ana;
+  beforeEach(async () => {
+    ana = await seedUserComPessoa({ id: 'u-ana', email: 'ana@t.br', nome: 'Ana Relatora' });
+  });
+
+  it('"Meus processos" traz a relatoria de quem está logado', async () => {
+    const proc = await asAdmin(request(app).post('/api/camara/processos')).send({ numero: '23082.000009/2026-11', assunto: 'Teste B.11' });
+    await pool.query(
+      `INSERT INTO camara_relatorias (id, processo_id, relator_id, relator_nome, ativa) VALUES ('rel-1', $1, $2, 'Ana Relatora', TRUE)`,
+      [proc.body.id, gravado(forma, ana)]
+    );
+    const t = await login('ana@t.br');
+    const r = await request(app).get('/api/camara/meus-processos').set('Authorization', `Bearer ${t}`);
+    expect(r.body.map((p) => p.numero)).toEqual(['23082.000009/2026-11']);
+  });
+
+  it('resolverPessoa cai no e-mail de login quando não há institucional', async () => {
+    expect(await resolverPessoa(gravado(forma, ana))).toEqual({ nome: 'Ana Relatora', email: 'ana@t.br' });
+  });
+});
+
+describe('B.11 pós-doutorado — pessoa com login', () => {
+  it('nome da pessoa e e-mail de login', async () => {
+    await seedUserComPessoa({ id: 'u-pd', email: 'pd@t.br', nome: 'Pós Doc' });
+    const r = await asAdmin(request(app).post('/api/pos-doutorado')).send({
+      pessoaId: 'u-pd', supervisorNome: 'Supervisor', projetoTitulo: 'Projeto', programaId: 'prog-1',
+    });
+    expect(r.status).toBe(201);
+    expect(r.body).toMatchObject({ nome: 'Pós Doc', email: 'pd@t.br' });
   });
 });

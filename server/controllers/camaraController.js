@@ -6,6 +6,7 @@ import { processosRepo, unidadesRepo, camaraAtosRepo } from '../db/repositories.
 import { camaraPautaItensRepo, camaraRelatoriasRepo } from '../db/camaraRepo.js';
 import { eventosRepo } from '../db/eventosRepo.js';
 import { query } from '../db/pool.js';
+import { idsDaMesmaPessoa } from '../db/identidadeVinculo.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { NUP_REGEX, validarNumeroProcesso } from '../utils/nup.js';
 import {
@@ -153,16 +154,18 @@ export const getProcessos = async (req, res) => {
   res.json(rows.map(fromRowProcesso));
 };
 
-// "O que está comigo" — visão do relator autenticado (Fase 4, expõe já a rota).
+// "O que está comigo" — visão do relator autenticado. relator_id pode estar
+// com o users.id ou com o pessoas.id de quem está logado (B.11).
 export const getMeusProcessos = async (req, res) => {
   if (!req.user?.id) return res.status(401).json({ message: 'Não autenticado.' });
+  const ids = await idsDaMesmaPessoa(req.user.id);
   const { rows } = await query(
     `SELECT p.*, r.prazo_devolucao AS relator_prazo_devolucao, r.relator_nome
        FROM camara_relatorias r
        JOIN processos p ON p.id = r.processo_id
-      WHERE r.relator_id = $1 AND r.ativa = TRUE
+      WHERE r.relator_id = ANY($1::text[]) AND r.ativa = TRUE
       ORDER BY r.prazo_devolucao ASC NULLS LAST`,
-    [req.user.id]
+    [ids]
   );
   res.json(rows.map(fromRowProcesso));
 };

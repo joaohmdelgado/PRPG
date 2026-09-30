@@ -9,17 +9,23 @@ import { query } from './pool.js';
 import { derivarSituacao } from '../utils/vigencia.js';
 import { hojeISO } from '../utils/datas.js';
 import { resolverOuCriarPessoa } from './pessoasRepo.js';
+import { joinPessoa, pessoaReal } from './identidadeVinculo.js';
 
 // Fase D: resolverOuCriarPessoa mudou para server/db/pessoasRepo.js (reusada
 // por teses/disciplinas/bolsas). Reexportado aqui por compatibilidade.
 export { resolverOuCriarPessoa };
 
 const fromRow = (r) => {
-  // Identidade do pós-doutorando: users.id ou pessoas.id (legado), mesma
-  // resolução polimórfica de vinculos.pessoa_id usada em programasController.
-  const pessoa = r.u_id
-    ? { id: r.u_id, nome: r.u_perfil_nome, email: r.u_email, cpf: r.u_perfil_cpf, telefones: r.u_perfil_telefones }
-    : (r.p_json || null);
+  // Pessoa do vínculo (identidadeVinculo.js): `pessoas` primeiro, o login
+  // completa nome/e-mail/CPF/telefone que faltarem (D-B11b).
+  const p = r.p_json || {};
+  const pessoa = (r.u_id || r.p_json) ? {
+    nome: p.nome || r.u_perfil_nome || null,
+    email: p.email_institucional || r.u_email || null,
+    cpf: p.cpf || r.u_perfil_cpf || null,
+    telefones: p.telefones || (Array.isArray(r.u_perfil_telefones) ? r.u_perfil_telefones.join(', ') : r.u_perfil_telefones) || null,
+    nacionalidade: p.nacionalidade, estrangeiro: p.estrangeiro, lattes: p.lattes, orcid: p.orcid,
+  } : null;
 
   const hoje = hojeISO();
   const base = derivarSituacao({
@@ -36,7 +42,7 @@ const fromRow = (r) => {
   return {
     id: r.id, vinculoId: r.vinculo_id,
     pessoaId: r.vinculo_pessoa_id, nome: pessoa?.nome || null, cpf: pessoa?.cpf || null,
-    email: pessoa?.email || pessoa?.email_institucional || null,
+    email: pessoa?.email || null,
     telefone: pessoa?.telefones || null,
     nacionalidade: pessoa?.nacionalidade || null, estrangeiro: pessoa?.estrangeiro ?? false,
     lattesUrl: pessoa?.lattes || null, orcid: pessoa?.orcid || null,
@@ -71,7 +77,7 @@ const fromRow = (r) => {
 };
 
 const JOIN_SELECT = `
-  SELECT pd.*, v.programa_id, v.pessoa_id AS vinculo_pessoa_id,
+  SELECT pd.*, v.programa_id, ${pessoaReal('v.pessoa_id')} AS vinculo_pessoa_id,
     v.data_inicio_mandato, v.data_fim_mandato, v.situacao_manual, v.motivo_encerramento, v.ato_id,
     u.id AS u_id, u.email AS u_email, u.perfil_nome AS u_perfil_nome,
     u.perfil_cpf AS u_perfil_cpf, u.perfil_telefones AS u_perfil_telefones,
@@ -81,8 +87,7 @@ const JOIN_SELECT = `
     proc.numero AS processo_numero, lp.nome AS linha_pesquisa_nome
   FROM pos_doutorados pd
   JOIN vinculos v ON v.id = pd.vinculo_id
-  LEFT JOIN users u ON u.id = v.pessoa_id
-  LEFT JOIN pessoas p ON p.id = v.pessoa_id
+  ${joinPessoa('v.pessoa_id')}
   LEFT JOIN pessoas sup ON sup.id = pd.supervisor_id
   LEFT JOIN pessoas cos ON cos.id = pd.cossupervisor_id
   LEFT JOIN programas pr ON pr.id = v.programa_id

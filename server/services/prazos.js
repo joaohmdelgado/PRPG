@@ -16,23 +16,23 @@ import { hojeISO } from '../utils/datas.js';
 import { enviarEmail } from './email.js';
 import { eventosRepo } from '../db/eventosRepo.js';
 import { posDoutoradoRepo } from '../db/posDoutoradoRepo.js';
+import { joinPessoa, nomePessoa, emailPessoa } from '../db/identidadeVinculo.js';
 
 export const diasEntre = (dataAlvo, hoje = hojeISO()) =>
   Math.round((new Date(dataAlvo) - new Date(hoje)) / 86400000);
 
-// pessoa_id é polimórfico em vários lugares do projeto (users.id OU
-// pessoas.id) — mesma resolução usada em programasController/posDoutoradoRepo.
+// Nome e e-mail de quem está por trás de um id de vínculo (users.id ou
+// pessoas.id — identidadeVinculo.js): o e-mail institucional, e na falta
+// dele o de login.
 export const resolverPessoa = async (id) => {
   if (!id) return { nome: null, email: null };
-  const { rows: viaPessoa } = await query('SELECT nome, email_institucional FROM pessoas WHERE id = $1', [id]);
-  if (viaPessoa[0]) return { nome: viaPessoa[0].nome, email: viaPessoa[0].email_institucional || null };
-  const { rows: viaUser } = await query('SELECT perfil_nome, email, pessoa_id FROM users WHERE id = $1', [id]);
-  if (viaUser[0]?.pessoa_id) {
-    const { rows } = await query('SELECT nome, email_institucional FROM pessoas WHERE id = $1', [viaUser[0].pessoa_id]);
-    if (rows[0]) return { nome: rows[0].nome || viaUser[0].perfil_nome, email: rows[0].email_institucional || viaUser[0].email || null };
-  }
-  if (viaUser[0]) return { nome: viaUser[0].perfil_nome, email: viaUser[0].email || null };
-  return { nome: null, email: null };
+  const { rows } = await query(
+    `SELECT ${nomePessoa()} AS nome, ${emailPessoa()} AS email
+       FROM (SELECT $1::text AS id) x ${joinPessoa('x.id')}
+      WHERE u.id IS NOT NULL OR p.id IS NOT NULL`,
+    [id]
+  );
+  return rows[0] ? { nome: rows[0].nome || null, email: rows[0].email || null } : { nome: null, email: null };
 };
 
 export const resolverEmail = async (id) => (await resolverPessoa(id)).email;
