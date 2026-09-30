@@ -3,7 +3,7 @@
 **Preparado em:** 30/09/2026, a partir de leitura de código na worktree `mystifying-noether-191f7d`
 (`server/`, `src/`, testes) e de consultas **somente de leitura** ao banco de desenvolvimento
 (container `prpg-postgres`, banco `prpg`). Nada foi alterado.
-**Status:** análise concluída; **aguardando as decisões do §7** antes do plano de implementação.
+**Status:** decisões tomadas em 30/09/2026 (§7); plano em docs/superpowers/plans/2026-09-30-b13-g1-users-credencial.md.
 
 ## 1. O problema, em uma frase
 
@@ -282,6 +282,12 @@ Cada passo é um commit verde (`npx vitest run` + `npm run test:front`); as muda
 Visibilidade) são conferidas no navegador.
 
 ## 7. Decisões em aberto (com recomendação)
+
+> **Respondidas em 30/09/2026:** **D1** manter o formato da API; **D2** remover as colunas, como último commit,
+> com baseline no `migrateRunner`; **D3** mapeamento aprovado como proposto (refinado no plano: o 400 de "aluno sem
+> vínculo" só vale para dado de vínculo de verdade, porque o formulário envia defaults); **D7** incluir
+> `user_linhas_pesquisa`, antes da remoção das colunas. **D4, D5, D6** seguiram a recomendação (não foram
+> perguntadas); **D8** e **D9** ficam fora. O achado §4.11 (senha padrão) virou tarefa separada.
 
 **D1 — Formato da API de usuários.** (a) **manter** `perfil_geral`/`dados_academicos`/`perfil_aluno`/
 `perfil_professor`, montados a partir de `pessoas`; (b) renomear já (`pessoa: {…}`, `vinculo.dados`).
