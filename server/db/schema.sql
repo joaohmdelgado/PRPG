@@ -6,12 +6,8 @@
 -- server/db/migrations/arquivo/. As migracoes ficam arquivadas para o registro;
 -- este arquivo e a fonte unica para `npm run db:migrate` reconstruir do zero.
 --
--- As FKs dos 8 `programa_id` (Fase A.11) ja foram aplicadas. As FKs
--- polimorficas de `vinculos.pessoa_id` e `camara_relatorias.relator_id`
--- continuam pendentes de proposito: apertar `vinculos.pessoa_id` exige
--- reescrever simultaneamente a criacao de usuario, a listagem por pessoa e
--- a limpeza ao excluir usuario (ver nota em `vinculos` mais abaixo) - fica
--- para a Fase B.3.
+-- As FKs dos 8 `programa_id` (Fase A.11) e de vinculos.pessoa_id /
+-- camara_relatorias.relator_id -> pessoas (B.11) ja foram aplicadas.
 
 -- ============================ Usuarios ============================
 CREATE TABLE IF NOT EXISTS users (
@@ -342,8 +338,8 @@ END$$;
 -- "Paginas" abaixo e a migracao 2026-09-14_pages_programa_scoped.sql.
 
 -- Fase A.2 (G1, PLANO.md): pessoas passa a ser a identidade de quem tem login
--- (users.pessoa_id abaixo) e de quem nao tem (vinculos.pessoa_id legado,
--- camara_relatorias.relator_id). email_institucional/telefones ainda vivem
+-- (users.pessoa_id abaixo) e de quem nao tem (vinculos.pessoa_id,
+-- camara_relatorias.relator_id — FK desde a B.11). email_institucional/telefones ainda vivem
 -- aqui (a extracao para `contatos` e a Fase A.5b, ainda nao aplicada).
 CREATE TABLE IF NOT EXISTS pessoas (
   id                  TEXT PRIMARY KEY,
@@ -400,12 +396,7 @@ CREATE TABLE IF NOT EXISTS modalidades (
 CREATE TABLE IF NOT EXISTS vinculos (
   id              TEXT PRIMARY KEY,
   programa_id     TEXT REFERENCES programas(id) ON DELETE CASCADE,
-  -- pessoa_id é polimórfico: aponta para users.id OU pessoas.id (legado),
-  -- resolvido na aplicação. FK real fica para a Fase B.3, quando buildCombined
-  -- vira JOIN — apertar a FK agora exigiria mudar simultaneamente a criação
-  -- de usuário, a listagem por pessoa e a limpeza de vínculos ao excluir
-  -- usuário (todas hoje comparam pessoa_id a users.id), risco desproporcional
-  -- para o ganho nesta fase.
+  -- pessoas.id (FK logo após camara_relatorias — B.11). O login, quando há, é users.pessoa_id = pessoa_id.
   pessoa_id       TEXT,
   papel           TEXT,
   portaria        TEXT,
@@ -1037,7 +1028,7 @@ CREATE TABLE IF NOT EXISTS camara_pauta_itens (
 CREATE TABLE IF NOT EXISTS camara_relatorias (
   id                  TEXT PRIMARY KEY,
   processo_id         TEXT NOT NULL REFERENCES processos(id) ON DELETE CASCADE,
-  -- relator_id é polimórfico (users.id ou pessoas.id), como em vinculos.pessoa_id
+  -- pessoas.id (FK abaixo — B.11); relator_nome guarda o nome histórico.
   relator_id          TEXT,
   relator_nome        TEXT NOT NULL,   -- desnormalizado: nomes históricos sem cadastro
   programa_id         TEXT REFERENCES programas(id) ON DELETE SET NULL,
@@ -1052,6 +1043,22 @@ CREATE TABLE IF NOT EXISTS camara_relatorias (
   criado_por          TEXT
 );
 CREATE INDEX IF NOT EXISTS camara_rel_proc_idx ON camara_relatorias(processo_id);
+-- B.11 (D-B11a): vinculos.pessoa_id e camara_relatorias.relator_id apontam
+-- só para pessoas(id). RESTRICT: nada apaga `pessoas`; mesclar duplicadas
+-- exige repontar os vínculos antes.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vinculos_pessoa_id_fkey') THEN
+    ALTER TABLE vinculos ADD CONSTRAINT vinculos_pessoa_id_fkey
+      FOREIGN KEY (pessoa_id) REFERENCES pessoas(id) ON DELETE RESTRICT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'camara_relatorias_relator_id_fkey') THEN
+    ALTER TABLE camara_relatorias ADD CONSTRAINT camara_relatorias_relator_id_fkey
+      FOREIGN KEY (relator_id) REFERENCES pessoas(id) ON DELETE RESTRICT;
+  END IF;
+END$$;
+CREATE INDEX IF NOT EXISTS vinculos_pessoa_idx ON vinculos(pessoa_id);
+CREATE INDEX IF NOT EXISTS camara_rel_relator_idx ON camara_relatorias(relator_id);
 
 -- Atos resultantes (resolução, decisão, portaria).
 CREATE TABLE IF NOT EXISTS camara_atos (

@@ -88,7 +88,7 @@ describe('GET /api/minha-conta', () => {
     expect(proc.status).toBe(201);
     await pool.query(
       `INSERT INTO camara_relatorias (id, processo_id, relator_id, relator_nome, prazo_devolucao, ativa)
-       VALUES ('rel-1', $1, 'prof-1', 'Prof. Ana', '2000-01-10', TRUE)`,
+       VALUES ('rel-1', $1, (SELECT pessoa_id FROM users WHERE id = 'prof-1'), 'Prof. Ana', '2000-01-10', TRUE)`,
       [proc.body.id]
     );
     const res = await as(profToken)(request(app).get('/api/minha-conta'));

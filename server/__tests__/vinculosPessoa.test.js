@@ -12,10 +12,8 @@ import professoresImporter from '../services/importers/professoresImporter.js';
 import alunosImporter from '../services/importers/alunosImporter.js';
 import { hojeISO } from '../utils/datas.js';
 
-// B.11 (docs/analise-fk-vinculos-pessoa-id-b3.md). Durante a transição cada
-// caso roda com o vínculo gravado pelo users.id (legado) e pelo pessoas.id; a
-// Task 10 (FK) deixa só 'pessoa'.
-const FORMAS = ['usuario', 'pessoa'];
+// Desde a Task 10 (FK) só existe a forma pessoas.id.
+const FORMAS = ['pessoa'];
 const gravado = (forma, pessoa) => (forma === 'usuario' ? pessoa.usuarioId : pessoa.pessoaId);
 const vincular = (id, pessoaIdGravado, papel, programaId = 'prog-1') => pool.query(
   `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, ativo, criado_em) VALUES ($1, $2, $3, $4, TRUE, now())`,

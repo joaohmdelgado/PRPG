@@ -55,7 +55,7 @@ describe('Fase L — artefatos da Câmara', () => {
     const proc = await asAdmin(request(app).post('/api/camara/processos')).send({ numero: NUP, assunto: 'Meu processo' });
     await pool.query(
       `INSERT INTO camara_relatorias (id, processo_id, relator_id, relator_nome, prazo_devolucao, ativa, criado_em)
-       VALUES ('rel-meu-1', $1, 'admin-test', 'Admin Teste', '2026-09-01', TRUE, now())`,
+       VALUES ('rel-meu-1', $1, (SELECT pessoa_id FROM users WHERE id = 'admin-test'), 'Admin Teste', '2026-09-01', TRUE, now())`,
       [proc.body.id]
     );
     const res = await asAdmin(request(app).get('/api/camara/meus-processos'));

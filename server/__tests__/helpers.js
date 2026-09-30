@@ -16,17 +16,18 @@ import { usersRepo } from '../db/repositories.js';
 // é a única FK NO ACTION entre estas tabelas (atos_serie_id_fkey); todas as
 // outras entre elas são ON DELETE CASCADE/SET NULL, e as demais NO ACTION
 // (processos -> unidades) apontam para `unidades`, que não é apagada.
+// `pessoas` vem depois de `vinculos` e `camara_relatorias` (FKs RESTRICT da B.11).
 // resetDb.test.js confere a ordem e a cobertura contra o catálogo do banco.
 export const RESET_TABLES = [
   'news', 'editais', 'resolucoes', 'formularios', 'portarias', 'teses_dissertacoes',
   'faq', 'disciplinas', 'bolsas', 'pages', 'users', 'taxonomias', 'taxonomia_refs',
-  'grupos_pesquisa', 'calendarios', 'calendario_milestones', 'programas', 'pessoas',
+  'grupos_pesquisa', 'calendarios', 'calendario_milestones', 'programas',
   'modalidades', 'vinculos', 'metricas_anuais',
   'linhas_pesquisa', 'programa_linhas_pesquisa', 'user_linhas_pesquisa',
   'vocabularios',
   'inscricoes_proficiencia',
   'processos', 'camara_reunioes', 'camara_pauta_itens',
-  'camara_relatorias', 'camara_atos',
+  'camara_relatorias', 'camara_atos', 'pessoas',
   'arquivos', 'anexos', 'contatos', 'eventos',
   'atos', 'ato_series', 'ato_referencias', 'documentos', 'declaracoes',
   'pos_doutorados', 'notificacoes', 'ato_diplomas',
