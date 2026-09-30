@@ -286,3 +286,8 @@ navegador, PROFIAP mostrou os mesmos 16 docentes e 73 discentes, e o mesmo coord
 **Achado na execução, fora do inventário do §3.1:** `POST /api/estrutura/unidades/:id/membros` gravava o `pessoaId`
 recebido sem resolver. Passou a usar `pessoaCanonica` (commit `5bf5ec3`); sem isso, a FK recusaria um `users.id`
 vindo por essa API.
+
+**Achado na Task 11:** `services/prazos.js` também usava `resolverEmail` com `atos.criado_por`, que guarda um
+`users.id`, no aviso de reserva pendente. Com o módulo na forma final, esse `users.id` deixou de ser resolvido. Ganhou
+`resolverEmailDoUsuario`: o e-mail da pessoa ligada ao login e, sem pessoa, o e-mail de login (commit `722bc1a`).
+Os demais chamadores recebem `relator_id`, `vinculos.pessoa_id` ou `solicitante_pessoa_id`, que são `pessoas.id` com FK.
