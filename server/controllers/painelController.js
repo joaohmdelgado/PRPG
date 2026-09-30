@@ -10,6 +10,7 @@ import { sqlPublicado } from '../utils/publicacao.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { posDoutoradoRepo } from '../db/posDoutoradoRepo.js';
 import { estadoDoAgendador } from '../services/agendador.js';
+import { joinPessoa } from '../db/identidadeVinculo.js';
 
 const LIMITE_ITENS = 8;
 const addDias = (iso, n) => {
@@ -89,8 +90,7 @@ export const getPendencias = async (req, res) => {
               COALESCE(pe.nome, u.perfil_nome) AS pessoa
          FROM vinculos v
          LEFT JOIN programas pr ON pr.id = v.programa_id
-         LEFT JOIN pessoas pe ON pe.id = v.pessoa_id
-         LEFT JOIN users u ON u.id = v.pessoa_id
+         ${joinPessoa('v.pessoa_id', { p: 'pe' })}
         WHERE v.ativo AND v.data_fim_mandato BETWEEN $1 AND $2
           AND v.papel IN ('COORDENADOR_ATUAL', 'COORDENADOR', 'VICE_COORDENADOR', 'SUBSTITUTO')
         ORDER BY v.data_fim_mandato`, [hoje, addDias(hoje, 30)]);

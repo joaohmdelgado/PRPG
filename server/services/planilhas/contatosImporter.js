@@ -17,6 +17,7 @@ import crypto from 'crypto';
 import { limpar, chaveTexto, linhasDaAba, indiceColunas } from './nucleo.js';
 import { carregarProgramas, carregarPessoas, parentesesDoNome, religarProcessos, sugerirPrograma } from './cadastro.js';
 import { normalizarEmail, formatarTelefone } from '../../utils/contato.js';
+import { joinPessoa, pessoaReal } from '../../db/identidadeVinculo.js';
 
 const COLUNAS = {
   programa: 'PROGRAMA', sigla: 'SIGLA', nota: 'NOTA CAPES',
@@ -263,12 +264,10 @@ export default {
         // Mesmo papel já ocupado no cadastro? Mesma pessoa = nada a fazer;
         // outra pessoa = pendência (o vínculo atual não é encerrado).
         const { rows: atuais } = await ctx.q(`
-          SELECT v.id, v.pessoa_id, COALESCE(pe.nome, pu.nome, u.perfil_nome) AS nome,
-                 COALESCE(u.pessoa_id, v.pessoa_id) AS pessoa_real
+          SELECT v.id, v.pessoa_id, COALESCE(p.nome, u.perfil_nome) AS nome,
+                 ${pessoaReal('v.pessoa_id')} AS pessoa_real
             FROM vinculos v
-            LEFT JOIN pessoas pe ON pe.id = v.pessoa_id
-            LEFT JOIN users u ON u.id = v.pessoa_id
-            LEFT JOIN pessoas pu ON pu.id = u.pessoa_id
+            ${joinPessoa('v.pessoa_id')}
            WHERE v.programa_id = $1 AND v.papel = ANY($2) AND v.ativo
              AND (v.data_fim_mandato IS NULL OR v.data_fim_mandato >= CURRENT_DATE)`,
           [programa.id, PAPEIS_EQUIVALENTES[p.papel]]);

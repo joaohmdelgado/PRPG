@@ -5,6 +5,7 @@
 //   POST /api/painel/qualidade/links/verificar dispara o verificador de links (202)
 import { query } from '../db/pool.js';
 import { verificarLinks, estadoVerificacao } from '../services/verificadorLinks.js';
+import { joinPessoa } from '../db/identidadeVinculo.js';
 
 const LIMITE = 50;
 
@@ -62,8 +63,7 @@ export const getQualidade = async (_req, res) => {
     SELECT v.id, v.papel, v.programa_id, pr.sigla, pr.nome AS programa_nome, COALESCE(pe.nome, u.perfil_nome) AS pessoa
       FROM vinculos v
       LEFT JOIN programas pr ON pr.id = v.programa_id
-      LEFT JOIN pessoas pe ON pe.id = v.pessoa_id
-      LEFT JOIN users u ON u.id = v.pessoa_id
+      ${joinPessoa('v.pessoa_id', { p: 'pe' })}
      WHERE v.ativo AND v.data_inicio_mandato IS NULL AND v.data_fim_mandato IS NULL
      ORDER BY v.papel, pr.nome`);
   const MANDATO = /^(COORDENADOR|VICE_COORDENADOR|SUBSTITUTO|SECRETARIO|POS_DOUTORANDO|COMISSAO_|LIDER_GRUPO)/;

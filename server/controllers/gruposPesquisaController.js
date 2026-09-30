@@ -5,6 +5,7 @@ import { filtrarPorEscopo } from '../utils/escopoPrograma.js';
 import { query } from '../db/pool.js';
 import { serverError } from '../utils/httpError.js';
 import { estaPublicado } from '../utils/publicacao.js';
+import { joinPessoa } from '../db/identidadeVinculo.js';
 
 // Fase D: líderes são linhas de `vinculos` (papel='LIDER_GRUPO_PESQUISA',
 // grupo_pesquisa_id), não mais o JSONB field_lideres — substitui o
@@ -19,8 +20,7 @@ const listarLideres = async (grupoIds) => {
             u.id AS u_id, u.email AS u_email, u.perfil_nome AS u_nome,
             p.id AS p_id, p.nome AS p_nome, p.email_institucional AS p_email
      FROM vinculos v
-     LEFT JOIN users u ON u.id = v.pessoa_id
-     LEFT JOIN pessoas p ON p.id = v.pessoa_id
+     ${joinPessoa('v.pessoa_id')}
      WHERE v.papel = $1 AND v.grupo_pesquisa_id = ANY($2) AND v.ativo = TRUE`,
     [LIDER_PAPEL, grupoIds]
   );

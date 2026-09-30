@@ -11,6 +11,7 @@
 import { isPlainObject } from '../utils/sanitize.js';
 import { query } from '../db/pool.js';
 import { contatosRepo } from '../db/contatosRepo.js';
+import { joinPessoa, nomePessoa, campoPessoa } from '../db/identidadeVinculo.js';
 
 export const CARGOS = {
   COORDENADOR_ATUAL: 'Coordenadores',
@@ -18,26 +19,20 @@ export const CARGOS = {
   TAE: 'Secretários',
 };
 
-// Resolve, para cada vínculo do papel pedido, a pessoa "de identidade"
-// (pessoas.id) por trás do vinculos.pessoa_id polimórfico (users.id ou
-// pessoas.id legado) — mesma resolução usada em B.2/B.3.
+// Para cada vínculo do papel pedido, a pessoa (pessoas.id) e o login por trás
+// dele — identidadeVinculo.js (B.11).
 const AGENDA_SELECT = `
   SELECT v.id AS vinculo_id, v.papel, v.programa_id, v.data_inicio_mandato,
     v.carater, v.ato_id,
     pr.sigla AS programa_sigla, pr.nome AS programa_nome, pr.campus,
     u.id AS user_id, u.email AS user_email, u.perfil_nome AS user_nome,
     u.perfil_foto_url AS user_foto_url,
-    -- contatos.entidade_id (entidade='pessoa') referencia pessoas.id; cai para
-    -- users.id quando o usuario ainda nao tem pessoa vinculada (users.pessoa_id
-    -- e preenchido pelo backfill da A.2, nem sempre presente, ex. em testes).
-    COALESCE(up.id, p.id, u.id) AS pessoa_id,
-    COALESCE(up.nome, u.perfil_nome, p.nome) AS nome,
-    COALESCE(up.foto_url, u.perfil_foto_url, p.foto_url) AS foto_url
+    COALESCE(p.id, u.id) AS pessoa_id,
+    ${nomePessoa()} AS nome,
+    ${campoPessoa('foto_url', 'perfil_foto_url')} AS foto_url
   FROM vinculos v
   LEFT JOIN programas pr ON pr.id = v.programa_id
-  LEFT JOIN users u ON u.id = v.pessoa_id
-  LEFT JOIN pessoas up ON up.id = u.pessoa_id
-  LEFT JOIN pessoas p ON p.id = v.pessoa_id
+  ${joinPessoa('v.pessoa_id')}
   WHERE v.ativo = TRUE
 `;
 

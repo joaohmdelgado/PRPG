@@ -232,3 +232,16 @@ describe('B.11 pós-doutorado — pessoa com login', () => {
     expect(r.body).toMatchObject({ nome: 'Pós Doc', email: 'pd@t.br' });
   });
 });
+
+describe.each(FORMAS)('B.11 grupos de pesquisa — líder gravado por %s', (forma) => {
+  it('o líder sai com o id de login (o formulário compara com a lista de professores)', async () => {
+    const ana = await seedUserComPessoa({ id: 'u-ana', email: 'ana@t.br', nome: 'Ana Líder' });
+    const g = await asAdmin(request(app).post('/api/grupos-pesquisa')).send({ title: 'Grupo B11', body: { value: '', summary: '' } });
+    await pool.query(
+      `INSERT INTO vinculos (id, grupo_pesquisa_id, pessoa_id, papel, ativo) VALUES ('v-lid', $1, $2, 'LIDER_GRUPO_PESQUISA', TRUE)`,
+      [g.body.id, gravado(forma, ana)]
+    );
+    const r = await asAdmin(request(app).get('/api/grupos-pesquisa'));
+    expect(r.body.find((x) => x.id === g.body.id).lideres).toEqual([expect.objectContaining({ id: 'u-ana', nome: 'Ana Líder' })]);
+  });
+});

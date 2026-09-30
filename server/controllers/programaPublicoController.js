@@ -10,6 +10,7 @@ import { sqlPublicado } from '../utils/publicacao.js';
 import { calculateEditalStatus } from './editaisController.js';
 import { linkPrograma } from '../utils/programaResumo.js';
 import { indicadoresDoPrograma } from '../db/indicadoresRepo.js';
+import { joinPessoa, nomePessoa, campoPessoa } from '../db/identidadeVinculo.js';
 
 const CAMPOS_PUBLICOS = [
   'nome', 'slug', 'status', 'campus', 'em_rede', 'nome_rede', 'grande_area', 'area_conhecimento',
@@ -19,12 +20,11 @@ const CAMPOS_PUBLICOS = [
 ];
 const PAPEL_DOCENTE = { DOCENTE_PERMANENTE: 'Permanente', DOCENTE_COLABORADOR: 'Colaborador', DOCENTE_VISITANTE: 'Visitante' };
 
-// Pessoa do vínculo: users OU pessoas (vinculos.pessoa_id é polimórfico).
+// Pessoa do vínculo — identidadeVinculo.js (B.11).
 const PESSOA_SQL = `
-  SELECT v.papel, coalesce(u.perfil_nome, p.nome) AS nome, coalesce(u.acad_lattes, p.lattes) AS lattes
+  SELECT v.papel, ${nomePessoa()} AS nome, ${campoPessoa('lattes', 'acad_lattes')} AS lattes
     FROM vinculos v
-    LEFT JOIN users u ON u.id = v.pessoa_id
-    LEFT JOIN pessoas p ON p.id = v.pessoa_id
+    ${joinPessoa('v.pessoa_id')}
    WHERE v.programa_id = $1 AND v.ativo IS NOT FALSE AND v.papel = ANY($2::text[])
      AND (v.data_fim_mandato IS NULL OR v.data_fim_mandato >= current_date)
    ORDER BY v.ordem, nome`;

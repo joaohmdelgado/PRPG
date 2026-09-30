@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { pool, query } from './pool.js';
 import { contatosRepo } from './contatosRepo.js';
 import { hojeISO } from '../utils/datas.js';
+import { joinPessoa } from './identidadeVinculo.js';
 
 // Equipe e Estrutura Organizacional da PRPG (Fase H.4): setores em
 // `unidades` (árvore por unidade_pai_id a partir de 'prpg'), pessoas em
@@ -137,8 +138,7 @@ export async function carregarEstrutura({ todos = false } = {}) {
             coalesce(p.nome, u.perfil_nome) AS nome, coalesce(p.foto_url, u.perfil_foto_url) AS foto,
             voc.rotulo AS papel_rotulo
        FROM vinculos v
-       LEFT JOIN pessoas p ON p.id = v.pessoa_id
-       LEFT JOIN users u ON u.id = v.pessoa_id
+       ${joinPessoa('v.pessoa_id')}
        LEFT JOIN vocabularios voc ON voc.dominio = 'vinculo.papel' AND voc.valor = v.papel AND voc.programa_id IS NULL
       WHERE v.unidade_id = ANY($1) AND v.ativo IS NOT FALSE
         AND (v.data_fim_mandato IS NULL OR v.data_fim_mandato >= $2)
