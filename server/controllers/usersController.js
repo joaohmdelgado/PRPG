@@ -6,6 +6,7 @@ import { usersRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { isProgramaScoped } from '../middleware/authMiddleware.js';
 import { responderLista, filtrarTexto } from '../utils/listagem.js';
 import { PAPEIS_DISCENTE, PAPEIS_DOCENTE } from './programasController.js';
+import { doUsuario } from '../db/identidadeVinculo.js';
 
 // Papéis (docente + discente) que representam vínculo a um programa, para
 // exibir os programas de qualquer usuário (aluno ou professor) na lista.
@@ -39,15 +40,16 @@ const anexarProgramasVinculo = async (users) => {
   const ids = users.map((u) => u.id);
   if (ids.length === 0) return users;
   const { rows } = await query(
-    `SELECT v.pessoa_id, p.id AS programa_id, p.sigla, p.nome
+    `SELECT u.id AS usuario_id, p.id AS programa_id, p.sigla, p.nome
        FROM vinculos v
+       JOIN users u ON ${doUsuario('v.pessoa_id')}
        JOIN programas p ON p.id = v.programa_id
-      WHERE v.ativo = TRUE AND v.papel = ANY($1::text[]) AND v.pessoa_id = ANY($2::text[])`,
+      WHERE v.ativo = TRUE AND v.papel = ANY($1::text[]) AND u.id = ANY($2::text[])`,
     [PAPEIS_VINCULO_PROGRAMA, ids]
   );
   const porPessoa = {};
   for (const r of rows) {
-    (porPessoa[r.pessoa_id] ||= []).push({ id: r.programa_id, sigla: r.sigla, nome: r.nome });
+    (porPessoa[r.usuario_id] ||= []).push({ id: r.programa_id, sigla: r.sigla, nome: r.nome });
   }
   return users.map((u) => ({ ...u, programas_vinculo: porPessoa[u.id] || [] }));
 };

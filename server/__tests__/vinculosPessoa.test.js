@@ -171,3 +171,30 @@ describe.each(FORMAS)('B.11 programas — vínculo gravado por %s', (forma) => {
     expect(rows[0].perfil_professor.programas).toEqual([]);
   });
 });
+
+describe.each(FORMAS)('B.11 usuários e escopo — vínculo gravado por %s', (forma) => {
+  beforeEach(async () => {
+    const ana = await seedUserComPessoa({ id: 'u-ana', email: 'ana@t.br', nome: 'Ana Aluna', roles: ['Aluno'] });
+    await vincular('v-disc', gravado(forma, ana), 'DISCENTE_MESTRADO');
+  });
+
+  it('a lista de usuários mostra o programa do vínculo', async () => {
+    const r = await asAdmin(request(app).get('/api/users'));
+    expect(r.body.find((u) => u.id === 'u-ana').programas_vinculo).toEqual([{ id: 'prog-1', sigla: 'PU', nome: 'Programa Um' }]);
+  });
+
+  it('o gestor do programa vê o aluno vinculado', async () => {
+    await seedUser({ id: 'gp', email: 'gp@t.br', roles: ['GestorPrograma'] });
+    await pool.query(`UPDATE users SET programa_id = 'prog-1' WHERE id = 'gp'`);
+    const gp = await login('gp@t.br');
+    const lista = await request(app).get('/api/users').set('Authorization', `Bearer ${gp}`);
+    expect(lista.body.map((u) => u.id)).toContain('u-ana');
+    const um = await request(app).get('/api/users/u-ana').set('Authorization', `Bearer ${gp}`);
+    expect(um.status).toBe(200);
+  });
+
+  it('a proficiência reconhece o aluno matriculado', async () => {
+    const r = await request(app).post('/api/proficiencia/verificar-aluno').send({ nome: 'Ana Aluna' });
+    expect(r.body).toEqual({ encontrado: true });
+  });
+});

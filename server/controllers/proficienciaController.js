@@ -6,6 +6,7 @@ import QRCode from 'qrcode';
 import { isPlainObject } from '../utils/sanitize.js';
 import { inscricoesProficienciaRepo, editaisRepo, usersRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
+import { doUsuario } from '../db/identidadeVinculo.js';
 import { emitir, verificar } from '../services/declaracoes.js';
 import { serverError } from '../utils/httpError.js';
 
@@ -121,7 +122,7 @@ export const verificarAluno = async (req, res) => {
   const { rows } = await query(
     `SELECT 1
        FROM users u
-       JOIN vinculos v ON v.pessoa_id = u.id
+       JOIN vinculos v ON ${doUsuario('v.pessoa_id')}
       WHERE v.ativo = TRUE
         AND v.papel = ANY($1::text[])
         AND lower(regexp_replace(btrim(u.perfil_nome), '\\s+', ' ', 'g')) = $2

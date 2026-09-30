@@ -7,6 +7,7 @@ import { query } from './pool.js';
 import { parseDataPt } from '../utils/datas.js';
 import { PAGINAS_FIXAS } from '../utils/micrositeMenu.js';
 import { sincronizarPessoaDoUsuario } from './pessoaDoUsuario.js';
+import { doUsuario } from './identidadeVinculo.js';
 
 const toArr = (v) => (Array.isArray(v) ? v : v != null && v !== '' ? [v] : []);
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
@@ -335,7 +336,7 @@ export const usersRepo = {
   async getScopedToPrograma(programaId) {
     const { rows } = await query(
       `SELECT DISTINCT u.* FROM users u
-       LEFT JOIN vinculos v ON v.pessoa_id = u.id AND v.programa_id = $1
+       LEFT JOIN vinculos v ON ${doUsuario('v.pessoa_id')} AND v.programa_id = $1
        WHERE u.programa_id = $1 OR v.id IS NOT NULL
        ORDER BY u.criado_em ASC`,
       [programaId]
@@ -345,7 +346,8 @@ export const usersRepo = {
   // True se o usuário tem algum vínculo (ativo ou não) com o programa.
   async isLinkedToPrograma(userId, programaId) {
     const { rows } = await query(
-      'SELECT 1 FROM vinculos WHERE pessoa_id = $1 AND programa_id = $2 LIMIT 1',
+      `SELECT 1 FROM vinculos v JOIN users u ON ${doUsuario('v.pessoa_id')}
+        WHERE u.id = $1 AND v.programa_id = $2 LIMIT 1`,
       [userId, programaId]
     );
     return rows.length > 0;
