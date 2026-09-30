@@ -56,6 +56,23 @@ describe('H.4 — estrutura pública', () => {
   });
 });
 
+describe('B.11 — membro da estrutura informado por id', () => {
+  it('users.id vira o pessoas.id da pessoa; id que não é de ninguém dá 400 sem gravar', async () => {
+    const u = await seedUser({ id: 'u-est', email: 'est@t.br', roles: ['Professor'], perfil_geral: { nome: 'Pessoa da Estrutura' } });
+    const add = await auth(request(app).post('/api/estrutura/unidades/prpg-lato-sensu/membros'))
+      .send({ pessoaId: 'u-est', nome: 'Pessoa da Estrutura', papel: 'SERVIDOR' });
+    expect(add.status).toBe(201);
+    const { rows } = await pool.query(`SELECT pessoa_id FROM vinculos WHERE unidade_id = 'prpg-lato-sensu' AND pessoa_id IN ('u-est', $1)`, [u.pessoaId]);
+    expect(rows).toEqual([{ pessoa_id: u.pessoaId }]);
+
+    const antes = (await pool.query('SELECT count(*)::int AS n FROM vinculos')).rows[0].n;
+    const ruim = await auth(request(app).post('/api/estrutura/unidades/prpg-lato-sensu/membros'))
+      .send({ pessoaId: 'ninguem', nome: 'Ninguém', papel: 'SERVIDOR' });
+    expect(ruim.status).toBe(400);
+    expect((await pool.query('SELECT count(*)::int AS n FROM vinculos')).rows[0].n).toBe(antes);
+  });
+});
+
 describe('H.4 — edição no painel', () => {
   it('adiciona pessoa com função e contatos, edita e reordena', async () => {
     const add = await auth(request(app).post('/api/estrutura/unidades/prpg-lato-sensu/membros')).send({

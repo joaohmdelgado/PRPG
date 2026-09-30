@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { pool, query } from './pool.js';
 import { contatosRepo } from './contatosRepo.js';
 import { hojeISO } from '../utils/datas.js';
-import { joinPessoa } from './identidadeVinculo.js';
+import { joinPessoa, pessoaCanonica } from './identidadeVinculo.js';
 
 // Equipe e Estrutura Organizacional da PRPG (Fase H.4): setores em
 // `unidades` (árvore por unidade_pai_id a partir de 'prpg'), pessoas em
@@ -67,7 +67,7 @@ export async function garantirEstruturaPrpg() {
 async function pessoaPorNome(nome) {
   const { rows } = await query(
     `SELECT id FROM pessoas WHERE lower(nome) = lower($1)
-     UNION ALL SELECT coalesce(pessoa_id, id) FROM users WHERE lower(perfil_nome) = lower($1)
+     UNION ALL SELECT pessoa_id FROM users WHERE lower(perfil_nome) = lower($1) AND pessoa_id IS NOT NULL
      LIMIT 1`,
     [nome.trim()]
   );
@@ -78,8 +78,10 @@ async function pessoaPorNome(nome) {
 }
 
 // Cria o vínculo de uma pessoa com um setor, com os contatos da função.
+// `pessoaId` vindo da API (users.id ou pessoas.id) vira o pessoas.id a gravar;
+// id que não é de ninguém responde 400 antes de gravar (B.11).
 export async function adicionarMembro(unidadeId, { pessoaId, nome, papel, funcao, ordem = 0, foto, contatos = [] }, actor = null) {
-  const pid = pessoaId || await pessoaPorNome(nome);
+  const pid = pessoaId ? await pessoaCanonica(pessoaId) : await pessoaPorNome(nome);
   if (foto) await query('UPDATE pessoas SET foto_url = $2 WHERE id = $1', [pid, foto]);
   const id = crypto.randomUUID();
   await query(
