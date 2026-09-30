@@ -597,7 +597,7 @@ export const buscaPrograma = async (req, res) => {
 // Corpo Docente (Fase 3)
 // ──────────────────────────────────────────────────────────────────────────────
 
-export const PAPEIS_DOCENTE = ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR'];
+export const PAPEIS_DOCENTE = ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR', 'DOCENTE_VISITANTE'];
 
 // Membros ativos de um programa em certos papéis, com a pessoa resolvida
 // (identidadeVinculo.js) — base das listas públicas e do painel.

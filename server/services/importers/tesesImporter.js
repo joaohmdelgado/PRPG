@@ -10,9 +10,9 @@ import { slugify } from '../../utils/slug.js';
 //
 // Fase D (Legado Drupal): o Autor não guarda mais um users.id (nem, pior,
 // às vezes um nome solto) — autor_pessoa_id é sempre um pessoas.id de verdade.
-// Quando o aluno já foi importado (perfil_aluno.uid_legado), resolvemos o
-// usuário e daí a pessoa (users.pessoa_id); senão criamos uma pessoa mínima
-// com o nome derivado do slug do export (resolverOuCriarPessoa).
+// Quando o aluno já foi importado (B.13/G1: vinculos.dados.uid_legado com a
+// origem do site), a pessoa vem direto do vínculo; senão criamos uma pessoa
+// mínima com o nome derivado do slug do export (resolverOuCriarPessoa).
 
 // Lê o primeiro item de um campo Drupal (lista) e devolve a chave pedida.
 const first = (campo, chave = 'value') => {
@@ -87,18 +87,19 @@ const parse = (buffer) => {
 // com fallback no slug do título quando o uuid estiver ausente.
 const montarId = (m) => `tese-${slugify(m.uuid) || slugify(m.title)}`;
 
-// Resolve o autor para um usuário existente cujo perfil_aluno/perfil_professor tenha
-// uid_legado igual ao target_id do export. Retorna users.id ou null.
-const resolverAutorUserId = async (autorUid) => {
+// Resolve o autor para a pessoa cujo vínculo (aluno ou docente) guarda em
+// dados.uid_legado o target_id do export, na origem deste site (PROFIAP) — o uid
+// do Drupal é de cada site. Retorna pessoas.id ou null. Não passa por users.
+const resolverAutorPessoaId = async (autorUid) => {
   if (!autorUid) return null;
   const { rows } = await query(
-    `SELECT id FROM users
-     WHERE perfil_aluno->>'uid_legado' = $1
-        OR perfil_professor->>'uid_legado' = $1
-     LIMIT 1`,
+    `SELECT pessoa_id FROM vinculos
+      WHERE dados ->> 'uid_legado' = $1 AND dados ->> 'origem_import' = 'profiap'
+        AND pessoa_id IS NOT NULL
+      ORDER BY criado_em, id LIMIT 1`,
     [String(autorUid)]
   );
-  return rows[0]?.id ?? null;
+  return rows[0]?.pessoa_id ?? null;
 };
 
 // Indica se os campos relevantes mudaram (para distinguir atualizado de inalterado).
@@ -114,19 +115,11 @@ const mudou = (existente, dados) =>
 // Retorna { acao, nome, email, mensagem } — "email" não se aplica e fica vazio.
 const importOne = async (m, { programaId, actor, dryRun }) => {
   const id = montarId(m);
-  const autorUserId = await resolverAutorUserId(m.autor_uid);
-  // Aluno já cadastrado: resolve a pessoa por trás do usuário. Senão, cria uma
-  // pessoa mínima com o nome derivado do export (nunca guarda nome solto).
-  // Em dryRun não cria nada — só verifica se já existiria uma pessoa (preview).
-  let autorPessoaId = null;
-  if (!dryRun) {
-    autorPessoaId = autorUserId
-      ? await resolverOuCriarPessoa({ pessoaId: autorUserId })
-      : await resolverOuCriarPessoa({ nome: m.autor_nome });
-  } else if (autorUserId) {
-    const { rows } = await query('SELECT pessoa_id FROM users WHERE id = $1', [autorUserId]);
-    autorPessoaId = rows[0]?.pessoa_id || null;
-  }
+  // Aluno já importado: a pessoa do vínculo. Senão, cria uma pessoa mínima com o
+  // nome derivado do export (nunca guarda nome solto). Em dryRun não cria nada.
+  const autorVinculado = await resolverAutorPessoaId(m.autor_uid);
+  let autorPessoaId = autorVinculado;
+  if (!autorPessoaId && !dryRun) autorPessoaId = await resolverOuCriarPessoa({ nome: m.autor_nome });
 
   const dados = {
     id,
@@ -140,7 +133,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
 
   // Sufixo informativo para a coluna "Detalhe".
   const partes = [m.tipo, m.ano ? m.ano.slice(0, 4) : null];
-  partes.push(autorUserId ? 'autor vinculado a usuário' : (m.autor_nome ? 'autor cadastrado sem login' : null));
+  partes.push(autorVinculado ? 'autor vinculado a usuário' : (m.autor_nome ? 'autor cadastrado sem login' : null));
   const info = partes.filter(Boolean).join(', ');
   const suf = info ? ` (${info})` : '';
   const nome = m.autor_nome || m.title;

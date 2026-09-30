@@ -4,6 +4,7 @@ import { usersRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
 import { idsDaMesmaPessoa, pessoaCanonica } from '../../db/identidadeVinculo.js';
 import { PAPEIS_DOCENTE } from '../../controllers/programasController.js';
+import { gravarPerfilNosVinculos } from '../../db/perfilVinculo.js';
 
 // Importador de PROFESSORES a partir do export de usuários do site antigo
 // (Drupal: array de objetos onde cada campo é uma lista de { value | uri | url }).
@@ -150,9 +151,15 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
       },
       atualizado_em: new Date().toISOString(),
     };
-    await usersRepo.update(existente.id, merged, actor);
+    const atualizado = await usersRepo.update(existente.id, merged, actor);
     if (linhaIds.length > 0) await vincularLinhas(existente.id, linhaIds);
     await garantirVinculo(programaId, existente.id, papel);
+    // B.13/G1: a chave da importação (origem + uid) vai para o vínculo deste
+    // programa. Sem uid no export, nada é gravado (não apaga o de outro site).
+    if (m.uid_legado) {
+      await gravarPerfilNosVinculos(atualizado.pessoaId,
+        { perfil_professor: { uid_legado: m.uid_legado, origem_import: 'profiap' } }, { programaId });
+    }
     return { acao: 'atualizado', nome: m.nome, email: m.email, mensagem: 'Vinculado a este programa.' };
   }
 
@@ -188,6 +195,10 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
   const created = await usersRepo.create(novo, actor);
   if (linhaIds.length > 0) await vincularLinhas(created.id, linhaIds);
   await garantirVinculo(programaId, created.id, papel);
+  if (m.uid_legado) {
+    await gravarPerfilNosVinculos(created.pessoaId,
+      { perfil_professor: { uid_legado: m.uid_legado, origem_import: 'profiap' } }, { programaId });
+  }
   const linhasMsg = linhaIds.length > 0 ? ` (${linhaIds.length} linha(s) de pesquisa mapeada(s))` : '';
   return { acao: 'criado', nome: m.nome, email: m.email, mensagem: `Professor criado.${linhasMsg}` };
 };

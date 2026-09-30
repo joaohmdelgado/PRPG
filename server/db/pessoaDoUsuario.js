@@ -10,6 +10,14 @@ import { normalizarCpf, cpfValido } from '../utils/cpf.js';
 
 const vazio = (v) => v == null || String(v).trim() === '';
 
+// B.13 / G1: sexo, nacionalidade e estrangeiro vêm do perfil de aluno ou de
+// professor (o formulário os mostra em um dos dois); privacidade, do bloco próprio.
+const perfilDe = (u) => u.perfil_aluno || u.perfil_professor || {};
+const booleano = (v) => (v == null ? undefined : !!v);
+// Colunas booleanas: `false` é valor (propaga); no modo soVazios não entram
+// (COALESCE(NULLIF(col, ''), …) não se aplica a boolean).
+const BOOLEANAS = ['estrangeiro', 'priv_mostrar_email', 'priv_mostrar_telefone'];
+
 // Coluna de `pessoas` <- valor do usuário no formato do app (userFromRow).
 const CAMPOS = {
   nome: (u) => u.perfil_geral?.nome,
@@ -24,10 +32,15 @@ const CAMPOS = {
   orcid: (u) => u.dados_academicos?.orcid,
   google_scholar: (u) => u.dados_academicos?.google_scholar,
   publons: (u) => u.dados_academicos?.publons,
+  sexo: (u) => perfilDe(u).sexo,
+  nacionalidade: (u) => perfilDe(u).nacionalidade,
+  estrangeiro: (u) => booleano(perfilDe(u).estrangeiro),
+  priv_mostrar_email: (u) => booleano(u.privacidade?.mostrar_email),
+  priv_mostrar_telefone: (u) => booleano(u.privacidade?.mostrar_telefone),
 };
 
 // Sem `antes` (usuário novo): todo campo preenchido. Com `antes`: só o que
-// mudou e não ficou vazio.
+// mudou e não ficou vazio. `false` não é vazio (propaga); `undefined` é.
 export function camposAPropagar(antes, depois) {
   const out = {};
   for (const [col, ler] of Object.entries(CAMPOS)) {
@@ -42,7 +55,7 @@ export function camposAPropagar(antes, depois) {
 // `soVazios`: só preenche coluna vazia em `pessoas` (pessoa já existente que
 // o cadastro encontrou pelo CPF — o que veio de planilha não é sobrescrito).
 async function gravar(pessoaId, campos, { soVazios = false } = {}) {
-  const cols = Object.keys(campos).filter((c) => !(soVazios && c === 'cpf'));
+  const cols = Object.keys(campos).filter((c) => !(soVazios && (c === 'cpf' || BOOLEANAS.includes(c))));
   if (!cols.length) return;
   const params = [pessoaId, ...cols.map((c) => campos[c])];
   const sets = cols.map((c, i) => (soVazios

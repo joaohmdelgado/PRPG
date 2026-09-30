@@ -141,6 +141,15 @@ async function vinculosDa(pessoaId, papeis, programaId) {
   return rows;
 }
 
+// Mesma regra de gravarAluno, sem gravar nada: quem chama confere ANTES de
+// gravar o usuário, para o 400 não deixar a gravação pela metade.
+export async function verificarPerfilAluno(pessoaId, perfil, { programaId = null } = {}) {
+  if (!perfil || !temDadoDeVinculo(perfil)) return;
+  if (!pessoaId || !vinculoPrincipalAluno(await vinculosDa(pessoaId, PAPEIS_ALUNO, programaId))) {
+    throw new PerfilSemVinculo();
+  }
+}
+
 // O formulário tem UM perfil de aluno; ele é o do vínculo principal (o mesmo que
 // montarPerfilAluno mostra). Gravar em todos os vínculos de aluno copiaria a entrada/
 // o nível do doutorado atual para o egresso do mestrado, por exemplo.
@@ -205,7 +214,11 @@ async function gravarProfessor(pessoaId, perfil, { programaId, reconciliarProgra
   }
   if (!reconciliarProgramas || !Array.isArray(perfil.programas)) return;
 
-  const pedidos = [...new Set(perfil.programas.filter(Boolean))];
+  // Só programas que existem: o array antigo pode guardar id de programa excluído
+  // (os vínculos dele saíram em cascata), e isso não pode travar a gravação.
+  const informados = [...new Set(perfil.programas.filter(Boolean).map(String))];
+  const { rows: existentes } = await query('SELECT id FROM programas WHERE id = ANY($1::text[])', [informados]);
+  const pedidos = informados.filter((pid) => existentes.some((r) => r.id === pid));
   const todos = await vinculosDa(pessoaId, PAPEIS_DOCENTE_TODOS, null);
   const ativosComPrograma = todos.filter((t) => t.ativo !== false && t.programa_id);
   // Programa novo: o tipo do formulário; sem ele, o do vínculo principal.

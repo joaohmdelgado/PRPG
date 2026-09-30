@@ -4,12 +4,14 @@ import { usersRepo, taxonomiaRefsRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
 import { idsDaMesmaPessoa, pessoaCanonica } from '../../db/identidadeVinculo.js';
 import { PAPEIS_DISCENTE } from '../../controllers/programasController.js';
+import { gravarPerfilNosVinculos, PAPEIS_DOCENTE_TODOS } from '../../db/perfilVinculo.js';
 import { slugify } from '../../utils/slug.js';
 
 // Importador de ALUNOS (discentes) a partir do export de usuários do site antigo
 // (Drupal: array de objetos onde cada campo é uma lista de { value | uri | url | target_id }).
 // Um aluno no sistema novo é um `users` com papel "Aluno", perfil_aluno preenchido,
-// e um `vinculos` (papel discente/egresso) ligando-o ao programa.
+// e um `vinculos` (papel discente/egresso) ligando-o ao programa. B.13/G1: o perfil
+// vai também para vinculos.dados (uid_legado + origem_import, entrada, situação...).
 
 const SENHA_PADRAO = 'Mudar123';
 
@@ -112,15 +114,20 @@ const vincularLinhas = async (userId, linhaIds) => {
   }
 };
 
-// Resolve o orientador: professor importado cujo perfil_professor.uid_legado
-// corresponde ao target_id do field_orientador. Retorna users.id ou null.
+// Resolve o orientador: professor importado (deste mesmo site, PROFIAP) cujo
+// vínculo docente guarda em dados.uid_legado o target_id do field_orientador.
+// Retorna a PESSOA do professor (pessoas.id) ou null — B.13/G1: o uid é chave da
+// importação de um site (origem + uid), não de users.
 const resolverOrientadorId = async (orientadorUid) => {
   if (!orientadorUid) return null;
   const { rows } = await query(
-    `SELECT id FROM users WHERE perfil_professor->>'uid_legado' = $1 LIMIT 1`,
-    [String(orientadorUid)]
+    `SELECT pessoa_id FROM vinculos
+      WHERE dados ->> 'uid_legado' = $1 AND dados ->> 'origem_import' = 'profiap'
+        AND papel = ANY($2::text[])
+      ORDER BY criado_em, id LIMIT 1`,
+    [String(orientadorUid), PAPEIS_DOCENTE_TODOS]
   );
-  return rows[0]?.id ?? null;
+  return rows[0]?.pessoa_id ?? null;
 };
 
 // Papel e estado do vínculo conforme a situação resolvida.
@@ -207,16 +214,20 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
 
   if (existente) {
     const jaAluno = (existente.roles || []).includes('Aluno');
+    // O export não traz estrangeiro/nacionalidade: os defaults (false, '') não
+    // podem sobrescrever o que a pessoa já tem (desde a G1 isso iria a `pessoas`).
+    const { estrangeiro, nacionalidade, ...importado } = perfilAluno;
     const merged = {
       ...existente,
       roles: jaAluno ? existente.roles : [...(existente.roles || []), 'Aluno'],
       // Preserva perfil_aluno anterior, sobrescrevendo com os dados importados.
-      perfil_aluno: { ...(existente.perfil_aluno || {}), ...perfilAluno },
+      perfil_aluno: { ...(existente.perfil_aluno || {}), ...importado },
       atualizado_em: new Date().toISOString(),
     };
-    await usersRepo.update(existente.id, merged, actor);
+    const atualizado = await usersRepo.update(existente.id, merged, actor);
     if (linhaIds.length > 0) await vincularLinhas(existente.id, linhaIds);
     await garantirVinculo(programaId, existente.id, papel, ativo);
+    await gravarPerfilNosVinculos(atualizado.pessoaId, { perfil_aluno: importado }, { programaId });
     return { acao: 'atualizado', nome: m.nome, email: m.email, mensagem: `Atualizado (${detalhes.join(', ')}).` };
   }
 
@@ -241,6 +252,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
   const created = await usersRepo.create(novo, actor);
   if (linhaIds.length > 0) await vincularLinhas(created.id, linhaIds);
   await garantirVinculo(programaId, created.id, papel, ativo);
+  await gravarPerfilNosVinculos(created.pessoaId, { perfil_aluno: perfilAluno }, { programaId });
   return { acao: 'criado', nome: m.nome, email: m.email, mensagem: `Aluno criado (${detalhes.join(', ')}).` };
 };
 

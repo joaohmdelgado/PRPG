@@ -8,6 +8,9 @@ import { responderLista, filtrarTexto } from '../utils/listagem.js';
 import { PAPEIS_DISCENTE, PAPEIS_DOCENTE } from './programasController.js';
 import { doUsuario, idsDaMesmaPessoa } from '../db/identidadeVinculo.js';
 import { hojeISO } from '../utils/datas.js';
+import {
+  gravarPerfilNosVinculos, verificarPerfilAluno, temDadoDeVinculo, PerfilSemVinculo,
+} from '../db/perfilVinculo.js';
 
 // Papéis (docente + discente) que representam vínculo a um programa, para
 // exibir os programas de qualquer usuário (aluno ou professor) na lista.
@@ -209,6 +212,14 @@ export const createUser = async (req, res) => {
       ? req.user.programaId
       : (roles.includes('GestorPrograma') ? data.programaId : (data.programaId || null));
 
+    // G1 (B.13): dado de vínculo do aluno (entrada, situação, qualificação, defesa)
+    // só existe com vínculo. No cadastro, o único vínculo de aluno é o criado logo
+    // abaixo (papelVinculo discente); sem ele, 400 ANTES de gravar qualquer coisa.
+    const criaVinculoAluno = !!(papelVinculo && ownerProgramaId && PAPEIS_DISCENTE.includes(papelVinculo));
+    if (roles.includes('Aluno') && !criaVinculoAluno && temDadoDeVinculo(data.perfil_aluno || {})) {
+      return res.status(400).json({ message: new PerfilSemVinculo().message });
+    }
+
     const password = data.password || 'Mudar123';
     const password_hash = await bcrypt.hash(password, await bcrypt.genSalt(10));
 
@@ -236,6 +247,22 @@ export const createUser = async (req, res) => {
     if (papelVinculo && ownerProgramaId && (roles.includes('Aluno') || roles.includes('Professor'))) {
       await vincularAoPrograma(ownerProgramaId, created.pessoaId, papelVinculo);
     }
+
+    // G1 (B.13): o perfil de aluno/professor vai também para os vínculos (o de
+    // cima já existe; a reconciliação não o duplica). O Gestor de Programa só
+    // acrescenta, e só no programa dele. Um papelVinculo docente informado vence
+    // o tipo do formulário (é a escolha explícita da tela de Docentes).
+    const papelDocenteExplicito = papelVinculo && data.papelVinculo === papelVinculo && PAPEIS_DOCENTE.includes(papelVinculo);
+    await gravarPerfilNosVinculos(
+      created.pessoaId,
+      {
+        perfil_aluno: newUser.perfil_aluno,
+        perfil_professor: newUser.perfil_professor && papelDocenteExplicito
+          ? { ...newUser.perfil_professor, tipo: undefined, tipo_professor: undefined }
+          : newUser.perfil_professor,
+      },
+      { programaId: scoped ? req.user.programaId : null, reconciliarProgramas: !scoped, podeRemover: false }
+    );
 
     if (Array.isArray(data.linhas_pesquisa_ids) && data.linhas_pesquisa_ids.length > 0) {
       const ids = data.linhas_pesquisa_ids.map(Number).filter((n) => !isNaN(n) && n > 0);
@@ -317,7 +344,27 @@ export const updateUser = async (req, res) => {
       atualizado_em: new Date().toISOString(),
     };
 
+    // G1 (B.13): quem grava dado de vínculo (papel, entrada, programas...).
+    //   Admin/Gestor da PRPG: tudo, inclusive criar/encerrar vínculos docentes pelo
+    //     array perfil_professor.programas.
+    //   Gestor de Programa dono: só nos vínculos do programa dele; não cria nem encerra.
+    //   Auto-edição: nada (o usuário não muda o próprio vínculo); sexo, nacionalidade,
+    //     estrangeiro e privacidade vão para `pessoas` pelo usersRepo (pessoaDoUsuario).
+    // Só o perfil que veio no payload, e do papel que o usuário tem.
+    const gravaVinculos = isAdmin || gestorOwns;
+    const opcoesVinculo = isAdmin
+      ? { reconciliarProgramas: true, podeRemover: true }
+      : { programaId: req.user.programaId, reconciliarProgramas: false, podeRemover: false };
+    const perfisVinculo = {
+      perfil_aluno: updatedRoles.includes('Aluno') ? data.perfil_aluno : undefined,
+      perfil_professor: updatedRoles.includes('Professor') ? data.perfil_professor : undefined,
+    };
+    // Confere antes de gravar o usuário: o 400 não deixa a gravação pela metade.
+    if (gravaVinculos) await verificarPerfilAluno(existing.pessoaId, perfisVinculo.perfil_aluno, opcoesVinculo);
+
     const updated = await usersRepo.update(req.params.id, merged, req.user?.id);
+
+    if (gravaVinculos) await gravarPerfilNosVinculos(updated.pessoaId, perfisVinculo, opcoesVinculo);
 
     if (data.linhas_pesquisa_ids !== undefined) {
       const ids = (Array.isArray(data.linhas_pesquisa_ids) ? data.linhas_pesquisa_ids : [])

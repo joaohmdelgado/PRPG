@@ -10,6 +10,7 @@ import {
 import { resolverPessoa } from '../services/prazos.js';
 import professoresImporter from '../services/importers/professoresImporter.js';
 import alunosImporter from '../services/importers/alunosImporter.js';
+import tesesImporter from '../services/importers/tesesImporter.js';
 import { hojeISO } from '../utils/datas.js';
 
 // Desde a Task 10 (FK) só existe a forma pessoas.id.
@@ -267,6 +268,94 @@ describe.each(FORMAS)('B.11 importadores legados — vínculo gravado por %s', (
     const m = alunosImporter.map({ name: [{ value: 'Bia' }], mail: [{ value: 'bia@t.br' }] });
     await alunosImporter.importOne(m, { programaId: 'prog-1', actor: 'admin-test', dryRun: false });
     expect(await contar('DISCENTE%')).toBe(1);
+  });
+});
+
+// B.13 / G1 (Task 3): os importadores legados gravam também vinculos.dados
+// (uid_legado + origem_import) e pessoas; orientador e autor de tese são
+// resolvidos por vinculos.dados, não por users.perfil_*.
+describe('B.13 importadores legados — vinculos.dados e pessoas', () => {
+  const opts = { programaId: 'prog-1', actor: 'admin-test', dryRun: false };
+  const vinculoDe = async (email) => (await pool.query(
+    `SELECT v.papel, v.ativo, v.dados, v.pessoa_id FROM vinculos v JOIN users u ON u.pessoa_id = v.pessoa_id
+      WHERE u.email = $1 AND v.programa_id = 'prog-1'`, [email])).rows;
+  const pessoaDoEmail = async (email) => (await pool.query(
+    'SELECT p.* FROM pessoas p JOIN users u ON u.pessoa_id = p.id WHERE u.email = $1', [email])).rows[0];
+  const importarProfessor = (uid, email = `prof${uid}@t.br`) => professoresImporter.importOne(professoresImporter.map({
+    uid: [{ value: uid }], name: [{ value: `Prof ${uid}` }], mail: [{ value: email }],
+    field_sexo: [{ value: 'Masculino' }], field_tipo_professor: [{ value: 'Colaborador' }],
+  }), opts);
+
+  it('professor novo: dados com uid_legado + origem, sexo em pessoas', async () => {
+    await importarProfessor(103);
+    const [v] = await vinculoDe('prof103@t.br');
+    expect(v).toMatchObject({ papel: 'DOCENTE_COLABORADOR', ativo: true, dados: { uid_legado: '103', origem_import: 'profiap' } });
+    expect((await pessoaDoEmail('prof103@t.br')).sexo).toBe('Masculino');
+  });
+
+  it('professor já cadastrado que ganha o programa: dados com o uid do export', async () => {
+    await seedUserComPessoa({ id: 'u-ex', email: 'ex@t.br', nome: 'Ex' });
+    await importarProfessor(104, 'ex@t.br');
+    const [v] = await vinculoDe('ex@t.br');
+    expect(v.dados).toEqual({ uid_legado: '104', origem_import: 'profiap' });
+  });
+
+  it('aluno: dados do vínculo, orientador resolvido pela pessoa do professor, placeholder de qualificação descartado', async () => {
+    await importarProfessor(103);
+    const prof = await pessoaDoEmail('prof103@t.br');
+    await alunosImporter.importOne(alunosImporter.map({
+      uid: [{ value: 501 }], name: [{ value: 'Aluna' }], mail: [{ value: 'aluna@t.br' }],
+      field_sexo: [{ value: 'Feminino' }], field_nivel: [{ value: 'Doutorado' }],
+      field_orientador: [{ target_id: 103 }],
+      field_qualificacao: [{ value: '2020-10-29T00:00:00' }], field_defesa: [{ value: '2024-05-10T00:00:00' }],
+    }), opts);
+    const [v] = await vinculoDe('aluna@t.br');
+    expect(v.papel).toBe('DISCENTE_DOUTORADO');
+    expect(v.dados).toEqual({ uid_legado: '501', origem_import: 'profiap', situacao: 'Matriculado',
+      defesa: '2024-05-10', egresso: false, orientador_pessoa_id: prof.id });
+    expect((await pessoaDoEmail('aluna@t.br')).sexo).toBe('Feminino');
+  });
+
+  it('aluno egresso: o nível vai para dados.nivel', async () => {
+    await alunosImporter.importOne(alunosImporter.map({
+      uid: [{ value: 502 }], name: [{ value: 'Egressa' }], mail: [{ value: 'egressa@t.br' }],
+      field_nivel: [{ value: 'Mestrado' }], field_egresso: [{ value: true }],
+    }), opts);
+    const [v] = await vinculoDe('egressa@t.br');
+    expect(v.papel).toBe('EGRESSO');
+    expect(v.dados).toMatchObject({ nivel: 'MESTRADO', egresso: true, uid_legado: '502' });
+  });
+
+  it('aluno reimportado não apaga o "estrangeiro" que a pessoa já tinha (o export não traz esse dado)', async () => {
+    const bia = await seedUserComPessoa({ id: 'u-bia', email: 'bia@t.br', nome: 'Bia', roles: ['Aluno'] });
+    await pool.query('UPDATE pessoas SET estrangeiro = TRUE, nacionalidade = $2 WHERE id = $1', [bia.pessoaId, 'chilena']);
+    await alunosImporter.importOne(alunosImporter.map({ uid: [{ value: 503 }], name: [{ value: 'Bia' }], mail: [{ value: 'bia@t.br' }] }), opts);
+    expect(await pessoaDoEmail('bia@t.br')).toMatchObject({ estrangeiro: true, nacionalidade: 'chilena' });
+    const [v] = await vinculoDe('bia@t.br');
+    expect(v.dados).toMatchObject({ uid_legado: '503', origem_import: 'profiap' });
+  });
+
+  it('tese: o autor é a pessoa cujo vínculo tem o uid do export', async () => {
+    await alunosImporter.importOne(alunosImporter.map({
+      uid: [{ value: 601 }], name: [{ value: 'Autora' }], mail: [{ value: 'autora@t.br' }],
+    }), opts);
+    const autora = await pessoaDoEmail('autora@t.br');
+    const r = await tesesImporter.importOne(tesesImporter.map({
+      uuid: [{ value: 'tese-uuid-1' }], title: [{ value: 'Tese Um' }], field_tipo_td: [{ value: 'Tese' }],
+      field_autor: [{ target_id: 601, url: '/pt-br/authenticated/autora' }],
+    }), opts);
+    expect(r.acao).toBe('criado');
+    const { rows: [t] } = await pool.query(`SELECT autor_pessoa_id FROM teses_dissertacoes WHERE id = 'tese-tese-uuid-1'`);
+    expect(t.autor_pessoa_id).toBe(autora.id);
+
+    // uid que não é de ninguém: pessoa mínima pelo nome do slug (não cai em users).
+    await tesesImporter.importOne(tesesImporter.map({
+      uuid: [{ value: 'tese-uuid-2' }], title: [{ value: 'Tese Dois' }],
+      field_autor: [{ target_id: 999, url: '/pt-br/authenticated/fulano-de-tal' }],
+    }), opts);
+    const { rows: [t2] } = await pool.query(
+      `SELECT p.nome FROM teses_dissertacoes t JOIN pessoas p ON p.id = t.autor_pessoa_id WHERE t.id = 'tese-tese-uuid-2'`);
+    expect(t2.nome).toBe('Fulano De Tal');
   });
 });
 
