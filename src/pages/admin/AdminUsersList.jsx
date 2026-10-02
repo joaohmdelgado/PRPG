@@ -67,12 +67,6 @@ const AdminUsersList = () => (
           <span className="bg-amber-50 text-amber-800 text-xs px-2 py-1 rounded-full font-medium">Sem vínculo</span>
         ) : <span className="text-gray-400 text-sm">—</span>),
       },
-      {
-        chave: 'visibilidade', rotulo: 'Visibilidade',
-        render: (u) => (u.privacidade?.perfil_publico
-          ? <span className="text-green-700 text-sm font-medium">Público</span>
-          : <span className="text-gray-600 text-sm font-medium">Privado</span>),
-      },
     ]}
   />
 );

@@ -18,7 +18,7 @@ const emptyGeral = { nome: '', cpf: '', siape: '', telefones: [''] };
 const emptyAcademicos = { lattes: '', orcid: '', google_scholar: '', publons: '', linhas_pesquisa: '' };
 const emptyAluno = { nivel: 'Mestrando', entrada: '', orientador_id: '', qualificacao: '', defesa: '', situacao: 'Matriculado', estrangeiro: false, nacionalidade: 'brasileiro(a)' };
 const emptyProfessor = { tipo_professor: 'Permanente', programas: [], estrangeiro: false, nacionalidade: 'brasileiro(a)' };
-const defaultPrivacidade = { perfil_publico: true, mostrar_email: true, mostrar_telefone: false, mostrar_lattes: true };
+const defaultPrivacidade = { mostrar_email: true, mostrar_telefone: false };
 
 const AdminUserForm = () => {
   const { id } = useParams();
@@ -406,20 +406,15 @@ const AdminUserForm = () => {
         <section className="border border-gray-200 p-6 rounded-lg">
           <h3 className="text-lg font-medium text-gray-800 mb-4 border-b pb-2">Controles de Privacidade</h3>
           <div className="flex flex-col gap-3">
-            <label className="flex items-center gap-2 font-bold text-ufrpe-blue">
-              <input type="checkbox" name="perfil_publico" checked={formData.privacidade.perfil_publico} onChange={(e) => handleChange(e, 'privacidade')} className="w-5 h-5 text-ufrpe-blue" />
-              Perfil Visível no Site Público
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="mostrar_email" checked={formData.privacidade.mostrar_email} onChange={(e) => handleChange(e, 'privacidade')} />
+              Exibir E-mail Institucional publicamente
             </label>
-            <div className={`pl-8 space-y-2 ${!formData.privacidade.perfil_publico && 'opacity-50 pointer-events-none'}`}>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="mostrar_email" checked={formData.privacidade.mostrar_email} onChange={(e) => handleChange(e, 'privacidade')} />
-                Exibir E-mail Institucional publicamente
-              </label>
-              <label className="flex items-center gap-2">
-                <input type="checkbox" name="mostrar_telefone" checked={formData.privacidade.mostrar_telefone} onChange={(e) => handleChange(e, 'privacidade')} />
-                Exibir Telefones publicamente
-              </label>
-            </div>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" name="mostrar_telefone" checked={formData.privacidade.mostrar_telefone} onChange={(e) => handleChange(e, 'privacidade')} />
+              Exibir Telefones publicamente
+            </label>
+            <p className="text-xs text-gray-500">Escolhas registradas; a exibição pública ainda não as consulta.</p>
           </div>
         </section>
 

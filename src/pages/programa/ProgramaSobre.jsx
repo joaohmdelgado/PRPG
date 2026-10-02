@@ -55,7 +55,7 @@ export default function ProgramaSobre() {
                       <span className="absolute -left-[9px] w-4 h-4 rounded-full bg-[var(--prog-primary)]/20 border-2 border-[var(--prog-primary)] flex items-center justify-center">
                         <span className="w-1.5 h-1.5 rounded-full bg-[var(--prog-primary)] block"></span>
                       </span>
-                      <p className="font-semibold text-gray-900">{c.nome || c.perfil_nome || '—'}</p>
+                      <p className="font-semibold text-gray-900">{c.nome || '—'}</p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         {fmtMes(c.data_inicio_mandato) || '?'} — {fmtMes(c.data_fim_mandato) || 'atual'}
                         {c.motivo_encerramento && (

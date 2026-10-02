@@ -13,8 +13,8 @@ const TIPO_LABEL = {
 };
 
 function MemberChip({ pessoa }) {
-  const nome = pessoa?.nome || pessoa?.perfil_nome || '—';
-  const foto = pessoa?.foto_url || pessoa?.perfil_foto_url;
+  const nome = pessoa?.nome || '—';
+  const foto = pessoa?.foto_url;
   return (
     <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 px-4 py-3 shadow-sm">
       {foto ? (
