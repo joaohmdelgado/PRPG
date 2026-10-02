@@ -17,7 +17,7 @@ const listarLideres = async (grupoIds) => {
   if (grupoIds.length === 0) return new Map();
   const { rows } = await query(
     `SELECT v.id AS vinculo_id, v.grupo_pesquisa_id, v.pessoa_id,
-            u.id AS u_id, u.email AS u_email, u.perfil_nome AS u_nome,
+            u.id AS u_id, u.email AS u_email,
             p.id AS p_id, p.nome AS p_nome, p.email_institucional AS p_email
      FROM vinculos v
      ${joinPessoa('v.pessoa_id')}
@@ -27,7 +27,7 @@ const listarLideres = async (grupoIds) => {
   const byGrupo = new Map();
   for (const r of rows) {
     const lider = r.u_id
-      ? { id: r.u_id, nome: r.u_nome || r.u_email, email: r.u_email }
+      ? { id: r.u_id, nome: r.p_nome || r.u_email, email: r.u_email }
       : { id: r.p_id, nome: r.p_nome, email: r.p_email };
     const lista = byGrupo.get(r.grupo_pesquisa_id) || [];
     lista.push({ vinculoId: r.vinculo_id, ...lider });

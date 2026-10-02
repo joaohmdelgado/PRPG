@@ -22,7 +22,7 @@ const PAPEL_DOCENTE = { DOCENTE_PERMANENTE: 'Permanente', DOCENTE_COLABORADOR: '
 
 // Pessoa do vínculo — identidadeVinculo.js (B.11).
 const PESSOA_SQL = `
-  SELECT v.papel, ${nomePessoa()} AS nome, ${campoPessoa('lattes', 'acad_lattes')} AS lattes
+  SELECT v.papel, ${nomePessoa()} AS nome, ${campoPessoa('lattes')} AS lattes
     FROM vinculos v
     ${joinPessoa('v.pessoa_id')}
    WHERE v.programa_id = $1 AND v.ativo IS NOT FALSE AND v.papel = ANY($2::text[])

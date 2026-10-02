@@ -26,7 +26,7 @@ const CONTEUDO = [
   { chave: 'disciplinas', tabela: 'disciplinas', titulo: 'title', detalhe: 'tipo_disciplina', colunas: ['title'], programa: 'programa_id', status: true, ordem: 'title' },
   // Globais da PRPG (sem programa): não aparecem para o Gestor de Programa.
   { chave: 'bolsas', tabela: 'bolsas', titulo: 'title', detalhe: 'tipo_bolsa', colunas: ['title', 'tipo_bolsa'], status: true, ordem: 'title', soPrpg: true },
-  { chave: 'usuarios', tabela: 'users', titulo: "COALESCE(NULLIF(btrim(perfil_nome), ''), email)", detalhe: 'email', colunas: ['perfil_nome', 'email'], ordem: 'perfil_nome', soPrpg: true },
+  { chave: 'usuarios', tabela: 'users u LEFT JOIN pessoas p ON p.id = u.pessoa_id', id: 'u.id', titulo: "COALESCE(NULLIF(btrim(p.nome), ''), u.email)", detalhe: 'u.email', colunas: ['p.nome', 'u.email'], ordem: 'p.nome', soPrpg: true },
   // O próprio programa: o Gestor de Programa só encontra o dele.
   { chave: 'programas', tabela: 'programas', titulo: 'nome', detalhe: 'sigla', colunas: ['nome', 'sigla'], ordem: 'nome', ehPrograma: true },
 ];
@@ -45,7 +45,7 @@ const buscarConteudo = (tipo, q, scopedPrograma) => {
     escopo = tipo.ehPrograma ? ' AND id = $2' : (tipo.programa ? ` AND ${tipo.programa} = $2` : '');
   }
   return query(
-    `SELECT id, ${tipo.titulo} AS titulo, ${tipo.detalhe || 'NULL'}::text AS detalhe${tipo.status ? ', status' : ''}
+    `SELECT ${tipo.id || 'id'} AS id, ${tipo.titulo} AS titulo, ${tipo.detalhe || 'NULL'}::text AS detalhe${tipo.status ? ', status' : ''}
        FROM ${tipo.tabela} WHERE (${where})${escopo} ORDER BY ${tipo.ordem} LIMIT 8`,
     params
   );

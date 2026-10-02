@@ -100,12 +100,10 @@ const loadModalidades = async () => (await query('SELECT * FROM modalidades')).r
 
 // Fase B.3 (PLANO.md): um JOIN resolve pessoa e portaria por vínculo (antes
 // era buildCombined, em JS). A pessoa vem de identidadeVinculo.js (B.11):
-// `pessoas` é a fonte dos dados (D-B11b), o usuário completa o que faltar.
+// `pessoas` é a fonte dos dados (G1); do login só vêm id e e-mail.
 const VINCULOS_JOIN_SELECT = `
   SELECT v.*,
-    u.id AS u_id, u.email AS u_email, u.perfil_nome AS u_perfil_nome,
-    u.perfil_cpf AS u_perfil_cpf, u.perfil_siape AS u_perfil_siape,
-    u.perfil_telefones AS u_perfil_telefones,
+    u.id AS u_id, u.email AS u_email,
     row_to_json(p.*) AS p_json,
     ${pessoaReal('v.pessoa_id')} AS pessoa_real,
     po.title AS portaria_titulo, po.download_link AS portaria_download_link
@@ -115,11 +113,9 @@ const VINCULOS_JOIN_SELECT = `
 `;
 
 const VINCULO_ROW_KEYS = [
-  'u_id', 'u_email', 'u_perfil_nome', 'u_perfil_cpf', 'u_perfil_siape', 'u_perfil_telefones',
+  'u_id', 'u_email',
   'p_json', 'pessoa_real', 'portaria_titulo', 'portaria_download_link',
 ];
-
-const telefonesDoUsuario = (t) => (Array.isArray(t) ? t.join(', ') : (t || ''));
 
 // Objeto "combinado" (pessoa + vínculo + portaria) de uma linha do JOIN acima.
 // `pessoa_id` = pessoas.id; `usuario_id` = login (o painel usa para vincular
@@ -138,11 +134,11 @@ const combinedFromRow = (row) => {
     ...resolvedPortaria,
     pessoa_id: p.id ?? row.pessoa_real,
     usuario_id: row.u_id ?? null,
-    nome: p.nome || row.u_perfil_nome || row.u_email || '',
-    cpf: p.cpf || row.u_perfil_cpf || '',
-    siape: p.siape || row.u_perfil_siape || '',
+    nome: p.nome || row.u_email || '',
+    cpf: p.cpf || '',
+    siape: p.siape || '',
     email_institucional: p.email_institucional || row.u_email || '',
-    telefones: p.telefones || telefonesDoUsuario(row.u_perfil_telefones),
+    telefones: p.telefones || '',
     endereco: vFields.endereco || '',
   };
 };
@@ -604,10 +600,10 @@ export const PAPEIS_DOCENTE = ['DOCENTE_PERMANENTE', 'DOCENTE_COLABORADOR', 'DOC
 const membrosDoPrograma = async (programaId, papeis) => (await query(
   `SELECT v.id, v.papel, v.email_funcao, ${pessoaReal('v.pessoa_id')} AS pessoa_id, u.id AS usuario_id,
           COALESCE(${nomePessoa()}, v.pessoa_id) AS nome,
-          ${campoPessoa('foto_url', 'perfil_foto_url')} AS foto_url, u.programa_id,
-          ${campoPessoa('lattes', 'acad_lattes')} AS lattes,
-          ${campoPessoa('orcid', 'acad_orcid')} AS orcid,
-          ${campoPessoa('google_scholar', 'acad_google_scholar')} AS google_scholar,
+          ${campoPessoa('foto_url')} AS foto_url, u.programa_id,
+          ${campoPessoa('lattes')} AS lattes,
+          ${campoPessoa('orcid')} AS orcid,
+          ${campoPessoa('google_scholar')} AS google_scholar,
           (u.id IS NOT NULL OR p.id IS NOT NULL) AS resolvido
      FROM vinculos v ${joinPessoa('v.pessoa_id')}
     WHERE v.programa_id = $1 AND v.ativo = TRUE AND v.papel = ANY($2::text[])

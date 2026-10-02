@@ -18,11 +18,10 @@ export const pessoaReal = (col) => col;
 // Condição "o vínculo em `col` é do usuário `u`" (para JOIN ... ON / WHERE).
 export const doUsuario = (col, { u = 'u' } = {}) => `${col} = ${u}.pessoa_id`;
 
-// Dados da pessoa: `pessoas` primeiro (D-B11b), o usuário como reserva.
-export const campoPessoa = (colPessoa, colUsuario, { u = 'u', p = 'p' } = {}) =>
-  `COALESCE(NULLIF(${p}.${colPessoa}, ''), NULLIF(${u}.${colUsuario}, ''))`;
+// Dados da pessoa: só `pessoas` (G1) — o login deixou de guardar cópia.
+export const campoPessoa = (colPessoa, { p = 'p' } = {}) => `NULLIF(${p}.${colPessoa}, '')`;
 export const nomePessoa = ({ u = 'u', p = 'p' } = {}) =>
-  `COALESCE(NULLIF(${p}.nome, ''), NULLIF(${u}.perfil_nome, ''), ${u}.email)`;
+  `COALESCE(NULLIF(${p}.nome, ''), ${u}.email)`;
 // E-mail para falar com a pessoa: o institucional; sem ele, o de login.
 export const emailPessoa = ({ u = 'u', p = 'p' } = {}) =>
   `COALESCE(NULLIF(${p}.email_institucional, ''), ${u}.email)`;

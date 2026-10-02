@@ -49,9 +49,10 @@ export async function apagarRevisoes(entidade, entidadeId) {
 export async function listarRevisoes(entidade, entidadeId) {
   const { rows } = await query(
     `SELECT r.id, r.versao_de, r.criado_em, r.autor,
-            COALESCE(NULLIF(u.perfil_nome, ''), u.email) AS autor_nome,
+            COALESCE(NULLIF(pu.nome, ''), u.email) AS autor_nome,
             r.snapshot->>'title' AS titulo
        FROM revisoes r LEFT JOIN users u ON u.id = r.autor
+       LEFT JOIN pessoas pu ON pu.id = u.pessoa_id
       WHERE r.entidade = $1 AND r.entidade_id = $2
       ORDER BY r.id DESC`,
     [entidade, String(entidadeId)]

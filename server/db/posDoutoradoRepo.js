@@ -16,14 +16,14 @@ import { joinPessoa, pessoaReal, pessoaCanonica } from './identidadeVinculo.js';
 export { resolverOuCriarPessoa };
 
 const fromRow = (r) => {
-  // Pessoa do vínculo (identidadeVinculo.js): `pessoas` primeiro, o login
-  // completa nome/e-mail/CPF/telefone que faltarem (D-B11b).
+  // Pessoa do vínculo (identidadeVinculo.js): `pessoas` é a fonte (G1); o
+  // login só completa o e-mail.
   const p = r.p_json || {};
   const pessoa = (r.u_id || r.p_json) ? {
-    nome: p.nome || r.u_perfil_nome || null,
+    nome: p.nome || null,
     email: p.email_institucional || r.u_email || null,
-    cpf: p.cpf || r.u_perfil_cpf || null,
-    telefones: p.telefones || (Array.isArray(r.u_perfil_telefones) ? r.u_perfil_telefones.join(', ') : r.u_perfil_telefones) || null,
+    cpf: p.cpf || null,
+    telefones: p.telefones || null,
     nacionalidade: p.nacionalidade, estrangeiro: p.estrangeiro, lattes: p.lattes, orcid: p.orcid,
   } : null;
 
@@ -79,8 +79,7 @@ const fromRow = (r) => {
 const JOIN_SELECT = `
   SELECT pd.*, v.programa_id, ${pessoaReal('v.pessoa_id')} AS vinculo_pessoa_id,
     v.data_inicio_mandato, v.data_fim_mandato, v.situacao_manual, v.motivo_encerramento, v.ato_id,
-    u.id AS u_id, u.email AS u_email, u.perfil_nome AS u_perfil_nome,
-    u.perfil_cpf AS u_perfil_cpf, u.perfil_telefones AS u_perfil_telefones,
+    u.id AS u_id, u.email AS u_email,
     row_to_json(p.*) AS p_json,
     sup.nome AS supervisor_nome_real, cos.nome AS cossupervisor_nome_real,
     pr.sigla AS programa_sigla, pr.nome AS programa_nome,

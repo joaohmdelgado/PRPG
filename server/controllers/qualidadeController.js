@@ -60,7 +60,7 @@ export const getQualidade = async (_req, res) => {
 
   // 3. Vínculos sem data
   const { rows: semData } = await query(`
-    SELECT v.id, v.papel, v.programa_id, pr.sigla, pr.nome AS programa_nome, COALESCE(pe.nome, u.perfil_nome) AS pessoa
+    SELECT v.id, v.papel, v.programa_id, pr.sigla, pr.nome AS programa_nome, pe.nome AS pessoa
       FROM vinculos v
       LEFT JOIN programas pr ON pr.id = v.programa_id
       ${joinPessoa('v.pessoa_id', { p: 'pe' })}

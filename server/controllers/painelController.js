@@ -87,7 +87,7 @@ export const getPendencias = async (req, res) => {
     // ---- Vigências: mandatos e portarias vencendo em 30 dias
     const { rows: mand } = await query(
       `SELECT v.id, v.papel, v.data_fim_mandato, pr.sigla, pr.nome AS programa_nome, pr.id AS programa_id,
-              COALESCE(pe.nome, u.perfil_nome) AS pessoa
+              pe.nome AS pessoa
          FROM vinculos v
          LEFT JOIN programas pr ON pr.id = v.programa_id
          ${joinPessoa('v.pessoa_id', { p: 'pe' })}

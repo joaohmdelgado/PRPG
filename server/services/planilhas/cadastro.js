@@ -196,8 +196,8 @@ export async function carregarPessoas(ctx) {
   const { rows } = await ctx.q(`
     SELECT p.id, p.nome, p.cpf, lower(p.email_institucional) AS email FROM pessoas p
     UNION ALL
-    SELECT u.pessoa_id, COALESCE(p.nome, u.perfil_nome), COALESCE(p.cpf, u.perfil_cpf), lower(u.email)
-      FROM users u LEFT JOIN pessoas p ON p.id = u.pessoa_id WHERE u.pessoa_id IS NOT NULL`);
+    SELECT u.pessoa_id, p.nome, p.cpf, lower(u.email)
+      FROM users u JOIN pessoas p ON p.id = u.pessoa_id`);
   const { rows: emails } = await ctx.q(
     `SELECT entidade_id AS id, valor FROM contatos WHERE entidade = 'pessoa' AND tipo = 'EMAIL'`);
   const porCpf = new Map(); const porEmail = new Map(); const porNome = new Map();

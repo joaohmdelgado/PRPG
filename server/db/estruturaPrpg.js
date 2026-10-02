@@ -62,12 +62,11 @@ export async function garantirEstruturaPrpg() {
   return dados.membros.length;
 }
 
-// Reaproveita a pessoa se já houver cadastro com o mesmo nome (pessoas ou
-// perfil de usuário); senão cria uma pessoa mínima.
+// Reaproveita a pessoa se já houver cadastro com o mesmo nome; senão cria
+// uma pessoa mínima.
 async function pessoaPorNome(nome) {
   const { rows } = await query(
     `SELECT id FROM pessoas WHERE lower(nome) = lower($1)
-     UNION ALL SELECT pessoa_id FROM users WHERE lower(perfil_nome) = lower($1) AND pessoa_id IS NOT NULL
      LIMIT 1`,
     [nome.trim()]
   );
@@ -137,7 +136,7 @@ export async function carregarEstrutura({ todos = false } = {}) {
 
   const { rows: membros } = await query(
     `SELECT v.id, v.unidade_id, v.pessoa_id, v.papel, v.funcao, v.ordem,
-            coalesce(p.nome, u.perfil_nome) AS nome, coalesce(p.foto_url, u.perfil_foto_url) AS foto,
+            p.nome AS nome, p.foto_url AS foto,
             voc.rotulo AS papel_rotulo
        FROM vinculos v
        ${joinPessoa('v.pessoa_id')}

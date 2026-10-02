@@ -25,11 +25,10 @@ const AGENDA_SELECT = `
   SELECT v.id AS vinculo_id, v.papel, v.programa_id, v.data_inicio_mandato,
     v.carater, v.ato_id,
     pr.sigla AS programa_sigla, pr.nome AS programa_nome, pr.campus,
-    u.id AS user_id, u.email AS user_email, u.perfil_nome AS user_nome,
-    u.perfil_foto_url AS user_foto_url,
+    u.id AS user_id, u.email AS user_email,
     COALESCE(p.id, u.id) AS pessoa_id,
     ${nomePessoa()} AS nome,
-    ${campoPessoa('foto_url', 'perfil_foto_url')} AS foto_url
+    ${campoPessoa('foto_url')} AS foto_url
   FROM vinculos v
   LEFT JOIN programas pr ON pr.id = v.programa_id
   ${joinPessoa('v.pessoa_id')}

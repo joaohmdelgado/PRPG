@@ -170,8 +170,9 @@ export const getImportacoes = async (req, res) => {
   if (req.query.fonte) { params.push(req.query.fonte); where = 'WHERE i.fonte = $1'; }
   const { rows } = await query(
     `SELECT i.id, i.fonte, i.simulacao, i.arquivo_nome, i.arquivo_sha256, i.resumo, i.erro, i.executado_em,
-            u.perfil_nome AS executado_por_nome
+            pu.nome AS executado_por_nome
      FROM importacoes i LEFT JOIN users u ON u.id = i.executado_por
+     LEFT JOIN pessoas pu ON pu.id = u.pessoa_id
      ${where} ORDER BY i.executado_em DESC LIMIT 50`, params);
   res.json(rows.map((r) => ({
     id: r.id, fonte: r.fonte, simulacao: r.simulacao, arquivoNome: r.arquivo_nome,

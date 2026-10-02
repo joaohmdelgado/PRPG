@@ -131,9 +131,8 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
 
   if (existente) {
     const jaProfessor = (existente.roles || []).includes('Professor');
-    const programas = existente.perfil_professor?.programas || [];
-    // Fonte de verdade é o vínculo ATIVO, não o array (que pode estar desatualizado
-    // de remoções antigas). Só é "inalterado" se realmente houver vínculo ativo.
+    // Fonte de verdade é o vínculo ATIVO (G1: perfil_professor.programas é derivado
+    // dele). Só é "inalterado" se realmente houver vínculo ativo.
     const jaNoPrograma = await temVinculoDocenteAtivo(programaId, existente.id);
     if (jaProfessor && jaNoPrograma) {
       return { acao: 'inalterado', nome: m.nome, email: m.email, mensagem: 'Já cadastrado neste programa.' };
@@ -145,10 +144,6 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     const merged = {
       ...existente,
       roles: jaProfessor ? existente.roles : [...(existente.roles || []), 'Professor'],
-      perfil_professor: {
-        ...(existente.perfil_professor || {}),
-        programas: programas.includes(programaId) ? programas : [...programas, programaId],
-      },
       atualizado_em: new Date().toISOString(),
     };
     const atualizado = await usersRepo.update(existente.id, merged, actor);

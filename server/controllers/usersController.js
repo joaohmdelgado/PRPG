@@ -105,8 +105,9 @@ const PAPEIS_AUTORES = ['Administrator', 'Gestor', 'GestorPrograma'];
 
 export const getUsersResumo = async (req, res) => {
   const { rows } = await query(
-    `SELECT id, COALESCE(NULLIF(btrim(perfil_nome), ''), email) AS nome
-       FROM users WHERE roles && $1::text[] ORDER BY nome`,
+    `SELECT u.id, COALESCE(NULLIF(btrim(p.nome), ''), u.email) AS nome
+       FROM users u LEFT JOIN pessoas p ON p.id = u.pessoa_id
+      WHERE u.roles && $1::text[] ORDER BY nome`,
     [PAPEIS_AUTORES]
   );
   res.json(rows);

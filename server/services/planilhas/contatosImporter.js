@@ -264,7 +264,7 @@ export default {
         // Mesmo papel já ocupado no cadastro? Mesma pessoa = nada a fazer;
         // outra pessoa = pendência (o vínculo atual não é encerrado).
         const { rows: atuais } = await ctx.q(`
-          SELECT v.id, v.pessoa_id, COALESCE(p.nome, u.perfil_nome) AS nome,
+          SELECT v.id, v.pessoa_id, p.nome AS nome,
                  ${pessoaReal('v.pessoa_id')} AS pessoa_real
             FROM vinculos v
             ${joinPessoa('v.pessoa_id')}
