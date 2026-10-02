@@ -85,7 +85,8 @@ describe('inscrição', () => {
     expect(res.status).toBe(201);
     expect(res.body.status).toBe('INSCRITO');
     expect(res.body.nome).toBe('João da Silva');
-    expect(res.body.cpf).toBe('111.222.333-44');
+    // B.13/G1: o CPF do cadastro vem de `pessoas`, que o guarda normalizado (só dígitos).
+    expect(res.body.cpf).toBe('11122233344');
     expect(res.body.linguas).toEqual(['Inglês']);
   });
 

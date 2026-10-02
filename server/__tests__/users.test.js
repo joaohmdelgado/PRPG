@@ -311,3 +311,92 @@ describe('G1: escritas em dupla', () => {
       .expect(200);
   });
 });
+
+// B.13 / G1 (Task 5): usersRepo lê de `pessoas` e dos vínculos e monta o formato
+// antigo da API. O que o contrato (retratoUsuarios.test.js) não cobre.
+describe('G1: leitura montada a partir de pessoas e vínculos', () => {
+  const programa = (id) => pool.query('INSERT INTO programas (id, nome, sigla) VALUES ($1, $1, $1)', [id]);
+  const vincular = (id, pessoaId, papel, programaId, { ativo = true, criadoEm = '2024-01-01T00:00:00Z', dados = null } = {}) =>
+    pool.query(
+      `INSERT INTO vinculos (id, programa_id, pessoa_id, papel, ativo, criado_em, dados)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)`,
+      [id, programaId, pessoaId, papel, ativo, criadoEm, dados && JSON.stringify(dados)]);
+  const dadosDe = async (id) => (await pool.query('SELECT dados FROM vinculos WHERE id = $1', [id])).rows[0].dados;
+  const perfilAluno = async (id) => (await asAdmin(request(app).get(`/api/users/${id}`)).expect(200)).body.perfil_aluno;
+
+  it('nome, telefones e links vêm de `pessoas` (o que a tela de Estrutura/planilha gravou lá aparece)', async () => {
+    const { body: u } = await asAdmin(request(app).post('/api/users'))
+      .send({ email: 'lido@t.br', roles: ['Gestor'], perfil_geral: { nome: 'Nome Antigo', telefones: ['81 0'] } })
+      .expect(201);
+    await pool.query(
+      `UPDATE pessoas SET nome = 'Nome Na Pessoa', telefones = '81 1, 81 2', lattes = 'http://lattes/9', foto_url = '/uploads/f.png'
+        WHERE id = $1`, [u.pessoaId]);
+    const { body } = await asAdmin(request(app).get(`/api/users/${u.id}`)).expect(200);
+    expect(body.perfil_geral).toMatchObject({ nome: 'Nome Na Pessoa', telefones: ['81 1', '81 2'], foto_url: '/uploads/f.png' });
+    expect(body.dados_academicos.lattes).toBe('http://lattes/9');
+    const res = await request(app).post('/api/login').send({ username: 'lido@t.br', password: 'Mudar123' });
+    expect(res.body.nome).toBe('Nome Na Pessoa');
+  });
+
+  it('CPF duplicado é achado pelo CPF da pessoa (409), mesmo que o login nunca o tenha recebido', async () => {
+    const { body: u } = await asAdmin(request(app).post('/api/users'))
+      .send({ email: 'cpf-pessoa@t.br', roles: ['Aluno'], perfil_geral: { nome: 'Tem CPF' } }).expect(201);
+    await pool.query(`UPDATE pessoas SET cpf = '11144477735' WHERE id = $1`, [u.pessoaId]);
+    const res = await asAdmin(request(app).post('/api/users'))
+      .send({ email: 'outro@t.br', roles: ['Aluno'], perfil_geral: { nome: 'Outro', cpf: '111.444.777-35' } });
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ conflict: 'cpf', existing: { id: u.id, nome: 'Tem CPF' } });
+  });
+
+  it('Gestor de Programa vê o mesmo conjunto: os do programa e os vinculados a ele, sem repetir', async () => {
+    await programa('ppg-a'); await programa('ppg-b');
+    const dono = await seedUserComPessoa({ id: 'u-dono', email: 'dono@t.br', nome: 'Dono', roles: ['Aluno'] });
+    const vinc = await seedUserComPessoa({ id: 'u-vinc', email: 'vinc@t.br', nome: 'Vinc', roles: ['Aluno'] });
+    const fora = await seedUserComPessoa({ id: 'u-fora', email: 'fora@t.br', nome: 'Fora', roles: ['Aluno'] });
+    await pool.query(`UPDATE users SET programa_id = 'ppg-a' WHERE id = 'u-dono'`);
+    await pool.query(`UPDATE users SET programa_id = 'ppg-b' WHERE id IN ('u-vinc', 'u-fora')`);
+    await vincular('v-d', dono.pessoaId, 'DISCENTE_MESTRADO', 'ppg-a');
+    await vincular('v-v1', vinc.pessoaId, 'EGRESSO', 'ppg-a', { ativo: false });
+    await vincular('v-v2', vinc.pessoaId, 'DISCENTE_DOUTORADO', 'ppg-a');
+    await vincular('v-f', fora.pessoaId, 'DISCENTE_MESTRADO', 'ppg-b');
+    await asAdmin(request(app).post('/api/users')).send({
+      email: 'gestor-a@t.br', password: 'senha123', roles: ['GestorPrograma'], programaId: 'ppg-a',
+      perfil_geral: { nome: 'Gestor A' } }).expect(201);
+    const token = await login('gestor-a@t.br');
+    const { body } = await request(app).get('/api/users').set('Authorization', `Bearer ${token}`).expect(200);
+    const emails = body.map((u) => u.email);
+    expect([...emails].sort()).toEqual(['dono@t.br', 'gestor-a@t.br', 'vinc@t.br']);
+  });
+
+  it('dois vínculos de aluno (egresso antigo + discente ativo): a API mostra e o PUT grava o mesmo, o discente', async () => {
+    await programa('ppg-a'); await programa('ppg-b');
+    const al = await seedUserComPessoa({ id: 'u-2v', email: '2v@t.br', nome: 'Dois', roles: ['Aluno'] });
+    await vincular('v-egr', al.pessoaId, 'EGRESSO', 'ppg-a',
+      { ativo: false, criadoEm: '2019-01-01T00:00:00Z', dados: { nivel: 'MESTRADO', entrada: '2017.1', egresso: true } });
+    await vincular('v-dis', al.pessoaId, 'DISCENTE_DOUTORADO', 'ppg-b',
+      { criadoEm: '2024-01-01T00:00:00Z', dados: { entrada: '2024.1', situacao: 'Cursando' } });
+    expect(await perfilAluno('u-2v')).toMatchObject({ nivel: 'Doutorando', entrada: '2024.1', situacao: 'Cursando', egresso: false });
+
+    await asAdmin(request(app).put('/api/users/u-2v'))
+      .send({ perfil_aluno: { nivel: 'Doutorando', entrada: '2024.2', situacao: 'Cursando' } }).expect(200);
+    expect(await dadosDe('v-dis')).toMatchObject({ entrada: '2024.2' });
+    expect(await dadosDe('v-egr')).toEqual({ nivel: 'MESTRADO', entrada: '2017.1', egresso: true });
+    expect(await perfilAluno('u-2v')).toMatchObject({ nivel: 'Doutorando', entrada: '2024.2' });
+  });
+
+  it('dois egressos criados no mesmo instante: o desempate por id é o mesmo na leitura e na gravação', async () => {
+    await programa('ppg-a'); await programa('ppg-b');
+    const al = await seedUserComPessoa({ id: 'u-emp', email: 'emp@t.br', nome: 'Empate', roles: ['Aluno'] });
+    const mesmo = '2020-06-01T00:00:00Z';
+    // 'v-z' entra primeiro; pela ordem (criado_em, id) o principal é 'v-a'.
+    await vincular('v-z', al.pessoaId, 'EGRESSO', 'ppg-a', { ativo: false, criadoEm: mesmo, dados: { nivel: 'MESTRADO', entrada: '2010.1' } });
+    await vincular('v-a', al.pessoaId, 'EGRESSO', 'ppg-b', { ativo: false, criadoEm: mesmo, dados: { nivel: 'DOUTORADO', entrada: '2015.1' } });
+    expect(await perfilAluno('u-emp')).toMatchObject({ nivel: 'Doutor', entrada: '2015.1', egresso: true });
+
+    await asAdmin(request(app).put('/api/users/u-emp'))
+      .send({ perfil_aluno: { nivel: 'Doutor', entrada: '2016.1', egresso: true } }).expect(200);
+    expect(await dadosDe('v-a')).toMatchObject({ entrada: '2016.1' });
+    expect(await dadosDe('v-z')).toEqual({ nivel: 'MESTRADO', entrada: '2010.1' });
+    expect(await perfilAluno('u-emp')).toMatchObject({ nivel: 'Doutor', entrada: '2016.1' });
+  });
+});

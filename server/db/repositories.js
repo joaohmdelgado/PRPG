@@ -8,6 +8,10 @@ import { parseDataPt } from '../utils/datas.js';
 import { PAGINAS_FIXAS } from '../utils/micrositeMenu.js';
 import { sincronizarPessoaDoUsuario } from './pessoaDoUsuario.js';
 import { doUsuario } from './identidadeVinculo.js';
+import {
+  PAPEIS_ALUNO, PAPEIS_DOCENTE_TODOS, ORDEM_VINCULOS, montarPerfilAluno, montarPerfilProfessor,
+} from './perfilVinculo.js';
+import { normalizarCpf } from '../utils/cpf.js';
 
 const toArr = (v) => (Array.isArray(v) ? v : v != null && v !== '' ? [v] : []);
 const intOrNull = (v) => (v === '' || v == null ? null : parseInt(v, 10));
@@ -265,24 +269,63 @@ export const gruposRepo = createRepository({
 });
 
 // ============================ Usuarios ============================
-const userFromRow = (r) => ({
-  id: r.id, email: r.email, password_hash: r.password_hash, roles: r.roles ?? [],
-  senhaTemporaria: r.senha_temporaria ?? false,
-  privacidade: { mostrar_email: r.priv_mostrar_email, mostrar_telefone: r.priv_mostrar_telefone },
-  perfil_geral: {
-    nome: r.perfil_nome, cpf: r.perfil_cpf, siape: r.perfil_siape,
-    foto_url: r.perfil_foto_url, telefones: r.perfil_telefones ?? [],
-  },
-  dados_academicos: {
-    lattes: r.acad_lattes, orcid: r.acad_orcid, google_scholar: r.acad_google_scholar,
-    publons: r.acad_publons,
-  },
-  perfil_aluno: r.perfil_aluno ?? null,
-  perfil_professor: r.perfil_professor ?? null,
-  programaId: r.programa_id ?? null,
-  pessoaId: r.pessoa_id ?? null,
-  criado_em: r.criado_em, atualizado_em: r.atualizado_em,
-});
+// B.13 / G1: o formato da API (perfil_geral, dados_academicos, perfil_aluno,
+// perfil_professor, privacidade) é MONTADO a partir de `pessoas` e dos vínculos
+// da pessoa; `users` só dá a credencial (e-mail, senha, papéis, programa dono).
+// As colunas perfil_*/acad_*/priv_* de `users` ainda recebem a cópia (userToRow)
+// até a Task 8 do plano, mas ninguém as lê por aqui.
+
+// Só constantes do código (nunca texto da requisição).
+const sqlLista = (arr) => `ARRAY[${arr.map((p) => `'${p}'`).join(',')}]::text[]`;
+// A MESMA ordem com que perfilVinculo.js escolhe o vínculo principal ao gravar:
+// o que a API mostra e o que gravarPerfilNosVinculos grava são o mesmo vínculo.
+const ORDEM_VINCULOS_V = ORDEM_VINCULOS.split(',').map((c) => `v.${c.trim()}`).join(', ');
+
+// Usuário + a pessoa por trás + os vínculos de aluno/docente dela (sempre array).
+const USER_SELECT = `
+  SELECT u.*,
+    p.nome AS p_nome, p.cpf AS p_cpf, p.siape AS p_siape, p.foto_url AS p_foto_url, p.telefones AS p_telefones,
+    p.lattes AS p_lattes, p.orcid AS p_orcid, p.google_scholar AS p_google_scholar, p.publons AS p_publons,
+    p.sexo AS p_sexo, p.nacionalidade AS p_nacionalidade, p.estrangeiro AS p_estrangeiro,
+    p.priv_mostrar_email AS p_priv_email, p.priv_mostrar_telefone AS p_priv_telefone,
+    COALESCE((SELECT jsonb_agg(jsonb_build_object('programa_id', v.programa_id, 'papel', v.papel, 'ativo', v.ativo,
+                                                   'dados', COALESCE(v.dados, '{}'::jsonb)) ORDER BY ${ORDEM_VINCULOS_V})
+                FROM vinculos v
+               WHERE v.pessoa_id = u.pessoa_id
+                 AND v.papel = ANY(${sqlLista([...PAPEIS_ALUNO, ...PAPEIS_DOCENTE_TODOS])})), '[]'::jsonb) AS p_vinculos
+  FROM users u LEFT JOIN pessoas p ON p.id = u.pessoa_id`;
+
+// pessoas.telefones é texto ("a, b"); a API segue em array (D5).
+const telefonesEmArray = (t) => String(t ?? '').split(',').map((x) => x.trim()).filter(Boolean);
+// `pessoas` não guarda texto vazio (pessoaDoUsuario pula o vazio): a API devolve
+// '' como antes devolvia o que o formulário tinha mandado.
+const txt = (v) => v ?? '';
+
+const userFromRow = (r) => {
+  const pessoa = { sexo: r.p_sexo, nacionalidade: r.p_nacionalidade, estrangeiro: r.p_estrangeiro };
+  const vinculos = r.p_vinculos || [];
+  const roles = r.roles ?? [];
+  return {
+    id: r.id, email: r.email, password_hash: r.password_hash, roles,
+    senhaTemporaria: r.senha_temporaria ?? false,
+    privacidade: { mostrar_email: r.p_priv_email ?? false, mostrar_telefone: r.p_priv_telefone ?? false },
+    perfil_geral: {
+      nome: txt(r.p_nome), cpf: txt(r.p_cpf), siape: txt(r.p_siape),
+      foto_url: txt(r.p_foto_url), telefones: telefonesEmArray(r.p_telefones),
+    },
+    dados_academicos: {
+      lattes: txt(r.p_lattes), orcid: txt(r.p_orcid), google_scholar: txt(r.p_google_scholar),
+      publons: txt(r.p_publons),
+    },
+    // Só quem tem o papel tem o perfil (Administrator/Gestor: null).
+    perfil_aluno: roles.includes('Aluno') ? montarPerfilAluno(pessoa, vinculos) : null,
+    perfil_professor: roles.includes('Professor') ? montarPerfilProfessor(pessoa, vinculos) : null,
+    programaId: r.programa_id ?? null,
+    pessoaId: r.pessoa_id ?? null,
+    criado_em: r.criado_em, atualizado_em: r.atualizado_em,
+    criado_por: r.criado_por ?? null, atualizado_por: r.atualizado_por ?? null,
+  };
+};
 const userToRow = (o) => ({
   id: o.id, email: o.email, password_hash: o.password_hash, roles: toArr(o.roles),
   senha_temporaria: o.senhaTemporaria != null ? !!o.senhaTemporaria : false,
@@ -301,48 +344,83 @@ const userToRow = (o) => ({
   criado_em: o.criado_em || new Date().toISOString(),
   atualizado_em: o.atualizado_em || new Date().toISOString(),
 });
-const usersBase = createRepository({ table: 'users', fromRow: userFromRow, toRow: userToRow, orderBy: 'criado_em ASC' });
+
+// Login anterior à B.11, ainda sem pessoa: a leitura acima não enxerga a cópia
+// em users, então a pessoa nasce DELA (como o cadastro fazia), antes de a
+// próxima gravação regravar a cópia. Sai com a cópia (Task 8 do plano G1).
+async function ligarPessoaDaCopia(id) {
+  const { rows: [r] } = await query('SELECT * FROM users WHERE id = $1', [id]);
+  if (!r || r.pessoa_id) return;
+  await sincronizarPessoaDoUsuario(null, {
+    id: r.id, pessoaId: null,
+    privacidade: { mostrar_email: r.priv_mostrar_email, mostrar_telefone: r.priv_mostrar_telefone },
+    perfil_geral: { nome: r.perfil_nome, cpf: r.perfil_cpf, siape: r.perfil_siape, foto_url: r.perfil_foto_url, telefones: r.perfil_telefones },
+    dados_academicos: { lattes: r.acad_lattes, orcid: r.acad_orcid, google_scholar: r.acad_google_scholar, publons: r.acad_publons },
+    perfil_aluno: r.perfil_aluno, perfil_professor: r.perfil_professor,
+  });
+}
+
+const lerUsuarios = async (where = 'TRUE', params = []) =>
+  (await query(`${USER_SELECT} WHERE ${where} ORDER BY u.criado_em ASC, u.id ASC`, params)).rows.map(userFromRow);
+
 export const usersRepo = {
-  ...usersBase,
+  getAll: () => lerUsuarios(),
+  async getById(id) { return (await lerUsuarios('u.id = $1', [id]))[0] || null; },
+  async findByEmail(email) { return (await lerUsuarios('u.email = $1', [email]))[0] || null; },
+  // Busca pelo CPF da pessoa comparando só os dígitos, com o zero à esquerda
+  // (ex.: "123.456.789-00" casa com "12345678900"). Retorna null se vazio.
+  async findByCpf(cpf) {
+    const cpfNormalizado = normalizarCpf(cpf);
+    if (!cpfNormalizado) return null;
+    return (await lerUsuarios(
+      "lpad(regexp_replace(COALESCE(p.cpf, ''), '\\D', '', 'g'), 11, '0') = $1", [cpfNormalizado]))[0] || null;
+  },
   // B.11 / D-B11b: toda gravação de usuário leva o que mudou para a `pessoas`
-  // ligada (e cria/liga uma se faltar) — ver server/db/pessoaDoUsuario.js.
+  // ligada (e cria/liga uma se faltar) — ver server/db/pessoaDoUsuario.js. Ela
+  // recebe o objeto no formato do app (perfil_geral...), não o usuário relido.
   async create(obj, actor) {
-    return sincronizarPessoaDoUsuario(null, await usersBase.create(obj, actor));
+    const row = userToRow(obj);
+    if (actor) { row.criado_por = actor; row.atualizado_por = actor; }
+    const keys = Object.keys(row);
+    await query(`INSERT INTO users (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')})`,
+      keys.map((k) => row[k]));
+    // Sem pessoaId, a sincronização liga o login a uma pessoa (a sem login com o
+    // mesmo CPF, ou uma nova); por isso a releitura vem depois dela.
+    await sincronizarPessoaDoUsuario(null, { ...obj, pessoaId: row.pessoa_id });
+    return usersRepo.getById(obj.id);
   },
   async update(id, partial, actor) {
-    const antes = await usersBase.getById(id);
-    return sincronizarPessoaDoUsuario(antes, await usersBase.update(id, partial, actor));
+    let antes = await usersRepo.getById(id);
+    if (!antes) return null;
+    if (!antes.pessoaId) {
+      await ligarPessoaDaCopia(id);
+      antes = await usersRepo.getById(id);
+    }
+    const { _versao, ...dados } = partial; // users não é publicável: sem checagem de versão
+    const merged = { ...antes, ...dados };
+    const row = userToRow(merged);
+    delete row.id; // a PK não é atualizada
+    if (actor) row.atualizado_por = actor; // criado_por é preservado (fora do SET)
+    const keys = Object.keys(row);
+    const { rowCount } = await query(
+      `UPDATE users SET ${keys.map((k, i) => `${k} = $${i + 1}`).join(', ')} WHERE id = $${keys.length + 1}`,
+      [...keys.map((k) => row[k]), id]);
+    if (!rowCount) return null;
+    await sincronizarPessoaDoUsuario(antes, merged);
+    return usersRepo.getById(id);
   },
-  async findByEmail(email) {
-    const { rows } = await query('SELECT * FROM users WHERE email = $1', [email]);
-    return rows[0] ? userFromRow(rows[0]) : null;
-  },
-  // Busca por CPF comparando só os dígitos (ignora pontuação de formatação,
-  // ex.: "123.456.789-00" casa com "12345678900"). Retorna null se vazio.
-  async findByCpf(cpf) {
-    const digits = String(cpf || '').replace(/\D/g, '');
-    if (!digits) return null;
-    const { rows } = await query(
-      "SELECT * FROM users WHERE regexp_replace(COALESCE(perfil_cpf,''), '\\D', '', 'g') = $1 LIMIT 1",
-      [digits]
-    );
-    return rows[0] ? userFromRow(rows[0]) : null;
+  async remove(id) {
+    const { rowCount } = await query('DELETE FROM users WHERE id = $1', [id]);
+    return rowCount > 0;
   },
   // Usuários visíveis a um Gestor de Programa: os que o programa "possui"
   // (programa_id = seu programa) OU os vinculados a ele por qualquer vínculo
   // (ex.: egresso de outro programa que também consta neste). Egressos de outro
   // programa aparecem aqui para leitura, mas a edição/exclusão fica restrita ao
   // programa dono (ver usersController/requireProgramaOwnership).
-  async getScopedToPrograma(programaId) {
-    const { rows } = await query(
-      `SELECT DISTINCT u.* FROM users u
-       LEFT JOIN vinculos v ON ${doUsuario('v.pessoa_id')} AND v.programa_id = $1
-       WHERE u.programa_id = $1 OR v.id IS NOT NULL
-       ORDER BY u.criado_em ASC`,
-      [programaId]
-    );
-    return rows.map(userFromRow);
-  },
+  getScopedToPrograma: (programaId) => lerUsuarios(
+    `u.programa_id = $1 OR EXISTS (SELECT 1 FROM vinculos v WHERE ${doUsuario('v.pessoa_id')} AND v.programa_id = $1)`,
+    [programaId]),
   // True se o usuário tem algum vínculo (ativo ou não) com o programa.
   async isLinkedToPrograma(userId, programaId) {
     const { rows } = await query(

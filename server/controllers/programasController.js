@@ -5,7 +5,7 @@ import { query } from '../db/pool.js';
 import {
   joinPessoa, pessoaReal, nomePessoa, campoPessoa, idsDaMesmaPessoa, pessoaCanonica,
 } from '../db/identidadeVinculo.js';
-import { usersRepo, pagesRepo, linhasPesquisaRepo } from '../db/repositories.js';
+import { pagesRepo, linhasPesquisaRepo } from '../db/repositories.js';
 import { contatosRepo } from '../db/contatosRepo.js';
 import { indicadoresDoPrograma } from '../db/indicadoresRepo.js';
 import { serverError } from '../utils/httpError.js';
@@ -673,31 +673,16 @@ export const addDocente = async (req, res) => {
 };
 
 // Remove (inativa) vínculo de docente. O professor permanece na base — apenas
-// deixa de pertencer a este programa. Mantém perfil_professor.programas em
-// sincronia para não ficar com programa fantasma (origem do "já cadastrado" na
-// importação). Se ficar sem nenhum programa, fica como "Sem vínculo" na lista.
+// deixa de pertencer a este programa. B.13/G1: perfil_professor.programas é
+// derivado dos vínculos docentes ativos (usersRepo), então não há array a manter
+// em sincronia. Se ficar sem nenhum programa, fica como "Sem vínculo" na lista.
 export const removeDocente = async (req, res) => {
   try {
-    const { rows } = await query(
-      `SELECT v.programa_id, u.id AS usuario_id FROM vinculos v ${joinPessoa('v.pessoa_id')}
-       WHERE v.id=$1 AND v.programa_id=$2 AND v.papel=ANY($3::text[])`,
+    const { rowCount } = await query(
+      `UPDATE vinculos SET ativo=FALSE WHERE id=$1 AND programa_id=$2 AND papel=ANY($3::text[])`,
       [req.params.vinculoId, req.params.id, PAPEIS_DOCENTE]
     );
-    if (rows.length === 0) return res.status(404).json({ message: 'Vínculo não encontrado' });
-    const { usuario_id, programa_id } = rows[0];
-
-    await query(`UPDATE vinculos SET ativo=FALSE WHERE id=$1`, [req.params.vinculoId]);
-
-    const user = usuario_id ? await usersRepo.getById(usuario_id) : null;
-    if (Array.isArray(user?.perfil_professor?.programas)) {
-      const programas = user.perfil_professor.programas.filter((p) => p !== programa_id);
-      if (programas.length !== user.perfil_professor.programas.length) {
-        await usersRepo.update(usuario_id, {
-          ...user,
-          perfil_professor: { ...user.perfil_professor, programas },
-        });
-      }
-    }
+    if (rowCount === 0) return res.status(404).json({ message: 'Vínculo não encontrado' });
     res.json({ message: 'Docente removido' });
   } catch (error) {
     serverError(res, 'Erro ao remover docente', error);

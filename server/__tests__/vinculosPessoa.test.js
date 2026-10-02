@@ -166,12 +166,13 @@ describe.each(FORMAS)('B.11 programas — vínculo gravado por %s', (forma) => {
   });
 
   it('remover o docente tira o programa do perfil_professor do usuário', async () => {
-    await pool.query(`UPDATE users SET perfil_professor = '{"programas": ["prog-1"]}' WHERE id = 'u-ana'`);
     await vincular('v-doc', gravado(forma, ana), 'DOCENTE_PERMANENTE');
+    const antes = await asAdmin(request(app).get('/api/users/u-ana'));
+    expect(antes.body.perfil_professor.programas).toEqual(['prog-1']);
     const r = await asAdmin(request(app).delete('/api/programas/prog-1/docentes/v-doc'));
     expect(r.status).toBe(200);
-    const { rows } = await pool.query(`SELECT perfil_professor FROM users WHERE id = 'u-ana'`);
-    expect(rows[0].perfil_professor.programas).toEqual([]);
+    const depois = await asAdmin(request(app).get('/api/users/u-ana'));
+    expect(depois.body.perfil_professor.programas).toEqual([]);
   });
 });
 
