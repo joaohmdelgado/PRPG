@@ -8,8 +8,8 @@ import { gravarPerfilNosVinculos } from '../../db/perfilVinculo.js';
 
 // Importador de PROFESSORES a partir do export de usuários do site antigo
 // (Drupal: array de objetos onde cada campo é uma lista de { value | uri | url }).
-// Um professor no sistema novo é um `users` com papel "Professor", perfil_professor
-// vinculado ao programa, e um `vinculos` (papel docente) ligando-o ao programa.
+// Um professor no sistema novo é um `users` (login) com papel "Professor", a
+// `pessoas` dele e um `vinculos` (papel docente) ligando-o ao programa.
 
 const SENHA_PADRAO = 'Mudar123';
 
@@ -176,14 +176,10 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
       lattes: m.lattes || '', orcid: m.orcid || '',
       google_scholar: m.google_scholar || '', publons: m.publons || '',
     },
-    perfil_aluno: null,
-    perfil_professor: {
-      programas: [programaId],
-      tipo: m.tipo,
-      sexo: m.sexo || '',
-      origem_import: 'profiap',
-      uid_legado: m.uid_legado,
-    },
+    // B.13 / G1: do perfil de professor, só o sexo vai pelo usersRepo (para
+    // `pessoas`); programa e tipo são o vínculo (garantirVinculo), e o uid do
+    // export vai para vinculos.dados (gravarPerfilNosVinculos), abaixo.
+    perfil_professor: { sexo: m.sexo || '' },
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   };

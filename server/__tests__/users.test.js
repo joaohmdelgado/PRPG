@@ -161,8 +161,8 @@ describe('users — exclusão', () => {
   });
 });
 
-// B.13 / G1 (Task 3): o perfil continua em users (cópia) e passa a ir também para
-// pessoas (sexo/estrangeiro/nacionalidade/privacidade) e para vinculos (papel + dados).
+// B.13 / G1 (Task 3): o perfil vai para pessoas (sexo/estrangeiro/nacionalidade/
+// privacidade) e para vinculos (papel + dados); a cópia em users acabou na Task 8.
 describe('G1: escritas em dupla', () => {
   const programa = (id) => pool.query('INSERT INTO programas (id, nome, sigla) VALUES ($1, $1, $1)', [id]);
   const vincular = (id, pessoaId, papel, programaId) => pool.query(
@@ -398,5 +398,57 @@ describe('G1: leitura montada a partir de pessoas e vínculos', () => {
     expect(await dadosDe('v-a')).toMatchObject({ entrada: '2016.1' });
     expect(await dadosDe('v-z')).toEqual({ nivel: 'MESTRADO', entrada: '2010.1' });
     expect(await perfilAluno('u-emp')).toMatchObject({ nivel: 'Doutor', entrada: '2016.1' });
+  });
+});
+
+// B.13 / G1 (Task 8): `users` é só a credencial. A pessoa nasce antes do login e
+// recebe o dado de pessoa direto; nada mais é copiado para users.perfil_*/acad_*.
+describe('G1: users só credencial', () => {
+  const copiaEmUsers = async (email) => (await pool.query(
+    `SELECT perfil_nome, perfil_cpf, perfil_telefones, acad_lattes, perfil_aluno, perfil_professor, pessoa_id
+       FROM users WHERE email = $1`, [email])).rows[0];
+  const pessoa = async (id) => (await pool.query(
+    'SELECT nome, cpf, telefones, lattes, foto_url, estrangeiro FROM pessoas WHERE id = $1', [id])).rows[0];
+
+  it('o cadastro não grava dado de pessoa em users (só em pessoas)', async () => {
+    await asAdmin(request(app).post('/api/users'))
+      .send({ email: 'sp@t.br', roles: ['Gestor'], perfil_geral: { nome: 'Só Pessoa', telefones: ['81 9'] },
+              dados_academicos: { lattes: 'http://l' } }).expect(201);
+    const u = await copiaEmUsers('sp@t.br');
+    expect(u.perfil_nome).toBeNull();
+    expect(u.acad_lattes).toBeNull();
+    expect(u.perfil_telefones ?? []).toEqual([]);
+    expect(u.pessoa_id).not.toBeNull();
+    expect(await pessoa(u.pessoa_id)).toMatchObject({ nome: 'Só Pessoa', telefones: '81 9', lattes: 'http://l' });
+  });
+
+  it('a edição não reescreve a cópia: o nome novo vai só para pessoas', async () => {
+    const { body: criado } = await asAdmin(request(app).post('/api/users'))
+      .send({ email: 'ed@t.br', roles: ['Aluno'], perfil_geral: { nome: 'Antes' } }).expect(201);
+    await asAdmin(request(app).put(`/api/users/${criado.id}`))
+      .send({ perfil_geral: { ...criado.perfil_geral, nome: 'Depois' }, perfil_aluno: { nivel: 'Mestrando', sexo: 'Feminino' } })
+      .expect(200);
+    const u = await copiaEmUsers('ed@t.br');
+    expect(u).toMatchObject({ perfil_nome: null, acad_lattes: null, perfil_aluno: null, perfil_professor: null });
+    expect((await pessoa(u.pessoa_id)).nome).toBe('Depois');
+  });
+
+  it('cadastro com o CPF de uma pessoa sem login reaproveita a pessoa e só preenche o vazio', async () => {
+    await pool.query(`INSERT INTO pessoas (id, nome, cpf, estrangeiro) VALUES ('pes-plan', 'NOME DA PLANILHA', '52998224725', TRUE)`);
+    const { body } = await asAdmin(request(app).post('/api/users')).send({
+      email: 'reuso@t.br', roles: ['Aluno'],
+      perfil_geral: { nome: 'Nome do Painel', cpf: '529.982.247-25', foto_url: '/uploads/r.jpg' },
+      perfil_aluno: { nivel: 'Mestrando', estrangeiro: false },
+    }).expect(201);
+    expect(body.pessoaId).toBe('pes-plan');
+    // soVazios: nome e o "estrangeiro" (boolean) da pessoa não são sobrescritos; a foto (vazia) é preenchida.
+    expect(await pessoa('pes-plan')).toMatchObject({ nome: 'NOME DA PLANILHA', foto_url: '/uploads/r.jpg', estrangeiro: true });
+    expect((await copiaEmUsers('reuso@t.br')).perfil_cpf).toBeNull();
+    expect((await pool.query('SELECT count(*)::int AS n FROM pessoas WHERE cpf = $1', ['52998224725'])).rows[0].n).toBe(1);
+
+    // Numa edição, `estrangeiro: false` explícito é valor e propaga.
+    await asAdmin(request(app).put(`/api/users/${body.id}`))
+      .send({ perfil_aluno: { nivel: 'Mestrando', estrangeiro: false } }).expect(200);
+    expect((await pessoa('pes-plan')).estrangeiro).toBe(false);
   });
 });

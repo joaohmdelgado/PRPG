@@ -27,12 +27,15 @@ beforeEach(async () => { await resetDb(); await seedAdmin(); });
 afterAll(async () => { await pool.end(); });
 
 describe('B.11 migração A — pessoa para todo usuário e reconciliação', () => {
+  // B.13 / G1 (Task 8): o usersRepo não grava mais a cópia em users.perfil_*/acad_*;
+  // o dado legado que a migração lê é posto ali por SQL.
   it('cria pessoa para quem não tem; o usuário vence, menos na foto', async () => {
-    await seedUser({ id: 'u-sem', email: 'sem@t.br', perfil_geral: { nome: 'Sem Pessoa' } });
-    await pool.query(`UPDATE users SET pessoa_id = NULL WHERE id = 'u-sem'`);
+    await seedUser({ id: 'u-sem', email: 'sem@t.br' });
+    await pool.query(`UPDATE users SET pessoa_id = NULL, perfil_nome = 'Sem Pessoa' WHERE id = 'u-sem'`);
     await seedUser({ id: 'u-com', email: 'com@t.br', perfil_geral: { nome: 'Nome Novo', foto_url: '/uploads/painel.jpg' } });
     // Simula a deriva de antes da Task 2: edições que ficaram só em `users`.
-    await pool.query(`UPDATE users SET acad_lattes = 'http://lattes/novo' WHERE id = 'u-com'`);
+    await pool.query(`UPDATE users SET perfil_nome = 'Nome Novo', perfil_foto_url = '/uploads/painel.jpg',
+                       acad_lattes = 'http://lattes/novo' WHERE id = 'u-com'`);
     await pool.query(`UPDATE pessoas SET nome = 'Nome Antigo', foto_url = '/uploads/estrutura.jpg', lattes = 'http://lattes/velho'
                        WHERE id = (SELECT pessoa_id FROM users WHERE id = 'u-com')`);
 

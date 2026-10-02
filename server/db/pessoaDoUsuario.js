@@ -1,11 +1,13 @@
-// B.11 / D-B11b (docs/analise-fk-vinculos-pessoa-id-b3.md §6): `pessoas` é a
-// fonte dos dados da pessoa; users.perfil_*/acad_* são cópia legada até o fim
-// da G1. Toda gravação de usuário passa por usersRepo, que chama isto para
-// levar à `pessoas` ligada o que mudou — nunca apagando valor preenchido lá com
-// vazio (a foto posta pela tela de Estrutura, por exemplo, só existe em
-// `pessoas`). O e-mail de login NÃO é copiado: não é e-mail institucional.
+// B.11 / D-B11b (docs/analise-fk-vinculos-pessoa-id-b3.md §6) e B.13 / G1
+// (docs/analise-g1-users-credencial.md): `pessoas` é a ÚNICA fonte dos dados da
+// pessoa — `users` é só a credencial. A pessoa nasce ANTES do login
+// (pessoaParaNovoUsuario) e toda gravação de usuário passa por usersRepo, que
+// escreve aqui, direto em `pessoas`, o que o app mandou no formato da API
+// (perfil_geral, dados_academicos...) — nunca apagando valor preenchido lá com
+// vazio (a foto posta pela tela de Estrutura, por exemplo). O e-mail de login
+// NÃO é gravado: não é e-mail institucional.
+import crypto from 'crypto';
 import { query } from './pool.js';
-import { criarPessoaDeUsuario } from './pessoasRepo.js';
 import { normalizarCpf, cpfValido } from '../utils/cpf.js';
 
 const vazio = (v) => v == null || String(v).trim() === '';
@@ -82,23 +84,21 @@ async function pessoaSemLoginPorCpf(cpf) {
   return rows.length === 1 ? rows[0].id : null;
 }
 
-// Chamado por usersRepo depois de gravar o usuário. Devolve o usuário com
-// `pessoaId` preenchido.
-export async function sincronizarPessoaDoUsuario(antes, depois) {
-  if (!depois) return depois;
-  if (depois.pessoaId) {
-    await gravar(depois.pessoaId, camposAPropagar(antes, depois));
-    return depois;
-  }
-  const existente = await pessoaSemLoginPorCpf(normalizarCpf(depois.perfil_geral?.cpf));
-  if (existente) {
-    await query('UPDATE users SET pessoa_id = $1 WHERE id = $2', [existente, depois.id]);
-    await gravar(existente, camposAPropagar(null, depois), { soVazios: true });
-    return { ...depois, pessoaId: existente };
-  }
-  // criarPessoaDeUsuario copia também sexo/nacionalidade/estrangeiro; o
-  // gravar seguinte normaliza o CPF e calcula cpf_valido.
-  const pessoaId = await criarPessoaDeUsuario(depois.id);
-  await gravar(pessoaId, camposAPropagar(null, depois));
-  return { ...depois, pessoaId };
+// Antes do INSERT do login: a pessoa que o novo usuário vai ter — uma sem login
+// com o mesmo CPF (não duplica quem veio de planilha) ou uma nova, vazia (o
+// gravarPessoaDoUsuario seguinte a preenche). Devolve { pessoaId, reaproveitada }.
+export async function pessoaParaNovoUsuario(obj) {
+  const existente = await pessoaSemLoginPorCpf(normalizarCpf(obj?.perfil_geral?.cpf));
+  if (existente) return { pessoaId: existente, reaproveitada: true };
+  const pessoaId = crypto.randomUUID();
+  await query('INSERT INTO pessoas (id) VALUES ($1)', [pessoaId]);
+  return { pessoaId, reaproveitada: false };
+}
+
+// Depois de gravar o login: leva à pessoa o que o app mandou. `antes` = o
+// usuário como estava (só o que mudou é gravado), ou null (tudo o que veio
+// preenchido). `soVazios`: pessoa reaproveitada — só preenche o vazio.
+export async function gravarPessoaDoUsuario(pessoaId, antes, depois, { soVazios = false } = {}) {
+  if (!pessoaId || !depois) return;
+  await gravar(pessoaId, camposAPropagar(antes, depois), { soVazios });
 }

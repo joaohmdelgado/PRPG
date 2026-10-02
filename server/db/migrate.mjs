@@ -11,7 +11,6 @@ import {
 } from './repositories.js';
 import { garantirPaginasInstitucionais } from './paginasInstitucionais.js';
 import { garantirEstruturaPrpg } from './estruturaPrpg.js';
-import { backfillPessoas } from './backfill-pessoas.mjs';
 import { backfillDeclaracoesProficiencia } from './backfill-declaracoes-proficiencia.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -134,6 +133,8 @@ async function main() {
   await migrateRepo('bolsas', 'bolsas.json', bolsasRepo);
   await migrateRepo('pages', 'pages.json', pagesRepo);
   await migrateRepo('grupos_pesquisa', 'grupos_pesquisa.json', gruposRepo);
+  // B.13 / G1: usersRepo.create cria (ou reaproveita, pelo CPF) a pessoa de cada
+  // login antes de gravá-lo — o antigo backfill de pessoas (A.2) não é mais preciso.
   await migrateRepo('users', 'users.json', usersRepo);
   await migrateRepo('calendarios', 'calendarios.json', calendariosRepo);
 
@@ -158,10 +159,6 @@ async function main() {
     await taxonomiasRepo.replaceAll(tax);
     console.log(`  taxonomias: ${Object.keys(tax).length} chaves`);
   }
-
-  console.log('Vinculando pessoas aos usuarios (Fase A.2, G1)...');
-  const { criadas, total } = await backfillPessoas();
-  console.log(`  pessoas: ${criadas}/${total}`);
 
   console.log('Recriando declaracoes retroativas de proficiencia (Fase B.2)...');
   const declProf = await backfillDeclaracoesProficiencia();

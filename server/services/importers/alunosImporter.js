@@ -9,9 +9,10 @@ import { slugify } from '../../utils/slug.js';
 
 // Importador de ALUNOS (discentes) a partir do export de usuários do site antigo
 // (Drupal: array de objetos onde cada campo é uma lista de { value | uri | url | target_id }).
-// Um aluno no sistema novo é um `users` com papel "Aluno", perfil_aluno preenchido,
+// Um aluno no sistema novo é um `users` (login) com papel "Aluno", a `pessoas` dele
 // e um `vinculos` (papel discente/egresso) ligando-o ao programa. B.13/G1: o perfil
-// vai também para vinculos.dados (uid_legado + origem_import, entrada, situação...).
+// de aluno vai para vinculos.dados (uid_legado + origem_import, entrada, situação...);
+// sexo, nome e links, para `pessoas` (pelo usersRepo).
 
 const SENHA_PADRAO = 'Mudar123';
 
@@ -220,8 +221,9 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     const merged = {
       ...existente,
       roles: jaAluno ? existente.roles : [...(existente.roles || []), 'Aluno'],
-      // Preserva perfil_aluno anterior, sobrescrevendo com os dados importados.
-      perfil_aluno: { ...(existente.perfil_aluno || {}), ...importado },
+      // B.13 / G1: do perfil de aluno, só o sexo vai pelo usersRepo (para `pessoas`);
+      // o dado de vínculo vai por gravarPerfilNosVinculos, abaixo.
+      perfil_aluno: { sexo: perfilAluno.sexo },
       atualizado_em: new Date().toISOString(),
     };
     const atualizado = await usersRepo.update(existente.id, merged, actor);
@@ -244,8 +246,8 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
       lattes: m.lattes || '', orcid: m.orcid || '',
       google_scholar: m.google_scholar || '', publons: m.publons || '',
     },
-    perfil_aluno: perfilAluno,
-    perfil_professor: null,
+    // B.13 / G1: só o sexo (vai para `pessoas`); o perfil de aluno vai para o vínculo abaixo.
+    perfil_aluno: { sexo: perfilAluno.sexo },
     criado_em: new Date().toISOString(),
     atualizado_em: new Date().toISOString(),
   };

@@ -166,16 +166,11 @@ export async function seedPessoa({ id, nome, cpf = '', siape = '' }) {
   );
 }
 
-// B.11: usuário com `pessoas` ligada (users.pessoa_id). Funciona antes e
-// depois da sincronização da Task 2 (que já cria a pessoa no cadastro).
+// B.11: usuário com `pessoas` ligada (users.pessoa_id). Desde a B.13 / G1 todo
+// seedUser já resulta em pessoa (ela nasce antes do login no usersRepo.create).
 export async function seedUserComPessoa({ id, email, nome, roles = ['Professor'] }) {
-  await seedUser({ id, email, roles, perfil_geral: { nome } });
-  const { rows: [u] } = await pool.query('SELECT pessoa_id FROM users WHERE id = $1', [id]);
-  if (u.pessoa_id) return { usuarioId: id, pessoaId: u.pessoa_id };
-  const pessoaId = `pes-${id}`;
-  await pool.query('INSERT INTO pessoas (id, nome) VALUES ($1, $2)', [pessoaId, nome]);
-  await pool.query('UPDATE users SET pessoa_id = $1 WHERE id = $2', [pessoaId, id]);
-  return { usuarioId: id, pessoaId };
+  const u = await seedUser({ id, email, roles, perfil_geral: { nome } });
+  return { usuarioId: id, pessoaId: u.pessoaId };
 }
 
 // Executa um arquivo de server/db/migrations/ como o migrateRunner: uma transação.

@@ -6,7 +6,7 @@ import { STATUS_PUBLICACAO } from '../utils/publicacao.js';
 import { query } from './pool.js';
 import { parseDataPt } from '../utils/datas.js';
 import { PAGINAS_FIXAS } from '../utils/micrositeMenu.js';
-import { sincronizarPessoaDoUsuario } from './pessoaDoUsuario.js';
+import { pessoaParaNovoUsuario, gravarPessoaDoUsuario } from './pessoaDoUsuario.js';
 import { doUsuario } from './identidadeVinculo.js';
 import {
   PAPEIS_ALUNO, PAPEIS_DOCENTE_TODOS, ORDEM_VINCULOS, montarPerfilAluno, montarPerfilProfessor,
@@ -271,9 +271,10 @@ export const gruposRepo = createRepository({
 // ============================ Usuarios ============================
 // B.13 / G1: o formato da API (perfil_geral, dados_academicos, perfil_aluno,
 // perfil_professor, privacidade) é MONTADO a partir de `pessoas` e dos vínculos
-// da pessoa; `users` só dá a credencial (e-mail, senha, papéis, programa dono).
-// As colunas perfil_*/acad_*/priv_* de `users` ainda recebem a cópia (userToRow)
-// até a Task 8 do plano, mas ninguém as lê por aqui.
+// da pessoa; `users` só guarda a credencial (e-mail, senha, papéis, programa
+// dono, pessoa_id). As colunas perfil_*/acad_*/priv_* de `users` não recebem mais
+// nada (saem do schema na Task 10 do plano); o dado de pessoa que chega no
+// formato da API vai direto para `pessoas` (pessoaDoUsuario.js).
 
 // Só constantes do código (nunca texto da requisição).
 const sqlLista = (arr) => `ARRAY[${arr.map((p) => `'${p}'`).join(',')}]::text[]`;
@@ -326,39 +327,15 @@ const userFromRow = (r) => {
     criado_por: r.criado_por ?? null, atualizado_por: r.atualizado_por ?? null,
   };
 };
+// Só a credencial: o dado de pessoa do objeto (perfil_geral...) não vai para users.
 const userToRow = (o) => ({
   id: o.id, email: o.email, password_hash: o.password_hash, roles: toArr(o.roles),
   senha_temporaria: o.senhaTemporaria != null ? !!o.senhaTemporaria : false,
-  priv_mostrar_email: o.privacidade?.mostrar_email ?? false,
-  priv_mostrar_telefone: o.privacidade?.mostrar_telefone ?? false,
-  perfil_nome: o.perfil_geral?.nome ?? null, perfil_cpf: o.perfil_geral?.cpf ?? null,
-  perfil_siape: o.perfil_geral?.siape ?? null, perfil_foto_url: o.perfil_geral?.foto_url ?? null,
-  perfil_telefones: toArr(o.perfil_geral?.telefones),
-  acad_lattes: o.dados_academicos?.lattes ?? null, acad_orcid: o.dados_academicos?.orcid ?? null,
-  acad_google_scholar: o.dados_academicos?.google_scholar ?? null,
-  acad_publons: o.dados_academicos?.publons ?? null,
-  perfil_aluno: o.perfil_aluno != null ? JSON.stringify(o.perfil_aluno) : null,
-  perfil_professor: o.perfil_professor != null ? JSON.stringify(o.perfil_professor) : null,
   programa_id: o.programaId || null,
   pessoa_id: o.pessoaId || null,
   criado_em: o.criado_em || new Date().toISOString(),
   atualizado_em: o.atualizado_em || new Date().toISOString(),
 });
-
-// Login anterior à B.11, ainda sem pessoa: a leitura acima não enxerga a cópia
-// em users, então a pessoa nasce DELA (como o cadastro fazia), antes de a
-// próxima gravação regravar a cópia. Sai com a cópia (Task 8 do plano G1).
-async function ligarPessoaDaCopia(id) {
-  const { rows: [r] } = await query('SELECT * FROM users WHERE id = $1', [id]);
-  if (!r || r.pessoa_id) return;
-  await sincronizarPessoaDoUsuario(null, {
-    id: r.id, pessoaId: null,
-    privacidade: { mostrar_email: r.priv_mostrar_email, mostrar_telefone: r.priv_mostrar_telefone },
-    perfil_geral: { nome: r.perfil_nome, cpf: r.perfil_cpf, siape: r.perfil_siape, foto_url: r.perfil_foto_url, telefones: r.perfil_telefones },
-    dados_academicos: { lattes: r.acad_lattes, orcid: r.acad_orcid, google_scholar: r.acad_google_scholar, publons: r.acad_publons },
-    perfil_aluno: r.perfil_aluno, perfil_professor: r.perfil_professor,
-  });
-}
 
 const lerUsuarios = async (where = 'TRUE', params = []) =>
   (await query(`${USER_SELECT} WHERE ${where} ORDER BY u.criado_em ASC, u.id ASC`, params)).rows.map(userFromRow);
@@ -375,30 +352,32 @@ export const usersRepo = {
     return (await lerUsuarios(
       "lpad(regexp_replace(COALESCE(p.cpf, ''), '\\D', '', 'g'), 11, '0') = $1", [cpfNormalizado]))[0] || null;
   },
-  // B.11 / D-B11b: toda gravação de usuário leva o que mudou para a `pessoas`
-  // ligada (e cria/liga uma se faltar) — ver server/db/pessoaDoUsuario.js. Ela
-  // recebe o objeto no formato do app (perfil_geral...), não o usuário relido.
+  // B.13 / G1: a pessoa nasce ANTES do login (a sem login com o mesmo CPF, ou uma
+  // nova) e recebe direto o dado de pessoa — ver server/db/pessoaDoUsuario.js. Ela
+  // lê o objeto no formato do app (perfil_geral...), não o usuário relido.
   async create(obj, actor) {
-    const row = userToRow(obj);
+    const { pessoaId, reaproveitada } = obj.pessoaId
+      ? { pessoaId: obj.pessoaId, reaproveitada: true }
+      : await pessoaParaNovoUsuario(obj);
+    const row = userToRow({ ...obj, pessoaId });
     if (actor) { row.criado_por = actor; row.atualizado_por = actor; }
     const keys = Object.keys(row);
     await query(`INSERT INTO users (${keys.join(', ')}) VALUES (${keys.map((_, i) => `$${i + 1}`).join(', ')})`,
       keys.map((k) => row[k]));
-    // Sem pessoaId, a sincronização liga o login a uma pessoa (a sem login com o
-    // mesmo CPF, ou uma nova); por isso a releitura vem depois dela.
-    await sincronizarPessoaDoUsuario(null, { ...obj, pessoaId: row.pessoa_id });
+    await gravarPessoaDoUsuario(pessoaId, null, obj, { soVazios: reaproveitada });
     return usersRepo.getById(obj.id);
   },
   async update(id, partial, actor) {
-    let antes = await usersRepo.getById(id);
+    const antes = await usersRepo.getById(id);
     if (!antes) return null;
-    if (!antes.pessoaId) {
-      await ligarPessoaDaCopia(id);
-      antes = await usersRepo.getById(id);
-    }
     const { _versao, ...dados } = partial; // users não é publicável: sem checagem de versão
     const merged = { ...antes, ...dados };
-    const row = userToRow(merged);
+    // Login sem pessoa (não deveria existir desde a migração A da B.11): ganha uma
+    // pelo mesmo caminho do cadastro, ligada já neste UPDATE.
+    let pessoaId = antes.pessoaId;
+    let soVazios = false;
+    if (!pessoaId) ({ pessoaId, reaproveitada: soVazios } = await pessoaParaNovoUsuario(merged));
+    const row = userToRow({ ...merged, pessoaId });
     delete row.id; // a PK não é atualizada
     if (actor) row.atualizado_por = actor; // criado_por é preservado (fora do SET)
     const keys = Object.keys(row);
@@ -406,7 +385,8 @@ export const usersRepo = {
       `UPDATE users SET ${keys.map((k, i) => `${k} = $${i + 1}`).join(', ')} WHERE id = $${keys.length + 1}`,
       [...keys.map((k) => row[k]), id]);
     if (!rowCount) return null;
-    await sincronizarPessoaDoUsuario(antes, merged);
+    // Pessoa recém-criada/ligada: `antes` não era dela (tudo o que veio preenchido vai).
+    await gravarPessoaDoUsuario(pessoaId, antes.pessoaId ? antes : null, merged, { soVazios });
     return usersRepo.getById(id);
   },
   async remove(id) {

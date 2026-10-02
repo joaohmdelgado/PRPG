@@ -108,12 +108,25 @@ describe('B.11 D-B11b — usersRepo leva os dados da pessoa para `pessoas`', () 
     });
   });
 
+  // B.13 / G1 (Task 8): não há mais cópia em users de onde tirar a pessoa; um login
+  // sem pessoa (não deveria existir desde a migração A da B.11) ganha uma pelo mesmo
+  // caminho do cadastro, com o que a gravação traz.
   it('usuário antigo sem pessoa ganha uma na próxima gravação', async () => {
-    await seedUser({ id: 'u-velho', email: 'velho@t.br', perfil_geral: { nome: 'Velho' } });
-    await pool.query('UPDATE users SET pessoa_id = NULL WHERE id = $1', ['u-velho']);
-    const atualizado = await usersRepo.update('u-velho', { roles: ['Aluno', 'Professor'] });
+    await pool.query(`INSERT INTO users (id, email, password_hash, roles) VALUES ('u-velho', 'velho@t.br', 'x', '{Aluno}')`);
+    const atualizado = await usersRepo.update('u-velho', { roles: ['Aluno', 'Professor'], perfil_geral: { nome: 'Velho' } });
     expect(atualizado.pessoaId).toBeTruthy();
-    expect(await pessoaDe('u-velho')).toMatchObject({ nome: 'Velho' });
+    expect(atualizado.perfil_geral.nome).toBe('Velho');
+    expect(await pessoaDe('u-velho')).toMatchObject({ id: atualizado.pessoaId, nome: 'Velho' });
+  });
+
+  it('usuário antigo sem pessoa, com o CPF de uma pessoa sem login: liga a ela e só preenche o vazio', async () => {
+    await pool.query(`INSERT INTO pessoas (id, nome, cpf) VALUES ('pes-imp', 'NOME DA PLANILHA', '52998224725')`);
+    await pool.query(`INSERT INTO users (id, email, password_hash, roles) VALUES ('u-velho', 'velho@t.br', 'x', '{Aluno}')`);
+    const atualizado = await usersRepo.update('u-velho', {
+      perfil_geral: { nome: 'Nome do Painel', cpf: '529.982.247-25', siape: '123' },
+    });
+    expect(atualizado.pessoaId).toBe('pes-imp');
+    expect(await pessoaDe('u-velho')).toMatchObject({ nome: 'NOME DA PLANILHA', siape: '123' });
   });
 });
 
