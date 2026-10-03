@@ -8,8 +8,20 @@
 --
 -- As FKs dos 8 `programa_id` (Fase A.11) e de vinculos.pessoa_id /
 -- camara_relatorias.relator_id -> pessoas (B.11) ja foram aplicadas.
+--
+-- B.13 / G1 (30/09/2026): este arquivo tambem ja reflete TODAS as migracoes de
+-- server/db/migrations/ ate 2026-09-30_g1c_remove_colunas_users.sql (inclusive):
+-- `users` e so a credencial; o dado da pessoa vive em `pessoas` e o do vinculo em
+-- `vinculos.dados`. Num banco novo criado daqui, `npm run db:migrate:apply` registra
+-- essas migracoes sem roda-las (BASELINE_ATE em server/db/migrateRunner.mjs).
 
 -- ============================ Usuarios ============================
+-- Credencial de acesso (B.13 / G1): 0..1 por pessoa. Os dados da pessoa (nome, CPF,
+-- SIAPE, foto, telefones, Lattes/ORCID/Scholar/Publons, sexo, nacionalidade,
+-- privacidade) vivem em `pessoas`; o que e do vinculo (entrada, situacao, defesa...),
+-- em `vinculos.dados`. As colunas perfil_*/acad_*/priv_* e os JSONB perfil_aluno/
+-- perfil_professor sairam na migracao 2026-09-30_g1c_remove_colunas_users.sql; a API
+-- de usuarios mantem o formato antigo, montado pelo usersRepo (server/db/repositories.js).
 CREATE TABLE IF NOT EXISTS users (
   id                    TEXT PRIMARY KEY,
   email                 TEXT UNIQUE NOT NULL,
@@ -18,27 +30,13 @@ CREATE TABLE IF NOT EXISTS users (
   -- o usuário é obrigado a trocá-la no primeiro acesso antes de usar o painel.
   senha_temporaria      BOOLEAN DEFAULT FALSE,
   roles                 TEXT[] NOT NULL DEFAULT '{}',
-  priv_mostrar_email    BOOLEAN DEFAULT FALSE,
-  priv_mostrar_telefone BOOLEAN DEFAULT FALSE,
-  perfil_nome           TEXT,
-  perfil_cpf            TEXT,
-  perfil_siape          TEXT,
-  perfil_foto_url       TEXT,
-  perfil_telefones      TEXT[] DEFAULT '{}',
-  acad_lattes           TEXT,
-  acad_orcid            TEXT,
-  acad_google_scholar   TEXT,
-  acad_publons          TEXT,
-  -- Perfis variaveis (estrutura livre conforme o papel) ficam como JSONB.
-  perfil_aluno          JSONB,
-  perfil_professor      JSONB,
   -- Gestor de Programa: vincula o usuario a um unico programa que ele administra.
   -- NULL = usuario sem programa (Administrator/Gestor da PRPG, professor, aluno, etc.).
   -- FK para programas(id) e adicionada mais abaixo, depois que a tabela existe.
   programa_id           TEXT,
-  -- Fase A.2 (G1): identidade real da pessoa. FK+UNIQUE adicionadas mais abaixo,
-  -- depois que `pessoas` existe. NULL ate o backfill (script de migracao).
-  pessoa_id             TEXT,
+  -- A pessoa por tras do login (a pessoa nasce antes do login). FK+UNIQUE
+  -- adicionadas mais abaixo, depois que `pessoas` existe.
+  pessoa_id             TEXT NOT NULL,
   criado_em             TIMESTAMPTZ DEFAULT now(),
   atualizado_em         TIMESTAMPTZ DEFAULT now(),
   criado_por            TEXT,
@@ -337,17 +335,18 @@ END$$;
 -- rich-text) foi substituida por `pages` com `programa_id`/`chave` — ver bloco
 -- "Paginas" abaixo e a migracao 2026-09-14_pages_programa_scoped.sql.
 
--- Fase A.2 (G1, PLANO.md): pessoas passa a ser a identidade de quem tem login
+-- Fase A.2 (G1, PLANO.md): pessoas e a identidade de quem tem login
 -- (users.pessoa_id abaixo) e de quem nao tem (vinculos.pessoa_id,
--- camara_relatorias.relator_id — FK desde a B.11). email_institucional/telefones ainda vivem
--- aqui (a extracao para `contatos` e a Fase A.5b, ainda nao aplicada).
+-- camara_relatorias.relator_id — FK desde a B.11). Desde a B.13 / G1 e a UNICA
+-- fonte do dado da pessoa (users nao guarda mais copia). email_institucional/telefones
+-- ainda vivem aqui (a extracao para `contatos` e a Fase A.5b, ainda nao aplicada).
 CREATE TABLE IF NOT EXISTS pessoas (
   id                  TEXT PRIMARY KEY,
   nome                TEXT,
   cpf                 TEXT,
   cpf_valido          BOOLEAN DEFAULT TRUE,   -- FALSE = DV nao confere (aviso, nao bloqueio)
   siape               TEXT,
-  sexo                TEXT,                   -- migrado de perfil_aluno/perfil_professor (A.2a)
+  sexo                TEXT,                   -- era users.perfil_aluno/perfil_professor (A.2a, G1)
   email_institucional TEXT,
   telefones           TEXT,
   endereco            TEXT,

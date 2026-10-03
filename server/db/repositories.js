@@ -272,9 +272,9 @@ export const gruposRepo = createRepository({
 // B.13 / G1: o formato da API (perfil_geral, dados_academicos, perfil_aluno,
 // perfil_professor, privacidade) é MONTADO a partir de `pessoas` e dos vínculos
 // da pessoa; `users` só guarda a credencial (e-mail, senha, papéis, programa
-// dono, pessoa_id). As colunas perfil_*/acad_*/priv_* de `users` não recebem mais
-// nada (saem do schema na Task 10 do plano); o dado de pessoa que chega no
-// formato da API vai direto para `pessoas` (pessoaDoUsuario.js).
+// dono, pessoa_id NOT NULL). As colunas perfil_*/acad_*/priv_* de `users` saíram
+// (migração 2026-09-30_g1c_remove_colunas_users.sql); o dado de pessoa que chega
+// no formato da API vai direto para `pessoas` (pessoaDoUsuario.js).
 
 // Só constantes do código (nunca texto da requisição).
 const sqlLista = (arr) => `ARRAY[${arr.map((p) => `'${p}'`).join(',')}]::text[]`;
@@ -372,11 +372,8 @@ export const usersRepo = {
     if (!antes) return null;
     const { _versao, ...dados } = partial; // users não é publicável: sem checagem de versão
     const merged = { ...antes, ...dados };
-    // Login sem pessoa (não deveria existir desde a migração A da B.11): ganha uma
-    // pelo mesmo caminho do cadastro, ligada já neste UPDATE.
-    let pessoaId = antes.pessoaId;
-    let soVazios = false;
-    if (!pessoaId) ({ pessoaId, reaproveitada: soVazios } = await pessoaParaNovoUsuario(merged));
+    // users.pessoa_id é NOT NULL desde a g1c: todo login tem pessoa.
+    const { pessoaId } = antes;
     const row = userToRow({ ...merged, pessoaId });
     delete row.id; // a PK não é atualizada
     if (actor) row.atualizado_por = actor; // criado_por é preservado (fora do SET)
@@ -385,8 +382,7 @@ export const usersRepo = {
       `UPDATE users SET ${keys.map((k, i) => `${k} = $${i + 1}`).join(', ')} WHERE id = $${keys.length + 1}`,
       [...keys.map((k) => row[k]), id]);
     if (!rowCount) return null;
-    // Pessoa recém-criada/ligada: `antes` não era dela (tudo o que veio preenchido vai).
-    await gravarPessoaDoUsuario(pessoaId, antes.pessoaId ? antes : null, merged, { soVazios });
+    await gravarPessoaDoUsuario(pessoaId, antes, merged);
     return usersRepo.getById(id);
   },
   async remove(id) {

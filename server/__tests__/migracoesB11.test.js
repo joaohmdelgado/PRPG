@@ -3,7 +3,7 @@ import request from 'supertest';
 import { describe, it, expect, beforeEach, afterEach, afterAll } from 'vitest';
 import { pool } from '../db/pool.js';
 import { app } from '../app.js';
-import { resetDb, seedAdmin, seedUser, seedUserComPessoa, loginAdmin } from './helpers.js';
+import { resetDb, seedAdmin, seedUserComPessoa, loginAdmin } from './helpers.js';
 
 // B.11: as migrações rodam como no migrateRunner — uma transação por arquivo.
 const ler = (nome) => fs.readFile(new URL(`../db/migrations/${nome}`, import.meta.url), 'utf8');
@@ -21,45 +21,13 @@ const rodar = async (nome) => {
     c.release();
   }
 };
-const MIG_A = '2026-09-30_b11a_pessoas_de_usuarios.sql';
 
 beforeEach(async () => { await resetDb(); await seedAdmin(); });
 afterAll(async () => { await pool.end(); });
 
-describe('B.11 migração A — pessoa para todo usuário e reconciliação', () => {
-  // B.13 / G1 (Task 8): o usersRepo não grava mais a cópia em users.perfil_*/acad_*;
-  // o dado legado que a migração lê é posto ali por SQL.
-  it('cria pessoa para quem não tem; o usuário vence, menos na foto', async () => {
-    await seedUser({ id: 'u-sem', email: 'sem@t.br' });
-    await pool.query(`UPDATE users SET pessoa_id = NULL, perfil_nome = 'Sem Pessoa' WHERE id = 'u-sem'`);
-    await seedUser({ id: 'u-com', email: 'com@t.br', perfil_geral: { nome: 'Nome Novo', foto_url: '/uploads/painel.jpg' } });
-    // Simula a deriva de antes da Task 2: edições que ficaram só em `users`.
-    await pool.query(`UPDATE users SET perfil_nome = 'Nome Novo', perfil_foto_url = '/uploads/painel.jpg',
-                       acad_lattes = 'http://lattes/novo' WHERE id = 'u-com'`);
-    await pool.query(`UPDATE pessoas SET nome = 'Nome Antigo', foto_url = '/uploads/estrutura.jpg', lattes = 'http://lattes/velho'
-                       WHERE id = (SELECT pessoa_id FROM users WHERE id = 'u-com')`);
-
-    await rodar(MIG_A);
-
-    const { rows } = await pool.query(
-      `SELECT u.id, p.nome, p.foto_url, p.lattes FROM users u JOIN pessoas p ON p.id = u.pessoa_id
-        WHERE u.id IN ('u-com', 'u-sem') ORDER BY u.id`
-    );
-    expect(rows).toEqual([
-      { id: 'u-com', nome: 'Nome Novo', foto_url: '/uploads/estrutura.jpg', lattes: 'http://lattes/novo' },
-      { id: 'u-sem', nome: 'Sem Pessoa', foto_url: null, lattes: null },
-    ]);
-  });
-
-  it('é idempotente', async () => {
-    await seedUser({ id: 'u-sem', email: 'sem@t.br', perfil_geral: { nome: 'Sem Pessoa' } });
-    await pool.query(`UPDATE users SET pessoa_id = NULL WHERE id = 'u-sem'`);
-    await rodar(MIG_A);
-    const antes = (await pool.query('SELECT count(*)::int AS n FROM pessoas')).rows[0].n;
-    await rodar(MIG_A);
-    expect((await pool.query('SELECT count(*)::int AS n FROM pessoas')).rows[0].n).toBe(antes);
-  });
-});
+// B.13 / G1: os testes da migração A (b11a) saíram com a Task 10 — ela lê
+// users.perfil_*/acad_*, que não existem mais no schema.sql final; o banco novo a
+// adota pelo baseline do migrateRunner (migrateRunner.test.js).
 
 const MIG_B = '2026-09-30_b11b_fk_vinculos_pessoa.sql';
 const semFks = () => pool.query(`

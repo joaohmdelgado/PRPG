@@ -32,7 +32,6 @@ export const USOS = [
   { tabela: 'programas', coluna: 'hero_imagem_url', modo: 'texto', tipo: 'Programa (imagem de capa)', titulo: 'nome', admin: (id) => `/admin/programas/editar/${id}` },
   { tabela: 'programas', coluna: 'regimento_url', modo: 'texto', tipo: 'Programa (regimento)', titulo: 'nome', admin: (id) => `/admin/programas/editar/${id}` },
   { tabela: 'programas', coluna: 'regulamento_url', modo: 'texto', tipo: 'Programa (regulamento)', titulo: 'nome', admin: (id) => `/admin/programas/editar/${id}` },
-  { tabela: 'users', coluna: 'perfil_foto_url', modo: 'texto', tipo: 'Usuário (foto)', titulo: 'perfil_nome', admin: (id) => `/admin/users/editar/${id}` },
   { tabela: 'pessoas', coluna: 'foto_url', modo: 'texto', tipo: 'Pessoa (foto)', titulo: 'nome', admin: () => null },
   // Fase H.1/H.4: menus, banner/logo do portal e fotos da equipe (pessoas, acima).
   { tabela: 'menu_itens', coluna: 'imagem', modo: 'texto', tipo: 'Menu do portal (imagem)', titulo: 'rotulo', admin: () => '/admin/portal' },

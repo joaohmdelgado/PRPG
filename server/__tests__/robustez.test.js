@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
 import { app } from '../app.js';
 import { pool } from '../db/pool.js';
-import { resetDb, seedAdmin, loginAdmin } from './helpers.js';
+import { resetDb, seedAdmin, seedUser, loginAdmin } from './helpers.js';
 import { parseDataPt } from '../utils/datas.js';
 
 // Fase R (docs/revisao-portal-conteudo-2026-09-24.md): um erro dentro de um
@@ -79,10 +79,9 @@ describe('R.9 — compressão e cache HTTP', () => {
 
 describe('R.8 — resumo de usuários para autoria', () => {
   it('traz só id e nome da equipe (sem CPF, sem alunos) e exige login', async () => {
-    await pool.query(
-      `INSERT INTO users (id, email, password_hash, roles, perfil_nome, perfil_cpf)
-       VALUES ('aluno-r8', 'aluno@r8.br', 'x', '{Aluno}', 'Aluno R8', '11122233344')`
-    );
+    // B.13 / G1: nome e CPF são da pessoa (o seedUser a cria antes do login).
+    await seedUser({ id: 'aluno-r8', email: 'aluno@r8.br', roles: ['Aluno'],
+      perfil_geral: { nome: 'Aluno R8', cpf: '11122233344' } });
     const anon = await request(app).get('/api/users/resumo');
     expect(anon.status).toBe(401);
 
