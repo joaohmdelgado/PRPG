@@ -692,7 +692,7 @@ ofício em lote — um único ofício cobrindo vários concluintes.
 > `orientador_id` **não** era órfão (erro de medição da 1ª versão); resolve em 48/48 para o `users.id` de um professor.
 > Ao final: servidor 57 arquivos / 593 testes, front 11 arquivos / 90 testes, lint limpo. **Produção NÃO verificada** (a
 > pré-verificação e a g1c ainda precisam rodar lá). **Dívidas achadas, fora do escopo:** (a) 89 de 91 usuários do dev com
-> a senha padrão `Mudar123` sem `senha_temporaria` (os importadores não marcam a flag) — tarefa à parte, já aberta em
+> a senha padrão `Mudar123` sem `senha_temporaria` (os importadores não marcam a flag) — **corrigido em 03/10/2026** (importadores criam com a flag; `npm run senhas:padrao` marcou as 89 no dev; **falta rodar em produção** e a API ainda não impõe a troca — ver `docs/operations/senhas-padrao.md`); antes: tarefa à parte, já aberta em
 > outra sessão, **não resolvida por esta fase**; (b) as flags de privacidade (`priv_mostrar_*`) não têm efeito no site
 > público (D-R2); (c) os importadores legados ainda criam login para todos (15 com e-mail sintético
 > `@import.prpg.local`), contra `arquitetura-dados.md` §5.1; (d) `users.programa_id` tem dois sentidos (programa do
