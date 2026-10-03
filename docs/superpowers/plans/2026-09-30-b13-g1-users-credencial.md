@@ -1,5 +1,7 @@
 # B.13 — Fechar a G1: `users` só credencial — Plano de implementação
 
+> **Status:** executado em 30/09–02/10/2026 (Tasks 0–11); desvios registrados em docs/analise-g1-users-credencial.md §8.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** todos os dados de pessoa (`perfil_*`, `acad_*`, `priv_*`) e os perfis de aluno/professor saem de `users` — para `pessoas` e `vinculos.dados` — sem mudar o formato da API de usuários; a cópia legada e a sincronização `users → pessoas` deixam de existir e as 13 colunas + 2 JSONB são removidas.

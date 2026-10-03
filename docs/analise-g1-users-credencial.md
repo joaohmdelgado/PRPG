@@ -3,7 +3,7 @@
 **Preparado em:** 30/09/2026, a partir de leitura de código na worktree `mystifying-noether-191f7d`
 (`server/`, `src/`, testes) e de consultas **somente de leitura** ao banco de desenvolvimento
 (container `prpg-postgres`, banco `prpg`). Nada foi alterado.
-**Status:** decisões tomadas em 30/09/2026 (§7); plano em docs/superpowers/plans/2026-09-30-b13-g1-users-credencial.md.
+**Status:** implementado em 02/10/2026 — plano em docs/superpowers/plans/2026-09-30-b13-g1-users-credencial.md (decisões tomadas em 30/09/2026, §7; como foi a execução, §8).
 
 ## 1. O problema, em uma frase
 
@@ -282,7 +282,7 @@ removidas.
 Cada passo é um commit verde (`npx vitest run` + `npm run test:front`); as mudanças de tela (AdminUserForm,
 Visibilidade) são conferidas no navegador.
 
-## 7. Decisões em aberto (com recomendação)
+## 7. Decisões (com recomendação e desfecho)
 
 > **Respondidas em 30/09/2026:** **D1** manter o formato da API; **D2** remover as colunas, como último commit,
 > com baseline no `migrateRunner`; **D3** mapeamento aprovado como proposto (refinado no plano: o 400 de "aluno sem
@@ -290,10 +290,15 @@ Visibilidade) são conferidas no navegador.
 > `user_linhas_pesquisa`, antes da remoção das colunas. **D4, D5, D6** seguiram a recomendação (não foram
 > perguntadas); **D8** e **D9** ficam fora. O achado §4.11 (senha padrão) virou tarefa separada.
 
+> **Desfecho (02/10/2026):** cada decisão abaixo termina com uma linha "*Desfecho*" do que foi feito.
+
 **D1 — Formato da API de usuários.** (a) **manter** `perfil_geral`/`dados_academicos`/`perfil_aluno`/
 `perfil_professor`, montados a partir de `pessoas`; (b) renomear já (`pessoa: {…}`, `vinculo.dados`).
 *Recomendo (a).* Custo de (b): 10 arquivos do painel + testes, sem ganho funcional; o rename entra depois
 junto de uma tela de pessoas. Em (a) o front e as ~70 linhas de teste não mudam.
+
+*Desfecho:* (a). O `usersRepo` monta `perfil_geral`/`dados_academicos`/`perfil_aluno`/`perfil_professor`/`privacidade` a partir
+de `pessoas` + vínculos; o painel e quase todos os testes não mudaram. O rename da API segue adiado.
 
 **D2 — As colunas de `users`: remover ou só deixar de usar?** (a) remover (passo 6) e ensinar o
 `migrateRunner` a **adotar o `schema.sql` como baseline** (num banco sem `schema_migrations` e com `users`,
@@ -301,6 +306,10 @@ marcar as migrações existentes como aplicadas sem rodá-las); (b) deixar de us
 ciclo, removendo depois. *Recomendo (a)*, mas com a remoção como **último commit**, separado, para poder parar
 no passo 5 se a pré-verificação da produção mostrar surpresa. (b) deixa a cópia "morta" mas ainda legível —
 é o que a D-B11b chamou de "até o fim da G1", sem acabá-la.
+
+*Desfecho:* (a). A remoção foi o último commit de código (migração g1c). O `migrateRunner` adota o `schema.sql` como
+baseline: `BASELINE_ATE = 2026-09-30_g1c_remove_colunas_users.sql`, só quando `schema_migrations` está vazia **e** o banco
+já está no formato novo.
 
 **D3 — Destino de cada chave de `perfil_aluno`/`perfil_professor`** (confirmar ou corrigir a A.2a, à luz do
 §4):
@@ -317,28 +326,47 @@ no passo 5 se a pré-verificação da produção mostrar surpresa. (b) deixa a c
 | `uid_legado`, `origem_import` | `vinculos.dados` (par origem + uid), busca de autor/orientador por origem |
 | aluno **sem vínculo** | exigir vínculo para gravar dados de vínculo (400 com mensagem), em vez de criar um "vínculo fantasma" |
 
+*Desfecho:* aprovada, com os refinamentos do §8 (o 400 só vale para dado de vínculo de verdade e é verificado antes de
+gravar; o perfil de aluno grava só no vínculo principal). `qualificacao` `2020-10-29` descartada como placeholder
+(69 de 73 no dev). `orientador_id` resolveu em 48/48 para `dados.orientador_pessoa_id`, 0 `orientador_legado`.
+
 **D4 — Privacidade.** (a) colunas `pessoas.priv_mostrar_email/telefone` (cópia literal, sem mudar
 comportamento), (b) migrar para `contatos.publico` (caminho da nota B.6). *Recomendo (a) agora* e **remover do
 formulário `perfil_publico` e `mostrar_lattes`** (nunca persistiram). Fazer o site público **respeitar** as
 flags é item próprio (LGPD): decisão **D-R2** do encarregado de dados, fora desta sessão.
 
+*Desfecho:* (a). `pessoas.priv_mostrar_email/telefone`; `perfil_publico` e `mostrar_lattes` saíram do formulário. O site
+público continua sem consultar as flags (D-R2).
+
 **D5 — Telefones.** Manter `pessoas.telefones` (texto, `, `) e a API em array (split/join); mover para
 `contatos` fica com a B.6/Fase G. *Recomendo manter.*
+
+*Desfecho:* mantido: `pessoas.telefones` texto, API em array.
 
 **D6 — `users.programa_id`.** *Recomendo não mexer* nesta sessão: é o programa do GestorPrograma **e** a posse
 que autoriza edição; separar os dois sentidos (derivar a posse dos vínculos) é decisão de permissão, item próprio.
 
+*Desfecho:* não mexeu. Segue com dois sentidos (90 de 91 preenchidos no dev) — dívida registrada no `PLANO.md`.
+
 **D7 — `user_linhas_pesquisa`.** (a) incluir no passo 7 (coluna `pessoa_id`, PK e FK para `pessoas`,
 backfill, 4 pontos de código); (b) deixar pendurada em `users`. *Recomendo (a)* — sem isso `users` **não**
 fica só credencial — como último passo, separável.
+
+*Desfecho:* (a), na g1b (antes da g1c): `user_linhas_pesquisa` passou a `pessoa_id` (PK e FK para `pessoas`). No dev,
+76 linhas/76 usuários antes e 76 linhas/76 pessoas depois.
 
 **D8 — Quem deveria ter login.** Os importadores criam `users` para todos (15 com e-mail sintético). *Recomendo
 não tratar nesta sessão* (mudaria o que o importador produz e o fluxo de "Importar usuários"), mas registrar o
 item e **antes** tratar o §4.11 (forçar troca de senha nas contas com senha padrão) — é segurança, independe
 da G1.
 
+*Desfecho:* fora, como recomendado. Os importadores legados seguem criando login para todos; registrado como dívida no
+`PLANO.md`. A senha padrão (§4.11) virou tarefa à parte, já aberta em outra sessão — **não resolvida por esta fase**.
+
 **D9 — Tela para editar pessoa sem login.** Hoje só Estrutura (nome/foto dos membros) e planilhas. O formulário
 de usuário continuará editando login + pessoa juntos. *Recomendo deixar a tela de pessoas para depois.*
+
+*Desfecho:* fora, como recomendado. Continua não havendo tela para editar pessoa sem login.
 
 ## 8. Implantação (produção) e reversão
 
@@ -353,6 +381,48 @@ de usuário continuará editando login + pessoa juntos. *Recomendo deixar a tela
 
 **Reversão:** até o passo 5 a cópia em `users` continua válida (escritas em dupla), então voltar o código
 basta. A migração D é *forward-only*: o backup (`docs/operations/backup-restore.md`) deve ser tirado antes.
+
+### Como foi no banco de desenvolvimento
+
+Execução de 30/09/2026 a 02/10/2026, só no banco de desenvolvimento (`prpg`); **a produção não foi verificada** — a
+pré-verificação (`docs/operations/g1-pre-verificacao.sql`) e a migração g1c (forward-only, backup antes) ainda precisam
+rodar lá.
+
+| | Antes | Depois |
+|---|---|---|
+| g1a — `vinculos.dados` | coluna inexistente | preenchido em 37 `DISCENTE_MESTRADO` ativos (+1 inativo sem perfil), 36 `EGRESSO`, 14 `DOCENTE_PERMANENTE`, 2 `DOCENTE_COLABORADOR` |
+| g1a — orientador | `orientador_id` (`users.id`) em 48 alunos | 48 vínculos com `orientador_pessoa_id` resolvido, 0 `orientador_legado` |
+| g1a — `qualificacao` | `2020-10-29` em 69 de 73 | só em 4 vínculos (o placeholder foi descartado) |
+| g1a — `priv_mostrar_email` | 1 em `users` | 1 em `pessoas` |
+| g1b — `user_linhas_pesquisa` | 76 linhas / 76 usuários | 76 linhas / 76 pessoas |
+| g1c — `users` | 13 colunas de pessoa + 2 JSONB | 11 colunas, `pessoa_id` NOT NULL, 91 usuários |
+| g1c — contrato | hashes de `usersRepo.getAll` e das listas públicas de docentes (16) e discentes (73) | **idênticos** aos de antes |
+
+Antes de remover a cópia, a divergência `users` × `pessoas` era 0 em todos os campos. Correção desta análise feita
+durante a execução: `orientador_id` **não** era órfão (§4, item 5); resolve em 48/48 para o `users.id` de um professor.
+Ao final: servidor 57 arquivos / 593 testes, front 11 arquivos / 90 testes, lint limpo.
+
+### Desvios do plano durante a execução
+
+- **400 de "aluno sem vínculo"**: só vale para dado de vínculo de verdade (o formulário sempre envia defaults) e é
+  verificado **antes** de gravar (`verificarPerfilAluno`), para não deixar a gravação pela metade.
+- **Perfil de aluno** grava só no vínculo principal; o **tipo do docente** só muda o papel quando difere do mostrado.
+- **`updateUser`** só grava nos vínculos para Administrator/Gestor (que reconciliam `programas`) e para o Gestor de
+  Programa dono (só o programa dele, sem criar nem encerrar vínculo); a **auto-edição** não grava vínculo.
+- Programa inexistente em `perfil_professor.programas` é **ignorado**.
+- O **CPF** devolvido pela API passa a vir só com dígitos (`pessoas` normaliza).
+- `verificarAluno` (proficiência) passa a reconhecer **aluno matriculado sem login**.
+- **`DOCENTE_VISITANTE`** entrou em `PAPEIS_DOCENTE` — mas `micrositeRepo.js:29` e 3 telas do front ainda agrupam só
+  permanentes e colaboradores: o visitante vem na API e **não aparece** nessas telas (dívida).
+- **`migrate.mjs`** perdeu o passo de backfill de pessoas (o `usersRepo.create` cria a pessoa antes do login).
+- Os **testes das migrações a (b11a) e g1a** foram removidos: elas leem colunas que o `schema.sql` final não tem, e ficam
+  cobertas pelo baseline (`migrateRunner.test.js`); `migracoesG1.test.js` cobre a g1b e a g1c.
+- O **runner não conseguia rodar num banco novo mesmo antes da G1** ("relation programa_paginas does not exist"); agora
+  adota o `schema.sql` como baseline (§4, item 12).
+- **Achados fora do escopo**, registrados no `PLANO.md` (§17): senha padrão sem `senha_temporaria` em 89 de 91 usuários
+  (tarefa à parte), flags de privacidade sem efeito no site público, importadores que ainda criam login para todos (15
+  com e-mail sintético), `users.programa_id` com dois sentidos, pessoa sem nome (`profiap@ufrpe.br` aparece como
+  "Sem Nome"), ausência de tela para editar pessoa sem login e o rename da API adiado.
 
 ## 9. Fora do escopo
 

@@ -270,7 +270,7 @@ de teste alterada precisa de justificativa escrita no commit.
 | `[ ]` | B.10 | Rodar a importação e validar 10 processos com a secretaria | — | |
 | `[x]` | B.11 | FK real de `vinculos.pessoa_id` e `camara_relatorias.relator_id` → `pessoas(id)` (resíduo da A.10/B.3), em 6 passos: leituras tolerantes às duas chaves → sincronização `users`→`pessoas` → escritas gravam `pessoas.id` → migração de dado → FK → simplificação | `docs/analise-fk-vinculos-pessoa-id-b3.md` | decisões tomadas em 29/09/2026: **D-B11a** `ON DELETE RESTRICT`; **D-B11b** `pessoas` é a fonte dos dados da pessoa, `usersRepo` propaga para ela até o fim da G1; **D-B11c** excluir usuário encerra os vínculos e os mantém como histórico — implementado em 30/09/2026 (plano docs/superpowers/plans/2026-09-29-b11-fk-vinculos-pessoa.md) |
 | `[x]` | B.12 | `inscricoes_proficiencia.aluno_id` (users.id sem FK) vira `aluno_pessoa_id` → `pessoas(id)` `ON DELETE SET NULL` (mesma regra de identidade da B.11; excluir o login não tira a inscrição da pessoa) | `docs/analise-fk-vinculos-pessoa-id-b3.md` §10 | implementado em 30/09/2026 |
-| `[ ]` | B.13 | **Fechar a G1:** `users` vira só credencial — dados da pessoa (`perfil_*`, `acad_*`, `priv_*`) e `perfil_aluno`/`perfil_professor` saem de `users` (para `pessoas` e `vinculos.dados`), a cópia legada e o `pessoaDoUsuario.js` somem; 7 passos (pré-verificação → migração aditiva → escritas em dupla → virada de leitura → fim da cópia → `DROP COLUMN` → arremates) | `docs/analise-g1-users-credencial.md` | decisões de 30/09/2026 (D1 manter o formato da API; D2 remover as colunas por último; D3 mapeamento do JSONB; D7 `user_linhas_pesquisa` por pessoa) — plano em `docs/superpowers/plans/2026-09-30-b13-g1-users-credencial.md`, 12 tasks |
+| `[x]` | B.13 | **Fechar a G1:** `users` virou só credencial (11 colunas, `pessoa_id NOT NULL`). O dado da pessoa (`perfil_*`, `acad_*`, `priv_*`) foi para `pessoas` (com `priv_mostrar_email/telefone`) e `perfil_aluno`/`perfil_professor` para `pessoas` + `vinculos.dados` (coluna criada nesta fase); a API de usuários mantém o formato, montado pelo `usersRepo`; a cópia legada e a sincronização `users` → `pessoas` acabaram (`pessoaDoUsuario.js` virou escrita direta em `pessoas`); `user_linhas_pesquisa` passou a `pessoa_id`; as 13 colunas e os 2 JSONB foram removidos (migração g1c) e o `migrateRunner` adota o `schema.sql` como baseline | `docs/analise-g1-users-credencial.md`, `server/db/perfilVinculo.js` | decisões de 30/09/2026 (D1 manter o formato da API; D2 remover as colunas por último; D3 mapeamento do JSONB; D4 flags de privacidade `perfil_publico`/`mostrar_lattes` saem do formulário; D5 telefones seguem texto em `pessoas`; D6 `users.programa_id` não muda; D7 `user_linhas_pesquisa` por pessoa) — plano em `docs/superpowers/plans/2026-09-30-b13-g1-users-credencial.md` (Tasks 0–11). **G1 fechada em 30/09/2026, concluída em 02/10/2026 no banco de desenvolvimento; produção ainda não verificada** (rodar `docs/operations/g1-pre-verificacao.sql` antes de implantar; a g1c é forward-only, com backup antes) |
 
 > **Nota B.4** — investigada, não aplicada: migrar `portarias`/`resolucoes` para `atos` esbarra
 > no mesmo problema do `camara_atos` (B.1) — exige série/sequencial reais, bloqueados por D-E1.
@@ -633,7 +633,7 @@ ofício em lote — um único ofício cobrindo vários concluintes.
 | Fase | Itens | Decisões a responder antes | Início | Fim | Estado |
 |---|---|---|---|---|---|
 | A — Núcleo | 18 | D-A1, D-A2, D-A3, D-A4, D-E1 | 27/07/2026 | 27/07/2026 | ✅ concluída (D-A1/D-A4 conforme recomendação; FK real de `vinculos.pessoa_id` adiada para B.3 — ver A.10) |
-| B — Refit + Câmara | 12 | D-B1, D-G8, D-A4 | 28/07/2026 | 28/07/2026 | 🟡 9/12 feitos (B.1-B.3, B.5, B.7 aplicados; B.4/B.6 investigados e adiados p/ Fase E/G; B.8-B.10 bloqueados por D-B1; B.11 (FK de `vinculos.pessoa_id`) e B.12 (FK de `inscricoes_proficiencia.aluno_pessoa_id`) aplicadas em 30/09/2026) |
+| B — Refit + Câmara | 13 | D-B1, D-G8, D-A4 | 28/07/2026 | 28/07/2026 | 🟡 10/13 feitos (B.1-B.3, B.5, B.7 aplicados; B.4/B.6 investigados e adiados p/ Fase E/G; B.8-B.10 bloqueados por D-B1; B.11 (FK de `vinculos.pessoa_id`), B.12 (FK de `inscricoes_proficiencia.aluno_pessoa_id`) e B.13 (G1: `users` só credencial) aplicadas em 30/09/2026; B.13 concluída em 02/10/2026 no banco de dev) |
 | G — Contatos | 9 | D-G1..D-G8 | 28/07/2026 | 29/09/2026 | 🟡 6/9 feitos (G.1-G.5 já aplicados; G.9 aplicado e testado em 29/09/2026, depois de D-G1 respondida — ver `docs/decisoes-pendentes-conexoes-n.md`; G.6/G.7 deixados por escopo; G.8 depende de rodar G.4 com `--gravar`) |
 | E — Expedientes | 14 | D-E1..D-E3, D-E5..D-E8 | 28/07/2026 | 28/07/2026 | 🟡 9/14 feitos (E.1-E.4, E.6-E.9, E.13 aplicados e testados; E.5/E.10/E.12/E.14 bloqueados pelas decisões D-E2/D-E3/D-E5; E.11 investigada e adiada — depende do importador) |
 | C — PNPD | 8 | D-C1..D-C4, D-C6..D-C9 | 28/07/2026 | 28/07/2026 | 🟡 7/8 feitos (C.1-C.4, C.6, C.8 aplicados e testados; C.7 parcial — declaração de vínculo pronta, certificado adiado por D-C7; C.5 bloqueado por D-C3/D-C8/D-C9) |
@@ -661,6 +661,46 @@ ofício em lote — um único ofício cobrindo vários concluintes.
 > do importador → siglas → nomes → aliases (desempate por id). Em Expedientes, "Secretaria" (quem expediu ou
 > destinatário) é **ambígua** — Câmara × Administrativa, os requisitos não dizem — e não casa sozinha: vira
 > pendência `SETOR_SEM_UNIDADE`/`DESTINATARIO_SEM_UNIDADE`, respondida na revisão (a resposta vira de-para).
+>
+> **30/09/2026–02/10/2026 — G1 fechada (B.13; análise em `docs/analise-g1-users-credencial.md`, plano em
+> `docs/superpowers/plans/2026-09-30-b13-g1-users-credencial.md`, Tasks 0–11).** `users` é só a credencial
+> (11 colunas: `id`, `email`, `password_hash`, `senha_temporaria`, `roles`, `programa_id`, `pessoa_id` NOT NULL e a
+> auditoria); o dado da pessoa vive em `pessoas` (que ganhou `priv_mostrar_email/telefone`) e o do vínculo em
+> `vinculos.dados` (coluna que a A.2 deu como feita sem existir). O formato da API de usuários (`perfil_geral`,
+> `dados_academicos`, `perfil_aluno`, `perfil_professor`, `privacidade`) foi **mantido** (D1) e passou a ser montado
+> pelo `usersRepo` a partir de `pessoas` + vínculos; `server/db/perfilVinculo.js` é o único módulo que converte entre
+> esse formato e `pessoas`/`vinculos.dados`. Ordem executada: pré-verificação → migração g1a (aditiva) → escritas em
+> dupla → teste de contrato → virada de leitura do `usersRepo` → leituras SQL sem `users.perfil_*` → front (flags de
+> privacidade que nunca persistiram) → fim da cópia (a pessoa nasce antes do login; `pessoaDoUsuario.js` virou escrita
+> direta) → `user_linhas_pesquisa` por pessoa (g1b) → remoção das colunas (g1c) com o `migrateRunner` adotando o
+> `schema.sql` como baseline (`BASELINE_ATE = 2026-09-30_g1c_remove_colunas_users.sql`; só adota com `schema_migrations`
+> vazia e o banco já no formato novo — antes disso o runner nem rodava num banco novo: "relation programa_paginas does
+> not exist"). Decisões: **D1** manter o formato da API; **D2** remover as colunas por último; **D3** sexo/estrangeiro/
+> nacionalidade → `pessoas`, nível (matriculado = papel do vínculo; egresso = `vinculos.dados.nivel`), tipo do docente →
+> papel `DOCENTE_*`, `programas[]` some (derivado dos vínculos), entrada/situação/defesa/egresso/qualificação e
+> `uid_legado`+`origem_import` → `vinculos.dados`, `orientador_id` (era `users.id` do professor) →
+> `dados.orientador_pessoa_id` (`orientador_legado` só se não resolve), `qualificacao` 2020-10-29 descartada como
+> placeholder (69 de 73 no dev); **D4** `pessoas.priv_*`, flags `perfil_publico`/`mostrar_lattes` fora do formulário
+> (nunca persistiram) e honrar as flags no site público fica de fora (LGPD, D-R2); **D5** `pessoas.telefones` texto, API
+> em array; **D6** `users.programa_id` não muda; **D7** `user_linhas_pesquisa` por `pessoa_id`. **Medido no dev:** g1a —
+> `vinculos.dados` preenchido em 37 DISCENTE_MESTRADO ativos (+1 inativo sem perfil), 36 EGRESSO, 14 DOCENTE_PERMANENTE e
+> 2 DOCENTE_COLABORADOR; 48 vínculos de alunos com `orientador_pessoa_id` resolvido e 0 `orientador_legado`;
+> `qualificacao` só em 4 vínculos; `priv_mostrar_email` 1. g1b — `user_linhas_pesquisa` 76 linhas/76 usuários antes e 76
+> linhas/76 pessoas depois. g1c — `users` com 11 colunas, `pessoa_id` NOT NULL, 91 usuários; hashes de
+> `usersRepo.getAll` e das listas públicas de docentes (16) e discentes (73) idênticos antes e depois; divergência
+> `users` × `pessoas` = 0 em todos os campos antes de remover a cópia. Correção da análise durante a execução:
+> `orientador_id` **não** era órfão (erro de medição da 1ª versão); resolve em 48/48 para o `users.id` de um professor.
+> Ao final: servidor 57 arquivos / 593 testes, front 11 arquivos / 90 testes, lint limpo. **Produção NÃO verificada** (a
+> pré-verificação e a g1c ainda precisam rodar lá). **Dívidas achadas, fora do escopo:** (a) 89 de 91 usuários do dev com
+> a senha padrão `Mudar123` sem `senha_temporaria` (os importadores não marcam a flag) — tarefa à parte, já aberta em
+> outra sessão, **não resolvida por esta fase**; (b) as flags de privacidade (`priv_mostrar_*`) não têm efeito no site
+> público (D-R2); (c) os importadores legados ainda criam login para todos (15 com e-mail sintético
+> `@import.prpg.local`), contra `arquitetura-dados.md` §5.1; (d) `users.programa_id` tem dois sentidos (programa do
+> GestorPrograma e "dono" de aluno/professor; 90 de 91 preenchidos); (e) pessoa sem nome: `profiap@ufrpe.br` aparece como
+> "Sem Nome"; (f) não existe tela para editar pessoa sem login; (g) o rename da API (`perfil_geral` → formato novo)
+> ficou adiado; (h) `DOCENTE_VISITANTE` entrou em `PAPEIS_DOCENTE`, mas `micrositeRepo.js:29` e 3 telas do front ainda
+> agrupam só permanentes/colaboradores — o visitante vem na API e não aparece nessas telas. Desvios do plano:
+> `docs/analise-g1-users-credencial.md` §8.
 
 ---
 

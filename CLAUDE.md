@@ -102,7 +102,7 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 | Scholarships (Bolsas) | bolsasController.js | bolsas.json | `/api/bolsas` |
 | FAQ | faqController.js | faq.json | `/api/faq` |
 | Custom Pages | pagesController.js | pages.json | `/api/pages` |
-| Users | usersController.js | users.json | `/api/users` |
+| Users | usersController.js | `users` (só credencial) + `pessoas` + `vinculos.dados`; `users.json` é só seed, via `usersRepo.create` | `/api/users` |
 | Portarias | portariasController.js | portarias.json | `/api/portarias` (admin only) |
 | Research Groups | gruposPesquisaController.js | grupos_pesquisa.json | `/api/grupos-pesquisa` (admin only) |
 | Proficiência (línguas) | proficienciaController.js | tabela `inscricoes_proficiencia` (sem JSON seed) | `/api/proficiencia/*` |
@@ -116,7 +116,7 @@ estrangeiro: Português + outra. Admin/Gestor gerenciam períodos, lançam a not
 (`PUT .../:id/nota` → resultado: 5–7 suficiência, >7 proficiência, <5
 insuficiente) e geram a declaração em PDF no servidor via `pdfkit`
 (`GET .../:id/declaracao`). O campo `estrangeiro`/`nacionalidade` foi adicionado
-ao `perfil_aluno` (JSONB) no cadastro do usuário. A inscrição aponta para a
+à pessoa (`pessoas.estrangeiro`/`nacionalidade`; a API de usuários os expõe em `perfil_aluno`) no cadastro do usuário. A inscrição aponta para a
 **pessoa** do aluno (`aluno_pessoa_id` → `pessoas`, `ON DELETE SET NULL`, B.12;
 nulo na inscrição anônima), não para o login.
 
@@ -292,7 +292,8 @@ proficiência, mídia, notificações, métricas.
   `listen`), and `server/index.js` does the DB boot check + `listen`. Tests
   import `app.js` directly via supertest.
 - `globalSetup.js` drops/recreates an isolated `prpg_test` database and applies
-  `schema.sql`; `helpers.js` empties the tables (`DELETE` over `RESET_TABLES`, not
+  `schema.sql` **only** (the migrations are not run: the schema is already their final state, which is why
+  `migrateRunner` adopts it as a baseline — see `migrateRunner.test.js`); `helpers.js` empties the tables (`DELETE` over `RESET_TABLES`, not
   `TRUNCATE` — the comment in `resetDb()` explains why) and seeds an admin before
   each test. A new table or sequence must be added to `RESET_TABLES` /
   `RESET_SEQUENCES` in `helpers.js`; `resetDb.test.js` fails otherwise. The dev
@@ -312,14 +313,15 @@ proficiência, mídia, notificações, métricas.
   fixed pages, menu overrides, publication checklist, color contrast), /minha-conta,
   the list contract (`listagemAdmin`), the panel search (`buscaPainel`), SQL-side listing/pagination
   for news and editais (`listagemSql`), the WebP image pipeline (`imagens`), per-route SEO metadata/
-  sitemap/robots (`seo`), real Web Vitals (`webVitals`), and the person behind a vínculo plus the users→pessoas sync (`vinculosPessoa`, `migracoesB11`). ~512 tests in 54 files — the exact number
+  sitemap/robots (`seo`), real Web Vitals (`webVitals`), the person behind a vínculo (`vinculosPessoa`, `migracoesB11`), and the G1 closure — `users` only credential (`perfilVinculo`, the API contract of /api/users before/after the switch `retratoUsuarios`, `migracoesG1`, the `migrateRunner` baseline). ~593 tests in 57 files — the exact number
   drifts; check with `npx vitest run`.
 - **Front component tests** (`npm run test:front`, `vitest.front.config.js`, jsdom, no DB/API) live in
   `src/__tests__/`: `ui` (Field/Dialog/Toast/Icone/rede de rótulos/menu/login), `paineis` (AdminLayout drawer and
   groups, RequireAuth, estados, /minha-conta, Ctrl+K), `tabela` (DataTable: URL, sort, errors, delete, selection),
   `formularios` (8 real forms: zero loose labels), `Imagem`/`SafeHtml` (srcset, lazy loading), `usePortal`
-  (server-embedded menus/config), `rotaVitals`/`webVitals` (route family grouping, beacon payload). ~85 tests
-  in 9 files. jsdom comes transitively from `isomorphic-dompurify`.
+  (server-embedded menus/config), `rotaVitals`/`webVitals` (route family grouping, beacon payload), `usuarioForm` (the user form/list
+  offer no privacy flag that never persisted) and `vinculosUsuario`. ~90 tests
+  in 11 files. jsdom comes transitively from `isomorphic-dompurify`.
 - Requires the Docker Postgres running (`npm run db:up`).
 
 ## Important Implementation Notes
@@ -331,7 +333,7 @@ proficiência, mídia, notificações, métricas.
    - `schema.sql`: full relational schema, written as a consolidated baseline (not
      incremental migrations — see `migrations/arquivo/` for the historical ones).
      Core/shared tables (reused across modules, not owned by one feature):
-     `pessoas` (identity — `users.pessoa_id` links a login to one), `unidades`
+     `pessoas` (identity and **the only source of person data** — `users.pessoa_id`, NOT NULL, links a login to one), `unidades`
      (org units), `arquivos`/`anexos` (uploads + polymorphic attachment),
      `contatos` (polymorphic contact info), `eventos` (polymorphic append-only
      timeline), `ato_series`/`atos`/`ato_referencias`/`documentos` (numbered
@@ -341,22 +343,46 @@ proficiência, mídia, notificações, métricas.
      each one up.
    - `repository.js`: generic CRUD factory (`createRepository`) for single-table entities.
    - `repositories.js`: per-entity repos with `fromRow`/`toRow` mappers that convert
-     between DB snake_case columns and the camelCase JSON the frontend expects.
+     between DB snake_case columns and the camelCase JSON the frontend expects. **Exception —
+     `usersRepo` (B.13 / G1)**: it does not use `createRepository`; `users` is only the credential
+     (11 columns: `id`, `email`, `password_hash`, `senha_temporaria`, `roles`, `programa_id`, `pessoa_id` NOT NULL,
+     `criado_em/por`, `atualizado_em/por`), and the repo reads `users` + `pessoas` + the person's student/teacher
+     `vinculos` and **builds** the API shape (`perfil_geral`, `dados_academicos`, `perfil_aluno`, `perfil_professor`,
+     `privacidade`). That shape is kept on purpose (renaming it is deferred); a controller or test that builds a
+     user still sends it as *input* to `usersRepo.create/update`.
    - `migrate.mjs`: seeds the DB from the JSON files (TRUNCATEs first — seeds
-     `programas` before the content tables that now have a real FK to it).
+     `programas` before the content tables that now have a real FK to it). `users.json` goes through
+     `usersRepo.create`, which creates the person first (no separate pessoas backfill any more).
+   - `migrateRunner.mjs` (`npm run db:migrate:apply`): applies `server/db/migrations/` in order. `schema.sql` is the
+     baseline up to `BASELINE_ATE` (`2026-09-30_g1c_remove_colunas_users.sql`): on a database with an empty
+     `schema_migrations` that is already in the new shape (has `pessoas.priv_mostrar_email`, no `users.perfil_nome`) it
+     only *registers* the migrations up to that one, without running them; a newer migration is applied normally.
    - `core.js`, `anexosRepo.js`, `eventosRepo.js`, `atosRepo.js`, `contatosRepo.js`:
      repositories/helpers for the tables above.
    - `identidadeVinculo.js` (B.11): **the** way to read the person behind `vinculos.pessoa_id` /
      `camara_relatorias.relator_id` (both FK → `pessoas`, RESTRICT). `joinPessoa(col)` gives `p` (pessoa) and `u`
-     (login, `users.pessoa_id`); `pessoaCanonica(id)` turns a panel `users.id` into the `pessoas.id` to write (400
-     if unknown). API responses carry `pessoa_id` (pessoas.id) and, panel-only, `usuario_id` (login).
+     (login, `users.pessoa_id`); `campoPessoa(col, { p })` reads a person field from `p` only (one column
+     argument — there is no `users.perfil_*` fallback any more) and `nomePessoa()` falls back to the login e-mail; `pessoaCanonica(id)` turns a panel `users.id`
+     into the `pessoas.id` to write (400 if unknown). API responses carry `pessoa_id` (pessoas.id) and, panel-only,
+     `usuario_id` (login).
    - `pessoaDoUsuario.js` (D-B11b, B.13): the person is created **before** the login (`pessoaParaNovoUsuario`: the
      login-less person with the same valid CPF, or a new one) and `usersRepo.create/update` write the person data
      (API format) straight to `pessoas` (`gravarPessoaDoUsuario`; never erasing a filled value; login e-mail is not
-     written). `users` only holds the credential — nothing is copied to `users.perfil_*` any more.
+     written). `users` only holds the credential — nothing is copied to `users.perfil_*` any more (those columns are gone).
+   - `perfilVinculo.js` (B.13): **the** module that converts between the API's `perfil_aluno`/`perfil_professor` and
+     `pessoas` (sexo, nacionalidade, estrangeiro) + `vinculos.dados` (JSONB: `nivel` — egresso only, MESTRADO/DOUTORADO —,
+     `entrada`, `situacao`, `qualificacao`, `defesa`, `egresso`, `orientador_pessoa_id`/`orientador_legado`, `uid_legado` +
+     `origem_import`). `montarPerfilAluno/Professor` build the API shape; `gravarPerfilNosVinculos` writes it (student
+     data goes to the main vínculo only; the teacher `tipo` changes the role only when it differs from what is shown;
+     `reconciliarProgramas` — Administrator/Gestor only — creates/ends teaching vínculos from `perfil_professor.programas`);
+     `verificarPerfilAluno` raises the 400 "aluno sem vínculo" *before* anything is saved, and only for real vínculo data
+     (the form always sends defaults). `PAPEIS_DOCENTE_TODOS` includes `DOCENTE_VISITANTE`.
+   - `pessoas.priv_mostrar_email/telefone` (from `users.priv_*`) hold the privacy choice; the public site does not honor
+     them yet (LGPD decision D-R2). The form no longer has `perfil_publico`/`mostrar_lattes` (they never persisted).
+   - `user_linhas_pesquisa` is keyed by `pessoa_id` (not the login); the table kept its old name.
    Controllers are thin: they call a repo and keep validation/sanitization/slug/status logic.
    A few genuinely free-form nested objects are stored as JSONB (`editais.erratas`,
-   `grupos_pesquisa.field_lideres`, `users.perfil_aluno`/`perfil_professor`).
+   `grupos_pesquisa.field_lideres`, `vinculos.dados`).
    Shared utilities live in `server/utils/`: `cpf.js`, `nup.js`, `datas.js`,
    `vigencia.js`, `contato.js` — validation/normalization is a warning
    (`*_valido = false`), never a hard block, since real historical data doesn't
@@ -494,6 +520,8 @@ family (`src/utils/rotaVitals.js`, e.g. `/noticia/:id`); `GET
 shown in **Qualidade dos dados → Desempenho real**.
 
 **Checking User Roles**:
-- Admin users are defined in `server/data/users.json`
+- Admin users are defined in `server/data/users.json` (seed only: it is read through `usersRepo.create`, so the
+  `perfil_geral`/`dados_academicos`/`privacidade` blocks in it are *input* — the person goes to `pessoas`, `users` keeps
+  only the credential)
 - Roles are array of strings: `["Administrator"]`, `["Gestor"]`, etc.
 - Check auth middleware for role validation logic

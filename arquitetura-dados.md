@@ -385,7 +385,7 @@ CREATE TABLE users (
 
 Some `perfil_aluno`/`perfil_professor` JSONB? **Não.** O que ali é estruturado
 (`situacao`, `entrada`, `nivel`) já é, na prática, atributo de **vínculo**, não de pessoa —
-e migra para `vinculos.dados`. O que sobrar de genuinamente livre continua em
+e migrou para `vinculos.dados` (G1 concluída; ver a nota abaixo da tabela A.2a). O que sobrar de genuinamente livre continua em
 `vinculos.dados JSONB`.
 
 > **A.2a — inspeção real (27/07/2026)**: 73 registros de `perfil_aluno` (13 chaves) e 16 de
@@ -400,6 +400,27 @@ e migra para `vinculos.dados`. O que sobrar de genuinamente livre continua em
 > | `programas` (array no professor) | **um `vinculo` por programa**, não array em JSONB | vínculo já é escopado por `programa_id`; múltiplos programas = múltiplas linhas |
 > | `entrada`, `situacao`, `defesa`, `egresso`, `qualificacao`, `orientador_id` | `vinculos.dados` | genuinamente do vínculo (semestre, defesa, orientador daquela matrícula), sem coluna própria no schema atual |
 > | `uid_legado`, `origem_import` | `vinculos.dados` | proveniência da importação, não atributo de negócio |
+
+> **G1 concluída (30/09/2026–02/10/2026, B.13; `docs/analise-g1-users-credencial.md`).** `users` é hoje só a
+> credencial, com 11 colunas: `id`, `email`, `password_hash`, `senha_temporaria`, `roles`, `programa_id`,
+> `pessoa_id` (NOT NULL), `criado_em`, `atualizado_em`, `criado_por`, `atualizado_por` (o `ultimo_acesso_em` do esquema
+> acima não foi criado). O que divergiu do que a A.2a decidiu:
+>
+> - **`nivel` do egresso** não cabe só no papel (`EGRESSO` perde o nível): o aluno matriculado tem o nível no papel do
+>   vínculo, o egresso em `vinculos.dados.nivel` (`MESTRADO`/`DOUTORADO`).
+> - **`qualificacao`**: a data `2020-10-29` repetida em 69 de 73 alunos do dev é valor-padrão da importação, não dado —
+>   foi descartada na migração (sobra em 4 vínculos).
+> - **`orientador_id`** guardava o `users.id` do professor (não uma pessoa); virou `vinculos.dados.orientador_pessoa_id`
+>   (48 de 48 resolvidos no dev) e o texto cru só vai para `orientador_legado` quando não resolve.
+> - **`uid_legado`** é guardado em `vinculos.dados` **junto de `origem_import`** (o uid é do Drupal de cada site; é a
+>   chave da importação, não da pessoa).
+> - **Privacidade**: `priv_mostrar_email/telefone` foram para `pessoas` (não para `contatos.publico`, que segue na B.6/
+>   Fase G); as flags `perfil_publico`/`mostrar_lattes` nunca persistiram e saíram do formulário.
+> - **`vinculos.dados`** só foi **criado agora** (a A.2 a dava como feita), junto com `pessoas.priv_*`.
+> - `perfil_professor.programas[]` sumiu (derivado dos vínculos) e o tipo do docente é o papel `DOCENTE_*`
+>   (`DOCENTE_VISITANTE` incluído); `pessoas.telefones` segue texto e `user_linhas_pesquisa` passou a `pessoa_id`.
+> - A API de usuários manteve o formato antigo (`perfil_geral`, `dados_academicos`, `perfil_aluno`, `perfil_professor`),
+>   montado pelo `usersRepo` a partir de `pessoas` + vínculos; renomeá-la ficou para depois.
 
 > **Ganho imediato**: `buildCombined` (`programasController.js`) deixa de existir; vira um
 > `JOIN`. `vinculos.pessoa_id`, `camara_relatorias.relator_id` e
@@ -716,7 +737,7 @@ CREATE INDEX vinculos_fim_idx     ON vinculos(data_fim);
 ```sql
 -- Meio de contato de qualquer entidade. Absorve 8 campos hoje espalhados por
 -- 4 tabelas (ver requisitos-contatos.md §4.3): pessoas.email_institucional,
--- pessoas.telefones, users.priv_mostrar_email, users.priv_mostrar_telefone,
+-- pessoas.telefones, pessoas.priv_mostrar_email, pessoas.priv_mostrar_telefone (antes em users, até a G1),
 -- programas.email_programa, programas.telefone_secretaria, programas.whatsapp
 -- e vinculos.email_funcao. users.email PERMANECE — é credencial, não contato.
 CREATE TABLE contatos (
@@ -743,7 +764,7 @@ CREATE INDEX contatos_vinculo_idx  ON contatos(vinculo_id);
 ```
 
 > **`publico` é por contato, não por pessoa.** Os dois interruptores atuais
-> (`users.priv_mostrar_email`/`priv_mostrar_telefone`) são tudo-ou-nada; um coordenador quer
+> (`pessoas.priv_mostrar_email`/`priv_mostrar_telefone`, vindos de `users` na G1) são tudo-ou-nada; um coordenador quer
 > publicar o e-mail institucional e não o celular pessoal. Com isso, o `filterSensitivePessoa`
 > de `programasController.js` — controle de privacidade escrito numa função, que pode ser
 > esquecido no próximo endpoint — é aposentado: **a regra passa a morar no dado.**
@@ -1076,6 +1097,7 @@ pós-doutorado não apaga a pessoa.
 2. **`perfil_aluno`/`perfil_professor` JSONB**: migrar tudo para `vinculos.dados`, ou manter
    parte em `pessoas`? Recomendação: `vinculos.dados` — `situacao` e `entrada` são atributos do
    vínculo, não da pessoa. Precisa de inspeção do conteúdo real antes de decidir em definitivo.
+   *(Decidida pela A.2a e executada na G1, B.13 — ver a nota no §5.1.)*
 3. **`resolucoes` no site**: passa a ler de `atos WHERE publicado` — a URL pública `/resolucoes`
    e o formato do JSON mudam? Recomendação: manter ambos, com o controller adaptando.
 4. **`documentos` vs `atos`**: confirmar que nenhum item hoje em `formularios` é, na verdade,
