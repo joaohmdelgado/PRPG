@@ -687,24 +687,31 @@ export const linhasPesquisaRepo = {
     }
     return this.getByPrograma(programaId);
   },
-  async getByUser(userId) {
+  // B.13 / G1: as linhas de pesquisa são da pessoa (pessoas.id), não do login.
+  async getByPessoa(pessoaId) {
+    if (!pessoaId) return [];
     const { rows } = await query(
       `SELECT lp.* FROM user_linhas_pesquisa ulp
        JOIN linhas_pesquisa lp ON lp.id = ulp.linha_id
-       WHERE ulp.user_id = $1 ORDER BY lp.nome`,
-      [userId]
+       WHERE ulp.pessoa_id = $1 ORDER BY lp.nome`,
+      [pessoaId]
     );
     return rows;
   },
-  async setForUser(userId, linhaIds) {
-    await query('DELETE FROM user_linhas_pesquisa WHERE user_id = $1', [userId]);
+  // Acrescenta sem tirar as que a pessoa já tem (importadores).
+  async addForPessoa(pessoaId, linhaIds) {
     for (const id of linhaIds) {
       await query(
-        'INSERT INTO user_linhas_pesquisa (user_id, linha_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-        [userId, id]
+        'INSERT INTO user_linhas_pesquisa (pessoa_id, linha_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+        [pessoaId, id]
       );
     }
-    return this.getByUser(userId);
+  },
+  // Substitui as linhas da pessoa (formulário do painel).
+  async setForPessoa(pessoaId, linhaIds) {
+    await query('DELETE FROM user_linhas_pesquisa WHERE pessoa_id = $1', [pessoaId]);
+    await this.addForPessoa(pessoaId, linhaIds);
+    return this.getByPessoa(pessoaId);
   },
   async getAllByPrograma() {
     const { rows } = await query(

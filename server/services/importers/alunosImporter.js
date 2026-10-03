@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { usersRepo, taxonomiaRefsRepo } from '../../db/repositories.js';
+import { usersRepo, taxonomiaRefsRepo, linhasPesquisaRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
 import { idsDaMesmaPessoa, pessoaCanonica } from '../../db/identidadeVinculo.js';
 import { PAPEIS_DISCENTE } from '../../controllers/programasController.js';
@@ -106,14 +106,8 @@ const resolverLinhasIds = async (programaId, target_ids) => {
   return rows.map((r) => r.id);
 };
 
-const vincularLinhas = async (userId, linhaIds) => {
-  for (const id of linhaIds) {
-    await query(
-      'INSERT INTO user_linhas_pesquisa (user_id, linha_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-      [userId, id]
-    );
-  }
-};
+// B.13 / G1: as linhas de pesquisa são da pessoa (pessoas.id), não do login.
+const vincularLinhas = (pessoaId, linhaIds) => linhasPesquisaRepo.addForPessoa(pessoaId, linhaIds);
 
 // Resolve o orientador: professor importado (deste mesmo site, PROFIAP) cujo
 // vínculo docente guarda em dados.uid_legado o target_id do field_orientador.
@@ -227,7 +221,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
       atualizado_em: new Date().toISOString(),
     };
     const atualizado = await usersRepo.update(existente.id, merged, actor);
-    if (linhaIds.length > 0) await vincularLinhas(existente.id, linhaIds);
+    if (linhaIds.length > 0) await vincularLinhas(existente.pessoaId, linhaIds);
     await garantirVinculo(programaId, existente.id, papel, ativo);
     await gravarPerfilNosVinculos(atualizado.pessoaId, { perfil_aluno: importado }, { programaId });
     return { acao: 'atualizado', nome: m.nome, email: m.email, mensagem: `Atualizado (${detalhes.join(', ')}).` };
@@ -252,7 +246,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     atualizado_em: new Date().toISOString(),
   };
   const created = await usersRepo.create(novo, actor);
-  if (linhaIds.length > 0) await vincularLinhas(created.id, linhaIds);
+  if (linhaIds.length > 0) await vincularLinhas(created.pessoaId, linhaIds);
   await garantirVinculo(programaId, created.id, papel, ativo);
   await gravarPerfilNosVinculos(created.pessoaId, { perfil_aluno: perfilAluno }, { programaId });
   return { acao: 'criado', nome: m.nome, email: m.email, mensagem: `Aluno criado (${detalhes.join(', ')}).` };

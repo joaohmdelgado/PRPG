@@ -371,6 +371,35 @@ describe('B.13 importadores legados — vinculos.dados e pessoas', () => {
       `SELECT p.nome FROM teses_dissertacoes t JOIN pessoas p ON p.id = t.autor_pessoa_id WHERE t.id = 'tese-tese-uuid-2'`);
     expect(t2.nome).toBe('Fulano De Tal');
   });
+
+  // B.13 / G1 (Task 9): as linhas resolvidas do export vão para a pessoa, não para o login.
+  it('linhas de pesquisa do export são gravadas por pessoa (professor novo, professor existente e aluno)', async () => {
+    const { rows: [l1, l2] } = await pool.query(`INSERT INTO linhas_pesquisa (nome, programa_id, target_id)
+      VALUES ('Linha 77', 'prog-1', '77'), ('Linha 78', 'prog-1', '78') RETURNING id`);
+    const linhasDe = async (email) => (await pool.query(
+      `SELECT ulp.linha_id FROM user_linhas_pesquisa ulp JOIN users u ON u.pessoa_id = ulp.pessoa_id
+        WHERE u.email = $1 ORDER BY ulp.linha_id`, [email])).rows.map((r) => r.linha_id);
+
+    await professoresImporter.importOne(professoresImporter.map({
+      uid: [{ value: 110 }], name: [{ value: 'Prof Linhas' }], mail: [{ value: 'pl@t.br' }],
+      field_linhas_pesquisa: [{ target_id: 77 }, { target_id: 78 }],
+    }), opts);
+    expect(await linhasDe('pl@t.br')).toEqual([l1.id, l2.id]);
+
+    await seedUserComPessoa({ id: 'u-exl', email: 'exl@t.br', nome: 'Existente' });
+    await professoresImporter.importOne(professoresImporter.map({
+      uid: [{ value: 111 }], name: [{ value: 'Existente' }], mail: [{ value: 'exl@t.br' }],
+      field_linhas_pesquisa: [{ target_id: 78 }],
+    }), opts);
+    expect(await linhasDe('exl@t.br')).toEqual([l2.id]);
+
+    await alunosImporter.importOne(alunosImporter.map({
+      uid: [{ value: 510 }], name: [{ value: 'Aluno Linhas' }], mail: [{ value: 'al@t.br' }],
+      field_linhas_pesquisa: [{ target_id: 77 }],
+    }), opts);
+    expect(await linhasDe('al@t.br')).toEqual([l1.id]);
+    expect((await pool.query('SELECT count(*)::int AS n FROM user_linhas_pesquisa')).rows[0].n).toBe(4);
+  });
 });
 
 describe('B.11 escritas gravam pessoas.id', () => {

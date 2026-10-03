@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { usersRepo } from '../../db/repositories.js';
+import { usersRepo, linhasPesquisaRepo } from '../../db/repositories.js';
 import { query } from '../../db/pool.js';
 import { idsDaMesmaPessoa, pessoaCanonica } from '../../db/identidadeVinculo.js';
 import { PAPEIS_DOCENTE } from '../../controllers/programasController.js';
@@ -114,14 +114,8 @@ const resolverLinhasIds = async (programaId, target_ids) => {
   return rows.map((r) => r.id);
 };
 
-const vincularLinhas = async (userId, linhaIds) => {
-  for (const id of linhaIds) {
-    await query(
-      'INSERT INTO user_linhas_pesquisa (user_id, linha_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-      [userId, id]
-    );
-  }
-};
+// B.13 / G1: as linhas de pesquisa são da pessoa (pessoas.id), não do login.
+const vincularLinhas = (pessoaId, linhaIds) => linhasPesquisaRepo.addForPessoa(pessoaId, linhaIds);
 
 // Importa um único registro já mapeado. Em dryRun apenas calcula a ação prevista.
 // Retorna { acao, nome, email, mensagem }.
@@ -147,7 +141,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
       atualizado_em: new Date().toISOString(),
     };
     const atualizado = await usersRepo.update(existente.id, merged, actor);
-    if (linhaIds.length > 0) await vincularLinhas(existente.id, linhaIds);
+    if (linhaIds.length > 0) await vincularLinhas(existente.pessoaId, linhaIds);
     await garantirVinculo(programaId, existente.id, papel);
     // B.13/G1: a chave da importação (origem + uid) vai para o vínculo deste
     // programa. Sem uid no export, nada é gravado (não apaga o de outro site).
@@ -184,7 +178,7 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
     atualizado_em: new Date().toISOString(),
   };
   const created = await usersRepo.create(novo, actor);
-  if (linhaIds.length > 0) await vincularLinhas(created.id, linhaIds);
+  if (linhaIds.length > 0) await vincularLinhas(created.pessoaId, linhaIds);
   await garantirVinculo(programaId, created.id, papel);
   if (m.uid_legado) {
     await gravarPerfilNosVinculos(created.pessoaId,

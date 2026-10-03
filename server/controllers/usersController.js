@@ -131,7 +131,7 @@ export const getUserById = async (req, res) => {
     if (!isSelf && !isAdmin && !gestorPodeVer) {
       return res.status(403).json({ message: 'Acesso negado. Você não tem permissão para visualizar este perfil.' });
     }
-    const linhas_pesquisa = await linhasPesquisaRepo.getByUser(user.id);
+    const linhas_pesquisa = await linhasPesquisaRepo.getByPessoa(user.pessoaId);
     res.json({ ...stripHash(user), linhas_pesquisa });
   } catch (error) {
     serverError(res, 'Erro ao buscar usuário', error);
@@ -267,7 +267,7 @@ export const createUser = async (req, res) => {
 
     if (Array.isArray(data.linhas_pesquisa_ids) && data.linhas_pesquisa_ids.length > 0) {
       const ids = data.linhas_pesquisa_ids.map(Number).filter((n) => !isNaN(n) && n > 0);
-      await linhasPesquisaRepo.setForUser(created.id, ids);
+      await linhasPesquisaRepo.setForPessoa(created.pessoaId, ids);
     }
 
     res.status(201).json(stripHash(created));
@@ -370,7 +370,7 @@ export const updateUser = async (req, res) => {
     if (data.linhas_pesquisa_ids !== undefined) {
       const ids = (Array.isArray(data.linhas_pesquisa_ids) ? data.linhas_pesquisa_ids : [])
         .map(Number).filter((n) => !isNaN(n) && n > 0);
-      await linhasPesquisaRepo.setForUser(req.params.id, ids);
+      await linhasPesquisaRepo.setForPessoa(updated.pessoaId, ids);
     }
 
     res.json(stripHash(updated));

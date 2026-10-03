@@ -829,11 +829,13 @@ CREATE TABLE IF NOT EXISTS programa_linhas_pesquisa (
   PRIMARY KEY (programa_id, linha_id)
 );
 
--- Usuários (professores e alunos) referenciam suas linhas de pesquisa (N:M).
+-- Pessoas (professores e alunos) referenciam suas linhas de pesquisa (N:M).
+-- B.13 / G1: por pessoa, não por login (migração 2026-09-30_g1b_linhas_pesquisa_pessoa.sql);
+-- o nome `user_linhas_pesquisa` ficou do formato antigo (user_id -> users).
 CREATE TABLE IF NOT EXISTS user_linhas_pesquisa (
-  user_id  TEXT    REFERENCES users(id)              ON DELETE CASCADE,
-  linha_id INTEGER REFERENCES linhas_pesquisa(id)    ON DELETE CASCADE,
-  PRIMARY KEY (user_id, linha_id)
+  pessoa_id TEXT    NOT NULL REFERENCES pessoas(id)         ON DELETE CASCADE,
+  linha_id  INTEGER NOT NULL REFERENCES linhas_pesquisa(id) ON DELETE CASCADE,
+  PRIMARY KEY (pessoa_id, linha_id)
 );
 
 -- ============== Referências de Taxonomia (importação legada) ==============

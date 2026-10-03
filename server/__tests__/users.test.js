@@ -452,3 +452,44 @@ describe('G1: users só credencial', () => {
     expect((await pessoa('pes-plan')).estrangeiro).toBe(false);
   });
 });
+
+// B.13 / G1 (Task 9): as linhas de pesquisa são da pessoa (user_linhas_pesquisa.pessoa_id), não do login.
+describe('G1: linhas de pesquisa por pessoa', () => {
+  const criarLinhas = async () => (await pool.query(
+    `INSERT INTO linhas_pesquisa (nome) VALUES ('Linha A'), ('Linha B'), ('Linha C') RETURNING id`)).rows.map((r) => r.id);
+  const linhasDaPessoa = async (pessoaId) => (await pool.query(
+    'SELECT linha_id FROM user_linhas_pesquisa WHERE pessoa_id = $1 ORDER BY linha_id', [pessoaId])).rows.map((r) => r.linha_id);
+
+  it('PUT grava por pessoa, GET devolve as linhas e dois usuários não se misturam', async () => {
+    const [a, b, c] = await criarLinhas();
+    const ana = await seedUserComPessoa({ id: 'u-ana', email: 'ana@t.br', nome: 'Ana', roles: ['Aluno'] });
+    const beto = await seedUserComPessoa({ id: 'u-beto', email: 'beto@t.br', nome: 'Beto', roles: ['Aluno'] });
+    await asAdmin(request(app).put('/api/users/u-ana')).send({ linhas_pesquisa_ids: [a, b] }).expect(200);
+    await asAdmin(request(app).put('/api/users/u-beto')).send({ linhas_pesquisa_ids: [c] }).expect(200);
+
+    const { rows } = await pool.query('SELECT DISTINCT pessoa_id FROM user_linhas_pesquisa ORDER BY pessoa_id');
+    expect(rows.map((r) => r.pessoa_id).sort()).toEqual([ana.pessoaId, beto.pessoaId].sort());
+    expect(await linhasDaPessoa(ana.pessoaId)).toEqual([a, b]);
+    expect(await linhasDaPessoa(beto.pessoaId)).toEqual([c]);
+
+    const { body } = await asAdmin(request(app).get('/api/users/u-ana')).expect(200);
+    expect(body.linhas_pesquisa.map((l) => l.nome)).toEqual(['Linha A', 'Linha B']);
+
+    // Trocar as linhas de um não mexe nas do outro; lista vazia limpa.
+    await asAdmin(request(app).put('/api/users/u-ana')).send({ linhas_pesquisa_ids: [b] }).expect(200);
+    expect(await linhasDaPessoa(ana.pessoaId)).toEqual([b]);
+    expect(await linhasDaPessoa(beto.pessoaId)).toEqual([c]);
+    await asAdmin(request(app).put('/api/users/u-beto')).send({ linhas_pesquisa_ids: [] }).expect(200);
+    expect(await linhasDaPessoa(beto.pessoaId)).toEqual([]);
+    expect((await asAdmin(request(app).get('/api/users/u-beto')).expect(200)).body.linhas_pesquisa).toEqual([]);
+  });
+
+  it('POST com linhas_pesquisa_ids grava na pessoa do novo usuário', async () => {
+    const [a] = await criarLinhas();
+    const { body } = await asAdmin(request(app).post('/api/users'))
+      .send({ email: 'novo@t.br', roles: ['Aluno'], perfil_geral: { nome: 'Novo' }, linhas_pesquisa_ids: [a] })
+      .expect(201);
+    expect(body.pessoaId).toBeTruthy();
+    expect(await linhasDaPessoa(body.pessoaId)).toEqual([a]);
+  });
+});
