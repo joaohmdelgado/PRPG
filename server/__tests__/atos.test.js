@@ -52,7 +52,9 @@ describe('atos — reserva de número (requisitos-expedientes.md §7/§13)', () 
     expect(respostas.every((r) => r.status === 201)).toBe(true);
     const sequenciais = respostas.map((r) => r.body.sequencial).sort((a, b) => a - b);
     expect(sequenciais).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
-  });
+    // Prova ausência de colisão, não velocidade: as 20 transações disputam o bloqueio
+    // da série num pool de 10 conexões; com a suíte rodando junto passava dos 5 s.
+  }, 20000);
 
   it('UNIQUE (serie_id, ano, sequencial) rejeita inserção duplicada explícita', async () => {
     await asAdmin(request(app).post('/api/atos/reservar')).send({ serieId: 'OFICIO', ano: 2026, assunto: 'A' });

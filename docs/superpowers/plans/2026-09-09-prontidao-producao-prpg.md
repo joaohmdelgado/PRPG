@@ -282,7 +282,7 @@ primeiro ensaio de restauração, continuam como gates de produção.
 - Create: `docs/security/dependency-exceptions.md`
 
 - [ ] Salvar baseline JSON de `npm audit` runtime e completo no artefato do CI, não no código-fonte.
-- [ ] Atualizar Multer, DOMPurify, React Router, Nodemailer e cadeia Express/qs/body-parser com testes por família.
+- [x] Atualizar Multer, DOMPurify, React Router, Nodemailer e cadeia Express/qs/body-parser com testes por família. *(05/10/2026: `npm audit fix --omit=dev`, só dentro das faixas do package.json: multer 2.1.1→2.4.0, dompurify 3.4.10→3.4.16, express 4.22.2→4.22.3, body-parser 1.20.5→1.20.8, qs 6.15.2→6.16.0, react-router(-dom) 7.16.0→7.18.4, ip-address 10.2.0→10.7.3, undici 7.27.2→7.30.0, nodemailer 9.0.3→9.1.1; runtime foi de 11 vulnerabilidades (6 high) para 2 high. Validado por lint, testes do servidor e do front, build e `perf:bundle`. **Aceito com motivo:** nodemailer ≥10.0.9 é major e a falha restante (cache de DNS reaproveitando o `servername` TLS entre transportes) só afeta quem usa vários transportes SMTP — `services/email.js` usa um só, e o e-mail está desligado até D-C5; reavaliar ao ligar o SMTP. **Aberto:** `xlsx` (sem correção publicada — item abaixo).)*
 - [ ] Substituir `xlsx` por biblioteca mantida ou CSV; se temporariamente mantido, carregar no clique e limitar a dados de exportação conhecidos.
 - [ ] Atualizar API de upload para limites de campo/arquivo, timeouts e abort seguro.
 - [ ] Configurar CSP no frontend/reverse proxy, HSTS, Permissions-Policy, Referrer-Policy, `frame-ancestors` e `nosniff`.
