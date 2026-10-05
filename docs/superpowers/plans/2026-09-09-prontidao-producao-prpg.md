@@ -120,7 +120,7 @@ considerados resolvidos.
 - [ ] Remover senha/hash conhecido do seed e impedir `seedAdmin` fora de development/test.
 - [ ] Criar bootstrap de administrador de uso único via secret manager/convite, ou integrar OIDC institucional.
 - [ ] Substituir a senha compartilhada `Mudar123` por convite/reset criptograficamente aleatório, single-use e expirável.
-- [ ] Adicionar `must_change_password` imposto pela API; até a troca, permitir apenas sessão/logout/troca de senha.
+- [x] Adicionar `must_change_password` imposto pela API; até a troca, permitir apenas sessão/logout/troca de senha. *(05/10/2026: `users.senha_temporaria` lida do banco pelo `protect` a cada requisição; libera só `GET /api/minha-conta`, `PUT /api/minha-conta/senha` e `PUT /api/users/<próprio id>` com só a senha; teste `server/__tests__/senhaTemporariaApi.test.js`. Logout é só do cliente.)*
 - [ ] Implementar access token curto e sessão/refresh revogável; preferir cookie HttpOnly/Secure/SameSite e proteção CSRF se identidade local.
 - [ ] Invalidar sessões quando senha, papel, status ou associação de programa mudar.
 - [ ] Exigir MFA para Administrator/Gestor quando suportado pelo provedor.

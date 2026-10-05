@@ -9,6 +9,7 @@ import { query } from '../db/pool.js';
 import { usersRepo } from '../db/repositories.js';
 import { PAPEIS_DISCENTE, PAPEIS_DOCENTE } from './programasController.js';
 import { gerarDeclaracao } from './proficienciaController.js';
+import { erroNovaSenha } from '../services/senhaPadrao.js';
 
 const mascararCpf = (cpf) => {
   const d = String(cpf || '').replace(/\D/g, '');
@@ -170,7 +171,8 @@ export const updateMinhaSenha = async (req, res) => {
   if (typeof senhaAtual !== 'string' || typeof novaSenha !== 'string') {
     return res.status(400).json({ message: 'Informe a senha atual e a nova senha.' });
   }
-  if (novaSenha.length < 8) return res.status(400).json({ message: 'A nova senha deve ter pelo menos 8 caracteres.' });
+  const erro = erroNovaSenha(novaSenha);
+  if (erro) return res.status(400).json({ message: erro });
   if (novaSenha === senhaAtual) return res.status(400).json({ message: 'A nova senha deve ser diferente da atual.' });
   const user = req.user?.id ? await usersRepo.getById(req.user.id) : null;
   if (!user) return res.status(404).json({ message: 'Conta não encontrada.' });

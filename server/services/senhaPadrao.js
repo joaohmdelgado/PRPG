@@ -8,6 +8,13 @@ import { query } from '../db/pool.js';
 
 export const SENHA_PADRAO = 'Mudar123';
 
+// Regra da senha que a própria pessoa escolhe (troca provisória ou voluntária).
+export const erroNovaSenha = (senha) => {
+  if (typeof senha !== 'string' || senha.length < 8) return 'A nova senha deve ter pelo menos 8 caracteres.';
+  if (senha === SENHA_PADRAO) return 'Escolha uma senha diferente da senha provisória.';
+  return null;
+};
+
 // Contas com a senha padrão que ainda NÃO estão marcadas como provisórias.
 export const localizarContasComSenhaPadrao = async () => {
   const { rows } = await query(

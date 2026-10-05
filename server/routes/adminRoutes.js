@@ -193,7 +193,7 @@ router.get('/resolucoes', optionalProtect, getResolucoes);
 router.get('/resolucoes/:id', optionalProtect, getResolucaoById);
 router.get('/formularios', optionalProtect, getFormularios);
 router.get('/formularios/:id', optionalProtect, getFormularioById);
-router.get('/programas', getProgramas);
+router.get('/programas', optionalProtect, getProgramas);
 // optionalProtect: com token de quem edita o programa, o microsite em
 // rascunho responde (pré-visualização); anônimo recebe 404.
 router.get('/programas/slug/:slug', optionalProtect, getProgramaBySlug);
@@ -220,7 +220,7 @@ router.get('/programas/:id/menu', protect, requireRole(['Administrator', 'Gestor
 router.put('/programas/:id/menu', protect, requireInstitutionalWriter, requireSelfPrograma, updateMenuPrograma);
 router.get('/programas/:id/checklist', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireSelfPrograma, getChecklistPrograma);
 // Rota genérica DEPOIS das específicas
-router.get('/programas/:id', getProgramaById);
+router.get('/programas/:id', optionalProtect, getProgramaById);
 router.get('/calendarios', optionalProtect, getCalendarios);
 router.get('/calendarios/:id', optionalProtect, getCalendarioById);
 router.get('/taxonomias', getTaxonomias);

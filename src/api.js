@@ -29,7 +29,19 @@ export async function apiFetch(path, { auth = true, json, headers, body, ...rest
     finalBody = JSON.stringify(json);
   }
 
-  return fetch(url, { ...rest, headers: finalHeaders, body: finalBody });
+  const res = await fetch(url, { ...rest, headers: finalHeaders, body: finalBody });
+  if (res.status === 403 && auth) await levarATrocaDeSenha(res);
+  return res;
+}
+
+// AUTH-02: com senha provisória a API recusa quase tudo (403 SENHA_TEMPORARIA),
+// inclusive numa sessão aberta antes de um reset feito pelo admin.
+async function levarATrocaDeSenha(res) {
+  if (typeof res.clone !== 'function') return;
+  const corpo = await res.clone().json().catch(() => null);
+  if (corpo?.codigo !== 'SENHA_TEMPORARIA') return;
+  localStorage.setItem('senhaTemporaria', 'true');
+  if (!window.location.pathname.startsWith('/admin/trocar-senha')) window.location.assign('/admin/trocar-senha');
 }
 
 // Atalho para GET que já devolve o JSON parseado (lança em status != 2xx).

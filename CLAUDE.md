@@ -182,6 +182,13 @@ feito ou ainda não.
 }
 ```
 
+**Provisional password (AUTH-02)**: `protect` reads `users.senha_temporaria` from the DB on every request
+(not from the token). While it is TRUE only `GET /api/minha-conta`, `PUT /api/minha-conta/senha` and
+`PUT /api/users/<own id>` with just `password` respond; everything else gets `403 { codigo: 'SENHA_TEMPORARIA' }`
+(the front's `apiFetch` sends the person to `/admin/trocar-senha`). `optionalProtect` treats such a token as
+anonymous, and a deleted account's token gets 401. Public routes that vary by role must use `optionalProtect`
++ `req.user`, never verify the JWT themselves.
+
 **Using Protected Routes**:
 - All POST/PUT/DELETE routes require JWT token
 - Include token in request headers: `Authorization: Bearer <token>`

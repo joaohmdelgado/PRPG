@@ -71,15 +71,20 @@ Só existe se a conta foi marcada por engano (a flag nunca apaga senha). Para um
 
 ## Limite conhecido — leia antes de dar o assunto por encerrado
 
-A flag é **imposta só pelo painel** (front: `RequireAuth.jsx` + `AdminTrocarSenha.jsx`). A **API não a impõe**:
-`login` devolve o token normalmente e o middleware `protect` não olha `senhaTemporaria`; quem usar o token
-direto na API (sem o painel) não é obrigado a trocar a senha. Ou seja, marcar a flag resolve o fluxo normal de
-primeiro acesso, **não** o risco de uma senha conhecida (`Mudar123`) continuar válida até a pessoa trocá-la.
-O fechamento de verdade é o item pendente do plano de prontidão de produção
-(`docs/superpowers/plans/2026-09-09-prontidao-producao-prpg.md`, Fase de segurança: "`must_change_password`
-imposto pela API" e "substituir a senha compartilhada `Mudar123` por convite/reset aleatório, single-use e
-expirável"). Até lá, quem não faz o primeiro acesso mantém a senha padrão; considere pedir às secretarias
-que os usuários que nunca entraram façam a troca ou usar o reset de senha do painel (Usuários).
+**Desde 05/10/2026 a API impõe a flag** (AUTH-02, `server/middleware/authMiddleware.js`): o `protect` lê
+`users.senha_temporaria` do banco a cada requisição e, com a flag ligada, só libera `GET /api/minha-conta`,
+`PUT /api/minha-conta/senha` e `PUT /api/users/<próprio id>` com **só** a senha no corpo; o resto recebe
+`403 { codigo: 'SENHA_TEMPORARIA' }` (o front leva à troca de senha ao receber esse código). Vale para tokens
+emitidos antes e para o reset feito pelo admin no meio da sessão; o `optionalProtect` trata esse token como
+anônimo; token de conta excluída recebe 401. A nova senha escolhida pela pessoa tem de ter 8+ caracteres e não
+pode ser `Mudar123` (`erroNovaSenha` em `server/services/senhaPadrao.js`).
+
+**O que continua aberto:** a senha compartilhada `Mudar123` ainda é o que a conta nova recebe, então quem sabe o
+e-mail de alguém que nunca entrou consegue fazer a troca no lugar dele e tomar a conta. O fechamento de verdade é
+o item "substituir a senha compartilhada `Mudar123` por convite/reset aleatório, single-use e expirável" do plano
+de prontidão (`docs/superpowers/plans/2026-09-09-prontidao-producao-prpg.md`, Task 2). Até lá, peça às
+secretarias que os usuários que nunca entraram façam a troca, ou use o reset de senha do painel (Usuários) com
+uma senha individual.
 
 ## Se `Mudar123` voltar a aparecer
 

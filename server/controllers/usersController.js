@@ -16,6 +16,7 @@ import {
 // exibir os programas de qualquer usuário (aluno ou professor) na lista.
 const PAPEIS_VINCULO_PROGRAMA = [...PAPEIS_DOCENTE, ...PAPEIS_DISCENTE];
 import { query } from '../db/pool.js';
+import { erroNovaSenha } from '../services/senhaPadrao.js';
 
 const stripHash = (u) => {
   if (!u) return u;
@@ -325,6 +326,10 @@ export const updateUser = async (req, res) => {
     // senha, o estado anterior é preservado.
     let senhaTemporaria = existing.senhaTemporaria ?? false;
     let password_hash = existing.password_hash;
+    if (data.password && isSelf) {
+      const erro = erroNovaSenha(data.password);
+      if (erro) return res.status(400).json({ message: erro });
+    }
     if (data.password) {
       password_hash = await bcrypt.hash(data.password, await bcrypt.genSalt(10));
       senhaTemporaria = isSelf ? false : true;

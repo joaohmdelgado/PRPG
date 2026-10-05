@@ -1,6 +1,4 @@
 import crypto from 'crypto';
-import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
 import {
   joinPessoa, pessoaReal, nomePessoa, campoPessoa, idsDaMesmaPessoa, pessoaCanonica,
@@ -75,17 +73,11 @@ const validarCoresPrograma = (data, atuais = {}) => {
   return ok ? null : erros.join(' ');
 };
 
+// req.user vem do optionalProtect das rotas públicas de programa (token inválido,
+// de conta excluída ou com senha provisória = anônimo).
 const checkAdmin = (req) => {
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      const token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, JWT_SECRET);
-      return decoded.roles && (decoded.roles.includes('Administrator') || decoded.roles.includes('Gestor'));
-    } catch (e) {
-      return false;
-    }
-  }
-  return false;
+  const roles = req.user?.roles || [];
+  return roles.includes('Administrator') || roles.includes('Gestor');
 };
 
 const filterSensitivePessoa = (pessoa, isAdmin) => {
