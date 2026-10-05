@@ -3,6 +3,7 @@ import request from 'supertest';
 import { app } from '../app.js';
 import { pool } from '../db/pool.js';
 import router from '../routes/adminRoutes.js';
+import { protect } from '../middleware/authMiddleware.js';
 import { resetDb, seedAdmin, seedUser, login } from './helpers.js';
 
 // SEC-01 (docs/analise-prontidao-producao-2026-09-09.md): toda rota de escrita
@@ -27,12 +28,26 @@ const AUTOATENDIMENTO = {
   'PUT /users/:id': 'troca forçada da senha provisória (só o próprio id)',
 };
 
+// Leituras que exigem login e que qualquer conta faz sobre si mesma; o
+// controller restringe ao próprio usuário (ver o caso de GET /users/:id abaixo).
+const LEITURA_PROPRIA = {
+  'GET /users/:id': 'o próprio cadastro (admin/gestor do programa veem os demais)',
+  'GET /proficiencia/inscricoes/minhas': 'as próprias inscrições',
+  'GET /camara/meus-processos': 'os processos de que a pessoa é relatora',
+  'GET /minha-conta': 'a própria conta',
+  'GET /minha-conta/declaracoes/:id/pdf': 'declaração da própria pessoa',
+};
+
 const ESCRITA = ['post', 'put', 'patch', 'delete'];
-const rotas = router.stack
+const todasAsRotas = router.stack
   .filter((camada) => camada.route)
-  .flatMap((camada) => Object.keys(camada.route.methods)
-    .filter((m) => ESCRITA.includes(m))
-    .map((m) => ({ metodo: m, padrao: camada.route.path, chave: `${m.toUpperCase()} ${camada.route.path}` })));
+  .flatMap((camada) => Object.keys(camada.route.methods).map((m) => ({
+    metodo: m, padrao: camada.route.path, chave: `${m.toUpperCase()} ${camada.route.path}`,
+    exigeLogin: camada.route.stack.some((s) => (s.handle.original || s.handle) === protect),
+  })));
+const rotas = todasAsRotas.filter((r) => ESCRITA.includes(r.metodo));
+// Leituras do painel: GET atrás do `protect` (as públicas usam optionalProtect ou nada).
+const leituras = todasAsRotas.filter((r) => r.metodo === 'get' && r.exigeLogin);
 
 const caminho = (padrao) => `/api${padrao.replace(/:\w+\??/g, 'nao-existe')}`;
 const chamar = (r, token) => {
@@ -41,9 +56,9 @@ const chamar = (r, token) => {
   return req.send({});
 };
 
-const violacoes = async (token, aceitos, liberadas) => {
+const violacoes = async (token, aceitos, liberadas, lista = rotas) => {
   const erradas = [];
-  for (const r of rotas) {
+  for (const r of lista) {
     if (liberadas[r.chave]) continue;
     const res = await chamar(r, token);
     if (!aceitos.includes(res.status)) erradas.push(`${r.chave} -> ${res.status}`);
@@ -81,6 +96,28 @@ describe('matriz de autorização das rotas de escrita (SEC-01)', () => {
   it('autoatendimento não alcança outra conta', async () => {
     const res = await request(app).put('/api/users/admin-test')
       .set('Authorization', `Bearer ${tokens.Aluno}`).send({ password: 'outraSenha123' });
+    expect(res.status).toBe(403);
+  });
+});
+
+describe('matriz de autorização das leituras do painel', () => {
+  it('enumera as leituras que exigem login', () => {
+    expect(leituras.length).toBeGreaterThan(50);
+    for (const chave of Object.keys(LEITURA_PROPRIA)) {
+      expect(leituras.map((r) => r.chave), `exceção sem rota: ${chave}`).toContain(chave);
+    }
+  });
+
+  it('anônimo recebe 401 em toda leitura do painel', async () => {
+    expect(await violacoes(null, [401], {}, leituras)).toEqual([]);
+  });
+
+  it.each(['Aluno', 'Professor'])('%s recebe 401/403 em toda leitura do painel que não é dele', async (papel) => {
+    expect(await violacoes(tokens[papel], [401, 403], LEITURA_PROPRIA, leituras)).toEqual([]);
+  });
+
+  it('leitura própria não alcança outra conta', async () => {
+    const res = await request(app).get('/api/users/admin-test').set('Authorization', `Bearer ${tokens.Aluno}`);
     expect(res.status).toBe(403);
   });
 });

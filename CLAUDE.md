@@ -192,10 +192,11 @@ token's copies are ignored (role/program changes take effect immediately). A `Ge
 anonymous, and a deleted account's token gets 401. Public routes that vary by role must use `optionalProtect`
 + `req.user`, never verify the JWT themselves.
 
-**Authorization matrix (SEC-01)**: `server/__tests__/authzMatrix.test.js` enumerates every write route of
-`adminRoutes.js` and requires 401 for anonymous and 401/403 for Aluno/Professor. A new write route needs a role
-check (`requireRole`/`requireInstitutionalWriter`) or an explicit, justified entry in its `PUBLICAS`/
-`AUTOATENDIMENTO` lists.
+**Authorization matrix (SEC-01)**: `server/__tests__/authzMatrix.test.js` enumerates every write route and
+every `protect`ed GET of `adminRoutes.js` (via `wrapAsync`'s `.original`) and requires 401 for anonymous and
+401/403 for Aluno/Professor. A new write route or panel read needs a role check (`requireRole`/
+`requireInstitutionalWriter`) or an explicit, justified entry in its `PUBLICAS`/`AUTOATENDIMENTO`/
+`LEITURA_PROPRIA` lists. `authzEscopo.test.js` covers GestorPrograma against another program's resources.
 
 **Using Protected Routes**:
 - All POST/PUT/DELETE routes require JWT token

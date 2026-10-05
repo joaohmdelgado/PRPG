@@ -80,8 +80,13 @@ gestor transferido seguia no programa antigo). Gestor de Programa sem programa (
 revisões, relacionados e pós-doc comparavam `programaId` e falhavam abertas com `null` (provado: editava a
 linha de pesquisa de outro programa). `server/__tests__/authzEscopo.test.js` cobre o gestor de B contra
 linhas, taxonomia, pós-doc, revisões e relacionados de A (já negavam), o rebaixamento, a transferência e o
-gestor sem programa. Ainda abertos: leituras sensíveis (GET protegidos) na matriz, `requirePermission`
-central e logs de negação.
+gestor sem programa.
+
+**Execução parcial (05/10/2026, 3ª etapa):** a matriz cobre também as leituras do painel — os 78 GET atrás do
+`protect` negam anônimo (401) e Aluno/Professor (401/403), salvo 5 leituras da própria conta listadas no
+teste; nenhuma brecha encontrada. As ~50 leituras sem login (conteúdo público, `optionalProtect`) foram
+revisadas à mão: as que envolvem pessoas devolvem só nome, foto e links acadêmicos (D-R2). Ainda abertos:
+`requirePermission` central e logs de negação.
 
 **Owner:** backend/AppSec
 **Files:**

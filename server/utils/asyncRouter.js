@@ -7,14 +7,17 @@
 // opções) passam intactos.
 export const wrapAsync = (fn) => {
   if (typeof fn !== 'function' || fn.length === 4) return fn;
-  return function wrapped(req, res, next) {
+  function wrapped(req, res, next) {
     try {
       const result = fn.call(this, req, res, next);
       if (result && typeof result.catch === 'function') result.catch(next);
     } catch (err) {
       next(err);
     }
-  };
+  }
+  // A matriz de autorização (authzMatrix.test.js) acha o `protect` de cada rota por aqui.
+  wrapped.original = fn;
+  return wrapped;
 };
 
 const METHODS = ['get', 'post', 'put', 'patch', 'delete', 'all'];
