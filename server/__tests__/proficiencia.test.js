@@ -74,14 +74,28 @@ describe('validarLinguas', () => {
 describe('inscrição', () => {
   it('rejeita inscrição quando não há período aberto', async () => {
     const res = await asAluno(request(app).post('/api/proficiencia/inscricoes'))
-      .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/uploads/x.pdf' });
+      .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/private-uploads/x.pdf' });
     expect(res.status).toBe(409);
+  });
+
+  it('recusa comprovante que não veio do upload privado (PRIV-01)', async () => {
+    await criarPeriodoAberto();
+    for (const url of ['/uploads/comp.pdf', 'https://exemplo.com/c.pdf', '/private-uploads/../uploads/c.pdf']) {
+      const res = await asAluno(request(app).post('/api/proficiencia/inscricoes'))
+        .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: url });
+      expect(res.status, url).toBe(400);
+    }
+    const vinculo = await asAluno(request(app).post('/api/proficiencia/inscricoes')).send({
+      nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/private-uploads/c.pdf',
+      titularComprovante: false, comprovanteVinculoUrl: '/uploads/v.pdf',
+    });
+    expect(vinculo.status).toBe(400);
   });
 
   it('aluno se inscreve em um período aberto (mestrado, uma língua)', async () => {
     await criarPeriodoAberto();
     const res = await asAluno(request(app).post('/api/proficiencia/inscricoes'))
-      .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/uploads/comp.pdf' });
+      .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/private-uploads/comp.pdf' });
     expect(res.status).toBe(201);
     expect(res.body.status).toBe('INSCRITO');
     expect(res.body.nome).toBe('João da Silva');
@@ -94,7 +108,7 @@ describe('inscrição', () => {
     await criarPeriodoAberto();
     const res = await asAluno(request(app).post('/api/proficiencia/inscricoes'))
       .send({
-        nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/uploads/comp.pdf',
+        nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/private-uploads/comp.pdf',
         titularComprovante: false,
       });
     expect(res.status).toBe(400);
@@ -104,13 +118,13 @@ describe('inscrição', () => {
   it('aplica as regras de língua via API (mestrado não pode duas)', async () => {
     await criarPeriodoAberto();
     const res = await asAluno(request(app).post('/api/proficiencia/inscricoes'))
-      .send({ nivel: 'Mestrado', linguas: ['Inglês', 'Espanhol'], comprovanteResidenciaUrl: '/uploads/c.pdf' });
+      .send({ nivel: 'Mestrado', linguas: ['Inglês', 'Espanhol'], comprovanteResidenciaUrl: '/private-uploads/c.pdf' });
     expect(res.status).toBe(400);
   });
 
   it('impede duas inscrições no mesmo período', async () => {
     await criarPeriodoAberto();
-    const body = { nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/uploads/c.pdf' };
+    const body = { nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/private-uploads/c.pdf' };
     await asAluno(request(app).post('/api/proficiencia/inscricoes')).send(body);
     const res = await asAluno(request(app).post('/api/proficiencia/inscricoes')).send(body);
     expect(res.status).toBe(409);
@@ -119,7 +133,7 @@ describe('inscrição', () => {
   it('aluno só enxerga as próprias inscrições', async () => {
     await criarPeriodoAberto();
     await asAluno(request(app).post('/api/proficiencia/inscricoes'))
-      .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/uploads/c.pdf' });
+      .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/private-uploads/c.pdf' });
     // Outro aluno
     await seedUser({ id: 'aluno-2', email: 'a2@test.com', roles: ['Aluno'], perfil_geral: { nome: 'Maria', cpf: '999' } });
     const token2 = await login('a2@test.com');
@@ -136,7 +150,7 @@ describe('avaliação e declaração', () => {
   async function inscrever() {
     await criarPeriodoAberto();
     const r = await asAluno(request(app).post('/api/proficiencia/inscricoes'))
-      .send({ nivel: 'Doutorado', linguas: ['Inglês', 'Espanhol'], comprovanteResidenciaUrl: '/uploads/c.pdf' });
+      .send({ nivel: 'Doutorado', linguas: ['Inglês', 'Espanhol'], comprovanteResidenciaUrl: '/private-uploads/c.pdf' });
     return r.body.id;
   }
 
@@ -207,7 +221,7 @@ describe('avaliação e declaração', () => {
 describe('B.12 — a inscrição aponta para a pessoa do aluno', () => {
   const pessoaDoAluno = async () => (await pool.query(`SELECT pessoa_id FROM users WHERE id = 'aluno-1'`)).rows[0].pessoa_id;
   const inscreverComoAluno = () => asAluno(request(app).post('/api/proficiencia/inscricoes'))
-    .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/uploads/c.pdf' });
+    .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/private-uploads/c.pdf' });
 
   it('grava o pessoas.id do aluno logado, e a declaração sai para a mesma pessoa', async () => {
     await criarPeriodoAberto();
@@ -229,7 +243,7 @@ describe('B.12 — a inscrição aponta para a pessoa do aluno', () => {
     await criarPeriodoAberto();
     const r = await request(app).post('/api/proficiencia/inscricoes').send({
       nome: 'Pessoa Anônima', cpf: '123.456.789-09', nivel: 'Mestrado', linguas: ['Inglês'],
-      comprovanteResidenciaUrl: '/uploads/c.pdf',
+      comprovanteResidenciaUrl: '/private-uploads/c.pdf',
     });
     expect(r.status).toBe(201);
     const { rows } = await pool.query('SELECT aluno_pessoa_id FROM inscricoes_proficiencia WHERE id = $1', [r.body.id]);

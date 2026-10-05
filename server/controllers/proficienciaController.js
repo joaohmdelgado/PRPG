@@ -13,6 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ASSETS_DIR = path.join(__dirname, '../assets');
 const PRIVATE_UPLOAD_DIR = path.join(__dirname, '../private-uploads');
 const PRIVATE_UPLOAD_PREFIX = '/private-uploads/';
+const comprovantePrivadoValido = (url) => typeof url === 'string' && /^\/private-uploads\/[A-Za-z0-9._-]+$/.test(url);
 
 // Origem pública do site (onde mora a página de verificação). Em produção,
 // definir PUBLIC_SITE_URL (ex.: https://prpg.ufrpe.br); em dev cai no Vite local.
@@ -159,6 +160,12 @@ export const createInscricao = async (req, res) => {
   const titular = body.titularComprovante != null ? !!body.titularComprovante : true;
   if (!titular && !body.comprovanteVinculoUrl) {
     return res.status(400).json({ message: 'Anexe o comprovante de vínculo com o titular do comprovante de residência.' });
+  }
+  // PRIV-01: comprovante é documento pessoal e só pode vir do upload privado
+  // (POST /proficiencia/upload); nunca de /uploads, que é público.
+  const comprovantes = [body.comprovanteResidenciaUrl, titular ? null : body.comprovanteVinculoUrl].filter(Boolean);
+  if (!comprovantes.every(comprovantePrivadoValido)) {
+    return res.status(400).json({ message: 'Comprovante inválido: anexe o arquivo pelo formulário de inscrição.' });
   }
 
   const valid = validarLinguas({ linguas: body.linguas, nivel, estrangeiro });

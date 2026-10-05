@@ -180,14 +180,14 @@ abertos antes de produção.
 
 - [ ] Escrever testes multipart reais para upload válido, extensão falsa, MIME falso, magic bytes inválidos, arquivo grande, EICAR, arquivo órfão e concorrência.
 - [ ] Escrever testes de acesso: anônimo, aluno proprietário, outro aluno, GestorPrograma e administrador.
-- [ ] Remover comprovantes do webroot e manter `/uploads` somente para ativos explicitamente públicos.
+- [ ] Remover comprovantes do webroot e manter `/uploads` somente para ativos explicitamente públicos. *(05/10/2026: os novos já iam para fora; os antigos saem com `npm run comprovantes:privados` — runbook `docs/operations/comprovantes-privados.md`, ainda a rodar no dev da raiz e em produção; a inscrição passou a recusar comprovante fora de `/private-uploads/`. `POST /upload` (público) ficou restrito a quem edita — SEC-01)*
 - [ ] Gravar privados em storage durável com chave UUID aleatória, criptografia, metadata mínima e status quarantine/clean.
 - [ ] Validar conteúdo por assinatura real, tamanho, quantidade, extensão e scanner; nunca confiar apenas no MIME do cliente.
 - [ ] Associar upload por `attachment_id` de uso único ao registro criado; executar cleanup/reconciliação de órfãos.
 - [ ] Implementar streaming autorizado ou URL assinada de poucos minutos; responder 404 quando a política recomendar ocultar existência.
 - [ ] Trocar o `<a href>` direto do admin por fluxo autenticado com estados 401/403/404/expirado.
 - [ ] Auditar upload, leitura e exclusão sem logar URL assinada ou conteúdo.
-- [ ] Migrar arquivos existentes com dual-read e checksums; manter origem somente durante janela definida.
+- [ ] Migrar arquivos existentes com dual-read e checksums; manter origem somente durante janela definida. *(parcial: a migração dos comprovantes copia, troca o endereço numa transação e só então apaga a origem; sem checksum nem janela de dual-read — backup antes, como diz o runbook)*
 
 **Run:** `npm test -- server/__tests__/uploadsPrivate.test.js server/__tests__/proficiencia.test.js`
 **Expected:** nenhum documento pessoal é obtido anonimamente/cross-user; arquivo hostil fica em quarentena; falha de DB não deixa órfão permanente.

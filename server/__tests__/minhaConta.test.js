@@ -48,7 +48,7 @@ async function periodoAberto() {
 
 async function inscrever(token) {
   const res = await as(token)(request(app).post('/api/proficiencia/inscricoes'))
-    .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/uploads/c.pdf' });
+    .send({ nivel: 'Mestrado', linguas: ['Inglês'], comprovanteResidenciaUrl: '/private-uploads/c.pdf' });
   expect(res.status).toBe(201);
   return res.body.id;
 }
