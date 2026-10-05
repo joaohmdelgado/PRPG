@@ -67,6 +67,15 @@ Tasks 1–11 ─ Task 12 (QA/pentest/carga) ─ Task 13 (ensaio/piloto)
 
 ## Task 1: Fechar autorização com política deny-by-default
 
+**Execução parcial (05/10/2026):** `server/__tests__/authzMatrix.test.js` enumera do próprio router todas as
+rotas de escrita (141) e exige 401 de anônimo e 401/403 de Aluno e Professor, salvo as exceções listadas
+no teste com o motivo (5 públicas por desenho, 3 de autoatendimento). A primeira execução achou um buraco:
+`POST /upload` (pasta pública `/uploads`) aceitava qualquer conta logada — agora exige papel de edição
+(`requireInstitutionalWriter`). As demais escritas já negavam. Ainda abertos: GestorPrograma do próprio
+programa × de outro programa (IDOR/escopo), leituras sensíveis (GET protegidos), `requirePermission` central
+e logs de negação. A recarga do usuário no boundary foi feita para a senha provisória e conta excluída
+(AUTH-02), não para papéis.
+
 **Owner:** backend/AppSec
 **Files:**
 
@@ -78,8 +87,8 @@ Tasks 1–11 ─ Task 12 (QA/pentest/carga) ─ Task 13 (ensaio/piloto)
 - Create: `docs/security/matriz-rbac.md`
 
 - [ ] Mapear toda rota como recurso, ação, papéis permitidos e regra de ownership/programa; nenhuma célula pode ficar implícita.
-- [ ] Escrever testes parametrizados cobrindo anônimo, Aluno, Professor, GestorPrograma do próprio programa, GestorPrograma alheio, Gestor e Administrator.
-- [ ] Confirmar que os testes atuais falham para mutações hoje alcançáveis por usuário comum.
+- [ ] Escrever testes parametrizados cobrindo anônimo, Aluno, Professor, GestorPrograma do próprio programa, GestorPrograma alheio, Gestor e Administrator. *(anônimo, Aluno e Professor feitos em `authzMatrix.test.js`; faltam os escopos de GestorPrograma)*
+- [x] Confirmar que os testes atuais falham para mutações hoje alcançáveis por usuário comum. *(falhava em `POST /upload`, corrigido)*
 - [ ] Substituir o fail-open de `requireSelfPrograma`/`scopeProgramaWrite` por `requirePermission(resource, action)` que negue quando não houver regra.
 - [ ] Recarregar usuário/papéis/estado a partir do banco no boundary de autorização ou usar versão de sessão revogável.
 - [ ] Exigir autorização explícita nas rotas aninhadas de pessoas, vínculos, modalidades, coordenadores e conteúdo institucional.

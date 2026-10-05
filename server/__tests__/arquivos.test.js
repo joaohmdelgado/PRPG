@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { app } from '../app.js';
 import { pool } from '../db/pool.js';
-import { resetDb, seedAdmin, loginAdmin } from './helpers.js';
+import { resetDb, seedAdmin, loginAdmin, seedUser, login } from './helpers.js';
 
 // Fase F.5 (docs/revisao-portal-conteudo-2026-09-24.md): biblioteca de mídia.
 // Os uploads vão para server/uploads de verdade; afterAll apaga os criados.
@@ -31,6 +31,28 @@ beforeEach(async () => {
 afterAll(async () => {
   for (const url of criados) await fs.unlink(path.join(PASTA, path.basename(url))).catch(() => {});
   await pool.end();
+});
+
+describe('upload público só para a equipe (SEC-01)', () => {
+  it('aluno e professor logados recebem 403 e nada é gravado', async () => {
+    for (const [id, papel] of [['al-1', 'Aluno'], ['pr-1', 'Professor']]) {
+      await seedUser({ id, email: `${id}@t.br`, roles: [papel] });
+      const t = await login(`${id}@t.br`);
+      const res = await request(app).post('/api/upload').set('Authorization', `Bearer ${t}`)
+        .attach('file', Buffer.from(`x-${id}-${Date.now()}`), { filename: 'x.pdf', contentType: 'application/pdf' });
+      if (res.body.url) criados.add(res.body.url);
+      expect(res.status).toBe(403);
+      expect(res.body.url).toBeUndefined();
+    }
+    const { rows } = await pool.query('SELECT count(*)::int AS n FROM arquivos');
+    expect(rows[0].n).toBe(0);
+  });
+
+  it('anônimo recebe 401', async () => {
+    const res = await request(app).post('/api/upload')
+      .attach('file', Buffer.from('x'), { filename: 'x.pdf', contentType: 'application/pdf' });
+    expect(res.status).toBe(401);
+  });
 });
 
 describe('F.5 — upload com deduplicação', () => {

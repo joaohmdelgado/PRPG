@@ -243,8 +243,9 @@ router.get('/pages/slug/:slug', optionalProtect, getPageBySlug);
 // Autenticação (com limite de tentativas por IP contra força bruta)
 router.post('/login', loginLimiter, login);
 
-// Uploads (qualquer usuário logado)
-router.post('/upload', uploadLimiter, protect, (req, res, next) => {
+// Uploads para a pasta pública /uploads: só quem edita conteúdo (os formulários
+// do painel). Aluno/professor não hospedam arquivo no domínio do site (SEC-01).
+router.post('/upload', uploadLimiter, protect, requireInstitutionalWriter, (req, res, next) => {
   upload.single('file')(req, res, async (err) => {
     if (err) return res.status(400).json({ message: err.message });
     if (!req.file) return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
@@ -400,16 +401,21 @@ router.get('/declaracoes/:codigo', verificarPublica); // Fase B.2: rota pública
 router.post('/proficiencia/inscricoes', optionalProtect, createInscricao);
 // Upload anônimo, mas armazenamento privado: comprovantes contêm dados
 // pessoais. A equipe gestora os acessa somente pela rota autenticada abaixo.
-router.post('/proficiencia/upload', uploadLimiter, (req, res) => {
+router.post('/proficiencia/upload', uploadLimiter, (req, res, next) => {
   privateUpload.single('file')(req, res, async (err) => {
     if (err) return res.status(400).json({ message: err.message });
     if (!req.file) return res.status(400).json({ message: 'Nenhum arquivo enviado.' });
-    const fileUrl = `/private-uploads/${req.file.filename}`;
-    const arquivo = await arquivosRepo.create({
-      url: fileUrl, nomeOriginal: req.file.originalname, mime: req.file.mimetype,
-      tamanhoBytes: req.file.size,
-    });
-    res.json({ id: arquivo.id, url: fileUrl, originalName: req.file.originalname });
+    // try/catch: este callback roda fora da promessa do handler (ver /upload).
+    try {
+      const fileUrl = `/private-uploads/${req.file.filename}`;
+      const arquivo = await arquivosRepo.create({
+        url: fileUrl, nomeOriginal: req.file.originalname, mime: req.file.mimetype,
+        tamanhoBytes: req.file.size,
+      });
+      res.json({ id: arquivo.id, url: fileUrl, originalName: req.file.originalname });
+    } catch (e) {
+      next(e);
+    }
   });
 });
 router.get('/proficiencia/inscricoes/minhas', protect, getMinhasInscricoes);

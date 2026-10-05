@@ -189,6 +189,11 @@ feito ou ainda não.
 anonymous, and a deleted account's token gets 401. Public routes that vary by role must use `optionalProtect`
 + `req.user`, never verify the JWT themselves.
 
+**Authorization matrix (SEC-01)**: `server/__tests__/authzMatrix.test.js` enumerates every write route of
+`adminRoutes.js` and requires 401 for anonymous and 401/403 for Aluno/Professor. A new write route needs a role
+check (`requireRole`/`requireInstitutionalWriter`) or an explicit, justified entry in its `PUBLICAS`/
+`AUTOATENDIMENTO` lists.
+
 **Using Protected Routes**:
 - All POST/PUT/DELETE routes require JWT token
 - Include token in request headers: `Authorization: Bearer <token>`
@@ -229,7 +234,7 @@ Most content items use:
 - `category`/`categorySlug`: For filtering content
 
 ### File Uploads
-- Endpoint: `POST /api/upload` (requires authentication)
+- Endpoint: `POST /api/upload` (requires an editing role — `requireInstitutionalWriter`; files land in the public `/uploads`)
 - Accepts: PDF files, images (PNG, JPG, etc.)
 - File size limit: 15MB
 - Returns: `{ id, url: "/uploads/filename", originalName: "..." }` — `id` references
