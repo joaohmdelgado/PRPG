@@ -630,6 +630,10 @@ CREATE TABLE IF NOT EXISTS declaracoes (
   revogada_motivo TEXT
 );
 CREATE INDEX IF NOT EXISTS declaracoes_entidade_idx ON declaracoes(entidade, entidade_id);
+-- DOC-01: no máximo uma declaração ativa por entidade e tipo (emissões
+-- simultâneas não geram dois códigos válidos para o mesmo documento).
+CREATE UNIQUE INDEX IF NOT EXISTS declaracoes_ativa_uidx
+  ON declaracoes(entidade, entidade_id, tipo) WHERE revogada_em IS NULL;
 
 -- =========================== Portarias ============================
 CREATE TABLE IF NOT EXISTS portarias (

@@ -16,24 +16,22 @@ const fromRow = (r) => ({
 // mantendo `codigo`/`emitidaEm` congelados na 1ª emissão — reemissões geram
 // o mesmo PDF/QR, só atualizando o snapshot em `dados`.
 export const emitir = async ({ tipo, entidade, entidadeId, pessoaId, dados, validaAte }, actor) => {
-  const { rows: existentes } = await query(
-    `SELECT * FROM declaracoes WHERE entidade = $1 AND entidade_id = $2 AND tipo = $3
-     AND revogada_em IS NULL LIMIT 1`,
-    [entidade, entidadeId, tipo]
-  );
-  if (existentes[0]) {
-    const { rows } = await query(
-      'UPDATE declaracoes SET dados = $1 WHERE id = $2 RETURNING *',
-      [JSON.stringify(dados), existentes[0].id]
-    );
-    return fromRow(rows[0]);
-  }
-  const id = crypto.randomUUID();
-  const codigo = crypto.randomUUID();
-  const { rows } = await query(
+  // DOC-01: o índice único parcial declaracoes_ativa_uidx garante uma ativa por
+  // entidade/tipo; com emissões simultâneas, só uma insere e as demais caem na
+  // reemissão abaixo (mesmo código).
+  const { rows: inseridas } = await query(
     `INSERT INTO declaracoes (id, codigo, tipo, entidade, entidade_id, pessoa_id, dados, emitida_por, valida_ate)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-    [id, codigo, tipo, entidade, entidadeId, pessoaId || null, JSON.stringify(dados), actor || null, validaAte || null]
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+     ON CONFLICT (entidade, entidade_id, tipo) WHERE revogada_em IS NULL DO NOTHING
+     RETURNING *`,
+    [crypto.randomUUID(), crypto.randomUUID(), tipo, entidade, entidadeId, pessoaId || null,
+      JSON.stringify(dados), actor || null, validaAte || null]
+  );
+  if (inseridas[0]) return fromRow(inseridas[0]);
+  const { rows } = await query(
+    `UPDATE declaracoes SET dados = $4
+      WHERE entidade = $1 AND entidade_id = $2 AND tipo = $3 AND revogada_em IS NULL RETURNING *`,
+    [entidade, entidadeId, tipo, JSON.stringify(dados)]
   );
   return fromRow(rows[0]);
 };

@@ -131,7 +131,9 @@ mesmos valores, tornando o PDF reproduzível. O PDF imprime um **QR code**
 (`src/pages/DeclaracaoProficiencia.jsx`). Essa página consome o endpoint público
 `GET /api/proficiencia/declaracoes/:codigo` (`verificarDeclaracao`), que reexibe
 os dados canônicos (nome, **CPF mascarado**, língua, resultado, nota, validade
-de 4 anos) para conferência contra o papel.
+de 4 anos) para conferência contra o papel. Em `declaracoes` vale no máximo uma
+declaração ativa por entidade e tipo (índice único parcial `declaracoes_ativa_uidx`;
+`services/declaracoes.js` `emitir` usa `ON CONFLICT` — emissões simultâneas dão o mesmo código).
 
 **Câmara de Pós-Graduação**: controle de processos administrativos do colegiado
 (`processos`, chave = NUP), com histórico append-only (`camara_eventos`),

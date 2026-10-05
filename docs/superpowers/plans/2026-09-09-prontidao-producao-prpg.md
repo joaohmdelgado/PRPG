@@ -259,7 +259,7 @@ primeiro ensaio de restauração, continuam como gates de produção.
 - [ ] Envolver alterações canônicas em transação; mover e-mail/job para outbox no mesmo commit do banco.
 - [ ] Adicionar chave idempotente/constraint para não duplicar ato, evento, notificação ou diploma em retry.
 - [ ] Tornar declaração emitida um snapshot imutável com hash do PDF/dados.
-- [ ] Adicionar constraint que impede dois códigos ativos concorrentes para mesma entidade/tipo; emitir/revogar/versionar em transação.
+- [ ] Adicionar constraint que impede dois códigos ativos concorrentes para mesma entidade/tipo; emitir/revogar/versionar em transação. *(parcial, 05/10/2026: índice único parcial `declaracoes_ativa_uidx` (entidade, entidade_id, tipo) `WHERE revogada_em IS NULL` — migração `2026-10-05_declaracao_ativa_unica.sql`, que aborta listando duplicatas — e `emitir` com `INSERT ... ON CONFLICT DO NOTHING`; provado que 10 emissões simultâneas geravam 10 códigos válidos, agora 1 (`declaracoesEmissao.test.js`). Falta o fluxo de revogar/versionar; a reemissão ainda atualiza o snapshot `dados`)*
 - [ ] Implementar revogação pública verificável e registrar motivo/autor/data.
 - [ ] Obter decisão institucional para assinatura digital; não apresentar PNG versionada como garantia criptográfica.
 - [ ] Criar trilha administrativa append-only para ações sensíveis.
@@ -345,7 +345,7 @@ primeiro ensaio de restauração, continuam como gates de produção.
 - [ ] Separar `/health/live` de `/health/ready`; readiness testa DB, storage e dependências indispensáveis dentro de timeout curto.
 - [ ] Parametrizar pool: TLS, max, connect/query/idle timeout, application name e orçamento por réplica.
 - [ ] Validar `trust proxy` por CIDR/hops reais e usar store compartilhado para rate limit em múltiplas réplicas.
-- [ ] Implementar SIGTERM/SIGINT: readiness false, parar accepts, drenar, fechar pool e sair no prazo.
+- [ ] Implementar SIGTERM/SIGINT: readiness false, parar accepts, drenar, fechar pool e sair no prazo. *(parcial: `server/runtime/shutdown.js` já para os accepts, drena, fecha o pool e sai — teste `shutdown.test.js`; faltam o prazo máximo, fechar keep-alive ocioso e readiness false)*
 - [ ] Em `uncaughtException`/`unhandledRejection`, registrar de forma segura e encerrar sob supervisor.
 - [ ] Adicionar logs JSON com request ID, usuário pseudonimizado e redação de token, senha, CPF, endereço e URL assinada.
 - [ ] Instrumentar taxa/erro/duração, 401/403, pool, storage, upload, outbox, jobs, SMTP e verificações públicas.
