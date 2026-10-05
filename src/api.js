@@ -1,7 +1,9 @@
 // Base URL central da API.
 // Em desenvolvimento usa o servidor Express local; em produção defina
 // VITE_API_URL no ambiente de build (ex.: https://prpg.ufrpe.br).
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// FE-01: no build de produção sem VITE_API_URL a API é a própria origem (o Express
+// entrega o site e a API — docs/operations/site-e-seo.md); localhost só no dev.
+export const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:5000' : '');
 
 // Cliente central de API. Substitui o fetch direto espalhado pelas telas:
 //  - prefixa a base (API_URL) quando o path começa com '/';

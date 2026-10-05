@@ -256,7 +256,7 @@ Create `.env` file in project root (see `.env.example`):
 PORT=5000
 JWT_SECRET=<long random string, min 16 chars>   # server refuses to boot without it
 DATABASE_URL=postgres://prpg:prpg@localhost:5433/prpg
-VITE_API_URL=                                    # prod only; empty uses localhost:5000
+VITE_API_URL=                                    # empty: same origin in a prod build, localhost:5000 in dev
 NODE_ENV=development                             # production restricts CORS
 CORS_ORIGINS=                                    # comma-separated allowlist (prod)
 ```

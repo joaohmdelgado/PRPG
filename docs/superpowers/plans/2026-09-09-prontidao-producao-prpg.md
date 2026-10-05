@@ -374,7 +374,7 @@ primeiro ensaio de restauração, continuam como gates de produção.
 - Create: `docs/content/inventario-home.md`
 
 - [ ] Escrever testes que distinguem loading, vazio, erro, offline e sucesso.
-- [ ] Fazer produção usar `/api` same-origin ou configuração validada; proibir fallback localhost.
+- [x] Fazer produção usar `/api` same-origin ou configuração validada; proibir fallback localhost. *(05/10/2026: `src/api.js` — sem `VITE_API_URL`, o build de produção usa a própria origem e o `localhost:5000` fica só no dev; conferido com build sem a variável servido pelo Express: nenhum `localhost:5000` no `dist/` e todas as chamadas em `/api` da mesma origem)*
 - [ ] Alimentar notícias, editais, programas, serviços e indicadores da home via APIs/CMS; definir política editorial de publicação.
 - [ ] Transformar CTAs em `Link`/`a`/`button` semântico e remover todos os `href="#"`, spans clicáveis e destinos errados.
 - [ ] Corrigir “Formando professionals” e revisar textos/datas/estatísticas com a equipe PRPG.
