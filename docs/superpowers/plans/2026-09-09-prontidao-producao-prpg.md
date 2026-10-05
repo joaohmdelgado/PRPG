@@ -343,7 +343,7 @@ primeiro ensaio de restauração, continuam como gates de produção.
 - Create: `docs/operations/monitoring.md`
 
 - [ ] Separar `/health/live` de `/health/ready`; readiness testa DB, storage e dependências indispensáveis dentro de timeout curto.
-- [ ] Parametrizar pool: TLS, max, connect/query/idle timeout, application name e orçamento por réplica.
+- [ ] Parametrizar pool: TLS, max, connect/query/idle timeout, application name e orçamento por réplica. *(parcial, 05/10/2026: `opcoesDoPool` em `server/db/pool.js` — `PG_POOL_MAX`, espera por conexão limitada a 10 s por padrão (antes infinita), idle, `application_name` `prpg-api`, `PG_STATEMENT_TIMEOUT_MS`/`PG_IDLE_IN_TX_TIMEOUT_MS` opcionais (desligados por padrão: o pool também serve migrações e importadores); teste `poolOpcoes.test.js`. Falta TLS — vai na `DATABASE_URL` (`?sslmode=`) e depende do banco de produção — e definir o orçamento por réplica)*
 - [ ] Validar `trust proxy` por CIDR/hops reais e usar store compartilhado para rate limit em múltiplas réplicas.
 - [x] Implementar SIGTERM/SIGINT: readiness false, parar accepts, drenar, fechar pool e sair no prazo. *(05/10/2026: `server/runtime/shutdown.js` marca `estadoProcesso.encerrando` (o `/api/ready` passa a 503, `/api/live` segue 200), para os accepts, fecha as keep-alive ociosas, drena, fecha o pool e sai; se não terminar em `SHUTDOWN_TIMEOUT_MS` (padrão 10 s) sai com 1. Teste `shutdown.test.js`)*
 - [ ] Em `uncaughtException`/`unhandledRejection`, registrar de forma segura e encerrar sob supervisor.
