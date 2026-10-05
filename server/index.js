@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import { app } from './app.js';
 import { pool } from './db/pool.js';
 import { createGracefulShutdown } from './runtime/shutdown.js';
+import { estadoProcesso } from './runtime/estado.js';
 import { garantirPaginasInstitucionais } from './db/paginasInstitucionais.js';
 import { garantirEstruturaPrpg } from './db/estruturaPrpg.js';
 
@@ -9,7 +10,12 @@ dotenv.config();
 
 const PORT = process.env.PORT || 5000;
 let server;
-const shutdown = createGracefulShutdown({ getServer: () => server, dbPool: pool });
+const shutdown = createGracefulShutdown({
+  getServer: () => server,
+  dbPool: pool,
+  aoIniciar: () => { estadoProcesso.encerrando = true; },
+  prazoMs: Number(process.env.SHUTDOWN_TIMEOUT_MS) || 10000,
+});
 
 // Rede de segurança: registra exceções/rejeições não tratadas em vez de
 // deixá-las derrubar o processo sem rastro nos logs.

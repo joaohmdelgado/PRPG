@@ -345,7 +345,7 @@ primeiro ensaio de restauração, continuam como gates de produção.
 - [ ] Separar `/health/live` de `/health/ready`; readiness testa DB, storage e dependências indispensáveis dentro de timeout curto.
 - [ ] Parametrizar pool: TLS, max, connect/query/idle timeout, application name e orçamento por réplica.
 - [ ] Validar `trust proxy` por CIDR/hops reais e usar store compartilhado para rate limit em múltiplas réplicas.
-- [ ] Implementar SIGTERM/SIGINT: readiness false, parar accepts, drenar, fechar pool e sair no prazo. *(parcial: `server/runtime/shutdown.js` já para os accepts, drena, fecha o pool e sai — teste `shutdown.test.js`; faltam o prazo máximo, fechar keep-alive ocioso e readiness false)*
+- [x] Implementar SIGTERM/SIGINT: readiness false, parar accepts, drenar, fechar pool e sair no prazo. *(05/10/2026: `server/runtime/shutdown.js` marca `estadoProcesso.encerrando` (o `/api/ready` passa a 503, `/api/live` segue 200), para os accepts, fecha as keep-alive ociosas, drena, fecha o pool e sai; se não terminar em `SHUTDOWN_TIMEOUT_MS` (padrão 10 s) sai com 1. Teste `shutdown.test.js`)*
 - [ ] Em `uncaughtException`/`unhandledRejection`, registrar de forma segura e encerrar sob supervisor.
 - [ ] Adicionar logs JSON com request ID, usuário pseudonimizado e redação de token, senha, CPF, endereço e URL assinada.
 - [ ] Instrumentar taxa/erro/duração, 401/403, pool, storage, upload, outbox, jobs, SMTP e verificações públicas.

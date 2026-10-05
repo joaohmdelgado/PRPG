@@ -13,6 +13,7 @@ import { pgClientError } from './utils/httpError.js';
 import { pool } from './db/pool.js';
 import { servirVariante } from './services/imagens.js';
 import { criarRotasSpa } from './seo/spa.js';
+import { estadoProcesso } from './runtime/estado.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -115,6 +116,10 @@ app.get('/api/live', (req, res) => {
 // Readiness é diferente de liveness: só responde pronto se a dependência
 // crítica (PostgreSQL) também estiver disponível para atender requisições.
 app.get('/api/ready', async (req, res) => {
+  if (estadoProcesso.encerrando) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(503).json({ status: 'encerrando' });
+  }
   try {
     await pool.query('SELECT 1');
     res.setHeader('Cache-Control', 'no-store');
