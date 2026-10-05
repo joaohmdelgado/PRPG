@@ -17,6 +17,7 @@ import {
 const PAPEIS_VINCULO_PROGRAMA = [...PAPEIS_DOCENTE, ...PAPEIS_DISCENTE];
 import { query } from '../db/pool.js';
 import { erroNovaSenha } from '../services/senhaPadrao.js';
+import { emitirToken } from './authController.js';
 
 const stripHash = (u) => {
   if (!u) return u;
@@ -378,6 +379,12 @@ export const updateUser = async (req, res) => {
       await linhasPesquisaRepo.setForPessoa(updated.pessoaId, ids);
     }
 
+    // AUTH-01: senha nova encerra as sessões da conta. Quem trocou a própria
+    // senha recebe um token novo para seguir nesta sessão.
+    if (data.password) {
+      const sessaoVersao = await usersRepo.encerrarSessoes(updated.id);
+      if (isSelf) return res.json({ ...stripHash(updated), token: emitirToken(updated, sessaoVersao) });
+    }
     res.json(stripHash(updated));
   } catch (error) {
     serverError(res, 'Erro ao atualizar usuário', error);

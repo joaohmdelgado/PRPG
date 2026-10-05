@@ -74,6 +74,9 @@ export default function ContaDados() {
     try {
       const res = await apiFetch('/api/minha-conta/senha', { method: 'PUT', json: { senhaAtual: senha.atual, novaSenha: senha.nova } });
       if (res.ok) {
+        // A troca encerra as outras sessões; a resposta traz o token desta.
+        const data = await res.json().catch(() => ({}));
+        if (data.token) localStorage.setItem('token', data.token);
         toast.success('Senha atualizada.');
         setSenha({ atual: '', nova: '', confirma: '' });
       } else {

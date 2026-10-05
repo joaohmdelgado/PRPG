@@ -309,6 +309,7 @@ const userFromRow = (r) => {
   return {
     id: r.id, email: r.email, password_hash: r.password_hash, roles,
     senhaTemporaria: r.senha_temporaria ?? false,
+    sessaoVersao: r.sessao_versao ?? 0,
     privacidade: { mostrar_email: r.p_priv_email ?? false, mostrar_telefone: r.p_priv_telefone ?? false },
     perfil_geral: {
       nome: txt(r.p_nome), cpf: txt(r.p_cpf), siape: txt(r.p_siape),
@@ -343,6 +344,12 @@ const lerUsuarios = async (where = 'TRUE', params = []) =>
 export const usersRepo = {
   getAll: () => lerUsuarios(),
   async getById(id) { return (await lerUsuarios('u.id = $1', [id]))[0] || null; },
+  // AUTH-01: invalida todos os tokens já emitidos da conta; devolve a versão nova.
+  async encerrarSessoes(id) {
+    const { rows } = await query(
+      'UPDATE users SET sessao_versao = sessao_versao + 1 WHERE id = $1 RETURNING sessao_versao', [id]);
+    return rows[0]?.sessao_versao ?? null;
+  },
   async findByEmail(email) { return (await lerUsuarios('u.email = $1', [email]))[0] || null; },
   // Busca pelo CPF da pessoa comparando só os dígitos, com o zero à esquerda
   // (ex.: "123.456.789-00" casa com "12345678900"). Retorna null se vazio.

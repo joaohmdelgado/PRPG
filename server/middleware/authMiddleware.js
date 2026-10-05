@@ -5,9 +5,13 @@ import { query } from '../db/pool.js';
 // AUTH-01/AUTH-02: a conta é lida do banco a cada requisição, não do token de 30
 // dias: senha provisória, papéis e programa valem na hora (reset de senha,
 // rebaixamento de papel, troca de programa) e conta excluída perde o acesso.
-const estadoDaConta = async (id) => {
-  const { rows } = await query('SELECT senha_temporaria, roles, programa_id FROM users WHERE id = $1', [id]);
-  if (!rows[0]) return { existe: false };
+// Token de sessão encerrada (a senha mudou depois dele: users.sessao_versao
+// avançou) vale como conta inexistente. Token sem `sv` é de antes da versão de
+// sessão e conta como 0.
+const estadoDaConta = async (decoded) => {
+  const { rows } = await query(
+    'SELECT senha_temporaria, roles, programa_id, sessao_versao FROM users WHERE id = $1', [decoded.id]);
+  if (!rows[0] || (decoded.sv ?? 0) !== rows[0].sessao_versao) return { existe: false };
   return {
     existe: true,
     senhaTemporaria: rows[0].senha_temporaria === true,
@@ -50,7 +54,7 @@ export const optionalProtect = async (req, res, next) => {
     } catch { /* token inválido — trata como anônimo */ }
     if (decoded) {
       try {
-        const conta = await estadoDaConta(decoded.id);
+        const conta = await estadoDaConta(decoded);
         const user = conta.existe ? contaComBanco(decoded, conta) : null;
         if (user && !conta.senhaTemporaria && !semEscopo(user)) req.user = user;
       } catch (error) {
@@ -73,8 +77,8 @@ export const protect = async (req, res, next) => {
     return res.status(401).json({ message: 'Não autorizado, token falhou' });
   }
   try {
-    const conta = await estadoDaConta(decoded.id);
-    if (!conta.existe) return res.status(401).json({ message: 'Não autorizado, conta não encontrada' });
+    const conta = await estadoDaConta(decoded);
+    if (!conta.existe) return res.status(401).json({ message: 'Sessão encerrada. Entre novamente.' });
     req.user = contaComBanco(decoded, conta);
     if (conta.senhaTemporaria && !rotaDaPropriaConta(req)) {
       return res.status(403).json({ codigo: 'SENHA_TEMPORARIA', message: 'Troque a senha provisória antes de continuar.' });

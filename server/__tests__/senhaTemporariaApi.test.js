@@ -52,8 +52,9 @@ describe('senha provisória imposta pela API', () => {
 
     const troca = await como(token)(request(app).put('/api/users/g-prov')).send({ password: 'novaSenhaForte9' });
     expect(troca.status).toBe(200);
-    // O mesmo token passa a valer: a flag é lida do banco a cada requisição.
-    expect((await como(token)(request(app).get('/api/users'))).status).toBe(200);
+    // A troca encerra as sessões (AUTH-01): segue-se com o token novo da resposta.
+    expect((await como(troca.body.token)(request(app).get('/api/users'))).status).toBe(200);
+    expect((await como(token)(request(app).get('/api/users'))).status).toBe(401);
   });
 
   it('a troca recusa a senha padrão e senha curta', async () => {
@@ -74,7 +75,7 @@ describe('senha provisória imposta pela API', () => {
     const res = await como(token)(request(app).put('/api/minha-conta/senha'))
       .send({ senhaAtual: SENHA_PADRAO, novaSenha: 'novaSenhaForte9' });
     expect(res.status).toBe(200);
-    expect((await como(token)(request(app).get('/api/users'))).status).toBe(200);
+    expect((await como(res.body.token)(request(app).get('/api/users'))).status).toBe(200);
   });
 
   it('reset pelo admin tranca uma sessão já aberta', async () => {
@@ -84,7 +85,10 @@ describe('senha provisória imposta pela API', () => {
 
     const reset = await como(adminToken)(request(app).put('/api/users/g-ok')).send({ password: 'provisoria99' });
     expect(reset.status).toBe(200);
-    const depois = await como(token)(request(app).get('/api/users'));
+    // A sessão aberta cai (AUTH-01); o novo login com a provisória fica trancado na troca.
+    expect((await como(token)(request(app).get('/api/users'))).status).toBe(401);
+    const novo = await login('ok@t.br', 'provisoria99');
+    const depois = await como(novo)(request(app).get('/api/users'));
     expect(depois.status).toBe(403);
     expect(depois.body.codigo).toBe('SENHA_TEMPORARIA');
   });

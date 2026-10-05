@@ -416,7 +416,7 @@ describe('G1: users só credencial', () => {
     const { rows } = await pool.query(`SELECT column_name, is_nullable FROM information_schema.columns
        WHERE table_schema = 'public' AND table_name = 'users' ORDER BY column_name`);
     expect(rows.map((c) => c.column_name)).toEqual(['atualizado_em', 'atualizado_por', 'criado_em', 'criado_por',
-      'email', 'id', 'password_hash', 'pessoa_id', 'programa_id', 'roles', 'senha_temporaria']);
+      'email', 'id', 'password_hash', 'pessoa_id', 'programa_id', 'roles', 'senha_temporaria', 'sessao_versao']);
     expect(rows.find((c) => c.column_name === 'pessoa_id').is_nullable).toBe('NO');
   });
 

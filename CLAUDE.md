@@ -184,7 +184,10 @@ feito ou ainda não.
 
 **Account state from the DB (AUTH-01/02)**: `protect`/`optionalProtect` reload `senha_temporaria`, `roles`
 and `programa_id` from `users` on every request and overwrite `req.user.roles`/`req.user.programaId` — the
-token's copies are ignored (role/program changes take effect immediately). A `GestorPrograma` with no program
+token's copies are ignored (role/program changes take effect immediately). The token carries `sv` =
+`users.sessao_versao`; a password change (self or admin reset) increments it via `usersRepo.encerrarSessoes`, so
+every older token gets 401, and a self change returns a fresh `token` in the response (tokens are minted only by
+`emitirToken` in `authController.js`; the front stores the new one). A `GestorPrograma` with no program
 (program deleted: `users.programa_id` is `ON DELETE SET NULL`) only reaches its own account. While
 `senha_temporaria` is TRUE only `GET /api/minha-conta`, `PUT /api/minha-conta/senha` and
 `PUT /api/users/<own id>` with just `password` respond; everything else gets `403 { codigo: 'SENHA_TEMPORARIA' }`
@@ -362,7 +365,7 @@ proficiência, mídia, notificações, métricas.
    - `repositories.js`: per-entity repos with `fromRow`/`toRow` mappers that convert
      between DB snake_case columns and the camelCase JSON the frontend expects. **Exception —
      `usersRepo` (B.13 / G1)**: it does not use `createRepository`; `users` is only the credential
-     (11 columns: `id`, `email`, `password_hash`, `senha_temporaria`, `roles`, `programa_id`, `pessoa_id` NOT NULL,
+     (12 columns: `id`, `email`, `password_hash`, `senha_temporaria`, `sessao_versao`, `roles`, `programa_id`, `pessoa_id` NOT NULL,
      `criado_em/por`, `atualizado_em/por`), and the repo reads `users` + `pessoas` + the person's student/teacher
      `vinculos` and **builds** the API shape (`perfil_geral`, `dados_academicos`, `perfil_aluno`, `perfil_professor`,
      `privacidade`). That shape is kept on purpose (renaming it is deferred); a controller or test that builds a

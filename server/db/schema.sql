@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS users (
   -- TRUE quando a senha é provisória (padrão 'Mudar123' ou reset pelo admin):
   -- o usuário é obrigado a trocá-la no primeiro acesso antes de usar o painel.
   senha_temporaria      BOOLEAN DEFAULT FALSE,
+  -- Versão das sessões (AUTH-01): vai no token (`sv`) e o `protect` compara com
+  -- esta coluna; trocar a senha incrementa e derruba os tokens antigos.
+  sessao_versao         INTEGER NOT NULL DEFAULT 0,
   roles                 TEXT[] NOT NULL DEFAULT '{}',
   -- Gestor de Programa: vincula o usuario a um unico programa que ele administra.
   -- NULL = usuario sem programa (Administrator/Gestor da PRPG, professor, aluno, etc.).

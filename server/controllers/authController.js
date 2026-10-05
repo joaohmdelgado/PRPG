@@ -4,6 +4,15 @@ import { JWT_SECRET } from '../config.js';
 import { usersRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
 
+// `sv` = users.sessao_versao: o protect recusa o token quando a versão da conta
+// mudou (troca de senha). Papéis e programa no token são só informativos — o
+// protect os relê do banco.
+export const emitirToken = (user, sessaoVersao = user.sessaoVersao ?? 0) => jwt.sign(
+  { id: user.id, email: user.email, roles: user.roles, programaId: user.programaId || null, sv: sessaoVersao },
+  JWT_SECRET,
+  { expiresIn: '30d' }
+);
+
 export const login = async (req, res) => {
   const { username, password } = req.body || {};
   const email = username; // username é o e-mail na nossa modelagem
@@ -23,11 +32,7 @@ export const login = async (req, res) => {
         if (rows[0]) gestorPrograma = rows[0];
       }
 
-      const token = jwt.sign(
-        { id: user.id, email: user.email, roles: user.roles, programaId: user.programaId || null },
-        JWT_SECRET,
-        { expiresIn: '30d' }
-      );
+      const token = emitirToken(user);
       res.json({
         token,
         username: user.email,

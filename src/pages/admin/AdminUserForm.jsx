@@ -287,6 +287,9 @@ const AdminUserForm = () => {
       const response = await apiFetch(path, { method: isEditing ? 'PUT' : 'POST', json: payload });
 
       if (response.ok) {
+        // Quem troca a própria senha recebe um token novo (as sessões antigas caem).
+        const data = await response.json().catch(() => ({}));
+        if (data.token) localStorage.setItem('token', data.token);
         // Se veio de uma página de programa (discentes/docentes), volta lá.
         const from = location.state?.from;
         navigate(from || '/admin/users');

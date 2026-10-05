@@ -10,6 +10,7 @@ import { usersRepo } from '../db/repositories.js';
 import { PAPEIS_DISCENTE, PAPEIS_DOCENTE } from './programasController.js';
 import { gerarDeclaracao } from './proficienciaController.js';
 import { erroNovaSenha } from '../services/senhaPadrao.js';
+import { emitirToken } from './authController.js';
 
 const mascararCpf = (cpf) => {
   const d = String(cpf || '').replace(/\D/g, '');
@@ -185,7 +186,9 @@ export const updateMinhaSenha = async (req, res) => {
     senhaTemporaria: false,
     atualizado_em: new Date().toISOString(),
   }, user.id);
-  res.json({ message: 'Senha atualizada.' });
+  // AUTH-01: as outras sessões da conta caem; esta segue com um token novo.
+  const sessaoVersao = await usersRepo.encerrarSessoes(user.id);
+  res.json({ message: 'Senha atualizada.', token: emitirToken(user, sessaoVersao) });
 };
 
 // PDF da declaração de proficiência da própria pessoa. Só entrega o que a

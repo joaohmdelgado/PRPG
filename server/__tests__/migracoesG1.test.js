@@ -123,7 +123,7 @@ const COLUNAS_LEGADAS = [
   ['acad_google_scholar', 'TEXT'], ['acad_publons', 'TEXT'], ['perfil_aluno', 'JSONB'], ['perfil_professor', 'JSONB'],
 ];
 const CREDENCIAL = ['atualizado_em', 'atualizado_por', 'criado_em', 'criado_por', 'email', 'id', 'password_hash',
-  'pessoa_id', 'programa_id', 'roles', 'senha_temporaria'];
+  'pessoa_id', 'programa_id', 'roles', 'senha_temporaria', 'sessao_versao'];
 
 const colunasDeUsers = async () => (await pool.query(`
   SELECT column_name, is_nullable FROM information_schema.columns

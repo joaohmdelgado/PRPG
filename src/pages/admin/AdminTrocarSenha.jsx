@@ -40,6 +40,9 @@ const AdminTrocarSenha = () => {
       });
 
       if (response.ok) {
+        // A troca encerra as sessões antigas; a resposta traz o token desta.
+        const data = await response.json().catch(() => ({}));
+        if (data.token) localStorage.setItem('token', data.token);
         localStorage.removeItem('senhaTemporaria');
         navigate(destinoPermitido(location.state?.de) || destinoPadrao(), { replace: true });
       } else if (response.status === 401) {
