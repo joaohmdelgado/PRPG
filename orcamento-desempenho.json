@@ -1,5 +1,5 @@
 {
-  "_comentario": "Orçamento de desempenho do front (Fase P.6). Tamanhos em KB comprimidos com gzip (nível 9), medidos no build de 28/09/2026 (com o relato de Web Vitals já incluído) com ~10% de folga: JS inicial 94,5 · CSS 15,3 · fontes 78,5. Conferido por `npm run perf:bundle` (scripts/orcamento-desempenho.mjs) e pelo workflow .github/workflows/desempenho.yml. Ao estourar, ou se corrige ou se justifica e se sobe o limite aqui, no mesmo commit.",
+  "_comentario": "Orçamento de desempenho do front (Fase P.6). Tamanhos em KB comprimidos com gzip (nível 9), medidos no build de 28/09/2026 (com o relato de Web Vitals já incluído) com ~10% de folga: JS inicial 94,5 · CSS 15,3 · fontes 78,5. Conferido por `npm run perf:bundle` (scripts/orcamento-desempenho.mjs) e pelo workflow .github/workflows/desempenho.yml. Ao estourar, ou se corrige ou se justifica e se sobe o limite aqui, no mesmo commit. 05/10/2026: o chunk xlsx (só sob demanda, na exportação de /programas; segue proibido no carregamento inicial) subiu de 150 para 165 KB — a versão 0.20.3 do CDN da SheetJS, que corrige as vulnerabilidades da 0.18.5, mede 155,4 KB.",
   "carregamentoInicial": {
     "jsKB": 105,
     "cssKB": 17,
@@ -8,7 +8,7 @@
   "chunkMaxKB": 30,
   "chunkExcecoesKB": {
     "index": 80,
-    "xlsx": 150
+    "xlsx": 165
   },
   "proibidoNoCarregamentoInicial": [
     "xlsx",
