@@ -2,16 +2,30 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 import { query } from '../db/pool.js';
 
-// AUTH-02: a conta é lida do banco a cada requisição (não do token), para que a
-// senha provisória valha também para tokens emitidos antes e para o reset feito
-// pelo admin no meio de uma sessão, e para que conta excluída perca o acesso.
+// AUTH-01/AUTH-02: a conta é lida do banco a cada requisição, não do token de 30
+// dias: senha provisória, papéis e programa valem na hora (reset de senha,
+// rebaixamento de papel, troca de programa) e conta excluída perde o acesso.
 const estadoDaConta = async (id) => {
-  const { rows } = await query('SELECT senha_temporaria FROM users WHERE id = $1', [id]);
-  return rows[0] ? { existe: true, senhaTemporaria: rows[0].senha_temporaria === true } : { existe: false };
+  const { rows } = await query('SELECT senha_temporaria, roles, programa_id FROM users WHERE id = $1', [id]);
+  if (!rows[0]) return { existe: false };
+  return {
+    existe: true,
+    senhaTemporaria: rows[0].senha_temporaria === true,
+    roles: rows[0].roles || [],
+    programaId: rows[0].programa_id || null,
+  };
 };
 
-// Com senha provisória, o token só serve para ver a própria conta e trocar a senha.
-const liberadoComSenhaTemporaria = (req) => {
+// Gestor de Programa sem programa (ex.: o programa foi excluído — users.programa_id
+// é ON DELETE SET NULL) não tem escopo: várias checagens de posse comparam
+// programaId e falhariam abertas com null.
+const semEscopo = (user) => isProgramaScoped(user) && !user.programaId;
+
+const contaComBanco = (decoded, conta) => ({ ...decoded, roles: conta.roles, programaId: conta.programaId });
+
+// Com senha provisória (ou gestor sem escopo), o token só serve para ver a
+// própria conta e trocar a senha.
+const rotaDaPropriaConta = (req) => {
   const caminho = req.originalUrl.split('?')[0];
   if (req.method === 'GET' && caminho === '/api/minha-conta') return true;
   if (req.method === 'PUT' && caminho === '/api/minha-conta/senha') return true;
@@ -25,7 +39,8 @@ const liberadoComSenhaTemporaria = (req) => {
 
 // Popula req.user se um Bearer token válido estiver presente, mas não rejeita
 // requisições sem token (rotas públicas com comportamento diferenciado por papel).
-// Token de conta excluída ou com senha provisória vale como anônimo.
+// Token de conta excluída, com senha provisória ou de gestor sem programa vale
+// como anônimo.
 export const optionalProtect = async (req, res, next) => {
   const auth = req.headers.authorization;
   if (auth && auth.startsWith('Bearer ')) {
@@ -36,7 +51,8 @@ export const optionalProtect = async (req, res, next) => {
     if (decoded) {
       try {
         const conta = await estadoDaConta(decoded.id);
-        if (conta.existe && !conta.senhaTemporaria) req.user = decoded;
+        const user = conta.existe ? contaComBanco(decoded, conta) : null;
+        if (user && !conta.senhaTemporaria && !semEscopo(user)) req.user = user;
       } catch (error) {
         return next(error);
       }
@@ -50,16 +66,21 @@ export const protect = async (req, res, next) => {
   if (!auth || !auth.startsWith('Bearer')) {
     return res.status(401).json({ message: 'Não autorizado, sem token' });
   }
+  let decoded;
   try {
-    req.user = jwt.verify(auth.split(' ')[1], JWT_SECRET);
+    decoded = jwt.verify(auth.split(' ')[1], JWT_SECRET);
   } catch {
     return res.status(401).json({ message: 'Não autorizado, token falhou' });
   }
   try {
-    const conta = await estadoDaConta(req.user.id);
+    const conta = await estadoDaConta(decoded.id);
     if (!conta.existe) return res.status(401).json({ message: 'Não autorizado, conta não encontrada' });
-    if (conta.senhaTemporaria && !liberadoComSenhaTemporaria(req)) {
+    req.user = contaComBanco(decoded, conta);
+    if (conta.senhaTemporaria && !rotaDaPropriaConta(req)) {
       return res.status(403).json({ codigo: 'SENHA_TEMPORARIA', message: 'Troque a senha provisória antes de continuar.' });
+    }
+    if (semEscopo(req.user) && !rotaDaPropriaConta(req)) {
+      return res.status(403).json({ message: 'Gestor sem programa vinculado.' });
     }
     return next();
   } catch (error) {

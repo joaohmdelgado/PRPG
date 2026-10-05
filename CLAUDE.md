@@ -182,8 +182,11 @@ feito ou ainda não.
 }
 ```
 
-**Provisional password (AUTH-02)**: `protect` reads `users.senha_temporaria` from the DB on every request
-(not from the token). While it is TRUE only `GET /api/minha-conta`, `PUT /api/minha-conta/senha` and
+**Account state from the DB (AUTH-01/02)**: `protect`/`optionalProtect` reload `senha_temporaria`, `roles`
+and `programa_id` from `users` on every request and overwrite `req.user.roles`/`req.user.programaId` — the
+token's copies are ignored (role/program changes take effect immediately). A `GestorPrograma` with no program
+(program deleted: `users.programa_id` is `ON DELETE SET NULL`) only reaches its own account. While
+`senha_temporaria` is TRUE only `GET /api/minha-conta`, `PUT /api/minha-conta/senha` and
 `PUT /api/users/<own id>` with just `password` respond; everything else gets `403 { codigo: 'SENHA_TEMPORARIA' }`
 (the front's `apiFetch` sends the person to `/admin/trocar-senha`). `optionalProtect` treats such a token as
 anonymous, and a deleted account's token gets 401. Public routes that vary by role must use `optionalProtect`

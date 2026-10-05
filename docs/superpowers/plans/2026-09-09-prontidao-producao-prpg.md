@@ -71,10 +71,17 @@ Tasks 1–11 ─ Task 12 (QA/pentest/carga) ─ Task 13 (ensaio/piloto)
 rotas de escrita (141) e exige 401 de anônimo e 401/403 de Aluno e Professor, salvo as exceções listadas
 no teste com o motivo (5 públicas por desenho, 3 de autoatendimento). A primeira execução achou um buraco:
 `POST /upload` (pasta pública `/uploads`) aceitava qualquer conta logada — agora exige papel de edição
-(`requireInstitutionalWriter`). As demais escritas já negavam. Ainda abertos: GestorPrograma do próprio
-programa × de outro programa (IDOR/escopo), leituras sensíveis (GET protegidos), `requirePermission` central
-e logs de negação. A recarga do usuário no boundary foi feita para a senha provisória e conta excluída
-(AUTH-02), não para papéis.
+(`requireInstitutionalWriter`). As demais escritas já negavam.
+
+**Execução parcial (05/10/2026, 2ª etapa):** `protect`/`optionalProtect` recarregam `roles` e `programa_id`
+do banco a cada requisição (antes vinham do token de 30 dias: um Gestor rebaixado a Aluno seguia Gestor e um
+gestor transferido seguia no programa antigo). Gestor de Programa sem programa (o programa foi excluído —
+`users.programa_id` é `ON DELETE SET NULL`) só alcança a própria conta: linhas de pesquisa, taxonomia-refs,
+revisões, relacionados e pós-doc comparavam `programaId` e falhavam abertas com `null` (provado: editava a
+linha de pesquisa de outro programa). `server/__tests__/authzEscopo.test.js` cobre o gestor de B contra
+linhas, taxonomia, pós-doc, revisões e relacionados de A (já negavam), o rebaixamento, a transferência e o
+gestor sem programa. Ainda abertos: leituras sensíveis (GET protegidos) na matriz, `requirePermission`
+central e logs de negação.
 
 **Owner:** backend/AppSec
 **Files:**
@@ -87,10 +94,10 @@ e logs de negação. A recarga do usuário no boundary foi feita para a senha pr
 - Create: `docs/security/matriz-rbac.md`
 
 - [ ] Mapear toda rota como recurso, ação, papéis permitidos e regra de ownership/programa; nenhuma célula pode ficar implícita.
-- [ ] Escrever testes parametrizados cobrindo anônimo, Aluno, Professor, GestorPrograma do próprio programa, GestorPrograma alheio, Gestor e Administrator. *(anônimo, Aluno e Professor feitos em `authzMatrix.test.js`; faltam os escopos de GestorPrograma)*
+- [ ] Escrever testes parametrizados cobrindo anônimo, Aluno, Professor, GestorPrograma do próprio programa, GestorPrograma alheio, Gestor e Administrator. *(anônimo, Aluno e Professor: `authzMatrix.test.js`; GestorPrograma alheio nas checagens dentro do controller: `authzEscopo.test.js`; as de rota já tinham `gestor_programa.test.js`)*
 - [x] Confirmar que os testes atuais falham para mutações hoje alcançáveis por usuário comum. *(falhava em `POST /upload`, corrigido)*
 - [ ] Substituir o fail-open de `requireSelfPrograma`/`scopeProgramaWrite` por `requirePermission(resource, action)` que negue quando não houver regra.
-- [ ] Recarregar usuário/papéis/estado a partir do banco no boundary de autorização ou usar versão de sessão revogável.
+- [x] Recarregar usuário/papéis/estado a partir do banco no boundary de autorização ou usar versão de sessão revogável. *(05/10/2026: `protect`/`optionalProtect` leem `senha_temporaria`, `roles` e `programa_id`)*
 - [ ] Exigir autorização explícita nas rotas aninhadas de pessoas, vínculos, modalidades, coordenadores e conteúdo institucional.
 - [ ] Testar IDOR/ownership com IDs de outro usuário/programa e payload que tente trocar `programaId`.
 - [ ] Registrar logs de decisão negada sem gravar token ou PII desnecessária.
@@ -131,7 +138,7 @@ considerados resolvidos.
 - [ ] Substituir a senha compartilhada `Mudar123` por convite/reset criptograficamente aleatório, single-use e expirável.
 - [x] Adicionar `must_change_password` imposto pela API; até a troca, permitir apenas sessão/logout/troca de senha. *(05/10/2026: `users.senha_temporaria` lida do banco pelo `protect` a cada requisição; libera só `GET /api/minha-conta`, `PUT /api/minha-conta/senha` e `PUT /api/users/<próprio id>` com só a senha; teste `server/__tests__/senhaTemporariaApi.test.js`. Logout é só do cliente.)*
 - [ ] Implementar access token curto e sessão/refresh revogável; preferir cookie HttpOnly/Secure/SameSite e proteção CSRF se identidade local.
-- [ ] Invalidar sessões quando senha, papel, status ou associação de programa mudar.
+- [ ] Invalidar sessões quando senha, papel, status ou associação de programa mudar. *(parcial, 05/10/2026: papel, programa, exclusão da conta e reset para senha provisória valem na hora para tokens já emitidos; trocar a senha ainda não derruba os outros tokens da conta)*
 - [ ] Exigir MFA para Administrator/Gestor quando suportado pelo provedor.
 - [ ] Rotacionar `JWT_SECRET` e credenciais reais no rollout; confirmar rejeição de tokens antigos.
 - [ ] Adicionar secret scan que detecte strings/hash/defaults proibidos.
