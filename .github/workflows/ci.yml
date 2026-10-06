@@ -1,0 +1,98 @@
+# Integração contínua (Task 7 de docs/superpowers/plans/2026-09-09-prontidao-producao-prpg.md).
+# Em cada PR e em cada push no main:
+#   qualidade  — type-check, testes do front, build e orçamento de desempenho
+#   servidor   — suíte do servidor num PostgreSQL efêmero (inclui o teste que cria um
+#                banco novo do schema.sql e confere o runner de migrações)
+#   seguranca  — varredura de segredos e auditoria de dependências de produção
+#                (alta/crítica sem exceção válida em auditoria-excecoes.json derruba)
+# Os mesmos comandos rodam na máquina: `npm run lint`, `npm run test:front`,
+# `npm run build`, `npm run perf:bundle`, `npm test`, `npm run ci:segredos`,
+# `npm run ci:auditoria`. Detalhes em docs/operations/ci.md.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # A auditoria também roda sozinha: advisory novo aparece sem commit novo.
+    - cron: '17 9 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualidade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Type-check
+        run: npm run lint
+      - name: Testes do front
+        run: npm run test:front
+      - name: Build de produção, sem VITE_API_URL (mesma origem)
+        run: npm run build
+      - name: Nada de localhost no build (FE-01)
+        run: |
+          if grep -rl "localhost:5000" dist; then
+            echo "O build de produção contém localhost:5000" >&2
+            exit 1
+          fi
+      - name: Orçamento de desempenho
+        run: npm run perf:bundle
+
+  servidor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: prpg
+          POSTGRES_PASSWORD: prpg
+          POSTGRES_DB: prpg
+        # O globalSetup dos testes (server/__tests__/globalSetup.js) usa localhost:5433.
+        ports: ['5433:5432']
+        options: >-
+          --health-cmd "pg_isready -U prpg -d prpg"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Suíte do servidor
+        run: npm test
+
+  seguranca:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Segredos e credenciais padrão
+        run: npm run ci:segredos
+      - name: Auditoria de dependências de produção
+        run: node scripts/auditoria-dependencias.mjs --saida auditoria-npm.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: auditoria-npm
+          path: auditoria-npm.json
+          if-no-files-found: ignore

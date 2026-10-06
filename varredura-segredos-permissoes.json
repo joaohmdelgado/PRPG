@@ -1,0 +1,13 @@
+{
+  "_comentario": "Ocorrências conhecidas e intencionais para scripts/varredura-segredos.mjs (npm run ci:segredos). Cada entrada precisa de caminho (arquivo, ou pasta terminando em /), tipo e motivo. Qualquer ocorrência fora desta lista derruba o CI.",
+  "permissoes": [
+    { "caminho": "server/data/users.json", "tipo": "hash bcrypt", "motivo": "Seed de desenvolvimento (2 contas de exemplo; os hashes não correspondem a nenhuma senha comum). `npm run db:migrate` recusa produção." },
+    { "caminho": "server/__tests__/configPolicy.test.js", "tipo": "URL de banco com senha", "motivo": "Valor de exemplo (senha literal \"senha\", host fictício) para provar que a política de configuração de produção o aceita." },
+    { "caminho": "server/__tests__/", "tipo": "senha padrão Mudar123", "motivo": "Os testes provam que a Mudar123 é recusada e que contas novas não a recebem." },
+    { "caminho": "src/__tests__/", "tipo": "senha padrão Mudar123", "motivo": "Idem, nos testes do front." },
+    { "caminho": "server/services/senhaPadrao.js", "tipo": "senha padrão Mudar123", "motivo": "Define a senha para RECUSÁ-LA (erroNovaSenha) e para achar contas antigas que ainda a usam (senhas:padrao)." },
+    { "caminho": "server/controllers/usersController.js", "tipo": "senha padrão Mudar123", "motivo": "Comentários que explicam a regra que recusa a Mudar123." },
+    { "caminho": "server/db/schema.sql", "tipo": "senha padrão Mudar123", "motivo": "Comentário da coluna senha_temporaria." },
+    { "caminho": "src/pages/admin/AdminTrocarSenha.jsx", "tipo": "senha padrão Mudar123", "motivo": "O front recusa a Mudar123 como nova senha e a cita num comentário." }
+  ]
+}

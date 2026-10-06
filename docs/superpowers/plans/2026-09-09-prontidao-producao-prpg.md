@@ -315,8 +315,8 @@ primeiro ensaio de restauração, continuam como gates de produção.
 - [ ] Criar build multi-stage e runtime não-root, read-only quando possível, com imagem base por digest.
 - [ ] Separar frontend estático/API ou documentar claramente o reverse proxy; produção não expõe PostgreSQL.
 - [ ] Tornar obrigatórios `DATABASE_URL`, sessão/JWT, `PUBLIC_SITE_URL`, origem da API, CORS, proxy, SMTP e storage.
-- [ ] Falhar build/deploy se produção contiver localhost, HTTP indevido, senha padrão ou segredo ausente.
-- [ ] Pipeline de PR: install, lint, typecheck, secret/SAST, SBOM/licenças, audit, DB efêmero, testes, cobertura, fresh/upgrade migration, build, E2E/axe, imagem e scan.
+- [ ] Falhar build/deploy se produção contiver localhost, HTTP indevido, senha padrão ou segredo ausente. *(06/10/2026, parcial: o job `qualidade` do CI falha se o build de produção contiver `localhost:5000`, e `npm run ci:segredos` falha com a senha padrão, hash bcrypt, chave privada ou URL de banco com senha no repositório; o servidor já recusa subir em produção com `JWT_SECRET`/CORS/`PUBLIC_SITE_URL` inválidos (`validateRuntimeConfig`). Falta checar a configuração do ambiente de deploy)*
+- [ ] Pipeline de PR: install, lint, typecheck, secret/SAST, SBOM/licenças, audit, DB efêmero, testes, cobertura, fresh/upgrade migration, build, E2E/axe, imagem e scan. *(06/10/2026, parcial: `.github/workflows/ci.yml` — `npm ci`, type-check, testes do front, build, orçamento de desempenho, suíte do servidor num PostgreSQL efêmero (que inclui o teste de banco novo do `schema.sql` + runner de migrações), varredura de segredos e auditoria de dependências com exceções que têm dono e prazo, também semanal. **Ainda não rodou no GitHub.** Faltam SAST, SBOM/licenças, cobertura, migração N-1→N, E2E/axe, imagem e scan — ver `docs/operations/ci.md`)*
 - [ ] Publicar artefato por commit/digest e assinar release; não reconstruir no deploy.
 - [ ] Criar staging equivalente em topologia/configuração, usando dados sintéticos ou clone mascarado aprovado.
 - [ ] Automatizar deploy e rollback do digest anterior com aprovação humana.

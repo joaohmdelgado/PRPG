@@ -32,6 +32,7 @@ PRPG website for UFRPE (Universidade Federal Rural de Pernambuco) - a full-stack
 | `npm run links` | Verificador de links (cron semanal); resultado no painel Qualidade dos dados |
 | `npm run senhas:padrao` | Acha (bcrypt) as contas que ainda usam a senha padrão `Mudar123` sem `senha_temporaria` e, com `-- --gravar`, marca a flag. **Simulação por padrão**; runbook de produção em `docs/operations/senhas-padrao.md` |
 | `npm run comprovantes:privados` | Move os comprovantes de proficiência antigos de `/uploads` (público) para `server/private-uploads` e troca o endereço. **Simulação por padrão**; rodar onde está o `server/uploads` real — runbook `docs/operations/comprovantes-privados.md` |
+| `npm run ci:segredos` / `npm run ci:auditoria` | As duas verificações de segurança do CI (`.github/workflows/ci.yml`, `docs/operations/ci.md`): segredos/credenciais padrão versionados (permissões em `varredura-segredos-permissoes.json`) e vulnerabilidade alta/crítica de dependência de produção sem exceção válida (`auditoria-excecoes.json`: motivo, dono e prazo) |
 | `npm run imagens` | Gera as versões WebP das imagens que já estavam em `server/uploads` (novos uploads já são preparados no envio) |
 | `npm run perf:bundle` | Orçamento de performance (Fase P.6): mede o JS/CSS/fontes do carregamento inicial contra `orcamento-desempenho.json` |
 | `npm run perf:lighthouse` | Lighthouse CI (`lighthouserc.cjs`) contra o site buildado; precisa do banco com carga inicial e de `npm run build` antes |

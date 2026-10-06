@@ -1,0 +1,11 @@
+{
+  "_comentario": "Exceções à auditoria de dependências de produção (scripts/auditoria-dependencias.mjs, npm run ci:auditoria). Cada uma precisa de motivo, dono e prazo; vencida, o CI volta a bloquear. Só vulnerabilidade alta/crítica entra aqui.",
+  "excecoes": [
+    {
+      "pacote": "nodemailer",
+      "motivo": "Correção só na versão 10 (major). A falha — cache de DNS do processo reaproveitando o servername TLS entre transportes — só afeta quem usa vários transportes SMTP; server/services/email.js usa um único e o e-mail está desligado até a decisão D-C5. Reavaliar ao ligar o SMTP.",
+      "dono": "equipe técnica PRPG",
+      "expira": "2027-01-31"
+    }
+  ]
+}
