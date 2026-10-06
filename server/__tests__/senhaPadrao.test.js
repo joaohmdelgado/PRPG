@@ -3,7 +3,7 @@ import request from 'supertest';
 import bcrypt from 'bcryptjs';
 import { app } from '../app.js';
 import { pool } from '../db/pool.js';
-import { resetDb, seedAdmin, seedUser } from './helpers.js';
+import { resetDb, seedAdmin, seedUser, loginAdmin } from './helpers.js';
 import alunosImporter from '../services/importers/alunosImporter.js';
 import professoresImporter from '../services/importers/professoresImporter.js';
 import {
@@ -23,25 +23,31 @@ const flagNoBanco = async (email) => (await pool.query(
 )).rows[0].senha_temporaria;
 const opcoes = { programaId: 'prog-1', actor: 'admin-test', dryRun: false };
 
-describe('importadores legados — senha padrão é provisória', () => {
-  it('aluno importado nasce com senha_temporaria e o login exige a troca', async () => {
+describe('importadores legados — conta nasce com senha desconhecida e provisória (AUTH-02)', () => {
+  const idDe = async (email) => (await pool.query('SELECT id FROM users WHERE email = $1', [email])).rows[0].id;
+  const gerarProvisoria = async (email) => (await request(app).post(`/api/users/${await idDe(email)}/senha-provisoria`)
+    .set('Authorization', `Bearer ${await loginAdmin()}`)).body.senhaProvisoria;
+
+  it('aluno importado: Mudar123 não entra; com a provisória gerada no painel, entra e tem de trocar', async () => {
     const m = alunosImporter.map({ name: [{ value: 'Bia' }], mail: [{ value: 'bia@t.br' }] });
     const r = await alunosImporter.importOne(m, opcoes);
     expect(r.acao).toBe('criado');
 
     expect(await flagNoBanco('bia@t.br')).toBe(true);
-    const res = await entrar('bia@t.br', SENHA_PADRAO);
+    expect((await entrar('bia@t.br', SENHA_PADRAO)).status).toBe(401);
+    const res = await entrar('bia@t.br', await gerarProvisoria('bia@t.br'));
     expect(res.status).toBe(200);
     expect(res.body.senhaTemporaria).toBe(true);
   });
 
-  it('professor importado nasce com senha_temporaria e o login exige a troca', async () => {
+  it('professor importado: mesma regra', async () => {
     const m = professoresImporter.map({ name: [{ value: 'Ana' }], mail: [{ value: 'ana@t.br' }] });
     const r = await professoresImporter.importOne(m, opcoes);
     expect(r.acao).toBe('criado');
 
     expect(await flagNoBanco('ana@t.br')).toBe(true);
-    const res = await entrar('ana@t.br', SENHA_PADRAO);
+    expect((await entrar('ana@t.br', SENHA_PADRAO)).status).toBe(401);
+    const res = await entrar('ana@t.br', await gerarProvisoria('ana@t.br'));
     expect(res.status).toBe(200);
     expect(res.body.senhaTemporaria).toBe(true);
   });
@@ -49,15 +55,15 @@ describe('importadores legados — senha padrão é provisória', () => {
   it('a flag persiste entre logins até a pessoa trocar a senha', async () => {
     const m = alunosImporter.map({ name: [{ value: 'Bia' }], mail: [{ value: 'bia@t.br' }] });
     await alunosImporter.importOne(m, opcoes);
+    const provisoria = await gerarProvisoria('bia@t.br');
 
-    const primeiro = await entrar('bia@t.br', SENHA_PADRAO);
-    const segundo = await entrar('bia@t.br', SENHA_PADRAO);
+    const primeiro = await entrar('bia@t.br', provisoria);
+    const segundo = await entrar('bia@t.br', provisoria);
     expect(primeiro.body.senhaTemporaria).toBe(true);
     expect(segundo.body.senhaTemporaria).toBe(true);
 
-    const troca = await request(app).put(`/api/users/${(await pool.query(
-      'SELECT id FROM users WHERE email = $1', ['bia@t.br']
-    )).rows[0].id}`).set('Authorization', `Bearer ${primeiro.body.token}`).send({ password: 'minhaNovaSenha8' });
+    const troca = await request(app).put(`/api/users/${await idDe('bia@t.br')}`)
+      .set('Authorization', `Bearer ${segundo.body.token}`).send({ password: 'minhaNovaSenha8' });
     expect(troca.status).toBe(200);
 
     const depois = await entrar('bia@t.br', 'minhaNovaSenha8');

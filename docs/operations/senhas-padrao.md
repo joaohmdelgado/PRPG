@@ -79,12 +79,19 @@ emitidos antes e para o reset feito pelo admin no meio da sessão; o `optionalPr
 anônimo; token de conta excluída recebe 401. A nova senha escolhida pela pessoa tem de ter 8+ caracteres e não
 pode ser `Mudar123` (`erroNovaSenha` em `server/services/senhaPadrao.js`).
 
-**O que continua aberto:** a senha compartilhada `Mudar123` ainda é o que a conta nova recebe, então quem sabe o
-e-mail de alguém que nunca entrou consegue fazer a troca no lugar dele e tomar a conta. O fechamento de verdade é
-o item "substituir a senha compartilhada `Mudar123` por convite/reset aleatório, single-use e expirável" do plano
-de prontidão (`docs/superpowers/plans/2026-09-09-prontidao-producao-prpg.md`, Task 2). Até lá, peça às
-secretarias que os usuários que nunca entraram façam a troca, ou use o reset de senha do painel (Usuários) com
-uma senha individual.
+**Desde 05/10/2026 conta nova não recebe mais `Mudar123`** (decisão do usuário): cadastro sem senha gera uma
+senha provisória aleatória (`gerarSenhaProvisoria`, 3×4 caracteres sem ambíguos), devolvida **uma vez** na
+resposta e mostrada no painel para quem cadastrou repassar; os importadores legados criam a conta com senha
+aleatória que ninguém recebe. Para dar acesso a uma conta (importada ou que perdeu a senha): Usuários → editar →
+**Gerar senha provisória** (`POST /api/users/:id/senha-provisoria` — Admin/Gestor, ou Gestor de Programa só para
+aluno/professor do próprio programa; derruba as sessões da conta). Senha escolhida à mão (pelo admin ou pela
+pessoa) precisa de 8+ caracteres e não pode ser `Mudar123`.
+
+**O que continua aberto:** as contas **antigas** que ainda têm `Mudar123` (as 89 do dev, e as de produção)
+continuam com a senha conhecida até a pessoa trocar — a flag provisória só garante que a troca acontece no
+primeiro acesso, não que o primeiro acesso seja da própria pessoa. Para fechar: depois de rodar `senhas:padrao`,
+gerar senha provisória para quem vai entrar (ou, em lote, uma rotação — ainda não implementada). Convite por
+e-mail com link de uso único continua dependendo da D-C5.
 
 ## Se `Mudar123` voltar a aparecer
 

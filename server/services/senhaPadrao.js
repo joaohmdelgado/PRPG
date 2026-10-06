@@ -3,10 +3,19 @@
 // `senha_temporaria`, então o primeiro acesso não forçava a troca. O hash é
 // bcrypt, que o SQL não compara sozinho (sem pgcrypto); por isso a varredura
 // é feita aqui, com bcryptjs, e só a marcação vai ao banco.
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { query } from '../db/pool.js';
 
 export const SENHA_PADRAO = 'Mudar123';
+
+// AUTH-02 (decisão de 05/10/2026): conta nova ou reset sem senha escolhida
+// recebe uma senha provisória aleatória, mostrada uma única vez a quem cadastrou
+// — não mais a `Mudar123` compartilhada. 3 grupos de 4 caracteres sem os
+// ambíguos (0/O, 1/l/I): ~69 bits, fácil de ditar e de digitar.
+const ALFABETO = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+export const gerarSenhaProvisoria = () => Array.from({ length: 3 }, () =>
+  Array.from({ length: 4 }, () => ALFABETO[crypto.randomInt(ALFABETO.length)]).join('')).join('-');
 
 // Regra da senha que a própria pessoa escolhe (troca provisória ou voluntária).
 export const erroNovaSenha = (senha) => {

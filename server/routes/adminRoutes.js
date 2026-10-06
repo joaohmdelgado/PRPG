@@ -73,7 +73,7 @@ import {
 } from '../controllers/importacoesController.js';
 
 import { login } from '../controllers/authController.js';
-import { getUsers, getUsersResumo, getUserById, createUser, updateUser, deleteUser } from '../controllers/usersController.js';
+import { getUsers, getUsersResumo, getUserById, createUser, updateUser, deleteUser, gerarSenhaProvisoriaUsuario } from '../controllers/usersController.js';
 import { getTaxonomias, updateTaxonomias } from '../controllers/taxonomiasController.js';
 
 import {
@@ -308,6 +308,7 @@ router.get('/users', protect, requireRole(['Administrator', 'Gestor', 'GestorPro
 router.get('/users/resumo', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), getUsersResumo);
 router.post('/users', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), createUser);
 router.delete('/users/:id', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireProgramaOwnership((id) => usersRepo.getById(id)), deleteUser);
+router.post('/users/:id/senha-provisoria', protect, requireRole(['Administrator', 'Gestor', 'GestorPrograma']), requireProgramaOwnership((id) => usersRepo.getById(id)), gerarSenhaProvisoriaUsuario);
 
 // Importação de dados do site antigo (somente Admin/Gestor da PRPG).
 router.get('/import/tipos', protect, requireRole(['Administrator', 'Gestor']), getTiposImportacao);

@@ -45,13 +45,26 @@ describe('users — criação', () => {
     expect(res.body.conflict).toBe('cpf');
   });
 
-  it('usa senha padrão Mudar123 quando não informada e oculta o hash', async () => {
+  it('sem senha informada, gera uma provisória aleatória devolvida uma vez (AUTH-02) e oculta o hash', async () => {
     const create = await asAdmin(request(app).post('/api/users')).send({ email: 'novo@test.com', roles: ['Aluno'] });
     expect(create.status).toBe(201);
     expect(create.body.password_hash).toBeUndefined();
-    // Consegue logar com a senha padrão.
-    const res = await request(app).post('/api/login').send({ username: 'novo@test.com', password: 'Mudar123' });
+    expect(create.body.senhaProvisoria).toMatch(/^[A-Za-z2-9]{4}-[A-Za-z2-9]{4}-[A-Za-z2-9]{4}$/);
+    const outra = await asAdmin(request(app).post('/api/users')).send({ email: 'novo2@test.com', roles: ['Aluno'] });
+    expect(outra.body.senhaProvisoria).not.toBe(create.body.senhaProvisoria);
+    // Entra com a provisória; a Mudar123 não vale mais para conta nova.
+    const res = await request(app).post('/api/login').send({ username: 'novo@test.com', password: create.body.senhaProvisoria });
     expect(res.status).toBe(200);
+    expect((await request(app).post('/api/login').send({ username: 'novo@test.com', password: 'Mudar123' })).status).toBe(401);
+    // Não volta a aparecer.
+    expect((await asAdmin(request(app).get(`/api/users/${create.body.id}`))).body.senhaProvisoria).toBeUndefined();
+  });
+
+  it('senha escolhida pelo admin segue a regra (8+ caracteres, nunca Mudar123)', async () => {
+    for (const password of ['Mudar123', 'curta']) {
+      const res = await asAdmin(request(app).post('/api/users')).send({ email: `x-${password}@test.com`, roles: ['Aluno'], password });
+      expect(res.status, password).toBe(400);
+    }
   });
 
   it('exige programa para Professor', async () => {
@@ -124,7 +137,7 @@ describe('users — senha provisória', () => {
     const create = await asAdmin(request(app).post('/api/users')).send({ email: 'prov@test.com', roles: ['Aluno'] });
     expect(create.status).toBe(201);
 
-    const res = await request(app).post('/api/login').send({ username: 'prov@test.com', password: 'Mudar123' });
+    const res = await request(app).post('/api/login').send({ username: 'prov@test.com', password: create.body.senhaProvisoria });
     expect(res.status).toBe(200);
     expect(res.body.senhaTemporaria).toBe(true);
   });
@@ -132,7 +145,7 @@ describe('users — senha provisória', () => {
   it('limpa a flag quando o próprio usuário troca a senha', async () => {
     const create = await asAdmin(request(app).post('/api/users')).send({ email: 'prov2@test.com', roles: ['Aluno'] });
     const id = create.body.id;
-    const t = await login('prov2@test.com', 'Mudar123');
+    const t = await login('prov2@test.com', create.body.senhaProvisoria);
 
     const upd = await request(app).put(`/api/users/${id}`)
       .set('Authorization', `Bearer ${t}`)
@@ -336,7 +349,7 @@ describe('G1: leitura montada a partir de pessoas e vínculos', () => {
     const { body } = await asAdmin(request(app).get(`/api/users/${u.id}`)).expect(200);
     expect(body.perfil_geral).toMatchObject({ nome: 'Nome Na Pessoa', telefones: ['81 1', '81 2'], foto_url: '/uploads/f.png' });
     expect(body.dados_academicos.lattes).toBe('http://lattes/9');
-    const res = await request(app).post('/api/login').send({ username: 'lido@t.br', password: 'Mudar123' });
+    const res = await request(app).post('/api/login').send({ username: 'lido@t.br', password: u.senhaProvisoria });
     expect(res.body.nome).toBe('Nome Na Pessoa');
   });
 

@@ -16,7 +16,7 @@ import {
 // exibir os programas de qualquer usuário (aluno ou professor) na lista.
 const PAPEIS_VINCULO_PROGRAMA = [...PAPEIS_DOCENTE, ...PAPEIS_DISCENTE];
 import { query } from '../db/pool.js';
-import { erroNovaSenha } from '../services/senhaPadrao.js';
+import { erroNovaSenha, gerarSenhaProvisoria } from '../services/senhaPadrao.js';
 import { emitirToken } from './authController.js';
 
 const stripHash = (u) => {
@@ -223,15 +223,20 @@ export const createUser = async (req, res) => {
       return res.status(400).json({ message: new PerfilSemVinculo().message });
     }
 
-    const password = data.password || 'Mudar123';
-    const password_hash = await bcrypt.hash(password, await bcrypt.genSalt(10));
+    if (data.password) {
+      const erro = erroNovaSenha(data.password);
+      if (erro) return res.status(400).json({ message: erro });
+    }
+    // Sem senha escolhida: provisória aleatória, devolvida UMA vez nesta resposta
+    // para quem cadastrou repassar (AUTH-02) e com troca obrigatória no 1º acesso.
+    // Senha informada pelo admin já vale como final.
+    const senhaProvisoria = data.password ? null : gerarSenhaProvisoria();
+    const password_hash = await bcrypt.hash(data.password || senhaProvisoria, await bcrypt.genSalt(10));
 
     const newUser = {
       id: crypto.randomUUID(),
       email: data.email,
       password_hash,
-      // Sem senha explícita usamos o padrão 'Mudar123' → provisória: obriga a
-      // troca no primeiro acesso. Senha informada pelo admin já vale como final.
       senhaTemporaria: !data.password,
       roles,
       programaId: ownerProgramaId,
@@ -272,7 +277,7 @@ export const createUser = async (req, res) => {
       await linhasPesquisaRepo.setForPessoa(created.pessoaId, ids);
     }
 
-    res.status(201).json(stripHash(created));
+    res.status(201).json(senhaProvisoria ? { ...stripHash(created), senhaProvisoria } : stripHash(created));
   } catch (error) {
     serverError(res, 'Erro ao criar usuário', error);
   }
@@ -292,6 +297,10 @@ export const updateUser = async (req, res) => {
     const scoped = isProgramaScoped(req.user);
     const gestorOwns = scoped && req.user.programaId && existing.programaId === req.user.programaId;
     if (scoped && !gestorOwns) {
+      return res.status(403).json({ message: 'Você só pode editar alunos/professores do seu programa.' });
+    }
+    // Nem conta de papel mais alto ligada ao programa (senão o gestor trocaria a senha dela).
+    if (scoped && !isSelf && existing.roles.some((r) => ['Administrator', 'Gestor'].includes(r))) {
       return res.status(403).json({ message: 'Você só pode editar alunos/professores do seu programa.' });
     }
     if (!isSelf && !isAdmin && !gestorOwns) {
@@ -327,7 +336,9 @@ export const updateUser = async (req, res) => {
     // senha, o estado anterior é preservado.
     let senhaTemporaria = existing.senhaTemporaria ?? false;
     let password_hash = existing.password_hash;
-    if (data.password && isSelf) {
+    // Senha escolhida — pela própria pessoa ou pelo admin — segue a mesma regra
+    // (8+ caracteres, nunca a Mudar123).
+    if (data.password) {
       const erro = erroNovaSenha(data.password);
       if (erro) return res.status(400).json({ message: erro });
     }
@@ -388,6 +399,33 @@ export const updateUser = async (req, res) => {
     res.json(stripHash(updated));
   } catch (error) {
     serverError(res, 'Erro ao atualizar usuário', error);
+  }
+};
+
+// AUTH-02: POST /users/:id/senha-provisoria — gera uma senha provisória
+// aleatória, devolvida UMA vez para quem pediu repassar à pessoa; derruba as
+// sessões da conta e exige a troca no 1º acesso. Substitui a Mudar123 nos
+// resets e é o caminho para dar acesso a contas importadas (que nascem com
+// senha aleatória desconhecida). Permissão na rota: igual à de excluir.
+export const gerarSenhaProvisoriaUsuario = async (req, res) => {
+  try {
+    const existing = await usersRepo.getById(req.params.id);
+    if (!existing) return res.status(404).json({ message: 'Usuário não encontrado' });
+    // Gestor de programa não toma conta de papel mais alto, mesmo do seu programa.
+    if (isProgramaScoped(req.user) && existing.roles.some((r) => ['Administrator', 'Gestor'].includes(r))) {
+      return res.status(403).json({ message: 'Você não pode gerar senha para esta conta.' });
+    }
+    const senhaProvisoria = gerarSenhaProvisoria();
+    await usersRepo.update(existing.id, {
+      ...existing,
+      password_hash: await bcrypt.hash(senhaProvisoria, await bcrypt.genSalt(10)),
+      senhaTemporaria: true,
+      atualizado_em: new Date().toISOString(),
+    }, req.user?.id);
+    await usersRepo.encerrarSessoes(existing.id);
+    res.json({ email: existing.email, senhaProvisoria });
+  } catch (error) {
+    serverError(res, 'Erro ao gerar a senha provisória', error);
   }
 };
 

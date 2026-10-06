@@ -6,6 +6,8 @@ import { apiFetch } from '../../api';
 import { AuditHeader } from '../../components/AuditInfo';
 import useUsers from '../../hooks/useUsers';
 import NACIONALIDADES from '../../data/nacionalidades';
+import SenhaProvisoriaAviso from '../../components/admin/SenhaProvisoriaAviso';
+import { useConfirm } from '../../components/admin/ConfirmModal';
 
 const ROLES = ['Administrator', 'Gestor', 'GestorPrograma', 'Secretário(a)', 'Professor', 'Aluno'];
 const ROLE_LABELS = { GestorPrograma: 'Gestor de Programa' };
@@ -44,6 +46,26 @@ const AdminUserForm = () => {
   const [loading, setLoading] = useState(isEditing);
   const [error, setError] = useState('');
   const [conflitoId, setConflitoId] = useState(null); // id do cadastro já existente (409)
+  // AUTH-02: senha provisória devolvida pelo servidor — mostrada uma vez.
+  const [senhaGerada, setSenhaGerada] = useState(null);
+  const { confirm, ConfirmModal } = useConfirm();
+
+  const gerarSenhaProvisoria = async () => {
+    const ok = await confirm(
+      'A senha atual deixa de valer, as sessões abertas da pessoa são encerradas e uma senha provisória nova é mostrada uma vez para você repassar.',
+      { title: 'Gerar senha provisória?', confirmar: 'Gerar' }
+    );
+    if (!ok) return;
+    setError('');
+    try {
+      const r = await apiFetch(`/api/users/${id}/senha-provisoria`, { method: 'POST' });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) setSenhaGerada({ email: d.email, senha: d.senhaProvisoria });
+      else setError(d.message || 'Não foi possível gerar a senha provisória.');
+    } catch {
+      setError('Erro de conexão com o servidor');
+    }
+  };
   const [taxonomias, setTaxonomias] = useState({ entradas: [], situacoes_aluno: [] });
   const [todasLinhas, setTodasLinhas] = useState([]);
   const [selectedLinhasIds, setSelectedLinhasIds] = useState(new Set());
@@ -292,6 +314,11 @@ const AdminUserForm = () => {
         if (data.token) localStorage.setItem('token', data.token);
         // Se veio de uma página de programa (discentes/docentes), volta lá.
         const from = location.state?.from;
+        // Cadastro sem senha: mostra a provisória (uma vez) antes de sair da tela.
+        if (data.senhaProvisoria) {
+          setSenhaGerada({ email: data.email, senha: data.senhaProvisoria, depois: from || '/admin/users' });
+          return;
+        }
         navigate(from || '/admin/users');
       } else {
         const data = await response.json();
@@ -350,10 +377,28 @@ const AdminUserForm = () => {
               <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full border p-2 rounded" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">{isEditing ? 'Nova Senha (deixe em branco para manter)' : 'Senha *'}</label>
-              <input type="password" name="password" value={formData.password} onChange={handleChange} required={!isEditing} className="w-full border p-2 rounded" />
+              <label className="block text-sm font-medium mb-1">{isEditing ? 'Nova Senha (deixe em branco para manter)' : 'Senha (opcional)'}</label>
+              <input type="password" name="password" value={formData.password} onChange={handleChange} minLength={8} autoComplete="new-password" className="w-full border p-2 rounded" />
+              <p className="text-xs text-gray-500 mt-1">
+                {isEditing
+                  ? 'Para dar acesso sem escolher a senha da pessoa, use "Gerar senha provisória".'
+                  : 'Recomendado: deixe em branco — o sistema gera uma senha provisória, mostrada uma vez, e a pessoa troca no primeiro acesso.'}
+              </p>
+              {isEditing && (
+                <button type="button" onClick={gerarSenhaProvisoria}
+                  className="mt-2 text-sm px-3 py-1.5 rounded border border-gray-300 bg-white hover:bg-gray-50">
+                  Gerar senha provisória
+                </button>
+              )}
             </div>
           </div>
+          {senhaGerada && (
+            <SenhaProvisoriaAviso
+              email={senhaGerada.email} senha={senhaGerada.senha}
+              rotuloConcluir={senhaGerada.depois ? 'Já anotei, concluir' : 'Já anotei'}
+              onConcluir={() => (senhaGerada.depois ? navigate(senhaGerada.depois) : setSenhaGerada(null))}
+            />
+          )}
           
           {isGestorPrograma ? (
             <div className="mb-2">
@@ -685,6 +730,7 @@ const AdminUserForm = () => {
         </div>
 
       </form>
+      {ConfirmModal}
     </div>
   );
 };

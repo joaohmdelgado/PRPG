@@ -198,6 +198,13 @@ every older token gets 401, and a self change returns a fresh `token` in the res
 anonymous, and a deleted account's token gets 401. Public routes that vary by role must use `optionalProtect`
 + `req.user`, never verify the JWT themselves.
 
+**Provisional passwords (AUTH-02)**: no account is created with the shared `Mudar123` any more. `POST /api/users`
+without `password` generates a random provisional password (`gerarSenhaProvisoria` in `services/senhaPadrao.js`)
+returned **once** as `senhaProvisoria` and shown by `components/admin/SenhaProvisoriaAviso.jsx`;
+`POST /api/users/:id/senha-provisoria` does the same for an existing account (kills its sessions; GestorPrograma only
+for aluno/professor of its program, never Administrator/Gestor). The legacy importers create accounts with an unknown
+random password — give access via that endpoint. A hand-picked password must have 8+ chars and not be `Mudar123`.
+
 **Authorization matrix (SEC-01)**: `server/__tests__/authzMatrix.test.js` enumerates every write route and
 every `protect`ed GET of `adminRoutes.js` (via `wrapAsync`'s `.original`) and requires 401 for anonymous and
 401/403 for Aluno/Professor. A new write route or panel read needs a role check (`requireRole`/

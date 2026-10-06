@@ -103,3 +103,37 @@ describe('B.13: o painel não oferece flags de privacidade que nunca persistiram
     expect(c.textContent).not.toContain('Privado');
   });
 });
+
+describe('AUTH-02: senha provisória no lugar da Mudar123', () => {
+  const clicar = async (el) => { await act(async () => { el.click(); }); await act(async () => { await new Promise((r) => setTimeout(r, 20)); }); };
+  const botao = (raiz, texto) => [...raiz.querySelectorAll('button')].find((b) => b.textContent.trim() === texto);
+
+  it('novo usuário: senha é opcional e a tela recomenda deixar em branco', async () => {
+    const c = await montar('/admin/users/novo', <AdminUserForm />, 'users/novo');
+    expect(c.querySelector('input[name="password"]').required).toBe(false);
+    expect(c.textContent).toContain('o sistema gera uma senha provisória');
+  });
+
+  it('edição: "Gerar senha provisória" pede confirmação e mostra a senha uma vez', async () => {
+    const chamadas = [];
+    const anterior = globalThis.fetch;
+    vi.stubGlobal('fetch', vi.fn(async (url, opts = {}) => {
+      chamadas.push(`${opts.method || 'GET'} ${String(url)}`);
+      if (String(url).endsWith('/api/users/u1/senha-provisoria')) {
+        return { ok: true, status: 200, json: async () => ({ email: 'ana@ufrpe.br', senhaProvisoria: 'abcd-EFGH-2345' }) };
+      }
+      return anterior(url, opts);
+    }));
+    const c = await montar('/admin/users/editar/u1', <AdminUserForm />, 'users/editar/:id');
+
+    await clicar(botao(c, 'Gerar senha provisória'));
+    expect(chamadas.some((x) => x.startsWith('POST'))).toBe(false); // ainda só a confirmação
+    await clicar(botao(document.body, 'Gerar'));
+
+    expect(chamadas).toContain('POST http://localhost:5000/api/users/u1/senha-provisoria');
+    expect(c.querySelector('[data-senha-provisoria]').textContent).toBe('abcd-EFGH-2345');
+    expect(c.textContent).toContain('não será mostrada de novo');
+    await clicar(botao(c, 'Já anotei'));
+    expect(c.querySelector('[data-senha-provisoria]')).toBeNull();
+  });
+});

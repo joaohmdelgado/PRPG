@@ -4,6 +4,7 @@ import { ArrowLeft, Trash2, UserPlus, Search, Pencil } from 'lucide-react';
 import { apiFetch } from '../../api';
 import { isProgramaGestor } from '../../auth';
 import Icone from '../../components/Icone';
+import SenhaProvisoriaAviso from '../../components/admin/SenhaProvisoriaAviso';
 
 // Gerenciador de pessoas vinculadas a um programa (discentes ou docentes).
 // Além de vincular usuários já cadastrados, permite CADASTRAR um novo aluno/
@@ -27,6 +28,7 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
   const [creating, setCreating] = useState(false);
   // Cadastro já existente detectado (e-mail/CPF) — oferece vínculo em vez de duplicar.
   const [conflito, setConflito] = useState(null);
+  const [senhaGerada, setSenhaGerada] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -89,6 +91,9 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
         },
       });
       if (r.ok) {
+        // AUTH-02: a senha provisória vem só nesta resposta — mostrada uma vez.
+        const d = await r.json().catch(() => ({}));
+        if (d.senhaProvisoria) setSenhaGerada({ email: d.email, senha: d.senhaProvisoria });
         setNovo({ nome: '', email: '', cpf: '', siape: '' });
         setShowCreate(false);
         load();
@@ -156,6 +161,9 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
       </div>
 
       {error && <div className="bg-red-50 text-red-600 p-3 rounded mb-4 text-sm">{error}</div>}
+      {senhaGerada && (
+        <SenhaProvisoriaAviso email={senhaGerada.email} senha={senhaGerada.senha} onConcluir={() => setSenhaGerada(null)} />
+      )}
 
       {/* Adicionar / Cadastrar */}
       <div className="bg-gray-50 rounded-xl p-5 mb-8 border border-gray-100">
@@ -228,8 +236,8 @@ export default function AdminProgramaPessoas({ recurso, titulo, papeis, createRo
                 <UserPlus size={15} />
                 {creating ? 'Cadastrando…' : `Cadastrar e vincular`}
               </button>
-              <p className="text-xs text-gray-400">
-                Senha inicial padrão: <strong>Mudar123</strong>
+              <p className="text-xs text-gray-500">
+                O sistema gera uma senha provisória, mostrada uma vez; a pessoa troca no primeiro acesso.
               </p>
             </div>
           </form>

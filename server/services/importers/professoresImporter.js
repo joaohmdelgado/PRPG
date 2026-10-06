@@ -5,13 +5,13 @@ import { query } from '../../db/pool.js';
 import { idsDaMesmaPessoa, pessoaCanonica } from '../../db/identidadeVinculo.js';
 import { PAPEIS_DOCENTE } from '../../controllers/programasController.js';
 import { gravarPerfilNosVinculos } from '../../db/perfilVinculo.js';
+import { gerarSenhaProvisoria } from '../senhaPadrao.js';
 
 // Importador de PROFESSORES a partir do export de usuários do site antigo
 // (Drupal: array de objetos onde cada campo é uma lista de { value | uri | url }).
 // Um professor no sistema novo é um `users` (login) com papel "Professor", a
 // `pessoas` dele e um `vinculos` (papel docente) ligando-o ao programa.
 
-const SENHA_PADRAO = 'Mudar123';
 
 // Lê o primeiro item de um campo Drupal (lista) e devolve a chave pedida.
 const first = (campo, chave = 'value') => {
@@ -157,12 +157,13 @@ const importOne = async (m, { programaId, actor, dryRun }) => {
   }
 
   const linhaIds = await resolverLinhasIds(programaId, m.linhas_target_ids);
-  const password_hash = await bcrypt.hash(SENHA_PADRAO, await bcrypt.genSalt(10));
+  // AUTH-02: senha aleatória que ninguém recebe; para dar acesso, a secretaria
+  // gera uma senha provisória no painel (POST /users/:id/senha-provisoria).
+  const password_hash = await bcrypt.hash(gerarSenhaProvisoria(), await bcrypt.genSalt(10));
   const novo = {
     id: crypto.randomUUID(),
     email: m.email,
     password_hash,
-    // Senha padrão conhecida: o primeiro acesso tem de trocá-la (o login devolve senhaTemporaria).
     senhaTemporaria: true,
     roles: ['Professor'],
     programaId,
