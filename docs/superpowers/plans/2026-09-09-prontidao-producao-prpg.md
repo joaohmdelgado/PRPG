@@ -105,7 +105,7 @@ revisadas à mão: as que envolvem pessoas devolvem só nome, foto e links acad�
 - [x] Recarregar usuário/papéis/estado a partir do banco no boundary de autorização ou usar versão de sessão revogável. *(05/10/2026: `protect`/`optionalProtect` leem `senha_temporaria`, `roles` e `programa_id`)*
 - [ ] Exigir autorização explícita nas rotas aninhadas de pessoas, vínculos, modalidades, coordenadores e conteúdo institucional.
 - [ ] Testar IDOR/ownership com IDs de outro usuário/programa e payload que tente trocar `programaId`.
-- [ ] Registrar logs de decisão negada sem gravar token ou PII desnecessária.
+- [x] Registrar logs de decisão negada sem gravar token ou PII desnecessária. *(06/10/2026: todo 401/403 sai em `warn` no log de acesso (rota, requestId, usuário pseudonimizado), sem token nem URL — ver Task 8)*
 
 **Run:** `npm test -- server/__tests__/authz.test.js server/__tests__/authzMatrix.test.js`
 **Expected:** todos os casos negativos retornam 401/403 e nenhuma mutação ocorre; casos positivos respeitam escopo.
@@ -348,7 +348,7 @@ primeiro ensaio de restauração, continuam como gates de produção.
 - [ ] Validar `trust proxy` por CIDR/hops reais e usar store compartilhado para rate limit em múltiplas réplicas.
 - [x] Implementar SIGTERM/SIGINT: readiness false, parar accepts, drenar, fechar pool e sair no prazo. *(05/10/2026: `server/runtime/shutdown.js` marca `estadoProcesso.encerrando` (o `/api/ready` passa a 503, `/api/live` segue 200), para os accepts, fecha as keep-alive ociosas, drena, fecha o pool e sai; se não terminar em `SHUTDOWN_TIMEOUT_MS` (padrão 10 s) sai com 1. Teste `shutdown.test.js`)*
 - [ ] Em `uncaughtException`/`unhandledRejection`, registrar de forma segura e encerrar sob supervisor.
-- [ ] Adicionar logs JSON com request ID, usuário pseudonimizado e redação de token, senha, CPF, endereço e URL assinada.
+- [x] Adicionar logs JSON com request ID, usuário pseudonimizado e redação de token, senha, CPF, endereço e URL assinada. *(06/10/2026: `middlewareAcesso` em `server/utils/logger.js` — uma linha JSON por requisição com `requestId`, método, rota (padrão do Express, nunca a URL nem a query), status, duração e usuário como HMAC de 12 hex; 401/403 em `warn` (trilha de acesso negado, também cobre o "logs de negação" da Task 1), 5xx em `error`; sondas `/api/live|ready|status` fora; desligado nos testes, `ACCESS_LOG=false` desliga. Conferido no servidor: uma busca com CPF e token na query saiu só como `/api/news`. Erros inesperados já usavam `formatErrorLog`)*
 - [ ] Instrumentar taxa/erro/duração, 401/403, pool, storage, upload, outbox, jobs, SMTP e verificações públicas.
 - [ ] Executar agendador como worker/schedule independente com lock, idempotência, retry e heartbeat; iniciar em dry-run.
 - [ ] Criar dashboards, alertas, sintéticos e runbooks com owner/escalonamento.

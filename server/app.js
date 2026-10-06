@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 import adminRoutes from './routes/adminRoutes.js';
 import { apiLimiter } from './middleware/rateLimit.js';
 import { IS_PRODUCTION, CORS_ORIGINS } from './config.js';
-import { logUnexpectedError } from './utils/logger.js';
+import { logUnexpectedError, middlewareAcesso } from './utils/logger.js';
 import { pgClientError } from './utils/httpError.js';
 import { pool } from './db/pool.js';
 import { servirVariante } from './services/imagens.js';
@@ -50,6 +50,8 @@ app.use((req, res, next) => {
   res.setHeader('X-Request-Id', req.requestId);
   next();
 });
+// OPS-03: log de acesso em JSON (desligado nos testes; ACCESS_LOG=false desliga em qualquer ambiente).
+app.use(middlewareAcesso({ ativo: process.env.NODE_ENV !== 'test' && process.env.ACCESS_LOG !== 'false' }));
 
 // CORS: em produção, libera apenas as origens da allowlist (CORS_ORIGINS).
 // Em desenvolvimento, libera qualquer origem para facilitar o trabalho local.
