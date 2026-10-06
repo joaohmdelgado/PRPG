@@ -21,7 +21,7 @@ import { usersRepo } from '../db/repositories.js';
 // resetDb.test.js confere a ordem e a cobertura contra o catálogo do banco.
 export const RESET_TABLES = [
   'news', 'editais', 'resolucoes', 'formularios', 'portarias', 'teses_dissertacoes',
-  'faq', 'disciplinas', 'bolsas', 'pages', 'users', 'taxonomias', 'taxonomia_refs',
+  'faq', 'disciplinas', 'bolsas', 'pages', 'users', 'login_tentativas', 'taxonomias', 'taxonomia_refs',
   'grupos_pesquisa', 'calendarios', 'calendario_milestones', 'programas',
   'modalidades', 'vinculos', 'metricas_anuais',
   'linhas_pesquisa', 'programa_linhas_pesquisa', 'user_linhas_pesquisa',

@@ -204,6 +204,9 @@ returned **once** as `senhaProvisoria` and shown by `components/admin/SenhaProvi
 `POST /api/users/:id/senha-provisoria` does the same for an existing account (kills its sessions; GestorPrograma only
 for aluno/professor of its program, never Administrator/Gestor). The legacy importers create accounts with an unknown
 random password — give access via that endpoint. A hand-picked password must have 8+ chars and not be `Mudar123`.
+Besides the per-IP `loginLimiter`, `services/tentativasLogin.js` locks an e-mail for 15 min after 5 failed logins in
+15 min, from any IP (table `login_tentativas`; unknown e-mails are treated the same; a successful login or a
+provisional password generated in the panel clears it).
 
 **Authorization matrix (SEC-01)**: `server/__tests__/authzMatrix.test.js` enumerates every write route and
 every `protect`ed GET of `adminRoutes.js` (via `wrapAsync`'s `.original`) and requires 401 for anonymous and

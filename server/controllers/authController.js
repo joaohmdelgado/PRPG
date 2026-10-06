@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../config.js';
 import { usersRepo } from '../db/repositories.js';
 import { query } from '../db/pool.js';
+import { estaBloqueado, registrarFalha, limparTentativas } from '../services/tentativasLogin.js';
 
 // `sv` = users.sessao_versao: o protect recusa o token quando a versão da conta
 // mudou (troca de senha). Papéis e programa no token são só informativos — o
@@ -18,9 +19,15 @@ export const login = async (req, res) => {
   const email = username; // username é o e-mail na nossa modelagem
 
   try {
+    if (await estaBloqueado(email)) {
+      return res.status(429).json({
+        message: 'Muitas tentativas sem sucesso para esta conta. Aguarde 15 minutos ou peça à secretaria uma senha provisória.',
+      });
+    }
     const user = await usersRepo.findByEmail(email);
 
     if (user && (await bcrypt.compare(password || '', user.password_hash))) {
+      await limparTentativas(email);
       // Gestor de Programa: anexa o programa ao token e à resposta para que o
       // painel possa escopar tudo automaticamente.
       let gestorPrograma = null;
@@ -44,6 +51,7 @@ export const login = async (req, res) => {
         senhaTemporaria: user.senhaTemporaria ?? false,
       });
     } else {
+      await registrarFalha(email);
       res.status(401).json({ message: 'E-mail ou senha inválidos' });
     }
   } catch (error) {

@@ -47,6 +47,16 @@ CREATE TABLE IF NOT EXISTS users (
 );
 CREATE INDEX IF NOT EXISTS users_programa_id_idx ON users(programa_id);
 
+-- AUTH-02: falhas de login por e-mail (normalizado), para bloquear a conta
+-- depois de várias tentativas, de qualquer IP. Vale também para e-mail que
+-- não existe (não revela quais contas existem). Sem FK de propósito.
+CREATE TABLE IF NOT EXISTS login_tentativas (
+  chave             TEXT PRIMARY KEY,          -- lower(trim(e-mail))
+  falhas            INTEGER NOT NULL DEFAULT 0,
+  primeira_falha_em TIMESTAMPTZ NOT NULL DEFAULT now(),
+  bloqueado_ate     TIMESTAMPTZ
+);
+
 -- ============================ Noticias ============================
 CREATE TABLE IF NOT EXISTS news (
   id            TEXT PRIMARY KEY,

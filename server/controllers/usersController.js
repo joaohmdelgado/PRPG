@@ -18,6 +18,7 @@ const PAPEIS_VINCULO_PROGRAMA = [...PAPEIS_DOCENTE, ...PAPEIS_DISCENTE];
 import { query } from '../db/pool.js';
 import { erroNovaSenha, gerarSenhaProvisoria } from '../services/senhaPadrao.js';
 import { emitirToken } from './authController.js';
+import { limparTentativas } from '../services/tentativasLogin.js';
 
 const stripHash = (u) => {
   if (!u) return u;
@@ -423,6 +424,7 @@ export const gerarSenhaProvisoriaUsuario = async (req, res) => {
       atualizado_em: new Date().toISOString(),
     }, req.user?.id);
     await usersRepo.encerrarSessoes(existing.id);
+    await limparTentativas(existing.email); // desbloqueia quem foi bloqueado por tentativas
     res.json({ email: existing.email, senhaProvisoria });
   } catch (error) {
     serverError(res, 'Erro ao gerar a senha provisória', error);
